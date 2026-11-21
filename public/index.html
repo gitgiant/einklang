@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>einklang</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;font:12px ui-monospace,Consolas,monospace;color:#ddd}
+  canvas{display:block;width:100vw;height:100vh}
+  #hud{position:fixed;left:8px;bottom:8px;background:#000a;padding:6px 8px;white-space:pre;pointer-events:none}
+  #panel{position:fixed;top:8px;left:8px;background:#000c;padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;max-width:95vw}
+  button,input{font:inherit;background:#222;color:#ddd;border:1px solid #555;padding:4px 6px}
+  .hide{display:none!important}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="panel">
+  <label>track <input type="file" id="file" accept="audio/*"></label>
+  <button id="live">go live (mic/line)</button>
+  <button id="stop">stop</button>
+  <label><input type="checkbox" id="aud"> audio here</label>
+  <label>offset ms <input type="number" id="off" step="5" style="width:5em"></label>
+  <button id="fs">fullscreen</button>
+  <span id="msg"></span>
+</div>
+<div id="hud"></div>
+<audio id="au" preload="auto"></audio>
+<script type="module">
+import { FPS, STRIDE, W, H, LIVE_DELAY, scene, hashList, OP_CLEAR, OP_CIRCLE, OP_RING, OP_LINE } from './core.js';
+import { Analyzer, N } from './analysis.js';
+
+const $ = (id) => document.getElementById(id);
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const msg = (s) => ($('msg').textContent = s);
+
+// per-host display-latency trim (TV vs laptop panel); visuals only
+const qs = new URLSearchParams(location.search);
+let offsetMs = +(qs.get('offset') ?? lsGet('offset') ?? 0);
+$('off').value = offsetMs;
+$('off').oninput = () => { offsetMs = +$('off').value || 0; lsSet('offset', offsetMs); };
+
+// ---- clock sync (NTP-style, min-RTT of last 20 samples) ----
+let ws, clockOff = 0, rtt = 0;
+const samples = [];
+const sNow = () => performance.now() + clockOff;
+function pingBurst() { for (let i = 0; i < 5; i++) setTimeout(() => ws?.readyState === 1 && ws.send(JSON.stringify({ t: 'ping', c: performance.now() })), i * 60); }
+
+let state = { mode: 'idle' }, fileFeat = null, frames = 0;
+const live = new Map();
+let leaderLive = null; // { an, analyser, td, last }
+
+function connect() {
+  ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+  ws.binaryType = 'arraybuffer';
+  ws.onopen = () => { samples.length = 0; pingBurst(); msg('connected'); };
+  ws.onclose = () => { msg('disconnected, retrying'); setTimeout(connect, 1000); };
+  ws.onmessage = (e) => {
+    if (typeof e.data !== 'string') {
+      const u = new Uint8Array(e.data), dv = new DataView(e.data);
+      if (u[0] === 1) live.set(dv.getUint32(1, true), u.slice(5, 5 + STRIDE));
+      else if (u[0] === 2) { frames = dv.getUint32(1, true); fileFeat = u.slice(5); }
+      return;
+    }
+    const j = JSON.parse(e.data);
+    if (j.t === 'pong') {
+      const t1 = performance.now();
+      samples.push({ rtt: t1 - j.c, off: j.s - (j.c + t1) / 2 });
+      if (samples.length > 20) samples.shift();
+      const best = samples.reduce((a, b) => (b.rtt < a.rtt ? b : a));
+      clockOff = best.off; rtt = best.rtt;
+    } else if (j.t === 'state') {
+      state = j;
+      if (j.mode !== 'live') { live.clear(); stopLeaderLive(); }
+      if (j.mode !== 'file') { fileFeat = null; $('au').pause(); }
+      if (j.mode === 'file' && $('aud').checked) loadAudio();
+    }
+  };
+}
+connect();
+setInterval(pingBurst, 3000);
+
+// ---- feature accessors ----
+const zeroF = () => 0;
+const fileF = (fr, k) => (fr < 0 || fr >= frames ? 0 : fileFeat[fr * STRIDE + k]);
+const liveF = (fr, k) => { const a = live.get(fr); return a ? a[k] : 0; };
+
+// ---- leader: file ----
+$('file').onchange = async () => {
+  const f = $('file').files[0]; if (!f) return;
+  msg('uploading');
+  const buf = await f.arrayBuffer();
+  await fetch('/track', { method: 'POST', headers: { 'content-type': f.type || 'application/octet-stream' }, body: buf.slice(0) });
+  msg('decoding');
+  const ac = new AudioContext();
+  const ab = await ac.decodeAudioData(buf);
+  ac.close();
+  const n = ab.length, mono = new Float32Array(n);
+  for (let ch = 0; ch < ab.numberOfChannels; ch++) { const d = ab.getChannelData(ch); for (let i = 0; i < n; i++) mono[i] += d[i] / ab.numberOfChannels; }
+  const an = new Analyzer(ab.sampleRate), nf = Math.ceil((n / ab.sampleRate) * FPS);
+  const out = new Uint8Array(5 + nf * STRIDE), td = new Float32Array(N);
+  new DataView(out.buffer).setUint32(1, nf, true); out[0] = 2;
+  for (let fr = 0; fr < nf; fr++) {
+    const c = Math.round((fr * ab.sampleRate) / FPS) - N / 2;
+    for (let i = 0; i < N; i++) { const s = c + i; td[i] = s >= 0 && s < n ? mono[s] : 0; }
+    out.set(an.frame(td), 5 + fr * STRIDE);
+    if (fr % 600 === 0) { msg(`analyzing ${(100 * fr / nf) | 0}%`); await new Promise((r) => setTimeout(r)); }
+  }
+  ws.send(out);
+  ws.send(JSON.stringify({ t: 'play' }));
+  msg('playing in 2.5 s');
+};
+
+// ---- leader: live (needs secure context: localhost or https) ----
+$('live').onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const ac = new AudioContext(), analyser = ac.createAnalyser();
+    analyser.fftSize = N;
+    ac.createMediaStreamSource(stream).connect(analyser);
+    leaderLive = { an: new Analyzer(ac.sampleRate), analyser, td: new Float32Array(N), last: -1 , ac, stream };
+    ws.send(JSON.stringify({ t: 'live' }));
+    msg('live leader');
+  } catch (e) { msg('mic failed: ' + e.message + (isSecureContext ? '' : ' (not a secure context: use localhost or https)')); }
+};
+function stopLeaderLive() {
+  if (!leaderLive) return;
+  leaderLive.stream.getTracks().forEach((t) => t.stop()); leaderLive.ac.close(); leaderLive = null;
+}
+setInterval(() => {
+  const L = leaderLive;
+  if (!L || state.mode !== 'live') return;
+  const cur = Math.floor(((sNow() - state.start) * FPS) / 1000);
+  if (cur < 0) return;
+  if (L.last < cur - 30) L.last = cur - 1; // don't burst after a stall
+  L.analyser.getFloatTimeDomainData(L.td);
+  while (L.last < cur) {
+    L.last++;
+    const b = L.an.frame(L.td), m = new Uint8Array(5 + STRIDE);
+    m[0] = 1; new DataView(m.buffer).setUint32(1, L.last, true); m.set(b, 5);
+    live.set(L.last, b); ws.send(m);
+  }
+}, 8);
+
+$('stop').onclick = () => { ws.send(JSON.stringify({ t: 'stop' })); stopLeaderLive(); };
+
+// ---- audio follow (file mode) ----
+let audTrack = -1;
+function loadAudio() { const au = $('au'); if (audTrack !== state.track) { au.src = '/track?' + state.track; audTrack = state.track; } }
+$('aud').onchange = () => { if ($('aud').checked && state.mode === 'file') loadAudio(); else $('au').pause(); };
+setInterval(() => {
+  const au = $('au');
+  if (!$('aud').checked || state.mode !== 'file' || !au.src) return;
+  const t = (sNow() - state.start) / 1000;
+  if (t < 0 || t > frames / FPS) { au.pause(); return; }
+  if (au.paused) { au.currentTime = t; au.play().catch(() => msg('click page to allow audio')); return; }
+  const drift = au.currentTime - t;
+  if (Math.abs(drift) > 0.12) { au.currentTime = t; au.playbackRate = 1; }
+  else au.playbackRate = Math.max(0.97, Math.min(1.03, 1 - drift * 0.5));
+}, 250);
+
+// ---- render ----
+const cv = $('c'), ctx = cv.getContext('2d');
+let hudOn = true;
+addEventListener('keydown', (e) => { if (e.key === 'h') { hudOn = !hudOn; $('hud').classList.toggle('hide', !hudOn); $('panel').classList.toggle('hide', !hudOn); } });
+$('fs').onclick = () => document.documentElement.requestFullscreen?.();
+const css = (rgb, a) => `rgba(${rgb >> 16},${(rgb >> 8) & 255},${rgb & 255},${a / 255})`;
+
+function draw(L) {
+  const dpr = devicePixelRatio || 1, cw = innerWidth * dpr | 0, ch = innerHeight * dpr | 0;
+  if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cw, ch);
+  const s = Math.min(cw / W, ch / H);
+  ctx.setTransform(s, 0, 0, s, (cw - W * s) / 2, (ch - H * s) / 2);
+  ctx.lineCap = 'round';
+  for (let i = 0; i < L.length; i += 8) {
+    const op = L[i], rgb = L[i + 5], al = Math.max(0, L[i + 6]);
+    if (op === OP_CLEAR) { ctx.fillStyle = css(rgb, 255); ctx.fillRect(0, 0, W, H); }
+    else if (op === OP_CIRCLE) { ctx.fillStyle = css(rgb, al); ctx.beginPath(); ctx.arc(L[i + 1], L[i + 2], L[i + 3], 0, 6.283185307179586); ctx.fill(); }
+    else if (op === OP_RING) { ctx.strokeStyle = css(rgb, al); ctx.lineWidth = L[i + 7]; ctx.beginPath(); ctx.arc(L[i + 1], L[i + 2], L[i + 3], 0, 6.283185307179586); ctx.stroke(); }
+    else if (op === OP_LINE) { ctx.strokeStyle = css(rgb, al); ctx.lineWidth = L[i + 7]; ctx.beginPath(); ctx.moveTo(L[i + 1], L[i + 2]); ctx.lineTo(L[i + 3], L[i + 4]); ctx.stroke(); }
+  }
+}
+
+function loop() {
+  requestAnimationFrame(loop);
+  const t = sNow() + offsetMs;
+  let f, F, label;
+  if (state.mode === 'file' && fileFeat) { f = Math.floor(((t - state.start) * FPS) / 1000); F = fileF; label = f < 0 ? `starts in ${(-f / FPS).toFixed(1)}s` : `file ${f}/${frames}`; }
+  else if (state.mode === 'live') { f = Math.floor(((t - state.start) * FPS) / 1000) - LIVE_DELAY; F = liveF; label = 'live'; for (const k of live.keys()) if (k < f - 700) live.delete(k); }
+  else { f = Math.floor((t * FPS) / 1000); F = zeroF; label = 'idle'; }
+  const L = scene(f, F);
+  draw(L);
+  if (hudOn) $('hud').textContent = `${label}\nframe ${f}  hash ${hashList(L)}\nrtt ${rtt.toFixed(1)}ms  offset ${offsetMs}ms`;
+}
+loop();
+</script>
+</body></html>
