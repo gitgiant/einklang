@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { galleryBeats, galleryTrans, mainTrans, restoreAuto } from '../src/web/defaults.ts';
+import { galleryBeats, galleryHold, galleryTrans, mainTrans, restoreAuto } from '../src/web/defaults.ts';
 import { ZERO, cycleSched, cycleTicks, holdAt, randomEffect, retime, transTicks, type Cycle } from '../src/web/cycle.ts';
 import { DoubleTap, SINGLE_MS, Taps, tapZone } from '../src/web/doubletap.ts';
 import { micError } from '../src/web/capture.ts';
@@ -128,6 +128,21 @@ test('gallery length: len= wins, then the remembered choice; stills ignore it', 
   assert.equal(b('stop=3', '2'), 8);
   assert.equal(b('len=99'), 16);
   assert.equal(b('', 'nonsense'), 8);
+});
+
+test('gallery hold: a scene shows alone twice as long by default; hold= sets the bars', () => {
+  const bar = transTicks(4), alone = (b: number, h?: number) => (cycleTicks(b, h) - transTicks(b)) / transTicks(1);
+  // per length: the beats alone before the hold was doubled
+  for (const [beats, was, bars] of [[0.5, 7.5, 4], [1, 7, 4], [2, 6, 4], [4, 4, 3], [8, 4, 4], [16, 4, 6]]) {
+    assert.equal(cycleTicks(beats), bars * bar, `len ${beats}`);
+    assert.ok(alone(beats) >= 2 * was, `len ${beats}`);
+  }
+  assert.deepEqual([alone(8, 4), alone(2, 1), cycleTicks(8, 0), cycleTicks(0.5, 0)], [16, 6, 2 * bar, bar]);
+  const c: Cycle = { ids: ['a', 'b'], trans: 'all', beats: 4, hold: 7 };
+  assert.equal(cycleSched(c, ZERO, 8 * bar - 1).at, 0);
+  assert.equal(cycleSched(c, ZERO, 8 * bar).at, 8 * bar);
+  const h = (q: string) => galleryHold(new URLSearchParams(q));
+  assert.deepEqual(['', 'hold=', 'hold=x', 'hold=-1', 'hold=0', 'hold=6', 'hold=999'].map(h), [undefined, undefined, undefined, undefined, 0, 6, 64]);
 });
 
 test('gallery cycle: a new length starts with the next switch', () => {

@@ -1,5 +1,5 @@
 // The gallery's local stand-in for the server's scene schedule: a pure function of the tick (so stills
-// repeat) that moves to the next scene every `cycle` ticks.
+// repeat) that moves to the next scene every `cycleTicks` ticks.
 import { TICKS_PER_BEAT } from '../core/constants.ts';
 import type { SceneSched, TransType } from '../core/protocol.ts';
 import { randomPool, transEffects } from '../core/transitions.ts';
@@ -57,19 +57,27 @@ export interface Cycle {
   trans: Exclude<GalleryTrans, ''>;
   /** Transition length in beats. */
   beats: number;
+  /** Bars each scene shows alone (`hold=`); see cycleTicks for the default. */
+  hold?: number;
   /** Transition vote scores, for `random`. */
   scores?: Record<string, number>;
 }
 
 export const transTicks = (beats: number) => Math.round(beats * TICKS_PER_BEAT);
-/** Ticks per scene: 2 bars, or longer so each scene holds a bar after a long transition. */
-export const cycleTicks = (beats: number) => Math.max(8, Math.ceil(beats / 4) * 4 + 4) * TICKS_PER_BEAT;
+/**
+ * Ticks from one switch to the next, whole bars: the transition, then the scene alone for at least `hold`
+ * bars. By default it is alone at least twice as long as in a cycle of max(2 bars, transition bars + 1).
+ */
+export function cycleTicks(beats: number, hold?: number): number {
+  const alone = hold === undefined ? 2 * (Math.max(8, Math.ceil(beats / 4) * 4 + 4) - beats) : hold * 4;
+  return Math.max(1, Math.ceil((beats + alone) / 4)) * 4 * TICKS_PER_BEAT;
+}
 
 /** An anchor that shows scene `idx` from `tick` on with no transition, until the next switch. */
 export const holdAt = (tick: number, idx: number, beats: number, n = 0): Anchor => ({ at: tick - transTicks(beats), n, idx, prev: idx });
 
 /** Number of the switch running at `tick`. */
-export const switchAt = (c: Cycle, a: Anchor, tick: number) => a.n + Math.floor((tick - a.at) / cycleTicks(c.beats));
+export const switchAt = (c: Cycle, a: Anchor, tick: number) => a.n + Math.floor((tick - a.at) / cycleTicks(c.beats, c.hold));
 
 /** The switch `from` -> `to` starting at tick `at`, as switch number `n`. */
 export function step(c: Cycle, n: number, from: string, to: string, at: number): SceneSched {
@@ -83,10 +91,10 @@ export function step(c: Cycle, n: number, from: string, to: string, at: number):
  */
 export function retime(c: Cycle, a: Anchor, tick: number): Anchor {
   const n = switchAt(c, a, tick) + 1, k = n - a.n;
-  return { at: a.at + k * cycleTicks(c.beats), n, idx: a.idx + k, prev: a.idx + k - 1 };
+  return { at: a.at + k * cycleTicks(c.beats, c.hold), n, idx: a.idx + k, prev: a.idx + k - 1 };
 }
 
 export function cycleSched(c: Cycle, a: Anchor, tick: number): SceneSched {
   const n = switchAt(c, a, tick), k = n - a.n, id = (i: number) => c.ids[mod(i, c.ids.length)];
-  return step(c, n, id(k === 0 ? a.prev : a.idx + k - 1), id(a.idx + k), a.at + k * cycleTicks(c.beats));
+  return step(c, n, id(k === 0 ? a.prev : a.idx + k - 1), id(a.idx + k), a.at + k * cycleTicks(c.beats, c.hold));
 }
