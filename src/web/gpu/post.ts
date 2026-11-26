@@ -1,0 +1,98 @@
+// Post chain: scene (HDR) -> feedback trails (ping-pong) -> bloom at 1/4 res -> tonemap to canvas.
+// Trails are GPU pixel state: after a join or stutter they converge within ~1 s (accepted by spec).
+import src from './shaders/post.wgsl?raw';
+import { HDR, shader } from './gpu.ts';
+
+export interface PostParams {
+  decay: number; zoom: number; rotate: number;
+  bloom: number; threshold: number; exposure: number;
+}
+
+/** Per-host views: same scene state, different framing of it. Index = view number. */
+export const VIEWS = ['normal', 'mirror', 'flip', 'rotate 180', 'zoom', 'kaleido'] as const;
+
+export const POST_DEFAULT: PostParams = { decay: 0, zoom: 0, rotate: 0, bloom: 0.6, threshold: 0.7, exposure: 1 };
+
+interface Targets { w: number; h: number; scene: GPUTexture; trail: [GPUTexture, GPUTexture]; bloomA: GPUTexture; bloomB: GPUTexture }
+
+export class PostChain {
+  private pipes: Record<'feedback' | 'bright' | 'blur' | 'composite', GPURenderPipeline>;
+  private samp: GPUSampler;
+  private bgl: GPUBindGroupLayout;
+  private ubuf: GPUBuffer;
+  private t: Targets | null = null;
+  private cur = 0;
+  private device: GPUDevice;
+
+  constructor(device: GPUDevice, outFormat: GPUTextureFormat) {
+    this.device = device;
+    const mod = shader(device, src, 'post');
+    this.bgl = device.createBindGroupLayout({
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: 'uniform', hasDynamicOffset: true } },
+        { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: {} },
+        { binding: 2, visibility: GPUShaderStage.FRAGMENT, texture: {} },
+        { binding: 3, visibility: GPUShaderStage.FRAGMENT, texture: {} },
+      ],
+    });
+    const layout = device.createPipelineLayout({ bindGroupLayouts: [this.bgl] });
+    const mk = (entry: string, format: GPUTextureFormat) => device.createRenderPipeline({
+      layout, label: entry,
+      vertex: { module: mod, entryPoint: 'vs_full' },
+      fragment: { module: mod, entryPoint: entry, targets: [{ format }] },
+    });
+    this.pipes = { feedback: mk('fs_feedback', HDR), bright: mk('fs_bright', HDR), blur: mk('fs_blur', HDR), composite: mk('fs_composite', outFormat) };
+    this.samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
+    this.ubuf = device.createBuffer({ size: 256 * 5, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  }
+
+  /** HDR scene target for this frame, (re)allocated to the canvas size. */
+  sceneTarget(w: number, h: number): GPUTexture {
+    if (!this.t || this.t.w !== w || this.t.h !== h) {
+      this.t?.scene.destroy(); this.t?.trail.forEach((x) => x.destroy()); this.t?.bloomA.destroy(); this.t?.bloomB.destroy();
+      const tex = (tw: number, th: number, label: string) => this.device.createTexture({
+        size: [Math.max(1, tw), Math.max(1, th)], format: HDR, label,
+        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+      });
+      const qw = Math.ceil(w / 4), qh = Math.ceil(h / 4);
+      this.t = { w, h, scene: tex(w, h, 'scene'), trail: [tex(w, h, 'trailA'), tex(w, h, 'trailB')], bloomA: tex(qw, qh, 'bloomA'), bloomB: tex(qw, qh, 'bloomB') };
+    }
+    return this.t.scene;
+  }
+
+  run(enc: GPUCommandEncoder, out: GPUTextureView, p: PostParams, view = 0): void {
+    const t = this.t!, d = this.device;
+    const prev = t.trail[this.cur], next = t.trail[this.cur ^ 1];
+    this.cur ^= 1;
+    const qw = t.bloomA.width, qh = t.bloomA.height;
+    // one 256-byte uniform slot per pass
+    const slots = new ArrayBuffer(256 * 5);
+    const put = (slot: number, texel: [number, number], dir: [number, number]) =>
+      new Float32Array(slots, slot * 256, 12).set([p.decay, p.zoom, p.rotate, p.bloom, p.threshold, p.exposure, t.w / t.h, view, ...texel, ...dir]);
+    put(0, [1 / t.w, 1 / t.h], [0, 0]);
+    put(1, [1 / t.w, 1 / t.h], [0, 0]);
+    put(2, [1 / qw, 1 / qh], [1, 0]);
+    put(3, [1 / qw, 1 / qh], [0, 1]);
+    put(4, [1 / t.w, 1 / t.h], [0, 0]);
+    d.queue.writeBuffer(this.ubuf, 0, slots);
+
+    const pass = (pipe: GPURenderPipeline, slot: number, target: GPUTextureView, a: GPUTexture, b: GPUTexture) => {
+      const bg = d.createBindGroup({
+        layout: this.bgl,
+        entries: [
+          { binding: 0, resource: { buffer: this.ubuf, size: 48 } },
+          { binding: 1, resource: this.samp },
+          { binding: 2, resource: a.createView() },
+          { binding: 3, resource: b.createView() },
+        ],
+      });
+      const rp = enc.beginRenderPass({ colorAttachments: [{ view: target, loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }] });
+      rp.setPipeline(pipe); rp.setBindGroup(0, bg, [slot * 256]); rp.draw(3); rp.end();
+    };
+    pass(this.pipes.feedback, 0, next.createView(), t.scene, prev);
+    pass(this.pipes.bright, 1, t.bloomA.createView(), next, next);
+    pass(this.pipes.blur, 2, t.bloomB.createView(), t.bloomA, t.bloomA);
+    pass(this.pipes.blur, 3, t.bloomA.createView(), t.bloomB, t.bloomB);
+    pass(this.pipes.composite, 4, out, next, t.bloomA);
+  }
+}

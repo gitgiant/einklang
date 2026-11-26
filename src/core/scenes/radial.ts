@@ -1,0 +1,56 @@
+// Radial spectrum: port of the prototype scene. Stateless, 600 ticks of lookback.
+import { W, H, K_RMS, K_ONSET } from '../constants.ts';
+import { derive } from '../features.ts';
+import { icos, isin, h32, hsv, clamp } from '../math.ts';
+import { PrimList, OP_CLEAR, OP_CIRCLE, OP_RING, OP_LINE } from '../prims.ts';
+import type { SceneDef } from '../scene.ts';
+
+export const radial: SceneDef = {
+  id: 'radial',
+  name: 'Radial spectrum',
+  state(f, F) {
+    const L = new PrimList(1024);
+    const cx = W >> 1, cy = H >> 1;
+    const { S, E, bass, onsets } = derive(F, f);
+    const hue = f * 2 + onsets * 96;
+
+    L.push(OP_CLEAR, 0, 0, 0, 0, hsv(hue + 768, 200, 10 + (E >> 4)), 255, 0);
+
+    // 64 spokes, mirrored band map, constant rotation
+    const rot = (f * 3) & 4095, r0 = 90 + (bass >> 2);
+    for (let i = 0; i < 64; i++) {
+      const b = (i < 32 ? i : 63 - i) >> 1, a = (rot + i * 64) & 4095, s = S[b];
+      const r1 = r0 + 20 + (((s * 220) / 255) | 0);
+      L.push(OP_LINE,
+        cx + ((icos(a) * r0) >> 15), cy + ((isin(a) * r0) >> 15),
+        cx + ((icos(a) * r1) >> 15), cy + ((isin(a) * r1) >> 15),
+        hsv(hue + b * 48, 220, 255), clamp(110 + (s >> 1), 0, 255), 3 + (s >> 5));
+    }
+
+    // onset pulse rings + particle bursts (closed-form in age, no sim state)
+    for (let g = f - 90; g <= f; g++) {
+      if (!F.get(g, K_ONSET)) continue;
+      const age = f - g;
+      if (age < 40) L.push(OP_RING, cx, cy, r0 + age * 12, 0, hsv(hue + 256, 120, 255), 255 - age * 6, 4);
+      const gb = (F.get(g, 0) + F.get(g, 1)) >> 1;
+      const n = 8 + (F.get(g, K_RMS) >> 4);
+      for (let j = 0; j < n; j++) {
+        const hh = h32(g, j), a = hh & 4095;
+        const dist = 100 + (2 + ((hh >>> 12) & 7) + (gb >> 6)) * age;
+        L.push(OP_CIRCLE, cx + ((icos(a) * dist) >> 15), cy + ((isin(a) * dist) >> 15), 2 + ((hh >>> 20) & 3), 0,
+          hsv(hue + ((hh >>> 24) & 255), 160, 255), 255 - (((age * 255) / 90) | 0), 0);
+      }
+    }
+
+    L.push(OP_CIRCLE, cx, cy, 40 + ((E / 3) | 0), 0, hsv(hue, 180, 60 + (E >> 1)), 255, 0);
+
+    // rms history strip
+    let px = 0, py = H - 20 - (((F.get(f - 127, K_RMS) * 80) / 255) | 0);
+    for (let i = 1; i < 128; i++) {
+      const x = i * 10, y = H - 20 - (((F.get(f - 127 + i, K_RMS) * 80) / 255) | 0);
+      L.push(OP_LINE, px, py, x, y, hsv(hue + 512, 140, 220), 180, 2);
+      px = x; py = y;
+    }
+    return { u: Int32Array.of(f, hue), prims: L.done() };
+  },
+};
