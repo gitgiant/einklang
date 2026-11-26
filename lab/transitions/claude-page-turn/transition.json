@@ -1,0 +1,11 @@
+{
+  "id": "claude-page-turn",
+  "name": "page turn",
+  "vendor": "claude",
+  "model": "claude-sonnet-5-5",
+  "description": "The old scene curls away from a seeded corner like a page, its pale back showing, with the new scene underneath.",
+  "curve": "smoothstep",
+  "budget": {
+    "ms": 0.2
+  }
+}

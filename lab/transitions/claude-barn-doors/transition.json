@@ -1,0 +1,11 @@
+{
+  "id": "claude-barn-doors",
+  "name": "barn doors",
+  "vendor": "claude",
+  "model": "claude-sonnet-5-5",
+  "description": "The old scene splits down the middle or across (seeded) and the two halves swing open toward you on their outer hinges.",
+  "curve": "cubic",
+  "budget": {
+    "ms": 0.2
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "claude-cube",
+  "name": "cube",
+  "vendor": "claude",
+  "model": "claude-sonnet-5-5",
+  "description": "The old and new scene are two faces of a block that turns left, right, up or down, with perspective and face shading.",
+  "curve": "cubic",
+  "budget": {
+    "ms": 0.2
+  }
+}

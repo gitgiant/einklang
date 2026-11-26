@@ -1,0 +1,11 @@
+{
+  "id": "claude-shatter",
+  "name": "shatter",
+  "vendor": "claude",
+  "model": "claude-sonnet-5-5",
+  "description": "The old scene cracks into seeded glass shards that spin, tumble and fall away from an impact point, revealing the new scene.",
+  "curve": "linear",
+  "budget": {
+    "ms": 0.8
+  }
+}
