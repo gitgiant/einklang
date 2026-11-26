@@ -6,6 +6,7 @@ import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { startServer } from '../src/server/main.ts';
+import { RESEED_TICKS } from '../src/core/constants.ts';
 
 const chrome = process.env.CHROME ?? ['C:/Program Files/Google/Chrome/Application/chrome.exe', '/usr/bin/google-chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(existsSync);
 if (!chrome) throw new Error('Chrome not found; set CHROME=');
@@ -147,12 +148,21 @@ try {
   const [fa, fb] = [await flowLine(a), await flowLine(b)];
   const nA = /flow N (\d+)/.exec(fa)?.[1], nB = /flow N (\d+)/.exec(fb)?.[1];
   check(!!nA && nA === nB && /cap \d+.*cap \d+/.test(caps), `flow budget: N ${nA} on both (${caps}); B: ${/N \S+( \+ dust \d+)?/.exec(hud)?.[0]}`);
+  // join early in a reseed period: the next boundary is then further off than the wait below, so
+  // the drop must still read as scheduled (a join just before a boundary would already be applied)
+  await a.waitForFunction((period) => {
+    const t = / tick (\d+) /.exec(document.querySelector('#debug pre')?.textContent ?? '')?.[1];
+    return t !== undefined && Number(t) % period < period - 180;
+  }, { timeout: 10000 }, RESEED_TICKS);
+  const before = await flowLine(a);
   const weak = new WebSocket(`ws://127.0.0.1:${port}/ws?t=${TOKEN}`);
   await new Promise((r) => (weak.onopen = r));
   weak.send(JSON.stringify({ t: 'hello', name: 'weak' })); weak.send(JSON.stringify({ t: 'bench', n: 4096 }));
   await sleep(600);
   const [wa, wb] = [await flowLine(a), await flowLine(b)];
-  check(/→ 4096 at reseed \d+/.test(wa) && wa.split('this host')[0] === wb.split('this host')[0], `weak host: ${wa.split('(weakest')[0].trim()}`);
+  const nBefore = Number(/flow N (\d+)/.exec(before)?.[1]), at = Number(/→ 4096 at reseed (\d+)/.exec(wa)?.[1]);
+  check(nBefore > 4096 && at % RESEED_TICKS === 0 && wa.split('this host')[0] === wb.split('this host')[0],
+    `weak host: ${wa.split('(weakest')[0].trim()}${at ? '' : ` (before the join: N ${nBefore})`}`);
   weak.close();
 
   // MIDI: a third (headless) host plays clock, notes and a CC; the server runs in this process,
