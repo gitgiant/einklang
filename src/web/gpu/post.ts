@@ -17,7 +17,11 @@ export const VIEWS = ['normal', 'mirror', 'flip', 'rotate 180', 'zoom', 'kaleido
 
 export const POST_DEFAULT: PostParams = { decay: 0, zoom: 0, rotate: 0, bloom: 0.6, threshold: 0.7, exposure: 1 };
 
-interface Targets { w: number; h: number; scene: GPUTexture; trail: [GPUTexture, GPUTexture]; bloomA: GPUTexture; bloomB: GPUTexture }
+interface Targets {
+  w: number; h: number; scene: GPUTexture; trail: [GPUTexture, GPUTexture]; bloomA: GPUTexture; bloomB: GPUTexture;
+  /** The two scenes of a transition, allocated on first use. */
+  pair: [GPUTexture, GPUTexture] | null;
+}
 
 export class PostChain {
   private pipes: Record<'feedback' | 'bright' | 'blur' | 'composite', GPURenderPipeline>;
@@ -54,14 +58,24 @@ export class PostChain {
   sceneTarget(w: number, h: number): GPUTexture {
     if (!this.t || this.t.w !== w || this.t.h !== h) {
       this.t?.scene.destroy(); this.t?.trail.forEach((x) => x.destroy()); this.t?.bloomA.destroy(); this.t?.bloomB.destroy();
-      const tex = (tw: number, th: number, label: string) => this.device.createTexture({
-        size: [Math.max(1, tw), Math.max(1, th)], format: HDR, label,
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-      });
+      this.t?.pair?.forEach((x) => x.destroy());
       const qw = Math.ceil(w / 4), qh = Math.ceil(h / 4);
-      this.t = { w, h, scene: tex(w, h, 'scene'), trail: [tex(w, h, 'trailA'), tex(w, h, 'trailB')], bloomA: tex(qw, qh, 'bloomA'), bloomB: tex(qw, qh, 'bloomB') };
+      this.t = { w, h, scene: this.tex(w, h, 'scene'), trail: [this.tex(w, h, 'trailA'), this.tex(w, h, 'trailB')], bloomA: this.tex(qw, qh, 'bloomA'), bloomB: this.tex(qw, qh, 'bloomB'), pair: null };
     }
     return this.t.scene;
+  }
+
+  /** HDR targets for a transition's two scenes, the same size as the scene target. */
+  pairTargets(): [GPUTexture, GPUTexture] {
+    const t = this.t!;
+    return (t.pair ??= [this.tex(t.w, t.h, 'transFrom'), this.tex(t.w, t.h, 'transTo')]);
+  }
+
+  private tex(tw: number, th: number, label: string): GPUTexture {
+    return this.device.createTexture({
+      size: [Math.max(1, tw), Math.max(1, th)], format: HDR, label,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    });
   }
 
   run(enc: GPUCommandEncoder, out: GPUTextureView, p: PostParams, view = 0, fx: Fx = NO_FX, tick = 0): void {

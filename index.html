@@ -43,6 +43,8 @@
   <label>offset ms <input type="number" id="off" step="5" style="width:5em"></label>
   <span>scene <button id="prev" title="previous scene ([)">&lt;</button> <select id="scene"></select> <button id="next" title="next scene (])">&gt;</button></span>
   <label>on <select id="quant"><option value="beat">beat</option><option value="bar" selected>bar</option><option value="now">now</option></select></label>
+  <label title="transition for every scene switch (random: the server picks, never the same twice)">transition <select id="trans"></select></label>
+  <label title="transition length in beats, following the room's tempo">length <select id="tlen"></select></label>
   <button id="hit" title="manual hit (space)">hit</button>
   <button id="midi" title="relay this host's MIDI inputs (clock, notes, CCs)">midi</button>
   <button id="hostsBtn">hosts</button>

@@ -2,3 +2,4 @@ node_modules/
 dist/
 dist-live/
 .einklang-token
+docs/mockups/trans-*.png

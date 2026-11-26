@@ -2,12 +2,13 @@
 // triggers) is sent when it changes, at most once per tick. FX come back as tick-stamped events
 // like everyone else's. Edge-triggered buttons map straight to room actions.
 import { BTN } from '../core/fx.ts';
-import type { ClientMsg, Quant } from '../core/protocol.ts';
+import type { ClientMsg } from '../core/protocol.ts';
 
 const DEAD = 0.14;
 const q = (v: number) => (Math.abs(v) < DEAD ? 0 : Math.round(((v - Math.sign(v) * DEAD) / (1 - DEAD)) * 100));
 
 export interface PadActions {
+  /** L1/R1: step the scene, with the panel's quantize and transition settings. */
   scene(step: number): void;
   view(step: number): void;
 }
@@ -32,7 +33,7 @@ export class PadRelay {
   }
 
   /** Call every frame. */
-  poll(quant: Quant): void {
+  poll(): void {
     if (!navigator.getGamepads) return;
     const now = performance.now();
     for (const gp of navigator.getGamepads()) {
@@ -47,8 +48,8 @@ export class PadRelay {
       const prev = this.prevButtons.get(gp.index) ?? 0, down = b & ~prev;
       this.prevButtons.set(gp.index, b);
       const hit = (bit: number) => (down >> bit) & 1;
-      if (hit(BTN.L1)) this.send({ t: 'scene', step: -1, quant });
-      if (hit(BTN.R1)) this.send({ t: 'scene', step: 1, quant });
+      if (hit(BTN.L1)) this.actions.scene(-1);
+      if (hit(BTN.R1)) this.actions.scene(1);
       if (hit(BTN.LEFT)) this.send({ t: 'ev', type: 'palette', payload: { step: -1 } });
       if (hit(BTN.RIGHT)) this.send({ t: 'ev', type: 'palette', payload: { step: 1 } });
       if (hit(BTN.UP)) this.actions.view(-1);

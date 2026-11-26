@@ -13,8 +13,28 @@ export type Mode =
   | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null }
   | { mode: 'live'; start: number };
 
-/** Scene schedule: `id` is active from tick `at` on, `prev` before it. */
-export interface SceneSched { id: string; prev: string; at: number }
+/** Transition effects, in shader order (`kind` = index). `cut` is the plain hard switch. */
+export const TRANSITIONS = [
+  'cut', 'blend', 'flash', 'wipe', 'iris', 'dissolve', 'luma', 'zoom', 'glitch', 'stutter', 'swirl', 'melt', 'audio', 'pixelate',
+] as const;
+export type TransType = (typeof TRANSITIONS)[number];
+/** Lengths the panel offers, in beats (0 = cut). */
+export const TRANS_BEATS = [0, 0.5, 1, 2, 4, 8, 16] as const;
+
+/**
+ * A scheduled transition: `ticks` long (fixed when scheduled), `seed` from the server, and the
+ * beat length `tpb` at scheduling time, so the beat-stepped effects don't warp on a tempo change.
+ */
+export interface TransSched { type: TransType; ticks: number; seed: number; tpb: number }
+export const CUT: TransSched = { type: 'cut', ticks: 0, seed: 0, tpb: TICKS_PER_BEAT };
+
+/** One switch: `prev` before tick `at`, a transition over [at, at + trans.ticks), `id` after. */
+export interface SceneStep { id: string; prev: string; at: number; trans: TransSched }
+/**
+ * Scene schedule: the most recently scheduled switch, plus the `earlier` ones (oldest first)
+ * that were still pending or running when it was queued behind them.
+ */
+export interface SceneSched extends SceneStep { earlier: SceneStep[] }
 
 /**
  * Beat grid in the current timeline: a bar starts at `origin`, a beat lasts `tpb` ticks (may be
@@ -55,7 +75,7 @@ export type ClientMsg =
   | { t: 'ev'; type: string; payload?: unknown }
   | ClockMsg
   | { t: 'tap' }
-  | { t: 'scene'; id?: string; step?: number; quant: Quant }
+  | { t: 'scene'; id?: string; step?: number; quant: Quant; trans?: { type: TransType | 'random'; beats: number } }
   | { t: 'view'; host: number; view: number | null }
   | { t: 'play'; name?: string } | { t: 'live' } | { t: 'stop' }
   | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
@@ -89,7 +109,21 @@ export function nextBoundary(tick: number, grid: Grid, quant: Quant): number {
   return Math.ceil(grid.origin + Math.ceil((tick - grid.origin) / len) * len - 1e-6);
 }
 
-export const sceneAt = (s: SceneSched, tick: number): string => (tick >= s.at ? s.id : s.prev);
+/** The switch that has started by `tick` (its transition may still be running), or null before the first. */
+export function stepAt(s: SceneSched, tick: number): SceneStep | null {
+  if (tick >= s.at) return s;
+  for (let i = s.earlier.length - 1; i >= 0; i--) if (tick >= s.earlier[i].at) return s.earlier[i];
+  return null;
+}
+
+/** The scene switched to by `tick` (the target while its transition runs). */
+export function sceneAt(s: SceneSched, tick: number): string {
+  const st = stepAt(s, tick);
+  return st ? st.id : (s.earlier[0] ?? s).prev;
+}
+
+/** A schedule showing `id` with nothing pending. */
+export const fixedScene = (id: string): SceneSched => ({ id, prev: id, at: 0, trans: CUT, earlier: [] });
 
 export const DEFAULT_GRID: Grid = { origin: 0, tpb: TICKS_PER_BEAT };
 export const DEFAULT_PRESETS = ['radial', 'tunnel', 'scope', 'flow'];

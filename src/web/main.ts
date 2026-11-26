@@ -4,7 +4,11 @@ import { CC_PARAMS, FPS, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE, WAVE_BYTES } f
 import { decimateWave, fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
 import { Analyzer, N } from '../core/analysis.ts';
-import { modeTick, sceneAt, DEFAULT_PRESETS, DEFAULT_GRID, type ClientMsg, type Quant, type RoomState, type ServerMsg } from '../core/protocol.ts';
+import {
+  modeTick, fixedScene, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS,
+  type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
+} from '../core/protocol.ts';
+import { TRANS_NAMES } from '../core/transitions.ts';
 import { initGpu } from './gpu/gpu.ts';
 import { VIEWS } from './gpu/post.ts';
 import { Engine } from './engine.ts';
@@ -15,7 +19,15 @@ import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
-declare global { interface Window { __ek?: { hashes: Map<number, string>; scene: string; view: number; events: number; wave?: boolean } } }
+declare global {
+  interface Window {
+    __ek?: {
+      hashes: Map<number, string>; scene: string; view: number; events: number; wave?: boolean;
+      /** Transition drawn on the last frame ('' = none), and every type drawn since load. */
+      trans: string; transSeen: string[];
+    };
+  }
+}
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -52,7 +64,7 @@ const sendBin = (d: Uint8Array<ArrayBuffer>) => { if (ws?.readyState === 1) { ws
 function pingBurst() { for (let i = 0; i < 5; i++) setTimeout(() => send({ t: 'ping', c: performance.now() }), i * 60); }
 
 let room: RoomState = {
-  mode: 'idle', epoch: -1, scene: { id: DEFAULT_PRESETS[0], prev: DEFAULT_PRESETS[0], at: 0 },
+  mode: 'idle', epoch: -1, scene: fixedScene(DEFAULT_PRESETS[0]),
   presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null, playlist: null,
 };
 let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
@@ -252,10 +264,21 @@ setInterval(() => {
 
 // ---- controls ----
 const quant = () => $<HTMLSelectElement>('quant').value as Quant;
+// transition + length: remembered per device, sent with every switch (picker, < >, [ ], pad L1/R1)
+const transSel = $<HTMLSelectElement>('trans'), lenSel = $<HTMLSelectElement>('tlen');
+transSel.add(new Option('random', 'random'));
+for (const t of TRANSITIONS) transSel.add(new Option(TRANS_NAMES[t], t));
+for (const b of TRANS_BEATS) lenSel.add(new Option(b === 0 ? 'cut' : b === 0.5 ? '½' : String(b), String(b)));
+transSel.value = lsGet('trans') ?? 'blend'; if (!transSel.value) transSel.value = 'blend';
+lenSel.value = lsGet('tlen') ?? '4'; if (!lenSel.value) lenSel.value = '4';
+transSel.onchange = () => lsSet('trans', transSel.value);
+lenSel.onchange = () => lsSet('tlen', lenSel.value);
+const switchScene = (to: { id?: string; step?: number }) =>
+  send({ t: 'scene', ...to, quant: quant(), trans: { type: transSel.value as TransType | 'random', beats: +lenSel.value } });
 const pick = $<HTMLSelectElement>('scene');
-pick.onchange = () => send({ t: 'scene', id: pick.value, quant: quant() });
-$('prev').onclick = () => send({ t: 'scene', step: -1, quant: quant() });
-$('next').onclick = () => send({ t: 'scene', step: 1, quant: quant() });
+pick.onchange = () => switchScene({ id: pick.value });
+$('prev').onclick = () => switchScene({ step: -1 });
+$('next').onclick = () => switchScene({ step: 1 });
 $('hit').onclick = () => send({ t: 'ev', type: 'hit' });
 
 // ---- transport bar (any host drives it; the server keeps everyone on the same position) ----
@@ -366,6 +389,7 @@ async function start() {
       ['room', [
         `mode ${room.mode}  epoch ${room.epoch}${room.mode === 'file' ? `  track ${room.track}  frames ${room.frames}` : ''}  tick ${f}  hash ${lastHash}`,
         `scene ${room.scene.id} (prev ${room.scene.prev}, at ${room.scene.at})  presets ${room.presets.join(' ')}`,
+        `transition: ${transLine(f)}`,
         `waveform ${hasWave}`,
         `grid origin ${room.grid.origin} tpb ${room.grid.tpb} (${((60 * FPS) / room.grid.tpb).toFixed(2)} bpm)`,
         `hosts: ${room.hosts.map((h) => `${h.name}#${h.id}${h.view === null ? '' : ` v${h.view}`}`).join(', ') || 'none'}`,
@@ -390,7 +414,7 @@ async function start() {
   $('dbgBtn').onclick = () => panel.toggle();
   // D-pad up/down cycles this host's own view (an override, like the hosts panel)
   const pads = new PadRelay(send, {
-    scene: (step) => send({ t: 'scene', step, quant: quant() }),
+    scene: (step) => switchScene({ step }),
     view: (step) => send({ t: 'view', host: me, view: (((engine.view + step) % VIEWS.length) + VIEWS.length) % VIEWS.length }),
   });
   let lastFx: Fx = fxAt(events, 0);
@@ -404,8 +428,8 @@ async function start() {
     }
     else if (e.key === 'd') panel.toggle();
     else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
-    else if (e.key === '[') send({ t: 'scene', step: -1, quant: quant() });
-    else if (e.key === ']') send({ t: 'scene', step: 1, quant: quant() });
+    else if (e.key === '[') switchScene({ step: -1 });
+    else if (e.key === ']') switchScene({ step: 1 });
   });
   $('fs').onclick = () => document.documentElement.requestFullscreen?.();
 
@@ -422,24 +446,27 @@ async function start() {
     } else { F = silence; label = 'idle'; }
     if (room.mode === 'live' && f >= 0 && f !== lastF && !live.has(f)) net.liveGaps++;
     events.prune(f - 2000);
-    engine.setScene(sceneAt(room.scene, f));
     const self = room.hosts.find((h) => h.id === me);
     engine.view = self?.view ?? defaultView;
-    pads.poll(quant());
+    pads.poll();
     const FE = withEvents(F, events);
     const fx = (lastFx = fxAt(events, f));
-    const hash = engine.frame(f, FE, fx);
+    const hash = engine.frame(f, FE, fx, room.scene);
     lastHash = hash; lastF = f;
     panel.frame(f);
     lastTick = Math.max(lastTick, f);
-    const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0, wave: false });
+    const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0, wave: false, trans: '', transSeen: [] as string[] });
+    dbg.trans = engine.transition?.type ?? '';
+    if (dbg.trans && !dbg.transSeen.includes(dbg.trans)) dbg.transSeen.push(dbg.trans);
     dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view; dbg.wave = F.wave(f) !== null;
     if (hudOn) updateBar(f);
     if (panel.shown) {
       const st = engine.scene.status?.();
-      const pending = room.scene.at > f ? `  →  ${names.get(room.scene.id)} in ${((room.scene.at - f) / FPS).toFixed(2)}s` : '';
+      const tr = engine.transition;
+      const pending = tr ? `  →  ${names.get(tr.to)}  (${TRANS_NAMES[tr.type]} ${((tr.p16 / 65536) * 100) | 0}%)`
+        : room.scene.at > f ? `  →  ${names.get(room.scene.id)} in ${((room.scene.at - f) / FPS).toFixed(2)}s` : '';
       $('hud').textContent = [
-        `${label}  ·  ${engine.scene.def.name}${pending}`,
+        `${label}  ·  ${tr ? names.get(tr.from) : engine.scene.def.name}${pending}`,
         `tick ${f}  hash ${hash}`,
         st,
         FE.get(f, K_BPM) ? `midi ${FE.get(f, K_BPM)} bpm  beat ${FE.get(f, K_BAR) + 1}/4` : null,
@@ -450,6 +477,18 @@ async function start() {
   };
   loop();
 }
+/** Running and pending switches at tick f, for the debug panel. */
+function transLine(f: number): string {
+  const steps: SceneStep[] = [...room.scene.earlier, room.scene].filter((s) => s.at + s.trans.ticks > f);
+  if (!steps.length) return 'none';
+  return steps.map((s) => {
+    const t = s.trans, name = TRANS_NAMES[t.type], len = t.ticks ? ` ${t.ticks}t (${(t.ticks / t.tpb).toFixed(2)} beats) seed ${hex(t.seed)}` : '';
+    const when = s.at > f ? `pending, in ${s.at - f}t` : `running ${f - s.at}/${t.ticks}`;
+    return `${s.prev}→${s.id} ${name}${len} at ${s.at}, ${when}`;
+  }).join('  |  ');
+}
+const hex = (n: number) => (n >>> 0).toString(16).padStart(8, '0');
+
 /** CC params that have been set, for the HUD. */
 function ccLine(f: number): string | null {
   const set = CC_PARAMS.map((c) => [c, events.cc(f, c)]).filter(([, v]) => v >= 0);

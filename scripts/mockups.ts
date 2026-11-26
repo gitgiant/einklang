@@ -25,6 +25,12 @@ const shots: [string, string, number][] = [
   ['flow', 'scene=flow', 38.87],
   ['grid', 'grid=1', 38.43],
   ['hud-flow', 'scene=flow&hud=1', 39.5],
+  // transition stills: a 4-beat transition from `scene` to the next scene starting at `at`
+  ...(['blend', 'flash', 'wipe', 'iris', 'dissolve', 'luma', 'zoom', 'glitch', 'stutter', 'swirl', 'melt', 'audio', 'pixelate'] as const)
+    .map((t, i): [string, string, number] => {
+      const at = 36 + (i % 4) * 0.25, scene = ['radial', 'tunnel', 'scope', 'flow'][i % 4];
+      return [`trans-${t}`, `scene=${scene}&trans=${t}&at=${at}&len=4`, at + (t === 'pixelate' ? 0.8 : t === 'audio' ? 0.6 : 1.0)];
+    }),
 ];
 
 const server = await createServer({ root, logLevel: 'error', server: { port: 5199, strictPort: true } });

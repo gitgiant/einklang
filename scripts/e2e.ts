@@ -19,8 +19,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let failed = false;
 const check = (ok: boolean, what: string) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) failed = true; };
 
-type Dbg = { hashes: [number, string][]; scene: string; view: number; events: number };
-const dbg = (p: Page) => p.evaluate(() => { const d = window.__ek!; return { hashes: [...d.hashes], scene: d.scene, view: d.view, events: d.events }; }) as Promise<Dbg>;
+type Dbg = { hashes: [number, string][]; scene: string; view: number; events: number; transSeen: string[] };
+const dbg = (p: Page) => p.evaluate(() => { const d = window.__ek!; return { hashes: [...d.hashes], scene: d.scene, view: d.view, events: d.events, transSeen: [...d.transSeen] }; }) as Promise<Dbg>;
 function compare(a: Dbg, b: Dbg): { shared: number; diff: number } {
   const hb = new Map(b.hashes);
   let shared = 0, diff = 0;
@@ -68,6 +68,33 @@ try {
   await sel[1].select('5');
   await sleep(400);
   check((await dbg(b)).view === 5, 'view override from another host applied');
+
+  // transitions: one of each effect, 1 beat long on the beat, stepped from A; equal hashes throughout
+  await a.click('#hostsBtn'); // close the host list again (it covers the panel's second row)
+  const next = () => a.$eval('#next', (e) => (e as HTMLButtonElement).click());
+  await a.select('#quant', 'beat');
+  await a.select('#tlen', '1');
+  const effects = (await a.$$eval('#trans option', (os) => os.map((o) => (o as HTMLOptionElement).value))).filter((v) => v !== 'random' && v !== 'cut');
+  let tShared = 0, tDiff = 0;
+  for (const eff of effects) {
+    await a.select('#trans', eff);
+    await next();
+    await sleep(1150); // up to a beat to the boundary, a beat of transition (28 ticks), slack
+    c = compare(await dbg(a), await dbg(b));
+    tShared += c.shared; tDiff += c.diff;
+    if (c.diff) console.log(`     ${eff}: ${c.diff} mismatches`);
+  }
+  da = await dbg(a); db = await dbg(b);
+  const missed = effects.filter((e) => !da.transSeen.includes(e) || !db.transSeen.includes(e));
+  check(tDiff === 0 && missed.length === 0, `transitions: ${effects.length} effects drawn on both (missed: ${missed.join(' ') || 'none'}), ${tShared} shared ticks, ${tDiff} mismatches`);
+  if (process.env.SHOT5) {
+    await a.select('#trans', 'iris'); await a.select('#tlen', '4'); await next();
+    await a.waitForFunction(() => window.__ek!.trans === 'iris', { timeout: 5000 });
+    await sleep(900);
+    await a.screenshot({ path: process.env.SHOT5 });
+    await sleep(1500);
+  }
+  await a.select('#trans', 'cut');
 
   // flow sim: switch, let it fast-forward, compare
   await a.select('#quant', 'now');

@@ -1,6 +1,13 @@
 # PRD: Scene transitions
 
-Status: agreed 2026-11-26, not started. Ticket: #19.
+Status: agreed 2026-11-26, **built 2026-11-26**. Ticket: #19. Stills: `docs/mockups/transitions.jpg` (`npm run mockups`, `ONLY=trans-iris,...`).
+
+### Build notes (decided while building)
+
+- `TransSched` also carries `tpb` (the beat length when scheduled), so the beat-stepped effects (stutter, glitch re-rolls) don't drift on a tempo change, like `ticks`.
+- The queue lives in the state: `scene.earlier` lists the switches still pending or running when the latest one was queued (at most 8). A pending *cut* is still replaced, as before.
+- Pause and resume keep the schedule (tick space is the track position), so a transition freezes. Seek, play, live and stop reset it. A switch requested while paused is a cut on the frozen tick.
+- A request without `trans` (old clients, tests) is a cut.
 
 ## Problem
 
