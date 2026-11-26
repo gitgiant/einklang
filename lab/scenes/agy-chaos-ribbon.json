@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "id": "agy-chaos-ribbon",
+  "name": "Chaos ribbon",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "aud", "piece": "core-audio" },
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.6 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 9, "window": 10, "gain": 1.5 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 48, "shape": 0 } },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": { "scheme": 2, "chroma": 0.22, "light": 0.72, "contrast": 0.52 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.55, 0.98] } }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-attractor",
+      "params": { "attractor": 0, "speed": 1.05, "chaos": 0.55, "orbit": 0.45, "streak": 1.35, "size": 1.05, "glow": 1.15 },
+      "bind": {
+        "speed": { "from": "bass.out", "range": [0.75, 2.0] },
+        "streak": { "from": "bass.out", "range": [0.9, 2.3] },
+        "chaos": { "from": "mid.out", "range": [0.25, 1.25] },
+        "size": { "from": "aud.rms", "range": [0.8, 1.65] }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": { "decay": 0.84, "zoom": 0.006, "rotate": 0.003 },
+      "bind": {
+        "rotate": { "from": "mid.out", "range": [-0.004, 0.008] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "trails.in" }
+  ],
+  "out": "trails.out",
+  "post": { "bloom": 0.9, "threshold": 0.5, "exposure": 1.05 }
+}

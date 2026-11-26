@@ -1,0 +1,26 @@
+{
+  "id": "agy-fluid",
+  "kind": "generator",
+  "name": "Navier-Stokes vortex fluid",
+  "doc": "Incompressible 2D Eulerian fluid and smoke simulation (384x216) with semi-Lagrangian advection, vorticity confinement, and 14-step Jacobi pressure projection. Orbiting audio-driven jets and opposing onset dipoles collide into iridescent silk-smoke plumes.",
+  "ports": {
+    "in": {
+      "palette": { "type": "palette", "optional": true, "doc": "OKLab palette tinting the injected fluid jets and iridescent smoke" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "vorticity": { "type": "float", "default": 2.4, "min": 0, "max": 6.0, "doc": "vorticity confinement curl strength" },
+    "force": { "type": "float", "default": 1.35, "min": 0.2, "max": 3.5, "doc": "jet injection thrust multiplier" },
+    "decay": { "type": "float", "default": 0.976, "min": 0.9, "max": 0.995, "doc": "dye persistence per frame" },
+    "vel_decay": { "type": "float", "default": 0.99, "min": 0.92, "max": 0.999, "doc": "velocity persistence per frame" },
+    "sheen": { "type": "float", "default": 1.0, "min": 0, "max": 2.5, "doc": "velvet gradient & curl specular highlight" },
+    "glow": { "type": "float", "default": 1.15, "min": 0.3, "max": 2.5, "doc": "output dye brightness" }
+  },
+  "budget": { "ms": 1.6, "scales": "none" },
+  "tags": ["simulation", "fluid", "smoke", "navier-stokes", "vorticity", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-26", "by": "gemini-4-neon-high", "note": "initial 2D incompressible Navier-Stokes fluid generator" }]
+}

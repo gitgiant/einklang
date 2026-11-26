@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "id": "agy-mycelium-pulse",
+  "name": "Mycelium pulse",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.6 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 3, "hi": 8, "window": 10, "gain": 1.4 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 11, "hi": 15, "window": 5, "gain": 1.5 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 24, "shape": 1 } },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": { "scheme": 4, "chroma": 0.2, "light": 0.72, "contrast": 0.5 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.08, 0.44] } }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-physarum",
+      "params": { "speed": 1.5, "sensor_angle": 0.52, "sensor_dist": 11.0, "turn": 0.44, "decay": 0.925, "glow": 1.35 },
+      "bind": {
+        "speed": { "from": "bass.out", "range": [1.1, 2.8] },
+        "sensor_dist": { "from": "bass.out", "range": [8.0, 20.0] },
+        "sensor_angle": { "from": "mid.out", "range": [0.32, 0.95] },
+        "turn": { "from": "mid.out", "range": [0.28, 0.78] },
+        "glow": { "from": "high.out", "range": [1.1, 1.9] }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": { "decay": 0.55, "zoom": 0.005, "rotate": 0.002 }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "trails.in" }
+  ],
+  "out": "trails.out",
+  "post": { "bloom": 0.85, "threshold": 0.55, "exposure": 1.08 }
+}

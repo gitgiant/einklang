@@ -1,0 +1,26 @@
+{
+  "id": "agy-gray-scott",
+  "kind": "generator",
+  "name": "Gray-Scott reaction-diffusion",
+  "doc": "2D Gray-Scott reaction-diffusion PDE on a 512x288 ping-pong grid with gradient-lit bioluminescent coral shading. Bass and mids steer feed/kill morphogenesis; onsets seed glowing chemical rings and pulse the field.",
+  "ports": {
+    "in": {
+      "palette": { "type": "palette", "optional": true, "doc": "OKLab palette mapped across chemical V concentration and ridge glow" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "feed": { "type": "float", "default": 0.036, "min": 0.015, "max": 0.07, "doc": "base Gray-Scott feed rate F" },
+    "kill": { "type": "float", "default": 0.06, "min": 0.045, "max": 0.07, "doc": "base Gray-Scott kill rate k" },
+    "pulse": { "type": "float", "default": 1.0, "min": 0, "max": 2.5, "doc": "radial onset advection and ring-seeding strength" },
+    "relief": { "type": "float", "default": 1.2, "min": 0, "max": 3.0, "doc": "3D ridge shading and specular rim intensity" },
+    "glow": { "type": "float", "default": 1.15, "min": 0.2, "max": 2.5, "doc": "emissive ridge brightness" },
+    "swirl": { "type": "float", "default": 0.35, "min": 0, "max": 1.5, "doc": "gentle curl drift keeping the colony alive" }
+  },
+  "budget": { "ms": 1.2, "scales": "none" },
+  "tags": ["simulation", "reaction-diffusion", "gray-scott", "organic", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-26", "by": "gemini-4-neon-high", "note": "initial Gray-Scott reaction-diffusion generator" }]
+}

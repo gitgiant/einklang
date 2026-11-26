@@ -1,0 +1,26 @@
+{
+  "id": "agy-physarum",
+  "kind": "generator",
+  "name": "Physarum slime mold",
+  "doc": "GPU compute Physarum polycephalum simulation: 32,768 dual-strain agents sensing, steering, and depositing pheromone onto a 640x360 diffusing trail map. Bass accelerates veins, mids bend branching angles, and onsets pulse chemoattractant rings.",
+  "ports": {
+    "in": {
+      "palette": { "type": "palette", "optional": true, "doc": "OKLab palette mapped across dual-strain vascular density" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "speed": { "type": "float", "default": 1.45, "min": 0.3, "max": 4.0, "doc": "agent forward speed in map pixels per tick" },
+    "sensor_angle": { "type": "float", "default": 0.52, "min": 0.12, "max": 1.4, "doc": "sensor spread angle in radians" },
+    "sensor_dist": { "type": "float", "default": 10.5, "min": 2.0, "max": 28.0, "doc": "sensor lookahead distance in map pixels" },
+    "turn": { "type": "float", "default": 0.42, "min": 0.08, "max": 1.4, "doc": "steering rate in radians" },
+    "decay": { "type": "float", "default": 0.925, "min": 0.78, "max": 0.985, "doc": "pheromone persistence per frame" },
+    "glow": { "type": "float", "default": 1.35, "min": 0.3, "max": 3.0, "doc": "vascular filament luminance" }
+  },
+  "budget": { "ms": 1.5, "scales": "none" },
+  "tags": ["simulation", "physarum", "slime-mold", "agents", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-26", "by": "gemini-4-neon-high", "note": "initial dual-strain Physarum compute generator" }]
+}

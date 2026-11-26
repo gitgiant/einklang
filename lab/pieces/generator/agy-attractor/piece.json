@@ -1,0 +1,27 @@
+{
+  "id": "agy-attractor",
+  "kind": "generator",
+  "name": "Strange attractor swarm",
+  "doc": "24,576 GPU-simulated particles tracing 3D strange attractors (Aizawa, Thomas, Dadras, Halvorsen) with RK2 integration, splatted as velocity-aligned glowing filaments through an orbiting perspective camera. Bass/mids modulate flow speed and bifurcation; onsets launch bright tracer bursts along the chaotic manifold.",
+  "ports": {
+    "in": {
+      "palette": { "type": "palette", "optional": true, "doc": "OKLab palette mapped across particle speed and 3D manifold lobes" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "attractor": { "type": "enum", "default": 0, "options": ["aizawa", "thomas", "dadras", "halvorsen"], "doc": "chaotic dynamical system" },
+    "speed": { "type": "float", "default": 1.0, "min": 0.2, "max": 3.0, "doc": "integration speed multiplier" },
+    "chaos": { "type": "float", "default": 0.5, "min": 0, "max": 1.5, "doc": "bifurcation perturbation driven by audio" },
+    "orbit": { "type": "float", "default": 0.4, "min": 0, "max": 2.0, "doc": "camera orbit speed, turns per 16 beats" },
+    "streak": { "type": "float", "default": 1.25, "min": 0.2, "max": 3.0, "doc": "velocity-aligned filament stretch" },
+    "size": { "type": "float", "default": 1.0, "min": 0.4, "max": 2.5, "doc": "particle splat thickness" },
+    "glow": { "type": "float", "default": 1.1, "min": 0.3, "max": 2.5, "doc": "filament intensity" }
+  },
+  "budget": { "ms": 1.4, "scales": "none" },
+  "tags": ["simulation", "strange-attractor", "chaos", "particles", "3d", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-26", "by": "gemini-4-neon-high", "note": "initial 3D strange attractor particle splat generator" }]
+}

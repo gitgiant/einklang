@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "id": "agy-coral-bloom",
+  "name": "Coral bloom",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.5 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 8, "window": 12, "gain": 1.4 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 6, "gain": 1.4 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 32, "shape": 0 } },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": { "scheme": 3, "chroma": 0.21, "light": 0.68, "contrast": 0.55 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.48, 0.86] } }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-gray-scott",
+      "params": { "feed": 0.036, "kill": 0.06, "pulse": 1.1, "relief": 1.2, "glow": 1.2, "swirl": 0.4 },
+      "bind": {
+        "feed": { "from": "bass.out", "range": [0.028, 0.048] },
+        "pulse": { "from": "bass.out", "range": [0.7, 1.9] },
+        "kill": { "from": "mid.out", "range": [0.056, 0.063] },
+        "swirl": { "from": "mid.out", "range": [0.2, 0.9] },
+        "relief": { "from": "high.out", "range": [0.9, 2.2] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "sim.palette" }
+  ],
+  "out": "sim.out",
+  "post": { "bloom": 0.65, "threshold": 0.65, "exposure": 1.05 }
+}
