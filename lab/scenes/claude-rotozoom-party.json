@@ -1,0 +1,21 @@
+{
+  "format": 1, "id": "claude-rotozoom-party", "name": "Rotozoom party", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" },
+  "status": "live", "created": "2026-11-26",
+  "nodes": [
+    { "id": "sway", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#12063b #5b1fd1 #00b8a9 #c6f432 #ff4fa3", "cycle": 0.5, "pads": true } },
+    { "id": "crowd", "piece": "core-sprite", "params": { "sheet": 0, "mode": 1, "count": 3, "size": 0.5, "y": 0.5, "per_beat": 2, "bounce": 0.6, "swap": 0.3, "outline": 1, "glow": 1.1 } },
+    { "id": "notes", "piece": "core-sprite-emitter", "params": { "sheet": 3, "burst": 10, "trickle": 5, "speed": 0.55, "gravity": 0, "spread": 1, "y": 0.5, "size": 0.12, "life": 1.6 } },
+    { "id": "stack", "piece": "core-blend", "params": { "mode": 5 } },
+    { "id": "roto", "piece": "claude-rotozoom", "params": { "tiles": 2.2, "bass": 0.6, "breathe": 0.4, "step": 1, "swing": 0.3, "spin": 0.12, "checker": 0.5, "squares": 3 },
+      "bind": { "zoom": { "from": "sway.out", "range": [0.75, 1.5] } } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "roto.palette" },
+    { "from": "notes.out", "to": "stack.a" }, { "from": "crowd.out", "to": "stack.b" },
+    { "from": "stack.out", "to": "roto.in" }
+  ],
+  "out": "roto.out",
+  "post": { "bloom": 0.35, "threshold": 0.85 }
+}
