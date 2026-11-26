@@ -165,7 +165,7 @@ lab/transitions/agy-ripple/
   | `ease-out` | `power` 1..8 (2) | fast start, slow end (`core-flash` = power 3) |
   | `bounce` | | ease-out with three bounces |
   | `stutter` | `per` 1..32 (8) | hard 0/1 cuts on a 1/per-beat grid, the new scene's share growing |
-  | `beat-steps` | `per` 1..32 (4) | p jumps on every 1/per beat |
+  | `beat-steps` | `per` 1..32 (4) | p jumps every 1/per beat from 0 on the first step to 1 on the last. With one step, p stays at 0 until the switch ends. |
   | `onset` | `push` 0..1 (0.15) | smoothstep; every onset closes `push` of the remaining way |
 
 - `uses` opts into core-computed inputs (each one enters the sync hash): `flash` (white flash 0..1, peaks at p = 0.25), `roll` (an index that re-rolls every 1/16 beat, for re-seeding glitches), `bands` (only the CPU-side `Transition.bands`: the shader always has `T.bands`). Without them `T.flash` and `T.roll` are 0.

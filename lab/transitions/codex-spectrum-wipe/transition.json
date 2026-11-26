@@ -1,0 +1,10 @@
+{
+  "id": "codex-spectrum-wipe",
+  "name": "Spectrum Bars",
+  "vendor": "codex",
+  "model": "gpt-6.2-sol",
+  "description": "Sixteen spectrum bars carry B up the frame, with live band levels pushing their illuminated tips ahead of the rising front.",
+  "curve": "linear",
+  "uses": ["bands"],
+  "budget": { "ms": 0.3 }
+}

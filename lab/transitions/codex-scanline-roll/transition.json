@@ -1,0 +1,10 @@
+{
+  "id": "codex-scanline-roll",
+  "name": "Scanline Roll",
+  "vendor": "codex",
+  "model": "gpt-6.2-sol",
+  "description": "B rolls vertically into place behind a bright tracking bar, with scanlines and a slight horizontal jitter near the seam.",
+  "curve": "smoothstep",
+  "uses": ["roll"],
+  "budget": { "ms": 0.3 }
+}

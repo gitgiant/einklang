@@ -225,10 +225,10 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 - [ ] Mosaic tiles (tiles turn over one by one)
 - [ ] Kaleido spin (both folded into a spinning kaleidoscope at the midpoint)
 - [ ] Warp tunnel (A sucked into the centre, B rushes out)
-- [ ] Beat-strobe cuts (`beat-steps` curve: A/B alternate on the beat, B's share growing)
-- [ ] Spectrum bars wipe (B rises as bars of the live spectrum)
-- [ ] Bass punch zoom (zoom kicks on onsets: `onset` curve)
-- [ ] Scanline roll (B rolls in like a CRT losing vertical hold)
+- [x] Beat-strobe cuts (`beat-steps` curve: A/B alternate on the beat, B's share growing) → codex-strobe
+- [x] Spectrum bars wipe (B rises as bars of the live spectrum) → codex-spectrum-wipe
+- [x] Bass punch zoom (zoom kicks on onsets: `onset` curve) → codex-bass-punch
+- [x] Scanline roll (B rolls in like a CRT losing vertical hold) → codex-scanline-roll
 - [x] Smoke dissolve (domain-warped noise threshold) → agy-smoke
 - [x] Liquid morph (A warps along a flow field into B) → agy-liquid
 - [ ] Polar wipe (angle sweep around the centre)
