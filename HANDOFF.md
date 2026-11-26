@@ -31,6 +31,7 @@ Newest first. Keep short; prune the oldest entries.
   - flow looks finer/foggier at big N (question for the user)
   - MIDI CC learn; real MIDI/pad device test
 - **Gotchas:**
+  - iOS capture (every browser there is WebKit): no `getDisplayMedia`, so tab/system audio is hidden; the mic rejects with `NotAllowedError` and no prompt when the browser app lacks iOS mic permission or the site is blocked (`micError` in `src/web/capture.ts`).
   - Never `git worktree remove` a worktree holding a `node_modules` junction: it deletes files through it (restore with `npm install`; `npm ci` fails while the user's Vite dev server runs).
   - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes. Heredocs with long JSON/WGSL/TS bodies sometimes fail to parse ("unexpected EOF"): write files with the Write tool, or put edit scripts in the scratchpad.
 

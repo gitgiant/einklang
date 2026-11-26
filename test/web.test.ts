@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { galleryTrans, mainTrans, restoreAuto } from '../src/web/defaults.ts';
 import { ZERO, cycleSched, cycleTicks, holdAt, randomEffect, transTicks, type Cycle } from '../src/web/cycle.ts';
 import { DoubleTap } from '../src/web/doubletap.ts';
+import { micError } from '../src/web/capture.ts';
 import { Room } from '../src/server/room.ts';
 import { TRANSITIONS, type ServerMsg } from '../src/core/protocol.ts';
 
@@ -91,4 +92,18 @@ test('double-tap: two quick taps in one place', () => {
   tap(6000);
   d.down(6100, 10, 10, 1); d.down(6110, 50, 50, 2); // two fingers
   assert.equal(d.up(6150, 10, 10, 1), false);
+});
+
+test('mic errors: a blocked mic says where to allow it', () => {
+  const blocked = { name: 'NotAllowedError', message: 'The request is not allowed' };
+  const nav = (userAgent: string, maxTouchPoints = 0) => ({ userAgent, maxTouchPoints });
+  const ios = (browser: string) => `mic blocked: allow Microphone for this browser in iOS Settings → Apps → ${browser}, and for this site in the browser's site settings, then tap mic again`;
+  const other = "mic blocked: allow the microphone for this site in the browser's site settings";
+  const mac = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
+  assert.equal(micError(blocked, '', nav('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) CriOS/130.0 Mobile Safari/604.1', 5)), ios('Chrome'));
+  assert.equal(micError(blocked, '', nav(mac, 5)), ios('Safari')); // iPadOS
+  assert.equal(micError(blocked, '', nav(mac)), other);
+  assert.equal(micError(blocked, '', nav('Mozilla/5.0 (Linux; Android 14) Chrome/130.0 Mobile Safari/537.36', 5)), other);
+  assert.equal(micError({ name: 'NotFoundError', message: 'no device' }, '', nav(mac)), 'mic failed: no device');
+  assert.equal(micError(blocked, ' (insecure)', nav(mac, 5)), 'mic failed: The request is not allowed (insecure)');
 });

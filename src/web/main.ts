@@ -19,7 +19,7 @@ import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
-import { LiveAnalyzer, insecure, openMic, openShare } from './capture.ts';
+import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare } from './capture.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
@@ -215,9 +215,10 @@ function stopLeaderLive() {
 
 $('live').onclick = async () => {
   try { startLive(await openMic(), `live: instrument / line-in (${delay(INSTRUMENT_DELAY)})`, INSTRUMENT_DELAY); }
-  catch (e) { msg(`mic failed: ${(e as Error).message}${insecure()}`); }
+  catch (e) { msg(micError(e as Error, insecure(), navigator)); }
 };
 
+$('capture').hidden = !canShare();
 $('capture').onclick = async () => {
   try {
     const stream = await openShare();
