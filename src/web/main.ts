@@ -17,6 +17,7 @@ import { ACCEPT, Player } from './player.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
 import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
+import { autoHideUi } from './idle.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global {
@@ -287,7 +288,7 @@ transSel.add(new Option('random', 'random'));
 for (const t of TRANSITIONS) transSel.add(new Option(TRANS_NAMES[t], t));
 for (const b of TRANS_BEATS) lenSel.add(new Option(b === 0 ? 'cut' : b === 0.5 ? '½' : String(b), String(b)));
 transSel.value = lsGet('trans') ?? 'blend'; if (!transSel.value) transSel.value = 'blend';
-lenSel.value = lsGet('tlen') ?? '4'; if (!lenSel.value) lenSel.value = '4';
+lenSel.value = lsGet('tlen') ?? '8'; if (!lenSel.value) lenSel.value = '8';
 transSel.onchange = () => lsSet('trans', transSel.value);
 lenSel.onchange = () => lsSet('tlen', lenSel.value);
 const transReq = () => ({ type: transSel.value as TransType | 'random', beats: +lenSel.value });
@@ -381,6 +382,8 @@ function renderHosts(names: Map<string, string>) {
   pick.replaceChildren(...room.presets.map((id) => new Option((names.get(id) ?? id) + sc(id), id)));
   autoSel.value = String(room.auto?.bars ?? 0);
 }
+
+autoHideUi(() => [$('panel'), $('bar'), $('hosts')]);
 
 // ---- votes (owner only: anyone with the room token) ----
 let toastTimer = 0;

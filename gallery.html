@@ -27,6 +27,9 @@
   #vote .tags { display: flex; flex-wrap: wrap; gap: 3px; width: 100%; }
   #vote .tags button { font: inherit; font-size: 11px; color: var(--dim); background: none; border: 1px solid var(--line); border-radius: 10px; padding: 2px 7px; cursor: pointer; }
   #vote .tags button[aria-pressed=true] { color: #000; background: var(--fg); }
+  #bar, #vote { transition: opacity .4s; }
+  body.idle #bar, body.idle #vote { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
   .hide { display: none !important; }
 </style>
 </head>

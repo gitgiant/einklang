@@ -31,6 +31,7 @@ Newest first. Keep short; prune the oldest entries.
   - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes.
 
 ## Log
+- **2026-11-26 · UI polish.** Gallery info text off by default (`i` / `hud=1`); transitions default 8 beats (gallery cycle 4 bars at 8); controls fade after 3 s without input on both pages (`src/web/idle.ts`); vote panel shows the scene name.
 - **2026-11-26 · voting (#24 done).**
   - User chose weighted next + server auto-rotation (no rotation existed before). `step` stays ordered; `weighted` is new.
   - `src/core/votes.ts` (format, tally, weight, retire), Room `vote()` / `tickAuto()`, `POST /vote` + `GET /scores`, toast, gallery panel, `scripts/lab/feedback.ts`.

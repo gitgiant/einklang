@@ -29,6 +29,9 @@
   .hide { display: none !important; }
   #toast { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 12px); background: #000d; color: #fff; padding: 8px 16px; border-radius: 18px; font: 15px system-ui, sans-serif; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
+  #panel, #bar, #hosts { transition: opacity .4s; }
+  body.idle #panel, body.idle #bar, body.idle #hosts { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
 </style>
 </head>
 <body>

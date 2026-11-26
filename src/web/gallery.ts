@@ -4,12 +4,12 @@
 //   grid=1                           all four at once
 //   start=<s>                        demo-track time to start at (default 0)
 //   stop=<s>                         stop rendering at this demo time (for screenshots); sets window.__done
-//   hud=0                            hide HUD and tab bar
+//   hud=0                            hide the tab bar; hud=1 also shows the info text (key `i`)
 //   trans=<effect>|all               transitions: auto-cycle scenes every 2 bars with this effect
 //                                    (all = rotate through every effect); key `t` / the selector
 //   at=<s>                           with trans: one transition from `scene` to the next at demo
 //                                    time s instead of the cycle (for stills: add stop=<s>)
-//   len=<beats>                      transition length (default 4)
+//   len=<beats>                      transition length (default 8)
 //   interp=0                         whole ticks only (no display-rate interpolation)
 //   t=<token>                        room token, for voting through the server (remembered like the app's)
 // Voting: 👍/👎 plus reason tags for the scene shown (keys + / -), posted to the server's /vote. A static
@@ -22,6 +22,7 @@ import { TRANSITIONS, type SceneSched, type TransType } from '../core/protocol.t
 import { TRANS_NAMES } from '../core/transitions.ts';
 import { h32 } from '../core/math.ts';
 import { VOTE_TAGS } from '../core/votes.ts';
+import { autoHideUi } from './idle.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
 
@@ -31,14 +32,17 @@ const F = demoSource();
 const startTick = Math.round(+(qs.get('start') ?? 0) * FPS);
 const stopTick = qs.has('stop') ? Math.round(+qs.get('stop')! * FPS) : Infinity;
 let hud = qs.get('hud') !== '0';
+/** The bottom-left info text: off unless hud=1 (mockups) or toggled with `i`. */
+let info = qs.get('hud') === '1';
 const interp = qs.get('interp') !== '0';
 let grid = (qs.get('grid') ?? document.body.dataset.grid) === '1'; // data-grid: default for hosted builds
 let current = qs.get('scene') ?? 'radial';
 /** '' = transitions off; else an effect id or 'all'. */
 let trans = qs.get('trans') ?? '';
 const oneShotAt = qs.has('at') ? Math.round(+qs.get('at')! * FPS) : null;
-const beats = Math.max(0.5, Math.min(16, +(qs.get('len') ?? 4) || 4));
-const CYCLE = 2 * 4 * TICKS_PER_BEAT;
+const beats = Math.max(0.5, Math.min(16, +(qs.get('len') ?? 8) || 8));
+/** Auto-cycle: every 2 bars, or longer so each scene holds a bar after a long transition. */
+const CYCLE = Math.max(8, Math.ceil(beats / 4) * 4 + 4) * TICKS_PER_BEAT;
 const ROTATE = TRANSITIONS.filter((t) => t !== 'cut');
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
@@ -48,7 +52,7 @@ if (qs.get('t')) try { localStorage.setItem('token', qs.get('t')!); } catch { /*
 const withToken = (p: string) => (token ? `${p}?t=${encodeURIComponent(token)}` : p);
 
 /** The vote panel: 👍/👎 and reason tags for the scene shown, posted to the server. */
-function votePanel(sceneOf: () => string | null) {
+function votePanel(sceneOf: () => { id: string; name: string } | null) {
   const el = document.createElement('div'); el.id = 'vote';
   const label = document.createElement('span'), up = document.createElement('button'), down = document.createElement('button');
   const tags = document.createElement('div'); tags.className = 'tags';
@@ -64,18 +68,19 @@ function votePanel(sceneOf: () => string | null) {
   document.body.append(el);
   let scores: Record<string, number> = {}, live: string[] = [], online = false;
   const show = () => {
-    const id = sceneOf();
-    el.classList.toggle('hide', id === null);
-    if (id === null) return;
-    const s = scores[id] ?? 0;
-    label.textContent = online ? `${s > 0 ? '+' : ''}${s}${live.includes(id) ? '' : ' · retired'}` : 'votes need the server';
+    const sc = sceneOf();
+    el.classList.toggle('hide', sc === null);
+    if (sc === null) return;
+    const s = scores[sc.id] ?? 0;
+    label.textContent = sc.name + (online ? `  ${s > 0 ? '+' : ''}${s}${live.includes(sc.id) ? '' : ' · retired'}` : '');
+    label.title = online ? '' : 'voting needs the server (npm run server)';
     up.disabled = down.disabled = !online;
   };
   fetch(withToken('/scores')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
     .then((j: { scores: Record<string, number>; live: string[] }) => { scores = j.scores; live = j.live; online = true; show(); })
     .catch(() => { online = false; show(); });
   const send = async (vote: 1 | -1) => {
-    const id = sceneOf();
+    const id = sceneOf()?.id;
     if (!id || !online) return;
     try {
       const r = await fetch(withToken('/vote'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scene: id, vote, tags: [...picked] }) });
@@ -125,7 +130,8 @@ async function main() {
     layout();
   };
   tsel.onchange = () => setTrans(tsel.value);
-  const votes = votePanel(() => (grid ? null : cells[0].engine.scene.def.id));
+  const votes = votePanel(() => (grid ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }));
+  autoHideUi(() => [bar, document.getElementById('vote')]);
 
   const layout = () => {
     stage.classList.toggle('grid', grid);
@@ -136,7 +142,7 @@ async function main() {
       c.tag.textContent = grid ? c.engine.scene.def.name : '';
     });
     for (const b of bar.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.id === (grid ? 'grid' : trans && oneShotAt === null ? '' : current)));
-    $('hud').classList.toggle('hide', !hud); bar.classList.toggle('hide', !hud);
+    $('hud').classList.toggle('hide', !info); bar.classList.toggle('hide', !hud);
     votes.show();
   };
   const go = (id: string) => {
@@ -157,6 +163,7 @@ async function main() {
   bar.append(tsel);
   addEventListener('keydown', (e) => {
     if (e.key === 'h') { hud = !hud; layout(); }
+    else if (e.key === 'i') { info = !info; layout(); }
     else if (e.key === 'g') go('grid');
     else if (e.key === 't') { const opts = ['', 'all', ...TRANSITIONS]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
     else if (+e.key >= 1 && +e.key <= ids.length) go(ids[+e.key - 1]);
@@ -176,7 +183,7 @@ async function main() {
     const hashes = active.map((c, i) => c.engine.frame(tick, F, undefined, i === 0 ? sched : undefined, sub));
     frames++;
     if (now - lastFps > 500) { fps = (frames * 1000) / (now - lastFps); frames = 0; lastFps = now; }
-    if (hud) {
+    if (info) {
       const sc = cells[0].engine.scene;
       $('hud').textContent = [
         `${grid ? 'grid' : sc.def.name}  ·  demo ${(tick / FPS).toFixed(2)}s  ${sectionAt(tick)}`,
