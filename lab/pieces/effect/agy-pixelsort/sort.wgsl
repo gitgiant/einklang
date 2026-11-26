@@ -45,7 +45,7 @@ fn cs_sort(
   let in_bounds = pos >= 0 && pos < i32(axis_len);
 
   var col = vec4f(0.0, 0.0, 0.0, 1.0);
-  var active = false;
+  var is_active = false;
   var luma = 0.0;
 
   if (in_bounds) {
@@ -54,13 +54,13 @@ fn cs_sort(
     let safe_rgb = max(col.rgb, vec3f(0.0));
     luma = dot(safe_rgb, vec3f(0.2126, 0.7152, 0.0722));
     let norm_luma = luma / (0.65 + luma);
-    active = norm_luma >= u.lo_thresh && norm_luma <= u.hi_thresh;
+    is_active = norm_luma >= u.lo_thresh && norm_luma <= u.hi_thresh;
   }
 
   s_col[lid] = col;
   s_key[lid] = select(luma, -luma, u.reverse == 1u);
   // Inactive pixels act as barriers with value lid + 1; active pixels start at 0
-  s_rid[lid] = select(lid + 1u, 0u, active);
+  s_rid[lid] = select(lid + 1u, 0u, is_active);
   workgroupBarrier();
 
   // Hillis-Steele inclusive prefix-max: every active run gets the index+1 of its preceding barrier
@@ -80,7 +80,7 @@ fn cs_sort(
   let run_start = s_rid[lid];
   let max_r = max(u.max_run, 1u);
   var final_rid = run_start << 9u;
-  if (active) {
+  if (is_active) {
     let sub = (lid - run_start) / max_r;
     final_rid = (run_start << 9u) | (1u + sub);
   }
