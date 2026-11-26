@@ -2,7 +2,7 @@
   "id": "codex-wire-mountains",
   "kind": "generator",
   "name": "Wireframe mountains",
-  "doc": "Neon wireframe peaks scroll along a moonlit mountain pass, with the mesh rising and falling on bass.",
+  "doc": "Wireframe peaks breathe with the bass while onsets light the rock faces and treble widens the fog over the pass.",
   "ports": {"in": {"palette": {"type": "palette", "optional": true}}, "out": {"out": {"type": "tex"}}},
   "params": {
     "speed": {"type": "float", "default": 0.95, "min": 0.25, "max": 2, "doc": "World units of forward travel per second."},
@@ -12,5 +12,6 @@
   "shader": "main.wgsl",
   "budget": {"ms": 1.8, "scales": "res"},
   "tags": ["synthwave", "terrain", "wireframe", "bass"],
-  "author": {"vendor": "codex", "model": "gpt-6.2-sol"}
+  "author": {"vendor": "codex", "model": "gpt-6.2-sol"},
+  "changelog": [{ "date": "2026-11-26", "by": "codex/gpt-6.2-sol", "note": "Increased bass lift and added onset lighting, beat surges and treble fog." }]
 }

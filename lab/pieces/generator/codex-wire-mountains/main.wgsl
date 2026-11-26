@@ -26,8 +26,13 @@ fn ridge_segment(p: vec2f, a: vec2f, b: vec2f) -> f32 {
 }
 
 fn shade(uv: vec2f) -> vec4f {
-  let horizon = 0.49;
-  let x = (uv.x - 0.5) * aspect();
+  let kick = smoothstep(0.10, 0.73, bass());
+  let swell = smoothstep(0.21, 0.59, rms());
+  let shimmer = smoothstep(0.34, 0.83, (band(11) + band(13) + band(15)) / 3.0);
+  let beat = phase();
+  let pulse = max(onset(), kick * exp(-beat * 4.4));
+  let horizon = 0.49 + 0.035 * pulse;
+  let x = (uv.x - 0.5) * aspect() + 0.08 * kick * sin(time() * 1.45);
   let p = vec2f(x, uv.y);
   let pixel = 1.0 / resolution().y;
   let night = palette(0.0);
@@ -35,11 +40,16 @@ fn shade(uv: vec2f) -> vec4f {
   let teal = palette(0.5);
   let mint = palette(0.75);
   let amber = palette(1.0);
-  let drive = time() * p_speed() * 1.6;
+  let surge = (1.0 - exp(-4.0 * beat)) / (1.0 - exp(-4.0)) - beat;
+  let drive = time() * p_speed() * 1.6 + 0.72 * kick * surge;
   let start = i32(floor(drive));
-  let lift = 0.72 + 0.82 * p_lift() + 0.65 * smoothstep(0.01, 0.65, bass());
+  let lift = 0.65 + 0.47 * p_lift() + 1.33 * kick + 0.40 * pulse;
   let dusk = exp(-abs(uv.y - horizon) * 5.4 - x * x * 0.85);
   var color = night * 0.64 + mist * dusk * 0.66;
+  // The pass catches the light below the skyline, and the far slope dissolves into it.
+  let fog = exp(-abs(uv.y - horizon + 0.032) * (8.7 - 4.4 * shimmer) - x * x * 1.7);
+  color += mix(teal, mint, 0.25 + 0.40 * shimmer) * fog
+    * (0.19 * min(rms(), 0.22) + 0.12 * swell + 0.26 * kick + 0.20 * pulse);
 
   // A crescent fixes the skyline in place while the terrain passes beneath it.
   let moon = p - vec2f(0.34, 0.195);
@@ -63,12 +73,17 @@ fn shade(uv: vec2f) -> vec4f {
     let c = vec2f(left * farScale, horizon + (0.62 - peak(column, row + 1, lift)) * farScale);
     let d = vec2f(right * farScale, horizon + (0.62 - peak(column + 1, row + 1, lift)) * farScale);
     let depth = 1.0 - smoothstep(0.85, 7.5, z);
-    let edge = ridge_line(ridge_segment(p, a, b), 0.50 + 0.44 * depth, pixel);
-    let rail = ridge_line(min(ridge_segment(p, c, a), ridge_segment(p, d, b)), 0.34, pixel);
+    let edge = ridge_line(ridge_segment(p, a, b), 0.50 + 0.44 * depth + 1.4 * pulse, pixel);
+    let rail = ridge_line(min(ridge_segment(p, c, a), ridge_segment(p, d, b)), 0.34 + 0.85 * pulse, pixel);
     let y = mix(a.y, b.y, fract(x / span));
     let face = smoothstep(y - pixel, y + pixel, uv.y) * smoothstep(0.31, 0.46, abs(x) * z);
-    let wire = mix(teal, mint, depth) * p_glow() * (0.29 + 0.8 * depth);
-    color = mix(color, mix(night, mist, 0.18 + 0.30 * depth) * 0.59, face);
+    let wire = mix(teal, mint, depth) * p_glow() * (0.29 + 0.8 * depth + 1.3 * pulse);
+    let lamplight = exp(-max(0.0, uv.y - y) * (4.4 - 2.6 * swell));
+    let sweep = 0.35 + 0.65 * sin(f32(row) * 0.93 - time() * 2.4) * 0.5;
+    let rock = mix(night, mist, 0.18 + 0.30 * depth) * 0.59;
+    let reflected = mix(teal, mint, 0.37 + 0.4 * pulse) * lamplight
+      * (0.05 * swell + (0.55 * kick + 0.30 * pulse) * sweep);
+    color = mix(color, rock + reflected, face);
     color += wire * (edge * 0.85 + rail * 0.61) * smoothstep(0.26, 0.5, abs(x) * z);
   }
 
@@ -78,9 +93,10 @@ fn shade(uv: vec2f) -> vec4f {
     let z = 0.62 / ground;
     let worldX = abs(x) * z;
     let shoulder = abs(worldX - 0.35) / z;
-    let markers = smoothstep(0.55, 0.73, fract(z / 0.46 + drive));
+    let markers = smoothstep(0.55 - 0.24 * pulse, 0.73, fract(z / 0.46 + drive));
     let paint = ridge_line(shoulder, 0.48, pixel) * markers;
-    color += amber * paint * smoothstep(0.04, 0.31, ground) * (0.47 + 0.36 * p_glow());
+    let laneGlow = exp(-shoulder * (26.0 - 9.0 * swell)) * (0.34 * kick + 0.2 * pulse);
+    color += amber * (paint + laneGlow) * smoothstep(0.04, 0.31, ground) * (0.47 + 0.36 * p_glow());
   }
   return vec4f(color, 1.0);
 }

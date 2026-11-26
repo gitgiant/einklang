@@ -2,7 +2,7 @@
   "id": "codex-grid-floor",
   "kind": "generator",
   "name": "Neon grid floor",
-  "doc": "A perspective grid rolls toward a slatted sunset at the beat tempo while onsets light the rails and horizon haze.",
+  "doc": "A perspective grid surges down the beat as bass and onsets swell the slatted sun and send neon reflections across the road.",
   "ports": {"in": {"palette": {"type": "palette", "optional": true}}, "out": {"out": {"type": "tex"}}},
   "params": {
     "pace": {"type": "float", "default": 0.85, "min": 0.25, "max": 2, "doc": "Rows traveled per beat."},
@@ -12,5 +12,6 @@
   "shader": "main.wgsl",
   "budget": {"ms": 0.35, "scales": "res"},
   "tags": ["synthwave", "grid", "perspective", "onset"],
-  "author": {"vendor": "codex", "model": "gpt-6.2-sol"}
+  "author": {"vendor": "codex", "model": "gpt-6.2-sol"},
+  "changelog": [{ "date": "2026-11-26", "by": "codex/gpt-6.2-sol", "note": "Stronger beat surges, onset flares and band-driven sunset reflections." }]
 }

@@ -2,7 +2,7 @@
   "format": 1,
   "id": "codex-night-drive",
   "name": "Night drive",
-  "version": 1,
+  "version": 2,
   "author": {"vendor": "codex", "model": "gpt-6.2-sol"},
   "status": "live",
   "created": "2026-11-26",
