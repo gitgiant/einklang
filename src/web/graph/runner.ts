@@ -79,6 +79,8 @@ export class GraphRunner {
   private plan: Plan;
 
   private budget: Budget;
+  /** The size the pool holds textures for (set by encode or prepare). */
+  private sized = '';
   constructor(device: GPUDevice, plan: Plan, budget: Budget) {
     this.device = device; this.plan = plan; this.budget = budget;
     this.pool = new TexPool(device);
@@ -115,10 +117,56 @@ export class GraphRunner {
     return inst ? { kind: 'driver', inst } : { kind: 'cpu' };
   }
 
+  /** Size the pool for w x h (a new size drops every texture, feedback included). */
+  private size(w: number, h: number): void {
+    this.sized = `${w}x${h}`;
+    if (this.pool.resize(w, h)) for (const r of this.runs) if (r.kind === 'auto' && r.fb) { r.fb.forEach((t) => t.destroy()); r.fb = null; }
+  }
+
+  /** Node i's image outputs for this frame: its feedback texture (flipped when `flip`) or pooled ones (recorded in `pooled`). */
+  private outputs(i: number, w: number, h: number, pooled: Map<string, GPUTexture>, flip: boolean): Record<string, GPUTexture> {
+    const r = this.runs[i], pn = this.plan.order[i], m = pn.def.manifest, id = pn.node.id;
+    const outTex: Record<string, GPUTexture> = {};
+    for (const [p, s] of Object.entries(m.ports.out)) {
+      if (!isTexPort(s.type)) continue;
+      if (r.kind === 'auto' && m.feedback) {
+        r.fb ??= [0, 1].map(() => this.device.createTexture({ size: [w, h], format: TEX_FORMAT[s.type as 'tex'], label: `${id}.fb`, usage: usageOf(TEX_FORMAT[s.type as 'tex']) })) as [GPUTexture, GPUTexture];
+        if (flip) r.cur ^= 1;
+        outTex[p] = r.fb[r.cur];
+      } else {
+        const t = this.pool.get(TEX_FORMAT[s.type], `${id}.${p}`);
+        pooled.set(`${id}.${p}`, t);
+        outTex[p] = t;
+      }
+    }
+    return outTex;
+  }
+
+  /** Hand textures whose last reader was node i back to the pool. */
+  private release(i: number, pooled: Map<string, GPUTexture>): void {
+    for (const [ref, t] of pooled) {
+      const last = this.lastUse.get(ref) ?? -1;
+      if (last <= i && last !== Infinity) { this.pool.put(t); pooled.delete(ref); }
+    }
+  }
+
+  /**
+   * Allocate the textures a w x h frame needs (pool and feedback), without encoding anything: the
+   * engine calls it while a switch to this scene is pending, so its first frame doesn't allocate.
+   * Pieces that allocate inside frame() still do that on their first frame.
+   */
+  prepare(w: number, h: number): void {
+    if (this.sized === `${w}x${h}`) return;
+    this.size(w, h);
+    const pooled = new Map<string, GPUTexture>();
+    this.plan.order.forEach((_, i) => { this.outputs(i, w, h, pooled, false); this.release(i, pooled); });
+    for (const t of pooled.values()) this.pool.put(t);
+  }
+
   /** Encode the graph for one frame into `target` (an HDR scene texture with COPY_DST). */
   encode(enc: GPUCommandEncoder, target: GPUTexture, frame: CpuFrame, pads: PadFx = NO_FX): void {
     const w = target.width, h = target.height;
-    if (this.pool.resize(w, h)) for (const r of this.runs) if (r.kind === 'auto' && r.fb) { r.fb.forEach((t) => t.destroy()); r.fb = null; }
+    this.size(w, h);
     /** Values produced this frame by "node.port": textures, particles, geo. */
     const gpuVals = new Map<string, unknown>();
     const pooled = new Map<string, GPUTexture>();
@@ -132,20 +180,8 @@ export class GraphRunner {
       const params = frame.params.get(id)!;
       const ins: Record<string, unknown> = {};
       for (const [p, ref] of Object.entries(pn.inputs)) ins[p] = value(ref, m.ports.in![p].type);
-      const outTex: Record<string, GPUTexture> = {};
-      for (const [p, s] of Object.entries(m.ports.out)) {
-        if (!isTexPort(s.type)) continue;
-        if (r.kind === 'auto' && m.feedback) {
-          r.fb ??= [0, 1].map(() => this.device.createTexture({ size: [w, h], format: TEX_FORMAT[s.type as 'tex'], label: `${id}.fb`, usage: usageOf(TEX_FORMAT[s.type as 'tex']) })) as [GPUTexture, GPUTexture];
-          r.cur ^= 1;
-          outTex[p] = r.fb[r.cur];
-        } else {
-          const t = this.pool.get(TEX_FORMAT[s.type], `${id}.${p}`);
-          pooled.set(`${id}.${p}`, t);
-          outTex[p] = t;
-        }
-        gpuVals.set(`${id}.${p}`, outTex[p]);
-      }
+      const outTex = this.outputs(i, w, h, pooled, true);
+      for (const [p, t] of Object.entries(outTex)) gpuVals.set(`${id}.${p}`, t);
 
       if (r.kind === 'auto') this.runAuto(enc, r, ins, outTex, params, frame, w, h);
       else if (r.kind === 'driver' && r.inst) {
@@ -153,11 +189,7 @@ export class GraphRunner {
         for (const [p, v] of Object.entries(res ?? {})) if (!isTexPort(m.ports.out[p]?.type)) gpuVals.set(`${id}.${p}`, v);
       }
 
-      // hand textures whose last reader was this node back to the pool
-      for (const [ref, t] of pooled) {
-        const last = this.lastUse.get(ref) ?? -1;
-        if (last <= i && last !== Infinity) { this.pool.put(t); pooled.delete(ref); }
-      }
+      this.release(i, pooled);
     });
 
     const out = gpuVals.get(this.plan.graph.out) as GPUTexture | undefined;

@@ -18,6 +18,8 @@ export interface GraphScene {
   readonly graph: SceneGraph;
   /** Encode the scene's GPU work for `state` (from def.state) into the HDR target. */
   encode(enc: GPUCommandEncoder, target: GPUTexture, state: SceneState, tick: number, F: FeatureSource, sub: number, pads: PadFx): void;
+  /** Allocate the targets a w x h frame needs ahead of the first one (a switch to this scene is coming). */
+  prepare(w: number, h: number): void;
   /** Sims only: particles this GPU can run. */
   bench?(): Promise<number>;
   /** Inputs for ticks >= `tick` changed after the fact (sims rewind and replay). */
@@ -42,6 +44,7 @@ export function graphScene(device: GPUDevice, g: SceneGraph, budget: Budget, reg
     def, graph: g,
     post: { ...POST_DEFAULT, ...g.post },
     encode(enc, target, s, tick, F, sub, pads) { runner.encode(enc, target, frames.get(s) ?? evalCpu(plan, tick, F, sub), pads); },
+    prepare: (w, h) => runner.prepare(w, h),
     bench: runner.hasBench ? async () => (await runner.bench())! : undefined,
     invalidate: (t) => runner.invalidate(t),
     status: () => runner.status(),

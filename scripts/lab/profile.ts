@@ -9,6 +9,7 @@
 import type { Lab } from './browser.ts';
 import type { ProfileFrame, ProfileOpts } from '../../src/web/lab.ts';
 import { TICKS_PER_BEAT } from '../../src/core/constants.ts';
+import { CUT_ID } from '../../src/core/transitions.ts';
 
 export interface SwitchStat {
   label: string;
@@ -88,7 +89,8 @@ export async function profileShow(lab: Lab, o: { scenes: string[]; transitions: 
   for (const s of o.quick ? [] : o.scenes.filter((x) => x !== o.from && x !== o.to)) {
     scenes.push(await one(`${o.from} → ${s}`, { from: o.from, to: s, trans: 'core-blend', ...short }));
   }
-  for (const t of o.quick ? o.transitions.slice(0, 2) : o.transitions) {
+  const effects = o.transitions.filter((t) => t !== CUT_ID); // a cut never draws a transition
+  for (const t of o.quick ? effects.slice(0, 2) : effects) {
     transitions.push(await one(t, { from: o.from, to: o.to, trans: t, before: 20, ticks: 4 * beat, after: 5 }));
   }
   return { adapter: lab.adapter, res: o.res, timestamps, cold, scenes, transitions };
@@ -105,9 +107,10 @@ export function profileMd(r: ProfileReport): string[] {
   ];
 }
 
-/** Compact, transitions first, for logs that only carry a short message. */
+/** Compact, a few switches per line, for logs that only carry a short message. */
 export function profileCompact(r: ProfileReport): string {
   const g = (x: SwitchStat, k: string) => (x.gpu ? ms(x.gpu[k] ?? 0) : '-');
   const f = (x: SwitchStat) => `${x.label.split(/[,:]/)[0].replace('radial → ', '')} ${ms(x.first)}/${ms(x.p50)}/${ms(x.p95)}/${ms(x.max)} b${g(x, 'b')} m${g(x, 'mix')}`;
-  return [`${r.adapter} ts=${r.timestamps} first/p50/p95/max`, ...r.transitions.map(f), ...r.cold.map(f), ...r.scenes.map(f)].join('\n');
+  const pack = (xs: SwitchStat[]) => Array.from({ length: Math.ceil(xs.length / 4) }, (_, i) => xs.slice(i * 4, i * 4 + 4).map(f).join(' ; '));
+  return [`${r.adapter} ts=${r.timestamps} first/p50/p95/max`, ...r.cold.map(f), ...pack(r.transitions), ...pack(r.scenes)].join('\n');
 }
