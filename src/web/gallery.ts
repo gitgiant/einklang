@@ -10,6 +10,7 @@
 //   at=<s>                           with trans: one transition from `scene` to the next at demo
 //                                    time s instead of the cycle (for stills: add stop=<s>)
 //   len=<beats>                      transition length (default 4)
+//   interp=0                         whole ticks only (no display-rate interpolation)
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { demoSource, sectionAt } from '../core/demo.ts';
@@ -26,6 +27,7 @@ const F = demoSource();
 const startTick = Math.round(+(qs.get('start') ?? 0) * FPS);
 const stopTick = qs.has('stop') ? Math.round(+qs.get('stop')! * FPS) : Infinity;
 let hud = qs.get('hud') !== '0';
+const interp = qs.get('interp') !== '0';
 let grid = (qs.get('grid') ?? document.body.dataset.grid) === '1'; // data-grid: default for hosted builds
 let current = qs.get('scene') ?? 'radial';
 /** '' = transitions off; else an effect id or 'all'. */
@@ -109,10 +111,11 @@ async function main() {
   let frames = 0, fps = 0, lastFps = t0;
   const loop = () => {
     const now = performance.now();
-    const tick = Math.min(startTick + Math.floor(((now - t0) * FPS) / 1000), stopTick);
+    const tF = startTick + ((now - t0) * FPS) / 1000, tick = Math.min(Math.floor(tF), stopTick);
+    const sub = interp && tick < stopTick ? Math.floor((tF - Math.floor(tF)) * 256) : 0;
     const active = grid ? cells : cells.slice(0, 1);
     const sched = schedAt(tick);
-    const hashes = active.map((c, i) => c.engine.frame(tick, F, undefined, i === 0 ? sched : undefined));
+    const hashes = active.map((c, i) => c.engine.frame(tick, F, undefined, i === 0 ? sched : undefined, sub));
     frames++;
     if (now - lastFps > 500) { fps = (frames * 1000) / (now - lastFps); frames = 0; lastFps = now; }
     if (hud) {

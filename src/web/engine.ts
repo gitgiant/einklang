@@ -52,33 +52,37 @@ export class Engine {
    * Render tick `tick`; returns the sync hash shown in the HUD. With a schedule, the scene (and a
    * running transition) come from it; without one, the scene set by setScene shows. Pad FX ride
    * on the post chain; a freeze evaluates the scene (and transition) at the frozen tick while
-   * trails and FX keep moving.
+   * trails and FX keep moving. `sub` (0..255) is the display time between `tick` and the next
+   * one: closed-form scenes and transitions draw there, the hash stays the tick's.
    */
-  frame(tick: number, F: FeatureSource, fx: Fx = NO_FX, sched?: SceneSched): string {
-    const st = fx.frozenAt !== null && fx.frozenAt < tick ? fx.frozenAt : tick;
+  frame(tick: number, F: FeatureSource, fx: Fx = NO_FX, sched?: SceneSched, sub = 0): string {
+    const frozen = fx.frozenAt !== null && fx.frozenAt < tick, st = frozen ? fx.frozenAt! : tick;
+    if (frozen) sub = 0;
+    /** Drawn state at the display time, hashed state at the tick (one evaluation when sub = 0). */
+    const states = (sc: GpuScene) => { const h = sc.def.state(st, F); return { draw: sub ? sc.def.state(st, F, sub) : h, hash: h }; };
     const dpr = devicePixelRatio || 1, c = this.canvas;
     const w = Math.max(1, Math.round(c.clientWidth * dpr)), h = Math.max(1, Math.round(c.clientHeight * dpr));
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
     if (sched) this.setScene(sceneAt(sched, st));
-    const tr = (this.transition = sched ? transitionAt(sched, st, F) : null);
+    const tr = (this.transition = sched ? transitionAt(sched, st, F, sub) : null);
     const d = this.gpu.device, enc = d.createCommandEncoder();
     const target = this.post.sceneTarget(w, h);
     let b: PostParams, hash: number;
     if (!tr) {
-      const sc = this.scene, state = sc.def.state(st, F);
-      sc.encode(enc, target, state, st, F);
-      b = sc.post; hash = hashState(state);
+      const sc = this.scene, s = states(sc);
+      sc.encode(enc, target, s.draw, st, F);
+      b = sc.post; hash = hashState(s.hash);
     } else {
       // both scenes live, each into its own HDR target, mixed into the scene target
       const from = this.byId(tr.from), to = this.byId(tr.to), [ta, tb] = this.post.pairTargets();
-      const sa = from.def.state(st, F), sb = to.def.state(st, F);
-      from.encode(enc, ta, sa, st, F);
-      to.encode(enc, tb, sb, st, F);
+      const sa = states(from), sb = states(to);
+      from.encode(enc, ta, sa.draw, st, F);
+      to.encode(enc, tb, sb.draw, st, F);
       this.trans.run(enc, target, ta, tb, tr, [fx.cx, fx.cy]);
       b = mixPost(from.post, to.post, tr.p);
       // melt: trails pushed to near 1 around the midpoint so the old scene smears into the new
       if (tr.type === 'melt') b = { ...b, decay: Math.max(b.decay, 0.985 * Math.min(1, 6.4 * tr.p * (1 - tr.p))) };
-      hash = transHash(hashState(sa), hashState(sb), tr);
+      hash = transHash(hashState(sa.hash), hashState(sb.hash), sub ? transitionAt(sched!, st, F)! : tr);
     }
     const post = {
       ...b,

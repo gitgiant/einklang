@@ -1,6 +1,6 @@
 // Room: the server-authoritative state (mode, scene schedule, presets, beat grid, host views),
 // the tick-stamped event stream, and the replay logs late joiners need to catch up.
-import { FPS, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
+import { FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import {
   CUT, DEFAULT_GRID, DEFAULT_PRESETS, INPUT_DELAY, TRANSITIONS, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
@@ -192,7 +192,7 @@ export class Room {
       }
       case 'live':
         this.leader = c;
-        this.setMode({ mode: 'live', start: this.now() + 300 });
+        this.setMode({ mode: 'live', start: this.now() + 300, delay: m.delay === undefined ? LIVE_DELAY : Math.max(1, clampInt(m.delay, 1, 30)) });
         return this.newTimeline();
       case 'stop':
         this.leader = null; this.fileFeat = null;

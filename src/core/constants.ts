@@ -3,8 +3,10 @@ export const FPS = 60;
 export const NB = 16, K_RMS = 16, K_ONSET = 17, STRIDE = 18;
 /** Virtual canvas that scene coordinates live in; the renderer letterboxes it. */
 export const W = 1280, H = 720;
-/** Live mode renders this many ticks behind the leader to absorb network jitter. */
+/** Live mode renders this many ticks behind the leader to absorb network jitter (captured audio). */
 export const LIVE_DELAY = 6;
+/** Instrument mode (line-in on the server PC): 2 ticks, the same on every host including the leader. */
+export const INSTRUMENT_DELAY = 2;
 /** Stateless scenes may look at most this many ticks into the past. */
 export const LOOKBACK = 600;
 /** Decimated waveform: WAVE_N interleaved L/R int8 pairs per tick (WAVE_BYTES), covering one tick of audio. */

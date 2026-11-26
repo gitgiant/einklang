@@ -37,16 +37,19 @@ const q16 = (x: number) => Math.round(Math.min(1, Math.max(0, x)) * ONE);
 /** Each onset during the audio mask closes this share of the remaining distance. */
 const ONSET_PUSH = 0.15;
 
-/** Progress 0..ONE of `tr` (started at `at`) `dt` ticks in, 0 <= dt < tr.ticks. */
-export function progress(tr: TransSched, at: number, dt: number, F: FeatureSource): number {
-  const x = dt / tr.ticks;
+/**
+ * Progress 0..ONE of `tr` (started at `at`) `dt` ticks in, 0 <= dt < tr.ticks; `sub` (0..255)
+ * places it between ticks for display interpolation (the hashed value uses sub = 0).
+ */
+export function progress(tr: TransSched, at: number, dt: number, F: FeatureSource, sub = 0): number {
+  const x = (dt + sub / 256) / tr.ticks;
   switch (tr.type) {
     case 'flash': { const y = 1 - x; return q16(1 - y * y * y); } // fast in, slow out
     case 'zoom': case 'swirl': return q16(cubic(x));
     case 'stutter': {
       // 1/8-beat steps; each starts on the old scene and cuts to the new one for its last `share`
-      const step = tr.tpb / 8, n = Math.max(1, Math.ceil(tr.ticks / step)), i = Math.floor(dt / step);
-      const u = (dt - i * step) / step, share = (i + 1) / n;
+      const d = dt + sub / 256, step = tr.tpb / 8, n = Math.max(1, Math.ceil(tr.ticks / step)), i = Math.floor(d / step);
+      const u = (d - i * step) / step, share = (i + 1) / n;
       return u >= 1 - share ? ONE : 0;
     }
     case 'audio': {
@@ -60,13 +63,13 @@ export function progress(tr: TransSched, at: number, dt: number, F: FeatureSourc
   }
 }
 
-/** The transition running at `tick`, or null when one scene is simply showing. */
-export function transitionAt(s: SceneSched, tick: number, F: FeatureSource): Transition | null {
+/** The transition running at `tick` (+ `sub`/256 for display), or null when one scene is simply showing. */
+export function transitionAt(s: SceneSched, tick: number, F: FeatureSource, sub = 0): Transition | null {
   const st = stepAt(s, tick);
   if (!st || st.trans.type === 'cut' || st.trans.ticks <= 0) return null;
   const tr = st.trans, dt = tick - st.at;
   if (dt >= tr.ticks) return null;
-  const p16 = progress(tr, st.at, dt, F), p = p16 / ONE;
+  const p16 = progress(tr, st.at, dt, F, sub), p = p16 / ONE;
   let flash16 = 0;
   if (tr.type === 'flash') { const f = p < 0.25 ? p / 0.25 : (1 - p) / 0.75; flash16 = q16(f * f); }
   return {

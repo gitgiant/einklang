@@ -11,7 +11,8 @@ export type Mode =
   | { mode: 'idle' }
   /** `paused`: the frame the track is frozen on, or null while playing. */
   | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null }
-  | { mode: 'live'; start: number };
+  /** `delay`: ticks every host renders behind the leader (instrument mode 2, captured audio 6). */
+  | { mode: 'live'; start: number; delay: number };
 
 /** Transition effects, in shader order (`kind` = index). `cut` is the plain hard switch. */
 export const TRANSITIONS = [
@@ -77,7 +78,7 @@ export type ClientMsg =
   | { t: 'tap' }
   | { t: 'scene'; id?: string; step?: number; quant: Quant; trans?: { type: TransType | 'random'; beats: number } }
   | { t: 'view'; host: number; view: number | null }
-  | { t: 'play'; name?: string } | { t: 'live' } | { t: 'stop' }
+  | { t: 'play'; name?: string } | { t: 'live'; delay?: number } | { t: 'stop' }
   | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
   /** Ask the playlist owner to play another track (absolute index, or a step from the current one). */
   | { t: 'track'; index?: number; step?: number }
@@ -98,7 +99,7 @@ export const modeTick = (m: Mode, ms: number): number => Math.floor(modeTickF(m,
 /** Fractional modeTick, for placing timed inputs (MIDI clock) between ticks. */
 export function modeTickF(m: Mode, ms: number): number {
   if (m.mode === 'file') return m.paused !== null ? m.paused : ((ms - m.start) * FPS) / 1000;
-  if (m.mode === 'live') return ((ms - m.start) * FPS) / 1000 - LIVE_DELAY;
+  if (m.mode === 'live') return ((ms - m.start) * FPS) / 1000 - (m.delay ?? LIVE_DELAY);
   return (ms * FPS) / 1000;
 }
 

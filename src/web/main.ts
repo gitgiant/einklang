@@ -1,11 +1,11 @@
 // Synced app page. The server owns the room state (mode, scene schedule, presets, views); this
 // page renders it through WebGPU on the shared tick and relays this host's inputs as events.
-import { CC_PARAMS, FPS, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
+import { CC_PARAMS, FPS, INSTRUMENT_DELAY, LIVE_DELAY, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import { decimateWave, fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
 import { Analyzer, N } from '../core/analysis.ts';
 import {
-  modeTick, fixedScene, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS,
+  modeTick, modeTickF, fixedScene, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS,
   type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
 } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
@@ -48,14 +48,16 @@ offIn.value = String(offsetMs);
 offIn.oninput = () => { offsetMs = +offIn.value || 0; lsSet('offset', String(offsetMs)); };
 const hostName = qs.get('name') ?? lsGet('name') ?? `host-${Math.random().toString(36).slice(2, 6)}`;
 lsSet('name', hostName);
+/** Display-rate interpolation between ticks (?interp=0 shows whole ticks only, for comparison). */
+const interp = qs.get('interp') !== '0';
 const defaultView = Math.max(0, Math.min(VIEWS.length - 1, +(qs.get('view') ?? 0) | 0));
 
 // ---- connection, clock sync (NTP-style, min-RTT of last 20 samples) ----
 let ws: WebSocket | null = null, clockOff = 0, rtt = 0, me = 0;
 const samples: { rtt: number; off: number }[] = [];
 const sNow = () => performance.now() + clockOff;
-const net: Counters & { connects: number; lateEvents: number; liveGaps: number; lastPong: number } =
-  { msgsIn: 0, bytesIn: 0, msgsOut: 0, bytesOut: 0, connects: 0, lateEvents: 0, liveGaps: 0, lastPong: 0 };
+const net: Counters & { connects: number; lateEvents: number; liveGaps: number; lateFrames: number; lastPong: number } =
+  { msgsIn: 0, bytesIn: 0, msgsOut: 0, bytesOut: 0, connects: 0, lateEvents: 0, liveGaps: 0, lateFrames: 0, lastPong: 0 };
 const send = (m: ClientMsg) => {
   if (ws?.readyState !== 1) return;
   const s = JSON.stringify(m); ws.send(s); net.msgsOut++; net.bytesOut += s.length;
@@ -87,7 +89,12 @@ function connect() {
     net.msgsIn++; net.bytesIn += typeof e.data === 'string' ? e.data.length : (e.data as ArrayBuffer).byteLength;
     if (typeof e.data !== 'string') {
       const u = new Uint8Array(e.data), dv = new DataView(e.data);
-      if (u[0] === 1) live.set(dv.getUint32(1, true), u.slice(5));
+      if (u[0] === 1) {
+        const tick = dv.getUint32(1, true);
+        live.set(tick, u.slice(5));
+        // past the render delay: the stateless scenes pick it up next frame, sims rewind and replay
+        if (tick <= lastTick) { net.lateFrames++; listeners.lateEvent.forEach((f) => f(tick)); }
+      }
       else if (u[0] === 2) { frames = dv.getUint32(1, true); fileFeat = u.slice(5); }
       return;
     }
@@ -174,11 +181,13 @@ setInterval(() => {
 }, 200);
 
 // ---- leader: live (capture needs a secure context: localhost or https) ----
+const delay = (t: number) => `${t}-tick delay, ${((t * 1000) / FPS).toFixed(0)} ms`;
 const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
 const insecure = () => (isSecureContext ? '' : ' (capture needs localhost or https: open the 127.0.0.1 link, or use `tailscale serve`)');
 
 /** Analyze `stream` on this host and stream features to the room as the live leader. */
-function startLive(stream: MediaStream, label: string) {
+/** `delay`: ticks every host renders behind (INSTRUMENT_DELAY for line-in, LIVE_DELAY for captured audio). */
+function startLive(stream: MediaStream, label: string, delay: number) {
   stopLeaderLive();
   const ac = new AudioContext(), analyser = ac.createAnalyser();
   analyser.fftSize = N;
@@ -194,7 +203,7 @@ function startLive(stream: MediaStream, label: string) {
   };
   // the user pressed "Stop sharing" in Chrome's bar, or the device went away
   for (const t of stream.getAudioTracks()) t.onended = () => { if (leaderLive?.stream === stream) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); } };
-  send({ t: 'live' });
+  send({ t: 'live', delay });
   msg(label);
 }
 function stopLeaderLive() {
@@ -203,7 +212,7 @@ function stopLeaderLive() {
 }
 
 $('live').onclick = async () => {
-  try { startLive(await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO }), 'live: mic / line-in'); }
+  try { startLive(await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO }), `live: instrument / line-in (${delay(INSTRUMENT_DELAY)})`, INSTRUMENT_DELAY); }
   catch (e) { msg(`mic failed: ${(e as Error).message}${insecure()}`); }
 };
 
@@ -219,7 +228,7 @@ $('capture').onclick = async () => {
     const audio = stream.getAudioTracks();
     stream.getVideoTracks().forEach((t) => t.stop());
     if (!audio.length) { msg('no audio was shared: pick a tab with "Share tab audio" on, or Entire screen with "Share system audio"'); return; }
-    startLive(new MediaStream(audio), `live: capturing "${audio[0].label || 'tab/app audio'}"`);
+    startLive(new MediaStream(audio), `live: capturing "${audio[0].label || 'tab/app audio'}" (${delay(LIVE_DELAY)})`, LIVE_DELAY);
   } catch (e) {
     if ((e as Error).name !== 'NotAllowedError') msg(`capture failed: ${(e as Error).message}${insecure()}`);
   }
@@ -383,7 +392,7 @@ async function start() {
         `rtt ${rtt.toFixed(1)}ms (min ${minR.toFixed(1)} max ${maxR.toFixed(1)}, ${samples.length} samples)  clock offset ${clockOff.toFixed(1)}ms  last pong ${ageS}s ago`,
         `in ${r.msgsIn.toFixed(0)} msg/s ${(r.bytesIn / 1024).toFixed(1)} KiB/s   out ${r.msgsOut.toFixed(0)} msg/s ${(r.bytesOut / 1024).toFixed(1)} KiB/s`,
         `totals in ${net.msgsIn} (${(net.bytesIn / 1048576).toFixed(2)} MiB)  out ${net.msgsOut} (${(net.bytesOut / 1048576).toFixed(2)} MiB)`,
-        room.mode === 'live' ? `live features: ${live.size} buffered, newest ${newest}, lead ${newest - f} ticks, gaps ${net.liveGaps}${leaderLive ? ' (leader)' : ''}` : `live features: n/a (${room.mode})`,
+        room.mode === 'live' ? `live features: delay ${room.delay}t, ${live.size} buffered, newest ${newest}, lead ${newest - f} ticks, gaps ${net.liveGaps}, late ${net.lateFrames}${leaderLive ? ' (leader)' : ''}` : `live features: n/a (${room.mode})`,
         `events: ${window.__ek?.events ?? 0} received, ${net.lateEvents} late (replayed)`,
       ]],
       ['room', [
@@ -435,7 +444,8 @@ async function start() {
 
   const loop = () => {
     requestAnimationFrame(loop);
-    const f = modeTick(room, sNow() + offsetMs);
+    // display time: tick f plus a sub-tick (0..255) that closed-form scenes interpolate to
+    const tF = modeTickF(room, sNow() + offsetMs), f = Math.floor(tF), sub = interp ? Math.floor((tF - f) * 256) : 0;
     let F: FeatureSource, label: string;
     if (room.mode === 'file' && fileFeat) {
       F = fileSource(fileFeat, frames);
@@ -451,7 +461,7 @@ async function start() {
     pads.poll();
     const FE = withEvents(F, events);
     const fx = (lastFx = fxAt(events, f));
-    const hash = engine.frame(f, FE, fx, room.scene);
+    const hash = engine.frame(f, FE, fx, room.scene, sub);
     lastHash = hash; lastF = f;
     panel.frame(f);
     lastTick = Math.max(lastTick, f);

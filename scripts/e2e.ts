@@ -13,7 +13,7 @@ const TOKEN = 'e2e';
 const srv = await startServer({ port: 0, pub: resolve(import.meta.dirname, '../dist'), token: TOKEN, hosts: ['127.0.0.1'] });
 const port = (srv.servers[0].address() as { port: number }).port;
 // one browser per host: background tabs don't get animation frames
-const launch = () => puppeteer.launch({ executablePath: chrome, headless: true, args: ['--enable-unsafe-webgpu'] });
+const launch = () => puppeteer.launch({ executablePath: chrome, headless: true, args: ['--enable-unsafe-webgpu', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const browsers = await Promise.all([launch(), launch()]);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let failed = false;
@@ -201,6 +201,16 @@ try {
     check(true, `auto-advanced to "${name1}"`);
   }
   if (process.env.SHOT2) await b.screenshot({ path: process.env.SHOT2 });
+
+  // instrument mode: A takes Chrome's fake mic as line-in; every host (A too) renders 2 ticks behind
+  await a.$eval('#live', (e) => (e as HTMLButtonElement).click());
+  await b.waitForFunction(() => /live features: delay 2t/.test(document.querySelector('#debug pre')?.textContent ?? ''), { timeout: 10000 });
+  await sleep(3000);
+  da = await dbg(a); db = await dbg(b);
+  c = compare(da, db);
+  const liveB = /live features: .*/.exec(await b.$eval('#debug pre', (e) => e.textContent ?? ''))?.[0] ?? '';
+  check(c.shared > 20 && c.diff === 0, `instrument mode (2-tick delay): ${c.shared} shared ticks, ${c.diff} mismatches; B ${liveB}`);
+  await a.$eval('#stop', (e) => (e as HTMLButtonElement).click());
 } catch (e) {
   console.log('FAIL', e); failed = true;
 } finally {

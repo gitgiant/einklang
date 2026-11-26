@@ -11,7 +11,12 @@ export interface SceneState { u: Int32Array; prims: Int32Array | null }
 export interface SceneDef {
   id: string;
   name: string;
-  state(f: number, F: FeatureSource): SceneState;
+  /**
+   * State at tick `f`. `sub` (0..255) is a sub-tick for display-rate interpolation: closed-form
+   * motion is evaluated at f + sub/256, for drawing only. The hash always uses sub = 0, and
+   * scenes that aren't closed-form (sims, per-tick data) ignore it and show tick f.
+   */
+  state(f: number, F: FeatureSource, sub?: number): SceneState;
 }
 
 export const hashState = (s: SceneState): number => fnv(fnv(FNV0, s.u), s.prims ?? []);
