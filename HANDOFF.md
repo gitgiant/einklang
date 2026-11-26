@@ -3,22 +3,54 @@
 Newest first. Keep short; prune the oldest entries.
 
 ## State
-- **Status 2026-11-26: v1 complete** (`21c7d76`), **WebGPU only**. All v1 tickets done: #1–#12, #19 (#4 and #8 without their WebGL2 parts). v2 (#13–#15) and v3 (#16–#18) not started. Last full run: 40 unit tests and e2e all pass.
-- Run: `npm run build && npm run server` (prints join URLs with `?t=<token>`, token in `.einklang-token`). Dev: `npm run dev` + server, open `http://localhost:5173/?t=<token>`. Gallery needs no server: `/gallery.html`.
-- Checks: `npm run typecheck`, `npm test` (40), `npm run build && npm run e2e` (two headless WebGPU hosts + a MIDI socket + Chrome's fake mic for instrument mode, compares hashes per tick).
-- Debug panel: `d` / **debug** / `?debug=1` (frame graph + hitches, network, room, MIDI, and the old bottom-left HUD, which is now hidden). e2e opens pages with `?debug=1`; `TRACKS=a.mp3,b.mp3 npm run e2e` tests with real files.
-- **WebGPU only, no WebGL2 fallback** (user, 2026-11-26): don't build or offer it.
-- iPhone/iPad need https for WebGPU: `tailscale serve --bg 8080` is set up → `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>`. Server currently runs with `BIND=0.0.0.0`.
-- **Lab PRD agreed 2026-11-26** (`docs/prd-lab.md`, tickets #20–#26): AI agents (via Hauptling) build pieces for a node graph that replaces the pipeline; owner votes prune and steer. #20 graph runtime, #21 graph-is-the-pipeline, #22 lab CLI + gate done; next lab step: #23 (asset import) or #26/#24. Lab: `npm run lab -- validate|render <id>|gate [--all]|new <kind> <id>`.
-- Next: v1 is feature-complete; v2 is #13 extension leader, #14 beat tracking, #15 anticipation. Open question for the user: at big N (this PC benchmarks at 2^20) the flow reads finer/foggier, since brightness is normalized by 2^17/N. Open bits: pad drift mode (float sims) + WebHID (v3), MIDI CC learn, transport → file play, flow reseed on the clock grid, real MIDI/pad device test.
+- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate are done. Open: #23 asset import, #26 sprites/text/style packs, #24 voting, #25 agents.
+- **Architecture now:** every scene is a graph in `lab/scenes/*.json` (v1 scenes = one synced `core-*` piece each), built from pieces in `lab/pieces/<kind>/<id>/` (`piece.json` + `driver.ts` and/or WGSL; the auto-shader path is `fn shade(uv)`). The Engine runs the show graph: scenes → `core-transition` → `core-post` → canvas. Piece API: `lab/api/index.ts`. The hash covers the graph inputs, and v1 state parity is unit-tested.
+- **Run:**
+  - `npm run build && npm run server` prints the join URLs with `?t=<token>` (token in `.einklang-token`).
+  - Dev: `npm run dev` + server, then `http://localhost:5173/?t=<token>`.
+  - Gallery, no server needed: `/gallery.html?scene=core-demo`.
+  - iPhone/iPad: `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>` (`tailscale serve`, server on `BIND=0.0.0.0`).
+- **Checks:**
+  - `npm run typecheck`
+  - `npm test` (56)
+  - `npm run build && npm run e2e` (23 checks, two headless WebGPU hosts, hashes per tick)
+  - `npm run lab -- gate --all` (all scenes, 1080p, 3 fixtures, ~2 min)
+- **Lab CLI:** `npm run lab -- validate | render <scene|piece> [--fixture all] [--cpu] | gate [--all] [--junit f] | new <kind> <vendor-slug> | fixtures`. Artifacts go to `lab/out/` (gitignored). No GPU means it falls back to SwiftShader (~50x slower, budget not enforced).
+- **Live hosts load every lab scene, but the server's preset list is still `radial tunnel scope flow`** until #24 ("all scenes live").
+- **Untested:** `hauptling.json` + `hauptling.Dockerfile` (Chrome in the worker image). This PC's WSL has no Docker or Hauptling, so whether Chrome sees the GPU under `--gpus all` is unproven.
+- **Open:**
+  - lab: `feedback` command (#24); recording a `.feat` fixture from real audio
+  - v2: #13 extension leader, #14 beat tracking, #15 anticipation
+  - v3: drift mode, WebHID
+  - flow looks finer/foggier at big N (question for the user)
+  - MIDI CC learn; real MIDI/pad device test
+- **Gotchas:**
+  - Never `git worktree remove` a worktree holding a `node_modules` junction: it deletes files through it (restore with `npm install`; `npm ci` fails while the user's Vite dev server runs).
+  - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes.
 
 ## Log
-- **2026-11-26 · lab CLI + gate (#22 done).** `npm run lab` (scripts/lab): validate (schema, lint, size), render (headless Chrome via Vite, GPU or SwiftShader fallback; contact sheet + webm + stats in lab/out/), gate (changed items, 1080p, 3 synthetic fixtures, checks + JUnit), new (scaffold). Fixtures in `src/core/fixtures.ts`. `hauptling.json` + `hauptling.Dockerfile` (untested: no Docker in WSL here). 56 unit tests, e2e 23/23.
-- **2026-11-26 · graph is the pipeline (#21 done).** v1 scenes = `lab/scenes/{radial,tunnel,scope,flow}.json` over synced `core-*` driver pieces; old `scenes.ts`/`post.ts`/`transition.ts` deleted; Engine = show graph (scenes → `core-transition` → `core-post` → canvas). Scene files carry `post`; pads reach pieces as `ctx.pads`. Room hash values changed (graph inputs), v1 state parity unit-tested; 50 tests + full e2e 0 mismatches. Gotcha: never `git worktree remove` a worktree holding a node_modules junction (it deleted files through it; fixed with `npm install`).
-- **2026-11-26 · graph runtime (#20 done).** `lab/api` (piece API), `src/core/graph` (validate, order, `compile`/`evalCpu` + hash of graph inputs), `src/web/graph` (Vite registry, auto-shader prelude, `GraphRunner` with texture pool + feedback ping-pong, `graphScene` adapter). 10 `core-*` starter pieces, scenes `core-demo` + `core-retro`, gallery-only (`?scene=core-demo`). 48 unit tests (8 new) + e2e pass; stills `docs/mockups/lab-*.png`. Build notes in the PRD.
-- **2026-11-26 · lab catalog + #26.** Added retro/aesthetic packs (vaporwave, synthwave, VHS, demoscene, PS1, Y2K, vector), text, sprites, generative tools (style packs). AI sprites: code-drawn by default, image API opt-in per brief (`imagegen: N` + monthly cap) via `einklang-lab sprite gen`.
-- **2026-11-26 · lab PRD (#20–#25).** Grilled one question at a time: free-form pieces (hash covers graph inputs + resolved params; v1 ports opt in as `synced`), piece = piece.json + driver.ts + WGSL, full node graph replaces the pipeline (v1, post, pad FX, transitions become nodes), rich ports + spectrum/wave, `einklang-lab` CLI (SwiftShader CPU render in Hauptling containers, GPU gate on the 2070S), in-repo `lab/`, owner-only votes (keys, pad chord, gallery), all scenes live, net ≤ −2 retires, `data/votes.jsonl` → committed digest, delegator `lab` skill picks from backlog + digest, pieces edited in place, space_sim own .vox imported (no third_party), CC0 downloads via egress. Full catalog in the PRD.
-- **2026-11-26 · flow particle budget (#8 done).** `Engine.bench()` times 48 rounds of 2^16-particle step + draw (1280x720), scales to a 4 ms budget, floors to a power of two in [2^12, 2^20]; `?cap=` overrides. Hosts send `{t:'bench', n}` on every connect; `HostInfo.cap`; `RoomState.flow {n, prev, at}` = min cap, changed at the next reseed boundary (`flowNAt`). Flow scene: storage grows to N, dust pipeline (`vs_dust`, closed-form, not hashed) for cap > N, dust-only (brighter) while cap < N. This PC: 2^20 at 1440p stays at the 240 fps headless cap.
-- **2026-11-26 · instrument mode + interpolation (#12).** Live `Mode` has `delay`; **mic / line-in** asks for 2 ticks (instrument), **capture** keeps 6. A live frame for an already-rendered tick fires the late-event path (sims replay); debug shows delay/late. `SceneDef.state(f, F, sub)`: radial (rotation, ring/burst ages, strip scroll) and tunnel (z, twist, hue, rush) are closed-form in f + sub/256, transitions too; Engine draws the sub state and hashes the sub = 0 one. main/gallery derive sub from modeTickF (`?interp=0` off).
-- **2026-11-26 · transitions built (#19).** `core/transitions.ts` (curves, `transitionAt`, `transHash`, `pickRandom`), `room.requestScene` (boundary start, ticks + tpb frozen, seed, random, queue in `scene.earlier`), `gpu/transition.ts` + `transition.wgsl` (one switch over 13 effects), Engine renders both scenes into `post.pairTargets()` and lerps post settings. Panel: **transition** + **length** (localStorage). Gallery: `trans=all|<effect>` auto-cycles every 2 bars, `at=<s>` one-shot for stills, `t` key. e2e runs all 13 effects on two hosts with 0 mismatches. Build notes are in the PRD.
-- **2026-11-26 · transitions PRD (#19).** Grilled with the user (one question at a time): mixing before post, server-scheduled `{type, ticks, seed}`, length in beats frozen to ticks, start on the boundary, all 14 effects with per-effect curves, panel selectors (transition + length), server-side random (no cut, no repeat), both scenes live, overlapping requests queued after the running one, seeded params + pad-centred iris/zoom/swirl, gallery auto-cycle. Self-decided: the transition hash mixes both states + progress; no new pad button; e2e runs every effect.
+- **2026-11-26 · lab CLI + gate (#22 done).**
+  - `scripts/lab`: validate (schema, lint, size), render (headless Chrome via Vite, GPU or SwiftShader; contact sheet + webm via mediabunny + stats), gate (changed items incl. untracked, 1080p, 3 fixtures, JUnit + `lab/out/gate.md`), new (scaffold).
+  - Synthetic fixtures in `src/core/fixtures.ts`; piece harness in `src/core/graph/harness.ts`.
+  - Checks: errors mapped to the piece file and line, NaN, black, blown out, frozen, no audio reaction, ms/frame. Dark or still on `quiet` only warns.
+  - Verified: planted black and broken pieces fail, a scaffolded one passes.
+- **2026-11-26 · graph is the pipeline (#21 done).**
+  - Old `scenes.ts`/`post.ts`/`transition.ts` deleted; their WGSL lives in piece folders.
+  - Scene files carry `post`; pads reach pieces as `ctx.pads`. Sims get `budget` / `bench` / `invalidate` via the piece API; `lab/api/prims.ts` draws display lists.
+  - Room hash values changed; e2e 0 mismatches; stills match the previous commit except for trail-timing noise.
+- **2026-11-26 · graph runtime (#20 done).** `src/core/graph` (validate, order, `compile`/`evalCpu` + hash), `src/web/graph` (Vite registry, auto-shader prelude, `GraphRunner` with texture pool + feedback ping-pong). 10 starter pieces, scenes `core-demo` + `core-retro`.
+- **2026-11-26 · lab PRD (#20–#26).**
+  - Grilled one question at a time:
+    - free-form pieces
+    - full node graph replaces the pipeline
+    - rich ports
+    - `einklang-lab` CLI
+    - in-repo `lab/`
+    - owner-only votes, all scenes live, net ≤ −2 retires
+    - votes as `data/votes.jsonl` → committed digest
+    - Hauptling delegator `lab` skill
+    - pieces edited in place
+    - space_sim own .vox imported
+    - CC0 downloads via egress
+  - Later added retro/text/sprites/generative tools; AI sprites code-drawn by default, image API opt-in (`imagegen: N`).
+- **2026-11-26 · flow particle budget (#8 done).** `Engine.bench()` → `{t:'bench', n}`; the room's N = min cap, changed at the reseed boundary; dust (closed-form, unhashed) on stronger hosts.
