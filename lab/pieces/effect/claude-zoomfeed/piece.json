@@ -1,0 +1,17 @@
+{
+  "id": "claude-zoomfeed", "kind": "effect", "name": "Zoom feedback",
+  "doc": "Its own last frame, zoomed, rotated, hue-shifted and decayed, showing through wherever the input is dark (Milkdrop-style). Bass and the beat push the zoom; the rotation swings over each bar.",
+  "ports": { "in": { "in": { "type": "tex" } }, "out": { "out": { "type": "tex" } } },
+  "params": {
+    "decay": { "type": "float", "default": 0.92, "min": 0, "max": 0.99, "doc": "brightness the last frame keeps" },
+    "zoom": { "type": "float", "default": 0.012, "min": -0.08, "max": 0.08, "doc": "constant growth per frame (negative shrinks)" },
+    "bass": { "type": "float", "default": 0.03, "min": 0, "max": 0.1, "doc": "extra zoom at full bass" },
+    "pulse": { "type": "float", "default": 0.025, "min": 0, "max": 0.1, "doc": "zoom kick at the start of each beat" },
+    "rotate": { "type": "float", "default": 0.006, "min": -0.08, "max": 0.08, "doc": "constant turn per frame, radians" },
+    "swing": { "type": "float", "default": 0.025, "min": 0, "max": 0.1, "doc": "turn that swings back and forth once per bar" },
+    "hue": { "type": "float", "default": 0.03, "min": -0.3, "max": 0.3, "doc": "hue shift of the echo per frame, radians" }
+  },
+  "shader": "zoomfeed.wgsl", "feedback": true, "budget": { "ms": 0.2, "scales": "res" },
+  "tags": ["feedback", "milkdrop", "warp"],
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" }
+}
