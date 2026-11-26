@@ -48,7 +48,17 @@ export interface Playlist { owner: number; names: string[]; index: number }
 /** MIDI clock master: a host's beat `n` happened at server time `at` (ms), at tempo `bpm`. */
 export interface ClockMsg { t: 'clock'; at: number; bpm: number; n: number }
 
-export interface HostInfo { id: number; name: string; view: number | null }
+/** `cap`: the flow particle count this host's benchmark says it can run (null until reported). */
+export interface HostInfo { id: number; name: string; view: number | null; cap: number | null }
+
+/** Flow particle budget bounds (powers of two) and the count used before any host reports. */
+export const FLOW_N_MIN = 1 << 12, FLOW_N_MAX = 1 << 20, FLOW_N_DEFAULT = 1 << 17;
+/**
+ * Flow particle count: `n` from tick `at` on (always a reseed boundary), `prev` before. The
+ * server sets it to the weakest host's benchmark; a change waits for the next reseed.
+ */
+export interface FlowN { n: number; prev: number; at: number }
+export const flowNAt = (s: FlowN, tick: number): number => (tick >= s.at ? s.n : s.prev);
 
 /** Server-authoritative room state, broadcast on every change. */
 export type RoomState = Mode & {
@@ -63,6 +73,7 @@ export type RoomState = Mode & {
   clock: number | null;
   /** Track list of the host that loaded a folder / several files (it uploads each in turn). */
   playlist: Playlist | null;
+  flow: FlowN;
 };
 
 /** An input event, stamped by the server with the tick on which every host applies it. */
@@ -76,6 +87,8 @@ export type ClientMsg =
   | { t: 'ev'; type: string; payload?: unknown }
   | ClockMsg
   | { t: 'tap' }
+  /** Benchmark result: particles this host can run. */
+  | { t: 'bench'; n: number }
   | { t: 'scene'; id?: string; step?: number; quant: Quant; trans?: { type: TransType | 'random'; beats: number } }
   | { t: 'view'; host: number; view: number | null }
   | { t: 'play'; name?: string } | { t: 'live'; delay?: number } | { t: 'stop' }

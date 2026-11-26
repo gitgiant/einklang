@@ -2,7 +2,7 @@
 // the tick-stamped event stream, and the replay logs late joiners need to catch up.
 import { FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import {
-  CUT, DEFAULT_GRID, DEFAULT_PRESETS, INPUT_DELAY, TRANSITIONS, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
+  CUT, DEFAULT_GRID, FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN, flowNAt, DEFAULT_PRESETS, INPUT_DELAY, TRANSITIONS, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
   type TickEvent, type TransSched, type TransType,
 } from '../core/protocol.ts';
@@ -32,7 +32,7 @@ function sanitize(type: string, p: unknown): { ok: boolean; payload?: unknown } 
   return { ok: true, payload: p };
 }
 
-interface Client { id: number; ws: WsConn; name: string | null }
+interface Client { id: number; ws: WsConn; name: string | null; cap: number | null }
 
 export class Room {
   private clients = new Map<number, Client>();
@@ -57,6 +57,7 @@ export class Room {
     mode: 'idle', epoch: 0,
     scene: fixedScene(DEFAULT_PRESETS[0]),
     presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null, playlist: null,
+    flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
   };
   private now: () => number;
   private rand: () => number;
@@ -67,7 +68,7 @@ export class Room {
   tickNow(): number { return modeTick(this.state, this.now()); }
 
   join(ws: WsConn): void {
-    const c: Client = { id: this.nextId++, ws, name: null };
+    const c: Client = { id: this.nextId++, ws, name: null, cap: null };
     this.clients.set(c.id, c);
     ws.onmessage = (d) => this.onMessage(c, d);
     ws.onclose = () => {
@@ -80,6 +81,7 @@ export class Room {
         this.emit({ tick: this.tickNow() + INPUT_DELAY, src: c.id, type: 'pad', payload: { s, b: 0, a: [0, 0, 0, 0], t: [0, 0], gone: 1 } });
         this.latest.delete(`pad:${s}`);
       }
+      if (c.cap !== null) this.renegotiate();
       if (c.name !== null) this.broadcastState();
     };
     this.send(c, { t: 'welcome', you: c.id });
@@ -96,7 +98,7 @@ export class Room {
   private broadcastState(): void {
     this.state.hosts = [...this.clients.values()]
       .filter((c) => c.name !== null)
-      .map((c): HostInfo => ({ id: c.id, name: c.name!, view: this.viewByName.get(c.name!) ?? null }));
+      .map((c): HostInfo => ({ id: c.id, name: c.name!, view: this.viewByName.get(c.name!) ?? null, cap: c.cap }));
     this.broadcast({ t: 'state', ...this.state });
   }
 
@@ -106,9 +108,11 @@ export class Room {
    */
   private setMode(m: Mode, keepScene = false): void {
     const cur = sceneAt(this.state.scene, this.tickNow());
-    const { epoch, presets, hosts, clock, playlist } = this.state;
+    const { epoch, presets, hosts, clock, playlist } = this.state, n = this.flowTarget();
     const scene = keepScene ? this.state.scene : fixedScene(cur);
-    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, grid: { ...DEFAULT_GRID } };
+    // a new timeline starts on a reseed, so the budget applies at once (pause/resume keep tick space and the schedule)
+    const flow = keepScene ? this.state.flow : { n, prev: n, at: 0 };
+    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, flow, grid: { ...DEFAULT_GRID } };
     this.ring = []; this.log = [];
     if (this.clock) this.clock.beatTick = -Infinity;
   }
@@ -149,6 +153,12 @@ export class Room {
         return this.emit({ tick: this.tickNow() + INPUT_DELAY, src: c.id, type: m.type, payload });
       }
       case 'tap': return this.onTap();
+      case 'bench': {
+        if (!(m.n > 0)) return;
+        c.cap = 2 ** Math.round(Math.log2(Math.max(FLOW_N_MIN, Math.min(FLOW_N_MAX, m.n))));
+        this.renegotiate();
+        return this.broadcastState();
+      }
       case 'clock': return this.onClock(c, m);
       case 'scene': return this.requestScene(m.id, m.step, m.quant, m.trans);
       case 'view': {
@@ -217,6 +227,22 @@ export class Room {
       s, b: clampInt(o.b, 0, 0x1ffff),
       a: [0, 1, 2, 3].map((i) => clampInt(a[i], -100, 100)), t: [0, 1].map((i) => clampInt(t[i], 0, 100)),
     };
+  }
+
+  /** N = the weakest reported host (the default until anyone reports). */
+  private flowTarget(): number {
+    let n = Infinity;
+    for (const c of this.clients.values()) if (c.cap !== null) n = Math.min(n, c.cap);
+    return n === Infinity ? FLOW_N_DEFAULT : n;
+  }
+
+  /** Move N to the target at the next reseed boundary (the sims reseed there anyway). */
+  private renegotiate(): void {
+    const n = this.flowTarget(), f = this.state.flow;
+    if (n === f.n) return;
+    const t = this.tickNow(), cur = flowNAt(f, t);
+    const at = Math.ceil((t + INPUT_DELAY) / RESEED_TICKS) * RESEED_TICKS;
+    this.state.flow = n === cur ? { n, prev: n, at: 0 } : { n, prev: cur, at };
   }
 
   /** Tap tempo: sets the beat grid from the taps, unless a MIDI clock is running. */

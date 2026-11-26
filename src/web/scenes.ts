@@ -12,6 +12,7 @@ import { tunnel } from '../core/scenes/tunnel.ts';
 import { scope } from '../core/scenes/scope.ts';
 import { flow, FlowSim, epochOf, seedOf, stepParams } from '../core/scenes/flow.ts';
 import { RESEED_TICKS } from '../core/constants.ts';
+import { FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN } from '../core/protocol.ts';
 import { PRIM_INTS } from '../core/prims.ts';
 import { hex8 } from '../core/math.ts';
 
@@ -19,7 +20,9 @@ export interface GpuScene {
   readonly def: SceneDef;
   readonly post: PostParams;
   /** Encode the work that renders `state` into the HDR scene target. */
-  encode(enc: GPUCommandEncoder, target: GPUTexture, state: SceneState, tick: number, F: FeatureSource): void;
+  encode(enc: GPUCommandEncoder, target: GPUTexture, state: SceneState, tick: number, F: FeatureSource, sub?: number): void;
+  /** Flow only: how many particles this GPU can run (see FlowBudget). */
+  bench?(): Promise<number>;
   /** Inputs for ticks >= `tick` changed after the fact (stateful sims must replay). */
   invalidate?(tick: number): void;
   /** Extra HUD line (e.g. sim status). */
@@ -92,8 +95,23 @@ function tunnelScene(device: GPUDevice): GpuScene {
   };
 }
 
-/** Fixed-point flow field: GPU sim stepped once per tick, fast-forwarded after a reseed or join. */
-function flowScene(device: GPUDevice, n = 1 << 17): GpuScene {
+/**
+ * Flow particle budget, shared with the engine: the room's N per tick (always a reseed-period
+ * constant) and this host's own benchmark capability (null = not measured: run N, no dust).
+ */
+export interface FlowBudget { n(tick: number): number; cap: number | null }
+
+/** Most dust a strong host adds on top of the sim. */
+const DUST_MAX = 1 << 18;
+/** Benchmark: particles per probe, and the share of a 60 Hz frame one step + draw may take. */
+const BENCH_N = 1 << 16, BENCH_BUDGET_MS = 4;
+
+/**
+ * Fixed-point flow field: GPU sim stepped once per tick, fast-forwarded after a reseed or join.
+ * N comes from the room; a host stronger than N adds closed-form dust (decorative, not simulated),
+ * and one weaker than N (it joined mid-period) shows dust only until N drops at the next reseed.
+ */
+function flowScene(device: GPUDevice, budget: FlowBudget): GpuScene {
   const MAX_STEPS = 50, CHECK_N = 1024, SLOT = 256;
   const csMod = shader(device, flowSrc, 'flow');
   const bgl = device.createBindGroupLayout({
@@ -106,14 +124,9 @@ function flowScene(device: GPUDevice, n = 1 << 17): GpuScene {
   const layout = device.createPipelineLayout({ bindGroupLayouts: [bgl] });
   const cp = (entryPoint: string) => device.createComputePipeline({ layout, label: entryPoint, compute: { module: csMod, entryPoint } });
   const pStep = cp('cs_step'), pSeed = cp('cs_seed'), pHash = cp('cs_hash');
-  const particles = device.createBuffer({ size: n * 16, usage: GPUBufferUsage.STORAGE });
   const params = device.createBuffer({ size: SLOT * (MAX_STEPS + 2), usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   const hashBuf = device.createBuffer({ size: 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST });
   const readback = device.createBuffer({ size: 4, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
-  const csBg = device.createBindGroup({
-    layout: bgl,
-    entries: [{ binding: 0, resource: { buffer: params, size: 32 } }, { binding: 1, resource: { buffer: particles } }, { binding: 2, resource: { buffer: hashBuf } }],
-  });
 
   const drawMod = shader(device, flowDrawSrc, 'flow_draw');
   const drawPipe = device.createRenderPipeline({
@@ -121,19 +134,62 @@ function flowScene(device: GPUDevice, n = 1 << 17): GpuScene {
     vertex: { module: drawMod, entryPoint: 'vs_flow' },
     fragment: { module: drawMod, entryPoint: 'fs_flow', targets: [{ format: HDR, blend: ADD }] },
   });
-  const dbuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-  const drawBg = device.createBindGroup({ layout: drawPipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: dbuf } }, { binding: 1, resource: { buffer: particles } }] });
+  const dustPipe = device.createRenderPipeline({
+    layout: 'auto', label: 'flow_dust',
+    vertex: { module: drawMod, entryPoint: 'vs_dust' },
+    fragment: { module: drawMod, entryPoint: 'fs_flow', targets: [{ format: HDR, blend: ADD }] },
+  });
+  const dbuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const dustBg = device.createBindGroup({ layout: dustPipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: dbuf } }] });
 
   // CPU reference over the first CHECK_N particles, compared against the GPU every ~2 s.
   const cpu = new FlowSim(CHECK_N);
-  let simTick = -Infinity, checking = false, lastCheck = 0, check = 'pending';
+  let simTick = -Infinity, simN = 0, checking = false, lastCheck = 0, check = 'pending', shown = '-';
+
+  // particle storage grows to the largest N seen (a regrow drops the sim: it reseeds + replays)
+  let capacity = 0, particles: GPUBuffer | null = null, csBg!: GPUBindGroup, drawBg!: GPUBindGroup;
+  const ensure = (n: number) => {
+    if (n <= capacity) return;
+    particles?.destroy();
+    capacity = n;
+    particles = device.createBuffer({ size: n * 16, usage: GPUBufferUsage.STORAGE });
+    csBg = device.createBindGroup({
+      layout: bgl,
+      entries: [{ binding: 0, resource: { buffer: params, size: 32 } }, { binding: 1, resource: { buffer: particles } }, { binding: 2, resource: { buffer: hashBuf } }],
+    });
+    drawBg = device.createBindGroup({ layout: drawPipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: dbuf } }, { binding: 1, resource: { buffer: particles } }] });
+    simTick = -Infinity;
+  };
+  ensure(FLOW_N_DEFAULT);
+
+  const writeDraw = (target: GPUTexture, s: SceneState, tick: number, sub: number, n: number, dustGain = 1) => {
+    const lb = letterbox(target.width, target.height);
+    const hue = ((s.u[1] % 1536) + 1536) % 1536 / 1536;
+    device.queue.writeBuffer(dbuf, 0, new Float32Array([
+      target.width, target.height, lb.ox, lb.oy, lb.scale, hue, s.u[2] / 255, Math.max(1.2, lb.scale * 1.1),
+      (((tick % 36000) + 36000) % 36000) + sub / 256, FLOW_N_DEFAULT / n, dustGain, 0,
+    ]));
+  };
 
   return {
     def: flow,
     post: { ...POST_DEFAULT, decay: 0.93, bloom: 0.7, threshold: 0.6, exposure: 1.1 },
     invalidate(tick) { if (tick <= simTick) simTick = -Infinity; },
-    status: () => `sim ${simTick === -Infinity ? '-' : simTick}  N ${n}  gpu≡cpu ${check}`,
-    encode(enc, target, s, tick, F) {
+    status: () => `sim ${simTick === -Infinity ? '-' : simTick}  N ${shown}  gpu≡cpu ${check}`,
+    encode(enc, target, s, tick, F, sub = 0) {
+      const n = budget.n(tick), cap = budget.cap;
+      const simulate = cap === null || n <= cap;
+      const dust = cap === null ? 0 : simulate ? Math.min(DUST_MAX, cap - n) : cap;
+      shown = simulate ? `${n}${dust ? ` + dust ${dust}` : ''}` : `dust ${dust} only (room N ${n} > this host's ${cap}, until the next reseed)`;
+      writeDraw(target, s, tick, sub, n, simulate ? 1 : 4);
+      if (!simulate) {
+        const rp = clearPass(enc, target);
+        rp.setPipeline(dustPipe); rp.setBindGroup(0, dustBg); rp.draw(6, dust); rp.end();
+        return;
+      }
+
+      ensure(n);
+      if (n !== simN) { simTick = -Infinity; simN = n; } // N only changes on a reseed boundary
       const groups = Math.ceil(n / 256);
       const slots = new ArrayBuffer(SLOT * (MAX_STEPS + 2));
       let used = 0;
@@ -182,21 +238,53 @@ function flowScene(device: GPUDevice, n = 1 << 17): GpuScene {
           checking = false;
         }, 0);
       }
-
-      const lb = letterbox(target.width, target.height);
-      const hue = ((s.u[1] % 1536) + 1536) % 1536 / 1536;
-      device.queue.writeBuffer(dbuf, 0, new Float32Array([target.width, target.height, lb.ox, lb.oy, lb.scale, hue, s.u[2] / 255, Math.max(1.2, lb.scale * 1.1)]));
       const rp = clearPass(enc, target);
-      rp.setPipeline(drawPipe); rp.setBindGroup(0, drawBg); rp.draw(6, n); rp.end();
+      rp.setPipeline(drawPipe); rp.setBindGroup(0, drawBg); rp.draw(6, n);
+      if (dust > 0) { rp.setPipeline(dustPipe); rp.setBindGroup(0, dustBg); rp.draw(6, dust); }
+      rp.end();
+    },
+
+    /**
+     * Particles this GPU can step and draw within BENCH_BUDGET_MS of a frame: times BENCH_N-particle
+     * step + draw rounds into a 1280x720 target, scales linearly, floors to a power of two.
+     */
+    async bench() {
+      ensure(BENCH_N);
+      const target = device.createTexture({ size: [1280, 720], format: HDR, usage: GPUTextureUsage.RENDER_ATTACHMENT });
+      const round = (steps: number) => {
+        const enc = device.createCommandEncoder(), slots = new ArrayBuffer(SLOT * (MAX_STEPS + 2));
+        new Int32Array(slots, 0, 8).set([0, 1, 0, 0, 0, 0, BENCH_N, 0]);
+        const c = enc.beginComputePass();
+        c.setPipeline(pSeed); c.setBindGroup(0, csBg, [0]); c.dispatchWorkgroups(BENCH_N / 256); c.end();
+        for (let k = 1; k <= steps; k++) {
+          new Int32Array(slots, k * SLOT, 8).set([k, 1, 40, 0, 640, 360, BENCH_N, 0]);
+          const cs = enc.beginComputePass();
+          cs.setPipeline(pStep); cs.setBindGroup(0, csBg, [k * SLOT]); cs.dispatchWorkgroups(BENCH_N / 256); cs.end();
+          const rp = clearPass(enc, target);
+          rp.setPipeline(drawPipe); rp.setBindGroup(0, drawBg); rp.draw(6, BENCH_N); rp.end();
+        }
+        device.queue.writeBuffer(params, 0, slots, 0, SLOT * (steps + 1));
+        writeDraw(target, { u: Int32Array.of(0, 0, 128), prims: null }, 0, 0, BENCH_N);
+        device.queue.submit([enc.finish()]);
+        return device.queue.onSubmittedWorkDone();
+      };
+      await round(4); // warm-up: pipelines, caches, clocks
+      const steps = MAX_STEPS - 2, t0 = performance.now();
+      await round(steps);
+      const perStep = (performance.now() - t0) / steps;
+      target.destroy();
+      simTick = -Infinity; // the probe overwrote the particles
+      const n = (BENCH_N * BENCH_BUDGET_MS) / Math.max(perStep, 1e-3);
+      return 2 ** Math.max(Math.log2(FLOW_N_MIN), Math.min(Math.log2(FLOW_N_MAX), Math.floor(Math.log2(n))));
     },
   };
 }
 
-export function createScenes(device: GPUDevice): GpuScene[] {
+export function createScenes(device: GPUDevice, budget: FlowBudget): GpuScene[] {
   return [
     primScene(device, radial, { ...POST_DEFAULT, decay: 0.55, bloom: 0.55, threshold: 0.75 }, OVER, 1.3),
     tunnelScene(device),
     primScene(device, scope, { ...POST_DEFAULT, decay: 0.9, bloom: 1.1, threshold: 0.35, exposure: 1.2 }, ADD, 1.6),
-    flowScene(device),
+    flowScene(device, budget),
   ];
 }

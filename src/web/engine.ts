@@ -1,12 +1,12 @@
 import type { Gpu } from './gpu/gpu.ts';
 import { PostChain, type PostParams } from './gpu/post.ts';
 import { TransitionPass } from './gpu/transition.ts';
-import { createScenes, type GpuScene } from './scenes.ts';
+import { createScenes, type FlowBudget, type GpuScene } from './scenes.ts';
 import type { FeatureSource } from '../core/features.ts';
 import { hashState } from '../core/scene.ts';
 import { hex8 } from '../core/math.ts';
 import { NO_FX, type Fx } from '../core/fx.ts';
-import { sceneAt, type SceneSched } from '../core/protocol.ts';
+import { FLOW_N_DEFAULT, sceneAt, type SceneSched } from '../core/protocol.ts';
 import { transHash, transitionAt, type Transition } from '../core/transitions.ts';
 
 const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
@@ -24,6 +24,8 @@ export class Engine {
   private idx = 0;
   /** Per-host view (see VIEWS); framing only, the scene state and hash are unaffected. */
   view = 0;
+  /** Flow particle budget: set `n` from the room schedule and `cap` from bench(). */
+  readonly budget: FlowBudget = { n: () => FLOW_N_DEFAULT, cap: null };
   /** The transition the last frame drew, if any. */
   transition: Transition | null = null;
   private gpu: Gpu;
@@ -35,7 +37,7 @@ export class Engine {
     this.ctx.configure({ device: gpu.device, format: gpu.format, alphaMode: 'opaque' });
     this.post = new PostChain(gpu.device, gpu.format);
     this.trans = new TransitionPass(gpu.device);
-    this.scenes = createScenes(gpu.device);
+    this.scenes = createScenes(gpu.device, this.budget);
   }
 
   get scene(): GpuScene { return this.scenes[this.idx]; }
@@ -44,6 +46,13 @@ export class Engine {
     if (i >= 0 && i < this.scenes.length) this.idx = i;
   }
   private byId(id: string): GpuScene { return this.scenes.find((s) => s.def.id === id) ?? this.scene; }
+
+  /** Measure this GPU's flow particle capability (also sets budget.cap). Run before rendering. */
+  async bench(): Promise<number> {
+    const n = await this.scenes.find((s) => s.bench)!.bench!();
+    this.budget.cap = n;
+    return n;
+  }
 
   /** An input landed on a tick that may already be simulated: sims rewind and replay. */
   invalidate(tick: number): void { for (const s of this.scenes) s.invalidate?.(tick); }
@@ -70,14 +79,14 @@ export class Engine {
     let b: PostParams, hash: number;
     if (!tr) {
       const sc = this.scene, s = states(sc);
-      sc.encode(enc, target, s.draw, st, F);
+      sc.encode(enc, target, s.draw, st, F, sub);
       b = sc.post; hash = hashState(s.hash);
     } else {
       // both scenes live, each into its own HDR target, mixed into the scene target
       const from = this.byId(tr.from), to = this.byId(tr.to), [ta, tb] = this.post.pairTargets();
       const sa = states(from), sb = states(to);
-      from.encode(enc, ta, sa.draw, st, F);
-      to.encode(enc, tb, sb.draw, st, F);
+      from.encode(enc, ta, sa.draw, st, F, sub);
+      to.encode(enc, tb, sb.draw, st, F, sub);
       this.trans.run(enc, target, ta, tb, tr, [fx.cx, fx.cy]);
       b = mixPost(from.post, to.post, tr.p);
       // melt: trails pushed to near 1 around the midpoint so the old scene smears into the new

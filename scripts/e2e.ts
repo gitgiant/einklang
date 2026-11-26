@@ -106,6 +106,21 @@ try {
   const hud = await b.$eval('#hud', (e) => e.textContent ?? '');
   check(/gpu≡cpu ✓/.test(hud), `flow gpu≡cpu on host B (${/gpu≡cpu \S+/.exec(hud)?.[0]})`);
 
+  // particle budget: both hosts benchmarked and run the same N; a weak host joining schedules a
+  // drop to its capability at the next reseed, on both
+  const flowLine = (p: Page) => p.$eval('#debug pre', (e) => /flow N .*/.exec(e.textContent ?? '')?.[0] ?? '');
+  const caps = /hosts: (.*)/.exec(await a.$eval('#debug pre', (e) => e.textContent ?? ''))?.[1] ?? '';
+  const [fa, fb] = [await flowLine(a), await flowLine(b)];
+  const nA = /flow N (\d+)/.exec(fa)?.[1], nB = /flow N (\d+)/.exec(fb)?.[1];
+  check(!!nA && nA === nB && /cap \d+.*cap \d+/.test(caps), `flow budget: N ${nA} on both (${caps}); B: ${/N \S+( \+ dust \d+)?/.exec(hud)?.[0]}`);
+  const weak = new WebSocket(`ws://127.0.0.1:${port}/ws?t=${TOKEN}`);
+  await new Promise((r) => (weak.onopen = r));
+  weak.send(JSON.stringify({ t: 'hello', name: 'weak' })); weak.send(JSON.stringify({ t: 'bench', n: 4096 }));
+  await sleep(600);
+  const [wa, wb] = [await flowLine(a), await flowLine(b)];
+  check(/→ 4096 at reseed \d+/.test(wa) && wa.split('this host')[0] === wb.split('this host')[0], `weak host: ${wa.split('(weakest')[0].trim()}`);
+  weak.close();
+
   // MIDI: a third (headless) host plays clock, notes and a CC; the server runs in this process,
   // so performance.now() is server time. Both hosts must show the clock and still agree.
   await a.select('#scene', 'radial');

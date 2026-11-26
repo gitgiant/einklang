@@ -5,7 +5,7 @@ import { decimateWave, fileSource, mapSource, silence, type FeatureSource } from
 import { EventLog, withEvents } from '../core/events.ts';
 import { Analyzer, N } from '../core/analysis.ts';
 import {
-  modeTick, modeTickF, fixedScene, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS,
+  modeTick, modeTickF, fixedScene, flowNAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS,
   type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
 } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
@@ -53,6 +53,8 @@ const interp = qs.get('interp') !== '0';
 const defaultView = Math.max(0, Math.min(VIEWS.length - 1, +(qs.get('view') ?? 0) | 0));
 
 // ---- connection, clock sync (NTP-style, min-RTT of last 20 samples) ----
+/** This host's flow particle capability once measured (or forced with ?cap=), re-sent on every connect. */
+let benchN: number | null = null;
 let ws: WebSocket | null = null, clockOff = 0, rtt = 0, me = 0;
 const samples: { rtt: number; off: number }[] = [];
 const sNow = () => performance.now() + clockOff;
@@ -68,6 +70,7 @@ function pingBurst() { for (let i = 0; i < 5; i++) setTimeout(() => send({ t: 'p
 let room: RoomState = {
   mode: 'idle', epoch: -1, scene: fixedScene(DEFAULT_PRESETS[0]),
   presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null, playlist: null,
+  flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
 };
 let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
@@ -83,7 +86,10 @@ let leaderLive: LeaderLive | null = null;
 function connect() {
   ws = new WebSocket(withToken(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`));
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => { net.connects++; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected'); };
+  ws.onopen = () => {
+    net.connects++; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected');
+    if (benchN !== null) send({ t: 'bench', n: benchN });
+  };
   ws.onclose = (e) => { msg(e.code === 1006 && !token ? 'not connected: open the join URL with ?t=' : 'disconnected, retrying'); setTimeout(connect, 1000); };
   ws.onmessage = (e) => {
     net.msgsIn++; net.bytesIn += typeof e.data === 'string' ? e.data.length : (e.data as ArrayBuffer).byteLength;
@@ -370,6 +376,10 @@ function renderHosts(names: Map<string, string>) {
 async function start() {
   const gpu = await initGpu();
   const engine = new Engine(gpu, $<HTMLCanvasElement>('c'));
+  // particle budget: benchmark before the first frame, report it; the room's N comes back in the state
+  engine.budget.n = (t) => flowNAt(room.flow, t);
+  benchN = engine.budget.cap = qs.has('cap') ? Math.max(1, +qs.get('cap')! | 0) : await engine.bench();
+  send({ t: 'bench', n: benchN });
   const names = new Map(engine.scenes.map((s) => [s.def.id, s.def.name]));
   const onState = () => { renderHosts(names); pick.value = room.scene.id; };
   listeners.state.push(onState); onState();
@@ -401,7 +411,8 @@ async function start() {
         `transition: ${transLine(f)}`,
         `waveform ${hasWave}`,
         `grid origin ${room.grid.origin} tpb ${room.grid.tpb} (${((60 * FPS) / room.grid.tpb).toFixed(2)} bpm)`,
-        `hosts: ${room.hosts.map((h) => `${h.name}#${h.id}${h.view === null ? '' : ` v${h.view}`}`).join(', ') || 'none'}`,
+        `hosts: ${room.hosts.map((h) => `${h.name}#${h.id}${h.view === null ? '' : ` v${h.view}`}${h.cap === null ? '' : ` cap ${h.cap}`}`).join(', ') || 'none'}`,
+        `flow N ${flowNAt(room.flow, f)}${room.flow.at > f ? ` → ${room.flow.n} at reseed ${room.flow.at}` : ''} (weakest host)  this host's cap ${benchN ?? '?'}${qs.has('cap') ? ' (forced)' : ' (benchmark)'}`,
       ]],
       ['midi', [
         `this host: ${midi.enabled ? `on, inputs: ${midi.status.inputs.join(', ') || 'none'}` : 'off'}`,
