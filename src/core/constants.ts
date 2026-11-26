@@ -11,3 +11,13 @@ export const LOOKBACK = 600;
 export const WAVE_N = 512;
 /** Sims reseed on this grid (8 bars of the 28-tick beat used until beat tracking lands). */
 export const TICKS_PER_BEAT = 28, RESEED_TICKS = TICKS_PER_BEAT * 4 * 8;
+/**
+ * Input-derived keys past the audio frame, served by `withEvents` (0 from plain sources):
+ * note pitch+1 / velocity*2 on a note-on tick, 255 on a MIDI beat tick, beat phase 0..255 and
+ * beat-in-bar 0..3 while a clock runs, tempo (bpm, 0 = no clock), CC params 0..254 (see CC_PARAMS).
+ */
+export const K_NOTE = 18, K_VEL = 19, K_BEAT = 20, K_PHASE = 21, K_BAR = 22, K_BPM = 23, K_P0 = 24, N_PARAMS = 4;
+/** Which CC number drives each param (any channel): mod wheel, cutoff, resonance, pan. */
+export const CC_PARAMS = [1, 74, 71, 10] as const;
+/** A clock beat is "current" for this many ticks; longer gaps read as no clock. */
+export const BEAT_HOLD = 120;

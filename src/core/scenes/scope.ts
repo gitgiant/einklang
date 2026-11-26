@@ -26,8 +26,8 @@ export const scope: SceneDef = {
   name: 'Oscilloscope / Lissajous',
   state(f, F) {
     const w = F.wave(f) ?? synthWave(F, f);
-    const { E, onsets, lastOnsetAge } = derive(F, f);
-    const hue = 256 + ((onsets * 96) % 1536) + ((f >> 2) % 256);
+    const { E, onsets, lastOnsetAge, hueOff } = derive(F, f);
+    const hue = 256 + ((onsets * 96) % 1536) + ((f >> 2) % 256) + hueOff;
     const L = new PrimList(WAVE_N + 8);
     const cx = W >> 1, cy = H >> 1, k = lastOnsetAge < 12 ? 3 : 2;
     L.push(OP_CLEAR, 0, 0, 0, 0, 0x000000, 255, 0);

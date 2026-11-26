@@ -70,7 +70,7 @@ export function demoSource(): FeatureSource {
     return f;
   };
   return {
-    get: (t, k) => get(t)[k],
+    get: (t, k) => (k < STRIDE ? get(t)[k] : 0),
     wave: (t) => {
       let w = wcache.get(t);
       if (!w) { w = wave(t); wcache.set(t, w); if (wcache.size > 64) wcache.delete(wcache.keys().next().value!); }

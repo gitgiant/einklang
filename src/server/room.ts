@@ -1,15 +1,29 @@
 // Room: the server-authoritative state (mode, scene schedule, presets, beat grid, host views),
 // the tick-stamped event stream, and the replay logs late joiners need to catch up.
-import { RESEED_TICKS, STRIDE } from '../core/constants.ts';
+import { FPS, RESEED_TICKS, STRIDE } from '../core/constants.ts';
 import {
-  DEFAULT_GRID, DEFAULT_PRESETS, INPUT_DELAY, modeTick, nextBoundary, sceneAt,
-  type ClientMsg, type HostInfo, type Mode, type RoomState, type ServerMsg, type TickEvent,
+  DEFAULT_GRID, DEFAULT_PRESETS, INPUT_DELAY, modeTick, modeTickF, nextBoundary, sceneAt,
+  type ClientMsg, type ClockMsg, type HostInfo, type Mode, type RoomState, type ServerMsg, type TickEvent,
 } from '../core/protocol.ts';
 import type { WsConn } from './ws.ts';
 
 /** Keep features and events for two reseed periods: covers a sim fast-forward from the last reseed. */
 const KEEP_TICKS = 2 * RESEED_TICKS;
 const MAX_EVENT_BYTES = 1024;
+/** The clock master keeps the job until it has been silent this long (or leaves). */
+export const CLOCK_TIMEOUT_MS = 2000;
+const TRANSPORT = new Set(['start', 'stop', 'continue']);
+const int7 = (x: unknown) => (Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 127 ? (x as number) : -1);
+
+/** Client events are relayed as-is, except MIDI ones, which are reduced to their known fields. */
+function sanitize(type: string, p: unknown): { ok: boolean; payload?: unknown } {
+  const o = (typeof p === 'object' && p ? p : {}) as Record<string, unknown>;
+  if (type === 'beat') return { ok: false }; // only the server stamps beats
+  if (type === 'note') { const n = int7(o.n), v = int7(o.v); return { ok: n >= 0 && v > 0, payload: { n, v } }; }
+  if (type === 'cc') { const c = int7(o.c), v = int7(o.v); return { ok: c >= 0 && v >= 0, payload: { c, v } }; }
+  if (type === 'transport') return { ok: TRANSPORT.has(o.op as string), payload: { op: o.op } };
+  return { ok: true, payload: p };
+}
 
 interface Client { id: number; ws: WsConn; name: string | null }
 
@@ -21,11 +35,14 @@ export class Room {
   private ring: Buffer[] = [];
   private log: TickEvent[] = [];
   private viewByName = new Map<string, number | null>();
+  /** Latest value of each CC, kept past the log window and carried into new timelines. */
+  private ccLast = new Map<number, TickEvent>();
+  private clock: { id: number; last: number; beatTick: number } | null = null;
   trackId = 0;
   state: RoomState = {
     mode: 'idle', epoch: 0,
     scene: { id: DEFAULT_PRESETS[0], prev: DEFAULT_PRESETS[0], at: 0 },
-    presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [],
+    presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null,
   };
   private now: () => number;
 
@@ -41,13 +58,15 @@ export class Room {
     ws.onclose = () => {
       this.clients.delete(c.id);
       if (this.leader === c) this.leader = null;
+      if (this.clock?.id === c.id) { this.clock = null; this.state.clock = null; }
       if (c.name !== null) this.broadcastState();
     };
     this.send(c, { t: 'welcome', you: c.id });
     this.send(c, { t: 'state', ...this.state });
     if (this.state.mode === 'file' && this.fileFeat) ws.send(this.fileFeat);
     if (this.state.mode === 'live') for (const m of this.ring) ws.send(m);
-    this.send(c, { t: 'log', epoch: this.state.epoch, events: this.log });
+    const inLog = new Set(this.log), stale = [...this.ccLast.values()].filter((e) => !inLog.has(e));
+    this.send(c, { t: 'log', epoch: this.state.epoch, events: [...stale, ...this.log] });
   }
 
   private send(c: Client, m: ServerMsg): void { c.ws.json(m); }
@@ -63,9 +82,25 @@ export class Room {
   /** New timeline: tick space restarts, so the logs and the scene schedule restart too. */
   private setMode(m: Mode): void {
     const cur = sceneAt(this.state.scene, this.tickNow());
-    const { epoch, presets, hosts } = this.state;
-    this.state = { ...m, epoch: epoch + 1, presets, hosts, scene: { id: cur, prev: cur, at: 0 }, grid: { ...DEFAULT_GRID } };
+    const { epoch, presets, hosts, clock } = this.state;
+    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, scene: { id: cur, prev: cur, at: 0 }, grid: { ...DEFAULT_GRID } };
     this.ring = []; this.log = [];
+    if (this.clock) this.clock.beatTick = -Infinity;
+  }
+
+  /** Announce a new timeline; the knobs keep their positions in it. */
+  private newTimeline(): void {
+    this.broadcastState();
+    const tick = this.tickNow() + INPUT_DELAY;
+    for (const [c, e] of this.ccLast) this.emit({ ...e, tick }, c);
+  }
+
+  private emit(ev: TickEvent, cc?: number): void {
+    this.log.push(ev);
+    if (cc !== undefined) this.ccLast.set(cc, ev);
+    const oldest = ev.tick - KEEP_TICKS;
+    while (this.log.length && this.log[0].tick < oldest) this.log.shift();
+    this.broadcast({ t: 'ev', ev });
   }
 
   private onMessage(c: Client, d: Buffer | string): void {
@@ -80,12 +115,12 @@ export class Room {
       case 'ev': {
         if (typeof m.type !== 'string' || m.type.length > 32) return;
         if (m.payload !== undefined && JSON.stringify(m.payload).length > MAX_EVENT_BYTES) return;
-        const ev: TickEvent = { tick: this.tickNow() + INPUT_DELAY, src: c.id, type: m.type, payload: m.payload };
-        this.log.push(ev);
-        const oldest = ev.tick - KEEP_TICKS;
-        while (this.log.length && this.log[0].tick < oldest) this.log.shift();
-        return this.broadcast({ t: 'ev', ev });
+        const { ok, payload } = sanitize(m.type, m.payload);
+        if (!ok) return;
+        const ev: TickEvent = { tick: this.tickNow() + INPUT_DELAY, src: c.id, type: m.type, payload };
+        return this.emit(ev, m.type === 'cc' ? (payload as { c: number }).c : undefined);
       }
+      case 'clock': return this.onClock(c, m);
       case 'scene': return this.requestScene(m.id, m.step, m.quant);
       case 'view': {
         const host = this.clients.get(m.host);
@@ -98,15 +133,47 @@ export class Room {
         this.leader = c;
         this.setMode({ mode: 'file', start: this.now() + 2500, frames: this.fileFeat.readUInt32LE(1), track: this.trackId });
         for (const o of this.clients.values()) o.ws.send(this.fileFeat);
-        return this.broadcastState();
+        return this.newTimeline();
       case 'live':
         this.leader = c;
         this.setMode({ mode: 'live', start: this.now() + 300 });
-        return this.broadcastState();
+        return this.newTimeline();
       case 'stop':
         this.leader = null; this.fileFeat = null;
         this.setMode({ mode: 'idle' });
-        return this.broadcastState();
+        return this.newTimeline();
+    }
+  }
+
+  /**
+   * MIDI clock. The first host to send one is master until it's silent for CLOCK_TIMEOUT_MS.
+   * It reports each beat after the fact, so the server stamps the *next* beat where it will
+   * fall (beats are predictable; the network isn't) and re-anchors the bar grid on it.
+   */
+  private onClock(c: Client, m: ClockMsg): void {
+    if (!(m.bpm >= 20 && m.bpm <= 400) || !Number.isFinite(m.at) || !Number.isInteger(m.n)) return;
+    const now = this.now(), cl = this.clock;
+    if (cl && cl.id !== c.id && now - cl.last < CLOCK_TIMEOUT_MS) return;
+    if (!cl || cl.id !== c.id) {
+      this.clock = { id: c.id, last: now, beatTick: -Infinity }; this.state.clock = c.id; this.broadcastState();
+    }
+    const k = this.clock!;
+    k.last = now;
+    const bpm100 = Math.round(m.bpm * 100), beatMs = 6e6 / bpm100, tpb = (6000 * FPS) / bpm100;
+    let n = m.n + 1, at = m.at + beatMs;
+    const earliest = this.tickNow() + INPUT_DELAY;
+    while (modeTickF(this.state, at) < earliest) { at += beatMs; n++; }
+    const tickF = modeTickF(this.state, at), tick = Math.round(tickF);
+    if (tick - k.beatTick < tpb / 2) return; // already stamped this one (or a restart landed on it)
+    k.beatTick = tick;
+    this.emit({ tick, src: c.id, type: 'beat', payload: { bpm: bpm100, n } });
+
+    // bar grid: beat n%4 of a bar lands on tickF; only rebroadcast on a real tempo/phase change
+    const origin = tickF - (n & 3) * tpb, g = this.state.grid, bar = 4 * tpb;
+    const drift = Math.abs(((((origin - g.origin) % bar) + bar * 1.5) % bar) - bar / 2);
+    if (Math.abs(tpb - g.tpb) > tpb * 0.005 || drift > 1) {
+      this.state.grid = { origin: Math.round(origin * 100) / 100, tpb: Math.round(tpb * 1000) / 1000 };
+      this.broadcastState();
     }
   }
 

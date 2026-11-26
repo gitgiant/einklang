@@ -1,8 +1,8 @@
-import { NB, STRIDE, K_RMS, K_ONSET } from './constants.ts';
+import { NB, STRIDE, K_RMS, K_ONSET, K_P0 } from './constants.ts';
 
 /** Read-only view of per-tick audio features. Unknown ticks read as silence. */
 export interface FeatureSource {
-  /** Feature k (see STRIDE layout) at tick, 0..255. */
+  /** Feature k (see STRIDE layout, plus the input keys past it) at tick, 0..255. */
   get(tick: number, k: number): number;
   /** Decimated L/R waveform at tick (WAVE_N interleaved int8 pairs), or null if not streamed. */
   wave(tick: number): Int8Array | null;
@@ -13,7 +13,7 @@ export const silence: FeatureSource = { get: () => 0, wave: () => null };
 /** Whole-track features as sent by the file-mode leader. */
 export function fileSource(feat: Uint8Array, frames: number): FeatureSource {
   return {
-    get: (t, k) => (t < 0 || t >= frames ? 0 : feat[t * STRIDE + k]),
+    get: (t, k) => (t < 0 || t >= frames || k >= STRIDE ? 0 : feat[t * STRIDE + k]),
     wave: () => null,
   };
 }
@@ -30,7 +30,8 @@ export function smooth(F: FeatureSource, f: number, k: number, n: number): numbe
   return (s / w) | 0;
 }
 
-export interface Smoothed { S: Int32Array; E: number; bass: number; onsets: number; lastOnsetAge: number }
+/** `hueOff`: MIDI param 0 (mod wheel) rotates every scene's palette; 0 without MIDI. */
+export interface Smoothed { S: Int32Array; E: number; bass: number; onsets: number; lastOnsetAge: number; hueOff: number }
 
 /** Common per-tick derived values every scene uses. */
 export function derive(F: FeatureSource, f: number, lookback = 600): Smoothed {
@@ -40,5 +41,5 @@ export function derive(F: FeatureSource, f: number, lookback = 600): Smoothed {
   const bass = ((S[0] + S[1] + S[2]) / 3) | 0;
   let onsets = 0, lastOnsetAge = 255;
   for (let i = 0; i < lookback; i++) if (F.get(f - i, K_ONSET)) { onsets++; if (lastOnsetAge === 255 && i < 255) lastOnsetAge = i; }
-  return { S, E, bass, onsets, lastOnsetAge };
+  return { S, E, bass, onsets, lastOnsetAge, hueOff: F.get(f, K_P0) * 6 };
 }

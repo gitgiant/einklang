@@ -13,13 +13,13 @@ TypeScript + Vite, **WebGPU only** for now (the WebGL2/naga fallback in the spec
   - **Room token (#2)**: it listens only on localhost and tailnet addresses. Every HTTP and WS request needs the token.
   - **Protocol v2 (#3)**: the server owns the mode, scene schedule, presets, beat grid and host views. Inputs become tick-stamped events, applied `INPUT_DELAY` (6) ticks after the server receives them. Joiners get the event log and the live feature ring (2 reseed periods). If an event arrives late, the flow sim rewinds and replays it.
   - **Presets and views (#9)**: scene switches land on the next beat or bar. Each host has a view (normal, mirror, flip, rotate 180, zoom, kaleido): its default comes from `?view=N`, and any host can override it from the hosts list.
-- Tests: pinned determinism hashes, order-independence, flow-sim independence, hit events, and server integration (auth, events, quantized switching, views, file mode). CI runs typecheck, tests and build. `npm run e2e` runs two real WebGPU browser hosts and checks they produce identical hashes at the same ticks.
+- Tests: pinned determinism hashes, order-independence, flow-sim independence, hit events, MIDI (sanitizing, clock master election and beat stamping, CC persistence, note/beat/CC features), and server integration (auth, events, quantized switching, views, file mode). CI runs typecheck, tests and build. `npm run e2e` runs two real WebGPU browser hosts and checks they produce identical hashes at the same ticks, including while a third socket plays MIDI clock, notes and a CC.
 
 Not done yet:
-- The beat grid is a fixed 28 ticks per beat until MIDI clock (#11) or beat tracking (#14) set it.
+- Without a MIDI clock the beat grid is a fixed 28 ticks per beat, until beat tracking (#14) lands. The flow sim's reseed period stays on that fixed grid.
 - The scope builds its waveform from the bands until the waveform stream (#7) exists.
 - There is no display-rate interpolation yet (#12).
-- Pads (#10) and MIDI (#11) will send their inputs as events; for now the only event is a manual hit.
+- Pads (#10) aren't relayed yet. MIDI CCs use a fixed map (no MIDI learn), and MIDI start/stop doesn't start or stop file playback.
 
 ## Run
 
@@ -42,5 +42,10 @@ To verify sync, check that the `hash` in the HUD matches across hosts.
   - `[` and `]`, or the arrows, step through the presets; the picker jumps straight to one. Switches land on the next beat, bar, or immediately (the "on" selector).
   - Space sends a manual hit.
   - **hosts** lists connected hosts and lets you override each one's view. `?name=` names a host.
+- **MIDI**: press **midi** on any Chrome host that has a MIDI device (the choice is remembered). Enable it on only one host per device, or every note arrives twice.
+  - **Clock**: the first host to send one is the master until it goes silent for 2 s. Its tempo and beat phase set the room's beat grid, so beat and bar quantizing follow the clock. MIDI start makes the next beat a downbeat. In the radial scene the core thumps on every beat.
+  - **Notes**: each note-on counts as an onset in every scene. In the radial scene, pitch sets the burst's direction and color, and octave sets its speed.
+  - **CCs**: CC 1 (mod wheel) rotates every scene's palette. CC 74, 71 and 10 also reach the scenes as params, but no scene uses them yet. The last value of each CC is kept across track changes and sent to late joiners.
+- **Debug panel**: press `d`, click **debug**, or add `?debug=1`. It shows a frame-time graph with hitches marked in red, fps, p99 and max frame time, recent hitches, and skipped or repeated ticks. It also shows network stats (RTT, clock offset, message and byte rates, live-feature gaps, late events), room state (epoch, scene schedule, grid, hosts) and MIDI status (inputs, local clock, room clock master, CC values).
 
 How it works: each scene's `state(tick, features)` uses integers only. Scenes are stateless with 600 ticks of lookback, so late joiners and dropped frames can't drift. The flow field is the exception: it is a sim, so it reseeds every 8 bars and fast-forwards up to 50 steps per frame. The tick comes from a server clock synced NTP-style (min-RTT sample).

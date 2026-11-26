@@ -16,7 +16,7 @@ export const tunnel: SceneDef = {
   id: 'tunnel',
   name: 'Tunnel / warp',
   state(f, F) {
-    const { S, E, bass, onsets, lastOnsetAge } = derive(F, f);
+    const { S, E, bass, onsets, lastOnsetAge, hueOff } = derive(F, f);
     let z = (((f % 16384) + 16384) % 16384) * 64; // period 16384 * 64 = 256 rings
     let rush = 0;
     for (let i = 0; i < LOOKBACK; i++) {
@@ -27,7 +27,7 @@ export const tunnel: SceneDef = {
     }
     z &= 0x3fffffff;
     const twist = (f * 5 + (isin(f * 7) >> 6)) & 4095;
-    const hue = f * 2 + onsets * 96;
+    const hue = f * 2 + onsets * 96 + hueOff;
     const u = new Int32Array(TUNNEL_U);
     u.set([z, twist, hue, E, bass, lastOnsetAge, rush, 0]);
     u.set(S, 8);

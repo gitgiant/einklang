@@ -14,8 +14,14 @@ export type Mode =
 /** Scene schedule: `id` is active from tick `at` on, `prev` before it. */
 export interface SceneSched { id: string; prev: string; at: number }
 
-/** Beat grid in the current timeline. Until MIDI clock / beat tracking land it is a fixed grid. */
+/**
+ * Beat grid in the current timeline: a bar starts at `origin`, a beat lasts `tpb` ticks (may be
+ * fractional). Fixed 28 ticks/beat until a MIDI clock master re-anchors it.
+ */
 export interface Grid { origin: number; tpb: number }
+
+/** MIDI clock master: a host's beat `n` happened at server time `at` (ms), at tempo `bpm`. */
+export interface ClockMsg { t: 'clock'; at: number; bpm: number; n: number }
 
 export interface HostInfo { id: number; name: string; view: number | null }
 
@@ -28,6 +34,8 @@ export type RoomState = Mode & {
   grid: Grid;
   /** Controller overrides; null = use the host's own ?view= default. */
   hosts: HostInfo[];
+  /** Host id of the MIDI clock master, if any. */
+  clock: number | null;
 };
 
 /** An input event, stamped by the server with the tick on which every host applies it. */
@@ -39,6 +47,7 @@ export type ClientMsg =
   | { t: 'ping'; c: number }
   | { t: 'hello'; name: string }
   | { t: 'ev'; type: string; payload?: unknown }
+  | ClockMsg
   | { t: 'scene'; id?: string; step?: number; quant: Quant }
   | { t: 'view'; host: number; view: number | null }
   | { t: 'play' } | { t: 'live' } | { t: 'stop' };
@@ -51,17 +60,20 @@ export type ServerMsg =
   | { t: 'log'; epoch: number; events: TickEvent[] };
 
 /** The tick every host renders at server time `ms` (before its own display offset). */
-export function modeTick(m: Mode, ms: number): number {
-  if (m.mode === 'file') return Math.floor(((ms - m.start) * FPS) / 1000);
-  if (m.mode === 'live') return Math.floor(((ms - m.start) * FPS) / 1000) - LIVE_DELAY;
-  return Math.floor((ms * FPS) / 1000);
+export const modeTick = (m: Mode, ms: number): number => Math.floor(modeTickF(m, ms));
+
+/** Fractional modeTick, for placing timed inputs (MIDI clock) between ticks. */
+export function modeTickF(m: Mode, ms: number): number {
+  if (m.mode === 'file') return ((ms - m.start) * FPS) / 1000;
+  if (m.mode === 'live') return ((ms - m.start) * FPS) / 1000 - LIVE_DELAY;
+  return (ms * FPS) / 1000;
 }
 
 /** First beat/bar boundary at or after `tick`. */
 export function nextBoundary(tick: number, grid: Grid, quant: Quant): number {
   if (quant === 'now') return tick;
   const len = quant === 'bar' ? grid.tpb * 4 : grid.tpb;
-  return grid.origin + Math.ceil((tick - grid.origin) / len) * len;
+  return Math.ceil(grid.origin + Math.ceil((tick - grid.origin) / len) * len - 1e-6);
 }
 
 export const sceneAt = (s: SceneSched, tick: number): string => (tick >= s.at ? s.id : s.prev);

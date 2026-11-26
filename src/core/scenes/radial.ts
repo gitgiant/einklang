@@ -1,5 +1,5 @@
 // Radial spectrum: port of the prototype scene. Stateless, 600 ticks of lookback.
-import { W, H, K_RMS, K_ONSET } from '../constants.ts';
+import { W, H, K_RMS, K_ONSET, K_NOTE, K_BPM, K_PHASE } from '../constants.ts';
 import { derive } from '../features.ts';
 import { icos, isin, h32, hsv, clamp } from '../math.ts';
 import { PrimList, OP_CLEAR, OP_CIRCLE, OP_RING, OP_LINE } from '../prims.ts';
@@ -11,8 +11,8 @@ export const radial: SceneDef = {
   state(f, F) {
     const L = new PrimList(1024);
     const cx = W >> 1, cy = H >> 1;
-    const { S, E, bass, onsets } = derive(F, f);
-    const hue = f * 2 + onsets * 96;
+    const { S, E, bass, onsets, hueOff } = derive(F, f);
+    const hue = f * 2 + onsets * 96 + hueOff;
 
     L.push(OP_CLEAR, 0, 0, 0, 0, hsv(hue + 768, 200, 10 + (E >> 4)), 255, 0);
 
@@ -34,15 +34,19 @@ export const radial: SceneDef = {
       if (age < 40) L.push(OP_RING, cx, cy, r0 + age * 12, 0, hsv(hue + 256, 120, 255), 255 - age * 6, 4);
       const gb = (F.get(g, 0) + F.get(g, 1)) >> 1;
       const n = 8 + (F.get(g, K_RMS) >> 4);
+      // a MIDI note aims its burst: pitch class -> direction and color, octave -> speed
+      const note = F.get(g, K_NOTE) - 1, pc = note % 12, oct = (note / 12) | 0;
       for (let j = 0; j < n; j++) {
-        const hh = h32(g, j), a = hh & 4095;
-        const dist = 100 + (2 + ((hh >>> 12) & 7) + (gb >> 6)) * age;
+        const hh = h32(g, j), a = note < 0 ? hh & 4095 : (((pc * 4096) / 12) | 0) + ((hh & 511) - 256);
+        const dist = 100 + (2 + ((hh >>> 12) & 7) + (note < 0 ? gb >> 6 : oct >> 1)) * age;
         L.push(OP_CIRCLE, cx + ((icos(a) * dist) >> 15), cy + ((isin(a) * dist) >> 15), 2 + ((hh >>> 20) & 3), 0,
-          hsv(hue + ((hh >>> 24) & 255), 160, 255), 255 - (((age * 255) / 90) | 0), 0);
+          hsv(note < 0 ? hue + ((hh >>> 24) & 255) : pc * 128 + ((hh >>> 24) & 63), 160, 255), 255 - (((age * 255) / 90) | 0), 0);
       }
     }
 
-    L.push(OP_CIRCLE, cx, cy, 40 + ((E / 3) | 0), 0, hsv(hue, 180, 60 + (E >> 1)), 255, 0);
+    // MIDI clock: the core thumps on every beat
+    const thump = F.get(f, K_BPM) ? (255 - F.get(f, K_PHASE)) >> 3 : 0;
+    L.push(OP_CIRCLE, cx, cy, 40 + ((E / 3) | 0) + thump, 0, hsv(hue, 180, 60 + (E >> 1)), 255, 0);
 
     // rms history strip
     let px = 0, py = H - 20 - (((F.get(f - 127, K_RMS) * 80) / 255) | 0);

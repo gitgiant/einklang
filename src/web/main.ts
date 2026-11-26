@@ -1,6 +1,6 @@
 // Synced app page. The server owns the room state (mode, scene schedule, presets, views); this
 // page renders it through WebGPU on the shared tick and relays this host's inputs as events.
-import { FPS, STRIDE } from '../core/constants.ts';
+import { CC_PARAMS, FPS, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE } from '../core/constants.ts';
 import { fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
 import { Analyzer, N } from '../core/analysis.ts';
@@ -8,6 +8,8 @@ import { modeTick, sceneAt, DEFAULT_PRESETS, DEFAULT_GRID, type ClientMsg, type 
 import { initGpu } from './gpu/gpu.ts';
 import { VIEWS } from './gpu/post.ts';
 import { Engine } from './engine.ts';
+import { MidiRelay } from './midi.ts';
+import { DebugPanel, Rate, type Counters } from './debug.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global { interface Window { __ek?: { hashes: Map<number, string>; scene: string; view: number; events: number } } }
@@ -37,13 +39,18 @@ const defaultView = Math.max(0, Math.min(VIEWS.length - 1, +(qs.get('view') ?? 0
 let ws: WebSocket | null = null, clockOff = 0, rtt = 0, me = 0;
 const samples: { rtt: number; off: number }[] = [];
 const sNow = () => performance.now() + clockOff;
-const send = (m: ClientMsg) => { if (ws?.readyState === 1) ws.send(JSON.stringify(m)); };
-const sendBin = (d: Uint8Array<ArrayBuffer>) => { if (ws?.readyState === 1) ws.send(d); };
+const net: Counters & { connects: number; lateEvents: number; liveGaps: number; lastPong: number } =
+  { msgsIn: 0, bytesIn: 0, msgsOut: 0, bytesOut: 0, connects: 0, lateEvents: 0, liveGaps: 0, lastPong: 0 };
+const send = (m: ClientMsg) => {
+  if (ws?.readyState !== 1) return;
+  const s = JSON.stringify(m); ws.send(s); net.msgsOut++; net.bytesOut += s.length;
+};
+const sendBin = (d: Uint8Array<ArrayBuffer>) => { if (ws?.readyState === 1) { ws.send(d); net.msgsOut++; net.bytesOut += d.length; } };
 function pingBurst() { for (let i = 0; i < 5; i++) setTimeout(() => send({ t: 'ping', c: performance.now() }), i * 60); }
 
 let room: RoomState = {
   mode: 'idle', epoch: -1, scene: { id: DEFAULT_PRESETS[0], prev: DEFAULT_PRESETS[0], at: 0 },
-  presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [],
+  presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null,
 };
 let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
@@ -54,9 +61,10 @@ let leaderLive: { an: Analyzer; analyser: AnalyserNode; td: Float32Array<ArrayBu
 function connect() {
   ws = new WebSocket(withToken(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`));
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => { samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected'); };
+  ws.onopen = () => { net.connects++; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected'); };
   ws.onclose = (e) => { msg(e.code === 1006 && !token ? 'not connected: open the join URL with ?t=' : 'disconnected, retrying'); setTimeout(connect, 1000); };
   ws.onmessage = (e) => {
+    net.msgsIn++; net.bytesIn += typeof e.data === 'string' ? e.data.length : (e.data as ArrayBuffer).byteLength;
     if (typeof e.data !== 'string') {
       const u = new Uint8Array(e.data), dv = new DataView(e.data);
       if (u[0] === 1) live.set(dv.getUint32(1, true), u.slice(5, 5 + STRIDE));
@@ -69,7 +77,7 @@ function connect() {
       samples.push({ rtt: t1 - m.c, off: m.s - (m.c + t1) / 2 });
       if (samples.length > 20) samples.shift();
       const best = samples.reduce((a, b) => (b.rtt < a.rtt ? b : a));
-      clockOff = best.off; rtt = best.rtt;
+      clockOff = best.off; rtt = best.rtt; net.lastPong = t1;
     } else if (m.t === 'welcome') me = m.you;
     else if (m.t === 'state') {
       const { t: _, ...s } = m;
@@ -86,7 +94,7 @@ function connect() {
     } else if (m.t === 'ev') {
       events.add(m.ev);
       if (window.__ek) window.__ek.events++;
-      if (m.ev.tick <= lastTick) listeners.lateEvent.forEach((f) => f(m.ev.tick)); // arrived late: replay
+      if (m.ev.tick <= lastTick) { net.lateEvents++; listeners.lateEvent.forEach((f) => f(m.ev.tick)); } // arrived late: replay
     }
   };
 }
@@ -204,6 +212,22 @@ pick.onchange = () => send({ t: 'scene', id: pick.value, quant: quant() });
 $('prev').onclick = () => send({ t: 'scene', step: -1, quant: quant() });
 $('next').onclick = () => send({ t: 'scene', step: 1, quant: quant() });
 $('hit').onclick = () => send({ t: 'ev', type: 'hit' });
+
+// ---- MIDI (opt-in per host, remembered: two hosts on one device would double every note) ----
+const midi = new MidiRelay(send, (perf) => perf + clockOff);
+const midiBtn = $<HTMLButtonElement>('midi');
+async function setMidi(on: boolean) {
+  try {
+    if (on) await midi.enable(); else midi.disable();
+    lsSet('midi', on ? '1' : '0');
+    msg(on ? `midi: ${midi.status.inputs.length ? midi.status.inputs.join(', ') : 'no inputs yet (hotplug works)'}` : 'midi off');
+  } catch (e) { msg(`midi failed: ${(e as Error).message}`); }
+  midiBtn.setAttribute('aria-pressed', String(midi.enabled));
+  midiBtn.textContent = midi.enabled ? 'midi on' : 'midi';
+}
+midiBtn.onclick = () => setMidi(!midi.enabled);
+if (lsGet('midi') === '1') setMidi(true);
+
 $('hostsBtn').onclick = () => $('hosts').classList.toggle('hide');
 
 function renderHosts(names: Map<string, string>) {
@@ -233,10 +257,49 @@ async function start() {
   listeners.state.push(onState); onState();
   listeners.lateEvent.push((t) => engine.invalidate(t));
 
-  let hudOn = true;
+  let hudOn = true, lastHash = '', lastF = 0;
+  const rate = new Rate();
+  const nameOf = (id: number | null) => (id === null ? 'none' : (room.hosts.find((h) => h.id === id)?.name ?? `#${id}`) + (id === me ? ' (this)' : ''));
+  const panel = new DebugPanel(() => {
+    const r = rate.sample(net), f = lastF;
+    const ageS = net.lastPong ? ((performance.now() - net.lastPong) / 1000).toFixed(1) : '-';
+    const rtts = samples.map((x) => x.rtt), minR = rtts.length ? Math.min(...rtts) : 0, maxR = rtts.length ? Math.max(...rtts) : 0;
+    let newest = -Infinity; for (const k of live.keys()) if (k > newest) newest = k;
+    const FE = withEvents(silence, events);
+    return [
+      ['hud', ($('hud').textContent ?? '').split('\n')],
+      ['network', [
+        `ws ${['connecting', 'open', 'closing', 'closed'][ws?.readyState ?? 3]}  connects ${net.connects}  me #${me}  ${location.host}`,
+        `rtt ${rtt.toFixed(1)}ms (min ${minR.toFixed(1)} max ${maxR.toFixed(1)}, ${samples.length} samples)  clock offset ${clockOff.toFixed(1)}ms  last pong ${ageS}s ago`,
+        `in ${r.msgsIn.toFixed(0)} msg/s ${(r.bytesIn / 1024).toFixed(1)} KiB/s   out ${r.msgsOut.toFixed(0)} msg/s ${(r.bytesOut / 1024).toFixed(1)} KiB/s`,
+        `totals in ${net.msgsIn} (${(net.bytesIn / 1048576).toFixed(2)} MiB)  out ${net.msgsOut} (${(net.bytesOut / 1048576).toFixed(2)} MiB)`,
+        room.mode === 'live' ? `live features: ${live.size} buffered, newest ${newest}, lead ${newest - f} ticks, gaps ${net.liveGaps}${leaderLive ? ' (leader)' : ''}` : `live features: n/a (${room.mode})`,
+        `events: ${window.__ek?.events ?? 0} received, ${net.lateEvents} late (replayed)`,
+      ]],
+      ['room', [
+        `mode ${room.mode}  epoch ${room.epoch}${room.mode === 'file' ? `  track ${room.track}  frames ${room.frames}` : ''}  tick ${f}  hash ${lastHash}`,
+        `scene ${room.scene.id} (prev ${room.scene.prev}, at ${room.scene.at})  presets ${room.presets.join(' ')}`,
+        `grid origin ${room.grid.origin} tpb ${room.grid.tpb} (${((60 * FPS) / room.grid.tpb).toFixed(2)} bpm)`,
+        `hosts: ${room.hosts.map((h) => `${h.name}#${h.id}${h.view === null ? '' : ` v${h.view}`}`).join(', ') || 'none'}`,
+      ]],
+      ['midi', [
+        `this host: ${midi.enabled ? `on, inputs: ${midi.status.inputs.join(', ') || 'none'}` : 'off'}`,
+        midi.enabled ? `local clock ${midi.status.bpm ? `${midi.status.bpm} bpm, beat ${midi.status.beat}` : 'none'}   last ${midi.status.lastMsg || '-'}` : '',
+        `room clock master: ${nameOf(room.clock)}   at tick: bpm ${FE.get(f, K_BPM)} phase ${FE.get(f, K_PHASE)} beat-in-bar ${FE.get(f, K_BAR)}`,
+        `params: ${CC_PARAMS.map((c) => `cc${c}=${events.cc(f, c)}`).join('  ')}`,
+      ].filter(Boolean)],
+      ['page', [
+        `${innerWidth}x${innerHeight} @${devicePixelRatio}x  canvas ${$<HTMLCanvasElement>('c').width}x${$<HTMLCanvasElement>('c').height}  view ${VIEWS[engine.view]}`,
+        `secure ${isSecureContext}  visibility ${document.visibilityState}  offset ${offsetMs}ms`,
+      ]],
+    ];
+  });
+  $('dbgBtn').onclick = () => panel.toggle();
+  if (qs.get('debug') === '1') panel.toggle(true);
   addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
     if (e.key === 'h') { hudOn = !hudOn; for (const id of ['hud', 'panel']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
+    else if (e.key === 'd') panel.toggle();
     else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
     else if (e.key === '[') send({ t: 'scene', step: -1, quant: quant() });
     else if (e.key === ']') send({ t: 'scene', step: 1, quant: quant() });
@@ -254,11 +317,15 @@ async function start() {
       F = mapSource(live); label = leaderLive ? 'live (leader)' : 'live';
       for (const k of live.keys()) if (k < f - 2000) live.delete(k);
     } else { F = silence; label = 'idle'; }
+    if (room.mode === 'live' && f >= 0 && f !== lastF && !live.has(f)) net.liveGaps++;
     events.prune(f - 2000);
     engine.setScene(sceneAt(room.scene, f));
     const self = room.hosts.find((h) => h.id === me);
     engine.view = self?.view ?? defaultView;
-    const hash = engine.frame(f, withEvents(F, events));
+    const FE = withEvents(F, events);
+    const hash = engine.frame(f, FE);
+    lastHash = hash; lastF = f;
+    panel.frame(f);
     lastTick = Math.max(lastTick, f);
     const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0 });
     dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view;
@@ -269,10 +336,17 @@ async function start() {
         `${label}  ·  ${engine.scene.def.name}${pending}`,
         `tick ${f}  hash ${hash}`,
         st,
+        FE.get(f, K_BPM) ? `midi ${FE.get(f, K_BPM)} bpm  beat ${FE.get(f, K_BAR) + 1}/4` : null,
+        ccLine(f),
         `${hostName}  view ${VIEWS[engine.view]}  ·  rtt ${rtt.toFixed(1)}ms  offset ${offsetMs}ms`,
       ].filter(Boolean).join('\n');
     }
   };
   loop();
+}
+/** CC params that have been set, for the HUD. */
+function ccLine(f: number): string | null {
+  const set = CC_PARAMS.map((c) => [c, events.cc(f, c)]).filter(([, v]) => v >= 0);
+  return set.length && N_PARAMS ? 'cc ' + set.map(([c, v]) => `${c}:${v}`).join(' ') : null;
 }
 start().catch((e: Error) => { const el = $('err'); el.style.display = 'grid'; el.textContent = e.message; });

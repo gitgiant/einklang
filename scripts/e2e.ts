@@ -77,6 +77,31 @@ try {
   check(da.scene === 'flow' && c.diff === 0 && c.shared > 20, `flow: ${c.shared} shared ticks, ${c.diff} mismatches`);
   const hud = await b.$eval('#hud', (e) => e.textContent ?? '');
   check(/gpu≡cpu ✓/.test(hud), `flow gpu≡cpu on host B (${/gpu≡cpu \S+/.exec(hud)?.[0]})`);
+
+  // MIDI: a third (headless) host plays clock, notes and a CC; the server runs in this process,
+  // so performance.now() is server time. Both hosts must show the clock and still agree.
+  await a.select('#scene', 'radial');
+  const m = new WebSocket(`ws://127.0.0.1:${port}/ws?t=${TOKEN}`);
+  await new Promise((r) => (m.onopen = r));
+  const msend = (x: unknown) => m.send(JSON.stringify(x));
+  msend({ t: 'hello', name: 'midi-box' });
+  msend({ t: 'ev', type: 'cc', payload: { c: 1, v: 90 } });
+  for (let n = 0; n < 6; n++) {
+    msend({ t: 'clock', at: performance.now(), bpm: 120, n });
+    msend({ t: 'ev', type: 'note', payload: { n: 60 + n * 3, v: 100 } });
+    await sleep(500);
+  }
+  da = await dbg(a); db = await dbg(b);
+  c = compare(da, db);
+  check(c.shared > 20 && c.diff === 0, `midi: ${c.shared} shared ticks, ${c.diff} mismatches`);
+  const hudA = await a.$eval('#hud', (e) => e.textContent ?? '');
+  check(/midi 120 bpm/.test(hudA) && /cc 1:90/.test(hudA), `midi clock + cc shown in HUD (${/midi .*/.exec(hudA)?.[0]})`);
+  await a.keyboard.press('d');
+  await sleep(600);
+  const dtext = await a.$eval('#debug pre', (e) => e.textContent ?? '');
+  check(/room clock master: midi-box/.test(dtext) && /fps \d/.test(dtext), 'debug panel shows frames, network and clock master');
+  if (process.env.SHOT) await a.screenshot({ path: process.env.SHOT });
+  m.close();
 } catch (e) {
   console.log('FAIL', e); failed = true;
 } finally {
