@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "codex-outrun",
+  "name": "Outrun",
+  "version": 1,
+  "author": {"vendor": "codex", "model": "gpt-6.2-sol"},
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {"id": "colors", "piece": "core-swatch", "params": {"colors": "#171137 #90235f #ff489e #ffad58 #fff0a2", "pads": false}},
+    {"id": "floor", "piece": "codex-grid-floor", "params": {"pace": 0.84, "horizon": 0.55, "glow": 1.25}}
+  ],
+  "edges": [
+    {"from": "colors.palette", "to": "floor.palette"}
+  ],
+  "out": "floor.out",
+  "post": {"bloom": 0.48, "threshold": 0.7, "exposure": 1.06}
+}

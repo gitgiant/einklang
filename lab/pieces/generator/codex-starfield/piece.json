@@ -1,0 +1,16 @@
+{
+  "id": "codex-starfield",
+  "kind": "generator",
+  "name": "Warp starfield",
+  "doc": "Perspective-projected stars streak away from the vanishing point, with more fast streams at higher energy and gold bursts on onsets.",
+  "ports": {"in": {"palette": {"type": "palette", "optional": true}}, "out": {"out": {"type": "tex"}}},
+  "params": {
+    "speed": {"type": "float", "default": 0.72, "min": 0.25, "max": 1.8, "doc": "Baseline travel speed through the star volume."},
+    "warp": {"type": "float", "default": 0.2, "min": 0, "max": 1, "doc": "Weight of the fast star streams, suitable for binding to audio energy."},
+    "glow": {"type": "float", "default": 1.2, "min": 0.4, "max": 2.5, "doc": "Brightness of the star cores and tails."}
+  },
+  "shader": "main.wgsl",
+  "budget": {"ms": 1.0, "scales": "res"},
+  "tags": ["synthwave", "space", "warp", "onset"],
+  "author": {"vendor": "codex", "model": "gpt-6.2-sol"}
+}
