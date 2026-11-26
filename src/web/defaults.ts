@@ -39,3 +39,9 @@ export function galleryBeats(qs: URLSearchParams, remembered: string | null): nu
   const v = qs.get('len') ?? (qs.has('at') || qs.has('stop') ? null : remembered);
   return Math.max(0.5, Math.min(16, +(v ?? DEFAULT_TRANS_BEATS) || DEFAULT_TRANS_BEATS));
 }
+
+/** `hold=`: bars each scene of the gallery cycle shows alone; undefined (also if invalid) = the default. */
+export function galleryHold(qs: URLSearchParams): number | undefined {
+  const v = qs.get('hold'), n = Number(v);
+  return v && n >= 0 ? Math.min(64, n) : undefined;
+}

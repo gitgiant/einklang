@@ -8,11 +8,14 @@
 //   start=<s>                        demo-track time to start at (default 0)
 //   stop=<s>                         stop rendering at this demo time (for screenshots); sets window.__done
 //   hud=0                            hide the tab bar; hud=1 also shows the info text (key `i`)
-//   trans=random|<effect>|all|off    transitions: auto-cycle scenes (2 bars, longer for long
-//                                    transitions) from `scene` with a random effect per switch (the
-//                                    default), one effect, or all in order; off (or none) = stay on
-//                                    one scene; key `t` / the selector. With stop= or at= the default
-//                                    is off, and a stop= cycle counts from the first scene at time 0
+//   trans=random|<effect>|all|off    transitions: auto-cycle scenes from `scene` with a random effect
+//                                    per switch (the default), one effect, or all in order; off (or
+//                                    none) = stay on one scene; key `t` / the selector. With stop= or
+//                                    at= the default is off, and a stop= cycle counts from the first
+//                                    scene at time 0
+//   hold=<bars>                      bars each scene of the cycle shows alone between transitions
+//                                    (rounded up so switches stay on bars). Default by len=: up to 2
+//                                    beats a switch every 4 bars, 4: every 3, 8: every 4, 16: every 6
 //   at=<s>                           with trans: one transition from `scene` to the next at demo
 //                                    time s instead of the cycle (for stills: add stop=<s>)
 //   len=<beats>                      transition length (default: the length selector's choice,
@@ -30,7 +33,7 @@ import { transIds, transName, transitions } from '../core/transitions.ts';
 import { VOTE_TAGS } from '../core/votes.ts';
 import { autoHideUi } from './idle.ts';
 import { tapZone, toggleUiOnDoubleTap } from './doubletap.ts';
-import { galleryBeats, galleryTrans, type GalleryTrans } from './defaults.ts';
+import { galleryBeats, galleryHold, galleryTrans, type GalleryTrans } from './defaults.ts';
 import { TRANS_KEYS, transRow } from './transvote.ts';
 import { ZERO, cycleSched, holdAt, retime, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
 import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
@@ -50,6 +53,7 @@ const interp = qs.get('interp') !== '0';
 let grid = (qs.get('grid') ?? document.body.dataset.grid) === '1'; // data-grid: default for hosted builds
 let current = qs.get('scene') ?? 'radial';
 let trans: GalleryTrans = galleryTrans(qs);
+const hold = galleryHold(qs);
 const oneShotAt = qs.has('at') ? Math.round(+qs.get('at')! * FPS) : null;
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
@@ -192,7 +196,7 @@ async function main() {
   });
   const ids = cells[0].engine.scenes.map((s) => s.def.id);
   let input = demoInput(startTick), tickNow = startTick;
-  const cyc = (): Cycle => ({ ids, trans: trans || 'random', beats, scores });
+  const cyc = (): Cycle => ({ ids, trans: trans || 'random', beats, hold, scores });
   const idxOf = (id: string) => Math.max(0, ids.indexOf(id));
   /** stop= stills count the cycle from time 0; otherwise it starts on `scene`. */
   let anchor: Anchor = qs.has('stop') ? ZERO : holdAt(startTick, idxOf(current), beats);
