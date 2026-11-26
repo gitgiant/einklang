@@ -30,7 +30,7 @@ Newest first. Keep short; prune the oldest entries.
   - MIDI CC learn; real MIDI/pad device test
 - **Gotchas:**
   - Never `git worktree remove` a worktree holding a `node_modules` junction: it deletes files through it (restore with `npm install`; `npm ci` fails while the user's Vite dev server runs).
-  - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes.
+  - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes. Heredocs with long JSON/WGSL/TS bodies sometimes fail to parse ("unexpected EOF"): write files with the Write tool, or put edit scripts in the scratchpad.
 
 ## Log
 - **2026-11-26 · sprites, text, style packs (#26 done).** Details in docs/prd-lab.md "Build notes for #26". Orbitron baked as `display-msdf` (OFL Reserved Font Name). Gate passes at 1080p for every changed piece and scene.
@@ -42,17 +42,3 @@ Newest first. Keep short; prune the oldest entries.
   - 568 files copied (no `third_party/`); `.vox` parser handles multi-model files and the nTRN/nGRP/nSHP scene graph (space_sim ships are hull + placed parts).
   - Lint: declared asset exists, shared license matches `index.json`, 2 MB cap counts shared files.
   - Exemplar `claude-vox-ship` (instanced cubes, band glow along the hull, onsets shatter it) + scene `claude-vox-fleet`; gate passes at 1080p (~0.9 ms whole show).
-- **2026-11-26 · lab PRD (#20–#26).**
-  - Grilled one question at a time:
-    - free-form pieces
-    - full node graph replaces the pipeline
-    - rich ports
-    - `einklang-lab` CLI
-    - in-repo `lab/`
-    - owner-only votes, all scenes live, net ≤ −2 retires
-    - votes as `data/votes.jsonl` → committed digest
-    - Hauptling delegator `lab` skill
-    - pieces edited in place
-    - space_sim own .vox imported
-    - CC0 downloads via egress
-  - Later added retro/text/sprites/generative tools; AI sprites code-drawn by default, image API opt-in (`imagegen: N`).
