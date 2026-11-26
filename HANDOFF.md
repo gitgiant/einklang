@@ -3,7 +3,7 @@
 Newest first. Keep short; prune the oldest entries.
 
 ## State
-- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate, #23 asset import, #24 voting, #26 sprites/text/styles are done. Open: #25 agents (`lab/AGENTS.md`, `lab/BACKLOG.md` from the catalog, the delegator `lab` skill, a first batch per vendor): the next ticket.
+- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate, #23 asset import, #24 voting, #26 sprites/text/styles are done. #25 agents: contract, backlog and `lab` skill done; its first batch is left to the other session's Hauptling delegator `d_a6a055` (owner's call), which is running 6 scene batches.
 - **Architecture now:** every scene is a graph in `lab/scenes/*.json` (v1 scenes = one synced `core-*` piece each), built from pieces in `lab/pieces/<kind>/<id>/` (`piece.json` + `driver.ts` and/or WGSL; the auto-shader path is `fn shade(uv)`). The Engine runs the show graph: scenes → `core-transition` → `core-post` → canvas. Piece API: `lab/api/index.ts`. The hash covers the graph inputs, and v1 state parity is unit-tested.
 - **Run:**
   - `npm run build && npm run server` prints the join URLs with `?t=<token>` (token in `.einklang-token`).
@@ -20,7 +20,8 @@ Newest first. Keep short; prune the oldest entries.
 - **Sprites / text / styles (#26):** `.spr` sheets + `.efont` fonts in `lab/assets/` (`sprite import`, `font bake`); pieces `core-sprite`, `core-sprite-emitter`, `core-text`, `core-swatch`; `lab/styles/*.json` packs via a scene's `style`; `.lrc` lyrics ride with the track (`ctx.lyric()`). `sprite gen` (image API) is off unless the brief's `EINKLANG_IMAGEGEN=N` and the host cap allow it; never called a real API here. Engine chunk ~780 KB (inlined assets, mostly the MSDF font).
 - **Votes:** `+`/`-` (live, toast everywhere, `-` skips), Select+△/✕ on pads, gallery 👍/👎 + tags. Server appends `data/votes.jsonl` (gitignored), list = every non-retired lab scene, net <= -2 drops out. `]`/`>`/R1 and the panel's **auto** pick by weight 2^score. `npm run lab -- feedback` writes `lab/feedback.json` + `lab/FEEDBACK.md` and retires scene files (commit them).
 - **The user's server on :8080 was started before #24:** restart it (`npm run build && npm run server`) to get votes, lyrics and the new scenes; the page tolerates the old state but those features stay dead until then.
-- **Untested:** `hauptling.json` + `hauptling.Dockerfile` (Chrome in the worker image). This PC's WSL has no Docker or Hauptling, so whether Chrome sees the GPU under `--gpus all` is unproven.
+- **Agents (#25):** contract `lab/AGENTS.md`, backlog `lab/BACKLOG.md` (catalog, built items ticked, pinned briefs on top), `lab` skill in `.agents/skills/lab/` and `.claude/skills/lab/` (keep identical); root `AGENTS.md`/`CLAUDE.md` link them. From WSL run the digest with `cmd.exe /c "npm run lab -- feedback"` in `/mnt/c/...`: Linux node there fails, and WSL git shows every file as modified (CRLF noise).
+- **Hauptling is installed in WSL** (doctor all green, RTX 4070 in containers). But PR #19's GPU gate fails: WebGPU is lost on readback in the worker container (Chrome swap-chain allocation), so `hauptling.Dockerfile` Chrome-on-GPU is still unproven.
 - **Open:**
   - lab: recording a `.feat` fixture from real audio; vote param correlation in the digest
   - pad vote chord not covered by tests (no real pad here)
@@ -33,12 +34,9 @@ Newest first. Keep short; prune the oldest entries.
   - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes. Heredocs with long JSON/WGSL/TS bodies sometimes fail to parse ("unexpected EOF"): write files with the Write tool, or put edit scripts in the scratchpad.
 
 ## Log
+- **2026-11-26 · agents (#25).** Wrote the contract, backlog and `lab` skill. Found delegator `d_a6a055` already running scene batches; the owner chose not to spawn a separate first batch.
 - **2026-11-26 · sprites, text, style packs (#26 done).** Details in docs/prd-lab.md "Build notes for #26". Orbitron baked as `display-msdf` (OFL Reserved Font Name). Gate passes at 1080p for every changed piece and scene.
 - **2026-11-26 · UI polish.** Gallery info text off by default (`i` / `hud=1`); transitions default 8 beats (gallery cycle 4 bars at 8); controls fade after 3 s without input on both pages (`src/web/idle.ts`); vote panel shows the scene name.
 - **2026-11-26 · voting (#24 done).**
   - User chose weighted next + server auto-rotation (no rotation existed before). `step` stays ordered; `weighted` is new.
   - `src/core/votes.ts` (format, tally, weight, retire), Room `vote()` / `tickAuto()`, `POST /vote` + `GET /scores`, toast, gallery panel, `scripts/lab/feedback.ts`.
-- **2026-11-26 · asset import (#23 done).**
-  - 568 files copied (no `third_party/`); `.vox` parser handles multi-model files and the nTRN/nGRP/nSHP scene graph (space_sim ships are hull + placed parts).
-  - Lint: declared asset exists, shared license matches `index.json`, 2 MB cap counts shared files.
-  - Exemplar `claude-vox-ship` (instanced cubes, band glow along the hull, onsets shatter it) + scene `claude-vox-fleet`; gate passes at 1080p (~0.9 ms whole show).
