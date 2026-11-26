@@ -104,3 +104,9 @@ export function profileMd(r: ProfileReport): string[] {
     '### Each transition (radial → tunnel, 4 beats, warm)', '', ...statTable(r.transitions), '',
   ];
 }
+
+/** One line per switch, for logs that only carry a short message. */
+export function profileCompact(r: ProfileReport): string {
+  const f = (x: SwitchStat) => `${x.label.split(',')[0]}: A ${ms(x.before)} first ${ms(x.first)} p50 ${ms(x.p50)} p95 ${ms(x.p95)} max ${ms(x.max)}@${x.maxAt} B ${ms(x.after)} gpu ${sections(x.gpu, ['a', 'b', 'mix', 'post'])} cpu ${sections(x.cpu, ['a', 'b', 'mix', 'post'])}`;
+  return [`${r.adapter} ${r.res} ts=${r.timestamps}`, ...r.cold.map(f), ...r.scenes.map(f), ...r.transitions.map(f)].join('\n');
+}

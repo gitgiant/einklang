@@ -23,6 +23,7 @@
 // build without the server shows the panel disabled.
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
+import { FrameStats } from './framestats.ts';
 import { FPS } from '../core/constants.ts';
 import { TRANS_BEATS, ranTransition, type SceneSched } from '../core/protocol.ts';
 import './transitions.ts'; // installs the transition registry (lab/transitions/)
@@ -321,7 +322,7 @@ async function main() {
   });
   layout();
 
-  let frames = 0, fps = 0, lastFps = performance.now();
+  const fstats = new FrameStats();
   const loop = () => {
     const now = performance.now();
     const tF = input.tick(now);
@@ -332,10 +333,9 @@ async function main() {
     const active = grid ? cells : cells.slice(0, 1);
     const sched = schedAt(tick);
     const hashes = active.map((c, i) => c.engine.frame(tick, input.F, undefined, i === 0 ? sched : undefined, sub));
+    fstats.frame(performance.now(), grid ? null : cells[0].engine.transition?.type ?? null);
     if (marked !== shownId()) mark();
     if (sched) votes.trans.ran(ranTransition(sched, tick));
-    frames++;
-    if (now - lastFps > 500) { fps = (frames * 1000) / (now - lastFps); frames = 0; lastFps = now; }
     if (info) {
       const sc = cells[0].engine.scene;
       $('hud').textContent = [
@@ -347,7 +347,7 @@ async function main() {
         })()}` : null,
         !grid && sc.status ? sc.status() : null,
         `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  t transition  ·  g grid  ·  h UI  ·  i info`,
-        `${fps.toFixed(0)} fps  ·  WebGPU ${gpu.adapterInfo}`,
+        `${fstats.line(transName)}  ·  WebGPU ${gpu.adapterInfo}`,
       ].filter(Boolean).join('\n');
     }
     if (tick >= stopTick) { gpu.device.queue.onSubmittedWorkDone().then(() => { window.__done = true; }); return; }
