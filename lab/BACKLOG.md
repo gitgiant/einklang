@@ -21,7 +21,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Physics: soft body
 - [x] Voxel shapes / .vox assets → claude-vox-ship, scene claude-vox-fleet
 - [ ] 3D assets (glTF)
-- [ ] Strange attractors
+- [x] Strange attractors → agy-attractor, scene agy-attractor-bloom
 - [x] Reaction-diffusion → claude-reaction, scene claude-coral
 - [ ] Physarum
 - [ ] Smoke / fluid
@@ -32,12 +32,12 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Fractals (mandelbox, julia)
 - [ ] L-systems / trees
 - [ ] Cellular automata
-- [ ] Spectrum terrain / ridgeline
+- [x] Spectrum terrain / ridgeline → agy-ridgeline, scene agy-unknown-ridges
 - [ ] Voronoi
 - [ ] Noise fields
 - [x] Text / lyrics → core-text
 - [ ] MIDI piano-roll
-- [ ] Lasers / lightning
+- [x] Lasers / lightning → agy-lightning, scene agy-storm
 - [ ] Shape grammar
 - [x] Metaballs → claude-metaballs, scene claude-lava
 - [ ] String / wave sim

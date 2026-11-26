@@ -1,0 +1,91 @@
+{
+  "id": "agy-attractor",
+  "kind": "generator",
+  "name": "Strange attractors",
+  "doc": "GPU compute-simulated Lorenz, Clifford, and Peter de Jong strange attractor particles splatted additively in 3D, with parameters morphing smoothly with band energy and 3D rotation stepping on the beat.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "colors the additive particle filaments by velocity and trajectory fold"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "attractor": {
+      "type": "enum",
+      "default": 0,
+      "options": [
+        "lorenz",
+        "clifford",
+        "dejong"
+      ],
+      "doc": "strange attractor family"
+    },
+    "points": {
+      "type": "int",
+      "default": 64,
+      "min": 16,
+      "max": 128,
+      "doc": "particle count in thousands (16K to 128K)"
+    },
+    "morph": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.5,
+      "doc": "how strongly smoothed band energy morphs the attractor parameters"
+    },
+    "spin": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 3.0,
+      "doc": "beat-synced 3D orbital rotation punch"
+    },
+    "speed": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.2,
+      "max": 3.0,
+      "doc": "particle integration and evolution speed"
+    },
+    "size": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.4,
+      "max": 2.5,
+      "doc": "additive splat radius multiplier"
+    },
+    "gain": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.2,
+      "max": 3.0,
+      "doc": "additive particle brightness"
+    }
+  },
+  "budget": {
+    "ms": 1.8,
+    "scales": "n"
+  },
+  "tags": [
+    "attractor",
+    "lorenz",
+    "clifford",
+    "dejong",
+    "particles",
+    "compute",
+    "3d"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  }
+}

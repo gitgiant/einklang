@@ -1,0 +1,99 @@
+{
+  "format": 1,
+  "id": "agy-unknown-ridges",
+  "name": "Unknown ridges",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 3,
+        "window": 8,
+        "gain": 1.6
+      }
+    },
+    {
+      "id": "highs",
+      "piece": "core-follow",
+      "params": {
+        "lo": 9,
+        "hi": 15,
+        "window": 6,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "drift",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 32,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#1a2844 #4472a8 #8ec8f2 #eaf6ff #4bf0e8",
+        "cycle": 0.12
+      }
+    },
+    {
+      "id": "ridges",
+      "piece": "agy-ridgeline",
+      "params": {
+        "rows": 52,
+        "speed": 1.15,
+        "thickness": 1.75,
+        "fill": 0.34
+      },
+      "bind": {
+        "height": {
+          "from": "bass.out",
+          "range": [0.95, 1.75]
+        },
+        "glow": {
+          "from": "highs.out",
+          "range": [1.15, 2.35]
+        },
+        "perspective": {
+          "from": "drift.out",
+          "range": [0.35, 0.72]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.42,
+        "zoom": 0.002,
+        "rotate": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "ridges.palette"
+    },
+    {
+      "from": "ridges.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.55,
+    "threshold": 0.72,
+    "exposure": 1.05
+  }
+}

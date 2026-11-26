@@ -1,0 +1,86 @@
+{
+  "id": "agy-ridgeline",
+  "kind": "generator",
+  "name": "Spectrum ridgeline",
+  "doc": "Joy-Division style stacked spectrum ridgelines scrolling smoothly into depth with back-to-front occlusion, atmospheric depth fog, and glowing HDR crests.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "colors the glowing ridge crests and horizon mist"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "rows": {
+      "type": "int",
+      "default": 48,
+      "min": 16,
+      "max": 64,
+      "doc": "number of stacked historical spectrum ridges"
+    },
+    "speed": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 3.0,
+      "doc": "scroll speed into depth"
+    },
+    "height": {
+      "type": "float",
+      "default": 1.15,
+      "min": 0.2,
+      "max": 2.5,
+      "doc": "ridge elevation amplitude"
+    },
+    "perspective": {
+      "type": "float",
+      "default": 0.5,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "0 = flat Joy-Division stack, 1 = deep horizon perspective"
+    },
+    "glow": {
+      "type": "float",
+      "default": 1.5,
+      "min": 0.1,
+      "max": 4.0,
+      "doc": "ridge crest HDR glow intensity"
+    },
+    "thickness": {
+      "type": "float",
+      "default": 1.7,
+      "min": 0.6,
+      "max": 4.0,
+      "doc": "ridge line stroke width in pixels"
+    },
+    "fill": {
+      "type": "float",
+      "default": 0.3,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "slope shading and mist on the occluding mountain faces"
+    }
+  },
+  "budget": {
+    "ms": 1.2,
+    "scales": "res"
+  },
+  "tags": [
+    "spectrum",
+    "ridgeline",
+    "terrain",
+    "joy-division",
+    "retro"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  }
+}
