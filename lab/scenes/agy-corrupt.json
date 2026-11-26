@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "agy-corrupt",
+  "name": "Corrupt feed",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "hit", "piece": "core-follow", "params": { "lo": 0, "hi": 3, "window": 4, "gain": 2.0 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 2.2 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#080914 #00f5d4 #ff006e #fee440 #9b5de5", "cycle": 0.5 } },
+    { "id": "tun", "piece": "core-tunnel" },
+    { "id": "bars", "piece": "core-bars", "params": { "height": 0.65, "gap": 0.18, "glow": 1.4 } },
+    { "id": "mix", "piece": "core-blend", "params": { "mode": 1, "amount": 0.85 } },
+    { "id": "glitch", "piece": "agy-glitch", "params": { "amount": 0.68, "smear": 0.72, "burst": 0.85, "blocks": 20 },
+      "bind": {
+        "displace": { "from": "hit.out", "range": [0.2, 0.9] },
+        "rgb": { "from": "hi.out", "range": [0.25, 0.95] }
+      } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "bars.palette" },
+    { "from": "tun.out", "to": "mix.a" },
+    { "from": "bars.out", "to": "mix.b" },
+    { "from": "mix.out", "to": "glitch.in" }
+  ],
+  "out": "glitch.out",
+  "post": { "bloom": 0.45, "threshold": 0.75 }
+}

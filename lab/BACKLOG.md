@@ -56,7 +56,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Palette cycling on the beat → claude-cycle, scene claude-cycle-plasma
 - [ ] Per-pad color
 - [ ] Contrast guard (APCA)
-- [ ] Blackbody / temperature
+- [x] Blackbody / temperature → agy-blackbody, scene agy-forge
 - [ ] LUT grading
 - [ ] Duotone / tritone mapping
 - [ ] Palettes learned from votes
@@ -67,10 +67,10 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Feedback / trails → core-trails
 - [x] Bloom → core-post
 - [ ] Chromatic aberration
-- [ ] Glitch / datamosh
+- [x] Glitch / datamosh → agy-glitch, scene agy-corrupt
 - [x] CRT / VHS → claude-crt, scene claude-late-show
 - [ ] ASCII / dither (Bayer, error diffusion)
-- [ ] Halftone
+- [x] Halftone → agy-halftone, scene agy-print-run
 - [ ] Edge / toon
 - [ ] Displacement by field
 - [ ] Polar warp
