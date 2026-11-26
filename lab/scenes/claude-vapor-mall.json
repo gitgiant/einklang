@@ -1,0 +1,36 @@
+{
+  "format": 1,
+  "id": "claude-vapor-mall",
+  "name": "Vaporwave mall",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "clock", "piece": "claude-beat-clock", "params": { "rate": 1, "sharp": 3 } },
+    { "id": "kick", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.8 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#1a0b3d #b967ff #01cdfe #ff71ce #fffb96", "cycle": 0 } },
+    { "id": "sun", "piece": "claude-synth-sun", "params": { "horizon": 0.66, "size": 0.26, "x": 0.3, "rise": 0.8, "slats": 6, "scroll": 0.25, "pulse": 0.25, "glow": 0.6, "sky": 0.9, "bright": 1.3 },
+      "bind": { "beats": { "from": "clock.out", "range": [0, 1024] } } },
+    { "id": "floor", "piece": "claude-neon-grid", "params": { "horizon": 0.66, "mode": 1, "speed": 0.5, "height": 0.55, "cell": 1, "curve": 0.15, "tint": 0.75, "glow": 1.2, "pulse": 0.6, "wave": 0.7, "fog": 0.06, "reflect": 0.8 },
+      "bind": { "beats": { "from": "clock.out", "range": [0, 1024] } } },
+    { "id": "ground", "piece": "core-blend", "params": { "mode": 5 } },
+    { "id": "desk", "piece": "claude-win95", "params": { "count": 4, "life": 8, "size": 0.3, "tint": 0.25, "kanji": 1, "side": 0.9, "glow": 1.3 },
+      "bind": { "beats": { "from": "clock.out", "range": [0, 1024] }, "bump": { "from": "kick.out", "range": [0.3, 1.6] } } },
+    { "id": "ui", "piece": "core-blend", "params": { "mode": 5 } },
+    { "id": "vhs", "piece": "claude-crt", "params": { "curve": 0.1, "lines": 240, "scan": 0.25, "mask": 0.1, "shift": 0.0025, "kick": 0.006, "track": 1, "noise": 0.045, "vignette": 0.6 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "sun.palette" },
+    { "from": "pal.palette", "to": "floor.palette" },
+    { "from": "pal.palette", "to": "desk.palette" },
+    { "from": "sun.out", "to": "floor.sky" },
+    { "from": "sun.out", "to": "ground.a" },
+    { "from": "floor.out", "to": "ground.b" },
+    { "from": "ground.out", "to": "ui.a" },
+    { "from": "desk.out", "to": "ui.b" },
+    { "from": "ui.out", "to": "vhs.in" }
+  ],
+  "out": "vhs.out",
+  "post": { "bloom": 0.4, "threshold": 0.85 }
+}
