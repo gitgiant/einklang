@@ -105,8 +105,9 @@ export function profileMd(r: ProfileReport): string[] {
   ];
 }
 
-/** One line per switch, for logs that only carry a short message. */
+/** Compact, transitions first, for logs that only carry a short message. */
 export function profileCompact(r: ProfileReport): string {
-  const f = (x: SwitchStat) => `${x.label.split(',')[0]}: A ${ms(x.before)} first ${ms(x.first)} p50 ${ms(x.p50)} p95 ${ms(x.p95)} max ${ms(x.max)}@${x.maxAt} B ${ms(x.after)} gpu ${sections(x.gpu, ['a', 'b', 'mix', 'post'])} cpu ${sections(x.cpu, ['a', 'b', 'mix', 'post'])}`;
-  return [`${r.adapter} ${r.res} ts=${r.timestamps}`, ...r.cold.map(f), ...r.scenes.map(f), ...r.transitions.map(f)].join('\n');
+  const g = (x: SwitchStat, k: string) => (x.gpu ? ms(x.gpu[k] ?? 0) : '-');
+  const f = (x: SwitchStat) => `${x.label.split(/[,:]/)[0].replace('radial → ', '')} ${ms(x.first)}/${ms(x.p50)}/${ms(x.p95)}/${ms(x.max)} b${g(x, 'b')} m${g(x, 'mix')}`;
+  return [`${r.adapter} ts=${r.timestamps} first/p50/p95/max`, ...r.transitions.map(f), ...r.cold.map(f), ...r.scenes.map(f)].join('\n');
 }
