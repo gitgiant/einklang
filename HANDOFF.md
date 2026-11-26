@@ -3,7 +3,7 @@
 Newest first. Keep short; prune the oldest entries.
 
 ## State
-- v1 in progress, **WebGPU only**. Tickets done: #1 (scaffold), #4 (renderer, WebGPU side), #5, #6, #8, #2, #3, #7, #9, #10, #11, #12, #19.
+- **Status 2026-11-26: v1 complete** (`21c7d76`), **WebGPU only**. All v1 tickets done: #1–#12, #19 (#4 and #8 without their WebGL2 parts). v2 (#13–#15) and v3 (#16–#18) not started. Last full run: 40 unit tests and e2e all pass.
 - Run: `npm run build && npm run server` (prints join URLs with `?t=<token>`, token in `.einklang-token`). Dev: `npm run dev` + server, open `http://localhost:5173/?t=<token>`. Gallery needs no server: `/gallery.html`.
 - Checks: `npm run typecheck`, `npm test` (40), `npm run build && npm run e2e` (two headless WebGPU hosts + a MIDI socket + Chrome's fake mic for instrument mode, compares hashes per tick).
 - Debug panel: `d` / **debug** / `?debug=1` (frame graph + hitches, network, room, MIDI, and the old bottom-left HUD, which is now hidden). e2e opens pages with `?debug=1`; `TRACKS=a.mp3,b.mp3 npm run e2e` tests with real files.

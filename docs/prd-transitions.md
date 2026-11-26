@@ -9,6 +9,13 @@ Status: agreed 2026-11-26, **built 2026-11-26**. Ticket: #19. Stills: `docs/mock
 - Pause and resume keep the schedule (tick space is the track position), so a transition freezes. Seek, play, live and stop reset it. A switch requested while paused is a cut on the frozen tick.
 - A request without `trans` (old clients, tests) is a cut.
 
+### Status (2026-11-26)
+
+- **Shipped** in `99e7d43`. All 13 effects plus cut, random, panel selectors, pads and keys, gallery auto-cycle and stills.
+- **Verified:** unit tests (scheduling, queueing, random, curves, stutter grid, audio mask, pause/seek) and e2e: two hosts run every effect, 0 hash mismatches over ~3100 shared ticks.
+- **Since then:** #12 made transition progress follow the sub-tick between ticks on fast displays. Only drawing uses it; the hash still uses whole ticks.
+- **Known:** on a narrow window the panel wraps onto another row, and the hosts popup can cover it. Not tuned on a real show yet: effect look, flash strength, glitch band count, melt drip.
+
 ## Problem
 
 Scene switches are hard cuts. The server already quantizes them to the beat or bar, but at that boundary one scene vanishes and the next appears. For live visuals the switch is a performance moment. It needs a set of transitions that are synced across every host, follow the tempo, and work from the panel, the keyboard and the pads.
