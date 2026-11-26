@@ -1,6 +1,8 @@
 // Local track list for the host that loaded files or a folder. Each track is decoded here,
 // analyzed in a worker, then uploaded; the next one is prepared while the current one plays.
 import type { AnalyzeIn, AnalyzeOut } from './analyze.worker.ts';
+// inlined: the single-file gallery build (build:live) has nowhere to load a separate worker from
+import AnalyzeWorker from './analyze.worker.ts?worker&inline';
 
 /** Formats Chrome can decode; the browser has the final word (decode errors are reported). */
 const MIME: Record<string, string> = {
@@ -22,7 +24,7 @@ export class Player {
   private lrc = new Map<string, File>();
   index = 0;
   private cache = new Map<File, Promise<Prepared>>();
-  private worker = new Worker(new URL('./analyze.worker.ts', import.meta.url), { type: 'module' });
+  private worker = new AnalyzeWorker();
   private jobs = new Map<number, { ok: (o: Uint8Array<ArrayBuffer>) => void; progress: (p: number) => void }>();
   private nextJob = 1;
 

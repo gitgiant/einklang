@@ -7,8 +7,9 @@
 <title>einklang</title>
 <style>
   :root { color-scheme: dark; }
-  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 12px ui-monospace, Consolas, monospace; color: #ddd; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 12px ui-monospace, Consolas, monospace; color: #ddd; touch-action: manipulation; }
   canvas { display: block; width: 100vw; height: 100vh; }
+  #c { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
   #hud { position: fixed; left: 8px; bottom: 8px; background: #000a; padding: 6px 8px; white-space: pre; pointer-events: none; border-radius: 4px; }
   #panel { position: fixed; top: 8px; left: 8px; background: #000c; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; max-width: 95vw; border-radius: 6px; }
   button, input, select { font: inherit; background: #222; color: #ddd; border: 1px solid #555; padding: 4px 6px; border-radius: 3px; }
@@ -32,6 +33,8 @@
   #panel, #bar, #hosts { transition: opacity .4s; }
   body.idle #panel, body.idle #bar, body.idle #hosts { opacity: 0; pointer-events: none; }
   body.idle { cursor: none; }
+  /* hidden by double-tap: stays hidden until the next one */
+  body.ui-off :is(#panel, #bar, #hosts, #hud, #debug) { opacity: 0; visibility: hidden; pointer-events: none; }
 </style>
 </head>
 <body>

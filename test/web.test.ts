@@ -1,0 +1,94 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { galleryTrans, mainTrans, restoreAuto } from '../src/web/defaults.ts';
+import { ZERO, cycleSched, cycleTicks, holdAt, randomEffect, transTicks, type Cycle } from '../src/web/cycle.ts';
+import { DoubleTap } from '../src/web/doubletap.ts';
+import { Room } from '../src/server/room.ts';
+import { TRANSITIONS, type ServerMsg } from '../src/core/protocol.ts';
+
+const store = (o: Record<string, string>) => (k: string) => o[k] ?? null;
+
+test('app defaults: random, 8 beats; the remembered choice wins', () => {
+  assert.deepEqual(mainTrans(store({})), { type: 'random', beats: 8 });
+  assert.deepEqual(mainTrans(store({ trans: 'wipe', tlen: '2' })), { type: 'wipe', beats: 2 });
+  assert.deepEqual(mainTrans(store({ trans: 'nonsense', tlen: '0' })), { type: 'random', beats: 0 });
+});
+
+test('auto-rotation: a device restores its choice only into a room nobody has set', () => {
+  const preset = { bars: 8, trans: { type: 'random' as const, beats: 8 }, preset: true };
+  assert.equal(restoreAuto(preset, store({})), null);
+  assert.deepEqual(restoreAuto(preset, store({ auto: '0' })), { t: 'auto', bars: 0, trans: { type: 'random', beats: 8 } });
+  assert.deepEqual(restoreAuto(preset, store({ trans: 'blend' })), { t: 'auto', bars: 8, trans: { type: 'blend', beats: 8 } });
+  assert.equal(restoreAuto({ bars: 4, trans: preset.trans }, store({ auto: '0' })), null);
+  assert.equal(restoreAuto(null, store({ auto: '16' })), null);
+});
+
+test('room: starts rotating every 8 bars, also after the tick space restarts', () => {
+  let ms = 1e7;
+  const room = new Room(() => ms, () => 0.5), got: ServerMsg[] = [];
+  const state = () => got.filter((m) => m.t === 'state').at(-1) as Extract<ServerMsg, { t: 'state' }>;
+  const ws = { on: () => {}, json: (m: ServerMsg) => got.push(m), send: (s: string) => got.push(JSON.parse(s)) };
+  room.join(ws as never);
+  assert.deepEqual(room.state.auto, { bars: 8, trans: { type: 'random', beats: 8 }, preset: true });
+  const first = room.state.scene.id, bar = room.state.grid.tpb * 4;
+  room.tickAuto();
+  assert.equal(room.state.scene.id, first, 'not right at start-up');
+  ms += (8 * bar * 1000) / 60;
+  room.tickAuto();
+  assert.notEqual(room.state.scene.id, first);
+  assert.notEqual(room.state.scene.trans.type, 'cut');
+  assert.ok(state());
+});
+
+test('gallery transitions: random unless trans= says otherwise; stills stay off', () => {
+  const t = (q: string) => galleryTrans(new URLSearchParams(q));
+  assert.equal(t(''), 'random');
+  assert.equal(t('scene=radial&grid=1'), 'random'); // the grid draws no transitions anyway
+  assert.equal(t('stop=3'), '');
+  assert.equal(t('at=3'), '');
+  assert.equal(t('stop=3&trans=iris'), 'iris');
+  for (const off of ['off', 'none', '0', '']) assert.equal(t(`trans=${off}`), '');
+  assert.equal(t('trans=all'), 'all');
+  assert.equal(t('trans=cut'), 'cut');
+  assert.equal(t('trans=bogus'), 'random');
+});
+
+test('random effect: deterministic, every effect, never twice in a row', () => {
+  const seq = Array.from({ length: 2000 }, (_, i) => randomEffect(i));
+  assert.deepEqual(seq.slice(0, 50), Array.from({ length: 50 }, (_, i) => randomEffect(i)));
+  assert.equal(new Set(seq).size, TRANSITIONS.length - 1);
+  assert.ok(!seq.includes('cut'));
+  assert.ok(seq.every((t, i) => i === 0 || t !== seq[i - 1]));
+});
+
+test('gallery cycle: holds the given scene, then moves on; from tick 0 it is as before', () => {
+  const c: Cycle = { ids: ['a', 'b', 'c'], trans: 'all', beats: 8 }, len = cycleTicks(8);
+  const z = cycleSched(c, ZERO, len + 5);
+  assert.deepEqual([z.prev, z.id, z.at, z.trans.type], ['a', 'b', len, TRANSITIONS[2]]);
+  assert.equal(cycleSched(c, ZERO, 0).prev, 'c');
+  const a = holdAt(1000, 1, 8), h = cycleSched(c, a, 1000);
+  assert.equal(h.id, 'b');
+  assert.ok(1000 - h.at >= transTicks(8), 'no transition running');
+  const n = cycleSched(c, a, a.at + len);
+  assert.deepEqual([n.prev, n.id], ['b', 'c']);
+});
+
+test('double-tap: two quick taps in one place', () => {
+  const d = new DoubleTap();
+  const tap = (t: number, x = 10, y = 10) => { d.down(t, x, y); return d.up(t + 50, x, y); };
+  assert.equal(tap(0), false);
+  assert.equal(tap(200), true);
+  assert.equal(tap(350), false, 'a third tap starts over');
+  assert.equal(tap(2000), false, 'too late for a pair');
+  assert.equal(tap(2200, 200), false, 'too far apart');
+  d.reset();
+  d.down(3000, 0, 0); assert.equal(d.up(3800, 0, 0), false); // long press
+  assert.equal(tap(3900, 0, 0), false);
+  d.reset();
+  tap(5000);
+  d.down(5100, 10, 10); assert.equal(d.up(5150, 90, 10), false, 'a drag');
+  d.reset();
+  tap(6000);
+  d.down(6100, 10, 10, 1); d.down(6110, 50, 50, 2); // two fingers
+  assert.equal(d.up(6150, 10, 10, 1), false);
+});

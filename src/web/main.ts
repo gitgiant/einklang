@@ -1,11 +1,10 @@
 // Synced app page. The server owns the room state (mode, scene schedule, presets, views); this
 // page renders it through WebGPU on the shared tick and relays this host's inputs as events.
-import { CC_PARAMS, FPS, INSTRUMENT_DELAY, LIVE_DELAY, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
-import { decimateWave, fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
+import { CC_PARAMS, FPS, INSTRUMENT_DELAY, LIVE_DELAY, K_BAR, K_BPM, K_PHASE, N_PARAMS } from '../core/constants.ts';
+import { fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
-import { Analyzer, N } from '../core/analysis.ts';
 import {
-  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS, AUTO_BARS,
+  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS,
   type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
 } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
@@ -19,6 +18,9 @@ import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
+import { toggleUiOnDoubleTap } from './doubletap.ts';
+import { LiveAnalyzer, insecure, openMic, openShare } from './capture.ts';
+import { mainTrans, restoreAuto } from './defaults.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global {
@@ -79,18 +81,16 @@ let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
 const events = new EventLog();
 const listeners = { state: [] as (() => void)[], lateEvent: [] as ((tick: number) => void)[], vote: [] as ((m: Extract<ServerMsg, { t: 'vote' }>) => void)[] };
-interface LeaderLive {
-  an: Analyzer; analyser: AnalyserNode; td: Float32Array<ArrayBuffer>; last: number; ac: AudioContext; stream: MediaStream; pending: boolean;
-  /** Per-channel taps for the waveform stream. */
-  wl: AnalyserNode; wr: AnalyserNode; bl: Float32Array<ArrayBuffer>; br: Float32Array<ArrayBuffer>;
-}
-let leaderLive: LeaderLive | null = null;
+/** This host's capture while it leads live mode; `pending` until the server confirms it. */
+let leaderLive: { an: LiveAnalyzer; pending: boolean } | null = null;
+/** This connection has offered the device's remembered auto-rotation to a fresh room. */
+let autoRestored = false;
 
 function connect() {
   ws = new WebSocket(withToken(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`));
   ws.binaryType = 'arraybuffer';
   ws.onopen = () => {
-    net.connects++; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected');
+    net.connects++; autoRestored = false; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected');
     if (benchN !== null) send({ t: 'bench', n: benchN });
   };
   ws.onclose = (e) => { msg(e.code === 1006 && !token ? 'not connected: open the join URL with ?t=' : 'disconnected, retrying'); setTimeout(connect, 1000); };
@@ -124,6 +124,11 @@ function connect() {
       else if (room.mode !== 'live' && !leaderLive?.pending) stopLeaderLive();
       if (room.mode !== 'file') { fileFeat = null; $<HTMLAudioElement>('au').pause(); }
       if (room.mode === 'file' && $<HTMLInputElement>('aud').checked) loadAudio();
+      if (!autoRestored) {
+        autoRestored = true;
+        const restore = restoreAuto(room.auto, lsGet);
+        if (restore) send(restore);
+      }
       listeners.state.forEach((f) => f());
     } else if (m.t === 'log') {
       if (m.epoch === room.epoch) { events.reset(m.events); listeners.lateEvent.forEach((f) => f(-Infinity)); }
@@ -193,73 +198,38 @@ setInterval(() => {
 
 // ---- leader: live (capture needs a secure context: localhost or https) ----
 const delay = (t: number) => `${t}-tick delay, ${((t * 1000) / FPS).toFixed(0)} ms`;
-const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
-const insecure = () => (isSecureContext ? '' : ' (capture needs localhost or https: open the 127.0.0.1 link, or use `tailscale serve`)');
 
 /** Analyze `stream` on this host and stream features to the room as the live leader. */
 /** `delay`: ticks every host renders behind (INSTRUMENT_DELAY for line-in, LIVE_DELAY for captured audio). */
 function startLive(stream: MediaStream, label: string, delay: number) {
   stopLeaderLive();
-  const ac = new AudioContext(), analyser = ac.createAnalyser();
-  analyser.fftSize = N;
-  const src = ac.createMediaStreamSource(stream);
-  src.connect(analyser); // analysis only: not routed to the speakers
-  // stereo taps for the scope; a mono source feeds the same signal to both (splitter upmixes)
-  const split = ac.createChannelSplitter(2), wl = ac.createAnalyser(), wr = ac.createAnalyser();
-  wl.fftSize = wr.fftSize = 2048;
-  src.connect(split); split.connect(wl, 0); split.connect(wr, 1);
-  leaderLive = {
-    an: new Analyzer(ac.sampleRate), analyser, td: new Float32Array(N), last: -1, ac, stream, pending: true,
-    wl, wr, bl: new Float32Array(2048), br: new Float32Array(2048),
-  };
-  // the user pressed "Stop sharing" in Chrome's bar, or the device went away
-  for (const t of stream.getAudioTracks()) t.onended = () => { if (leaderLive?.stream === stream) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); } };
+  const an: LiveAnalyzer = new LiveAnalyzer(stream, () => { if (leaderLive?.an === an) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); } });
+  leaderLive = { an, pending: true };
   send({ t: 'live', delay });
   msg(label);
 }
 function stopLeaderLive() {
   if (!leaderLive) return;
-  leaderLive.stream.getTracks().forEach((t) => t.stop()); leaderLive.ac.close(); leaderLive = null;
+  leaderLive.an.close(); leaderLive = null;
 }
 
 $('live').onclick = async () => {
-  try { startLive(await navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO }), `live: instrument / line-in (${delay(INSTRUMENT_DELAY)})`, INSTRUMENT_DELAY); }
+  try { startLive(await openMic(), `live: instrument / line-in (${delay(INSTRUMENT_DELAY)})`, INSTRUMENT_DELAY); }
   catch (e) { msg(`mic failed: ${(e as Error).message}${insecure()}`); }
 };
 
-// Music already playing elsewhere: a Chrome tab ("Share tab audio") or any app via
-// "Entire screen" + "Share system audio" (Windows/ChromeOS). The source keeps playing normally.
 $('capture').onclick = async () => {
   try {
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: true, // required by Chrome; dropped below
-      audio: { ...RAW_AUDIO, suppressLocalAudioPlayback: false },
-      systemAudio: 'include', selfBrowserSurface: 'exclude', surfaceSwitching: 'include', preferCurrentTab: false,
-    } as DisplayMediaStreamOptions);
-    const audio = stream.getAudioTracks();
-    stream.getVideoTracks().forEach((t) => t.stop());
-    if (!audio.length) { msg('no audio was shared: pick a tab with "Share tab audio" on, or Entire screen with "Share system audio"'); return; }
-    startLive(new MediaStream(audio), `live: capturing "${audio[0].label || 'tab/app audio'}" (${delay(LIVE_DELAY)})`, LIVE_DELAY);
+    const stream = await openShare();
+    startLive(stream, `live: capturing "${stream.getAudioTracks()[0].label || 'tab/app audio'}" (${delay(LIVE_DELAY)})`, LIVE_DELAY);
   } catch (e) {
     if ((e as Error).name !== 'NotAllowedError') msg(`capture failed: ${(e as Error).message}${insecure()}`);
   }
 };
 setInterval(() => {
-  const L = leaderLive;
-  if (!L || room.mode !== 'live') return;
+  if (!leaderLive || room.mode !== 'live') return;
   const cur = Math.floor(((sNow() - room.start) * FPS) / 1000);
-  if (cur < 0) return;
-  if (L.last < cur - 30) L.last = cur - 1; // don't burst after a stall
-  L.analyser.getFloatTimeDomainData(L.td);
-  L.wl.getFloatTimeDomainData(L.bl); L.wr.getFloatTimeDomainData(L.br);
-  const span = L.ac.sampleRate / FPS;
-  while (L.last < cur) {
-    L.last++;
-    const b = L.an.frame(L.td), m = new Uint8Array(5 + STRIDE + WAVE_BYTES);
-    m[0] = 1; new DataView(m.buffer).setUint32(1, L.last, true); m.set(b, 5);
-    decimateWave(L.bl, L.br, L.bl.length - span, span, m, 5 + STRIDE); // the newest tick of audio
-    live.set(L.last, m.slice(5)); sendBin(m);
-  }
+  leaderLive.an.pull(cur, (tick, m) => { live.set(tick, m.slice(5)); sendBin(m); });
 }, 8);
 
 $('stop').onclick = () => { send({ t: 'stop' }); stopLeaderLive(); };
@@ -289,10 +259,13 @@ const transSel = $<HTMLSelectElement>('trans'), lenSel = $<HTMLSelectElement>('t
 transSel.add(new Option('random', 'random'));
 for (const t of TRANSITIONS) transSel.add(new Option(TRANS_NAMES[t], t));
 for (const b of TRANS_BEATS) lenSel.add(new Option(b === 0 ? 'cut' : b === 0.5 ? '½' : String(b), String(b)));
-transSel.value = lsGet('trans') ?? 'blend'; if (!transSel.value) transSel.value = 'blend';
-lenSel.value = lsGet('tlen') ?? '8'; if (!lenSel.value) lenSel.value = '8';
-transSel.onchange = () => lsSet('trans', transSel.value);
-lenSel.onchange = () => lsSet('tlen', lenSel.value);
+const remembered = mainTrans(lsGet);
+transSel.value = remembered.type;
+lenSel.value = String(remembered.beats); if (!lenSel.value) lenSel.value = String(DEFAULT_TRANS_BEATS);
+/** A running auto-rotation takes the new transition settings too. */
+const transChanged = () => { if (room.auto) send({ t: 'auto', bars: room.auto.bars, trans: transReq() }); };
+transSel.onchange = () => { lsSet('trans', transSel.value); transChanged(); };
+lenSel.onchange = () => { lsSet('tlen', lenSel.value); transChanged(); };
 const transReq = () => ({ type: transSel.value as TransType | 'random', beats: +lenSel.value });
 /** `next` picks a random other scene weighted by votes (👍 doubles, 👎 halves); `prev` steps back in list order. */
 const switchScene = (to: { id?: string; step?: number; weighted?: boolean }) => send({ t: 'scene', ...to, quant: quant(), trans: transReq() });
@@ -303,7 +276,7 @@ $('next').onclick = () => switchScene({ weighted: true });
 // auto-rotation (server-side, by vote weight), with this host's transition settings
 const autoSel = $<HTMLSelectElement>('auto');
 for (const b of AUTO_BARS) autoSel.add(new Option(b ? `every ${b} bars` : 'off', String(b)));
-autoSel.onchange = () => send({ t: 'auto', bars: +autoSel.value, trans: transReq() });
+autoSel.onchange = () => { lsSet('auto', autoSel.value); send({ t: 'auto', bars: +autoSel.value, trans: transReq() }); };
 $('hit').onclick = () => send({ t: 'ev', type: 'hit' });
 
 // ---- transport bar (any host drives it; the server keeps everyone on the same position) ----
@@ -386,6 +359,7 @@ function renderHosts(names: Map<string, string>) {
 }
 
 autoHideUi(() => [$('panel'), $('bar'), $('hosts')]);
+toggleUiOnDoubleTap((el) => el.id === 'c');
 
 // ---- votes (owner only: anyone with the room token) ----
 let toastTimer = 0;
@@ -468,7 +442,8 @@ async function start() {
   if (qs.get('debug') === '1') panel.toggle(true);
   addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
-    if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
+    if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
+    else if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
     else if (e.key === 'p') playPause();
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       if (room.mode === 'file') send({ t: 'seek', frame: Math.max(0, Math.min(room.frames, modeTick(room, sNow())) + (e.key === 'ArrowLeft' ? -10 : 10) * FPS) });

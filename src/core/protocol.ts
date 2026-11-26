@@ -66,8 +66,14 @@ export interface TransReq { type: TransType | 'random'; beats: number }
 
 /** Auto-rotation lengths the panel offers, in bars (0 = off). */
 export const AUTO_BARS = [0, 4, 8, 16] as const;
-/** Auto-rotation: the server picks a scene by vote weight every `bars` bars, with this transition. */
-export interface AutoRot { bars: number; trans: TransReq }
+/** The rotation a new room starts with, and the default transition length. */
+export const DEFAULT_AUTO_BARS = 8;
+export const DEFAULT_TRANS_BEATS = 8;
+/**
+ * Auto-rotation: the server picks a scene by vote weight every `bars` bars, with this transition.
+ * `preset`: the room's starting value, which no host has chosen.
+ */
+export interface AutoRot { bars: number; trans: TransReq; preset?: boolean }
 
 /** Server-authoritative room state, broadcast on every change. */
 export type RoomState = Mode & {

@@ -8,11 +8,12 @@ Newest first. Keep short; prune the oldest entries.
 - **Run:**
   - `npm run build && npm run server` prints the join URLs with `?t=<token>` (token in `.einklang-token`).
   - Dev: `npm run dev` + server, then `http://localhost:5173/?t=<token>`.
-  - Gallery, no server needed: `/gallery.html?scene=core-demo`.
+  - Gallery, no server needed: `/gallery.html?scene=core-demo`. Cycles scenes with random transitions by default (`trans=off` stays put); input picker bottom left (demo / mic / tab audio / file, analyzed in the page).
+  - Both pages start with random transitions; the room starts auto-rotating every 8 bars (a device's remembered `auto`/`trans`/`tlen` wins while nobody in the room has chosen). Double-tap / double-click the picture hides the UI until the next one.
   - iPhone/iPad: `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>` (`tailscale serve`, server on `BIND=0.0.0.0`).
 - **Checks:**
   - `npm run typecheck`
-  - `npm test` (83)
+  - `npm test` (90)
   - `npm run build && npm run e2e` (28 checks, two headless WebGPU hosts, hashes per tick; votes + gallery vote included)
   - `npm run lab -- gate --all` (all scenes, 1080p, 3 fixtures, ~2 min)
 - **Lab CLI:** `npm run lab -- validate | render <scene|piece> [--fixture all] [--cpu] | gate [--all] [--junit f] | new <kind> <vendor-slug> | fixtures | feedback | import-space-sim | sprite import <file> --license L | sprite gen "<prompt>" --name id | font bake <ttf|builtin:pixel5x8> --name id --license L` (usage in `scripts/lab/cli.ts`). Artifacts go to `lab/out/` (gitignored). No GPU means it falls back to SwiftShader (~50x slower, budget not enforced).

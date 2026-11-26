@@ -42,6 +42,9 @@ try {
 
   const a = await open('name=left', 0), b = await open('name=right&view=1', 1);
   await noTok.close();
+  const picked = await a.$$eval('#trans, #auto', (es) => es.map((e) => (e as HTMLSelectElement).value).join(' '));
+  check(picked === 'random 8', `defaults: random transitions, auto-rotation every 8 bars ("${picked}")`);
+  await a.select('#auto', '0'); // the checks below switch scenes themselves
   let da = await dbg(a), db = await dbg(b);
   check(da.view === 0 && db.view === 1, `per-host default views (left ${da.view}, right ${db.view})`);
   let c = compare(da, db);
@@ -78,7 +81,7 @@ try {
   check(c.shared > 20 && c.diff === 0, `after votes: ${c.shared} shared ticks, ${c.diff} hash mismatches`);
   // gallery: a reason tag + 👍 posts to /vote; the live hosts toast it
   const gal = await browsers[0].newPage();
-  await gal.goto(`http://127.0.0.1:${port}/gallery.html?scene=radial&t=${TOKEN}`);
+  await gal.goto(`http://127.0.0.1:${port}/gallery.html?scene=radial&trans=off&t=${TOKEN}`);
   await gal.waitForSelector('#vote > button:not([disabled])', { timeout: 20000 });
   await gal.$$eval('#vote .tags button', (bs) => (bs.find((x) => x.textContent === 'great colors') as HTMLButtonElement).click());
   await gal.$$eval('#vote > button', (bs) => (bs[0] as HTMLButtonElement).click());

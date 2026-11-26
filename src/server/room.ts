@@ -6,7 +6,7 @@ import {
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
   type TickEvent, type TransReq, type TransSched, type TransType,
 } from '../core/protocol.ts';
-import { AUTO_BARS } from '../core/protocol.ts';
+import { AUTO_BARS, DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS } from '../core/protocol.ts';
 import { RETIRE_AT, cleanTags, pickWeighted, score, tally, type Tally, type Vote } from '../core/votes.ts';
 import { pickRandom } from '../core/transitions.ts';
 import { cleanLyrics } from '../core/lrc.ts';
@@ -74,7 +74,7 @@ export class Room {
     scene: fixedScene(DEFAULT_PRESETS[0]),
     presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null, playlist: null,
     flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
-    scores: {}, auto: null,
+    scores: {}, auto: { bars: DEFAULT_AUTO_BARS, trans: { type: 'random', beats: DEFAULT_TRANS_BEATS }, preset: true },
   };
   private now: () => number;
   private rand: () => number;
@@ -91,6 +91,7 @@ export class Room {
     this.tallies = tally(this.votes.load());
     this.refreshList();
     this.state.scene = fixedScene(this.state.presets[0]);
+    this.autoFrom = this.tickNow();
   }
 
   /** Scores and the live list from the tallies (retired scenes leave it; never empty). */
@@ -150,6 +151,7 @@ export class Room {
     const flow = keepScene ? this.state.flow : { n, prev: n, at: 0 };
     this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, flow, scores, auto, grid: { ...DEFAULT_GRID } };
     this.ring = []; this.log = [];
+    if (!keepScene) this.autoFrom = this.tickNow(); // tick space restarted: count the rotation from here
     if (this.clock) this.clock.beatTick = -Infinity;
   }
 
@@ -421,6 +423,7 @@ export class Room {
     if (!a || (s.mode === 'file' && s.paused !== null) || s.presets.length < 2) return;
     const t = this.tickNow(), sc = s.scene, end = sc.at + sc.trans.ticks;
     if (end > t) return; // a switch is pending or running
+    this.autoFrom = Math.min(this.autoFrom, t); // a seek back restarts the count
     const from = Math.max(this.autoFrom, end), bar = s.grid.tpb * 4;
     if (t + bar < from + a.bars * bar) return;
     this.autoFrom = t;

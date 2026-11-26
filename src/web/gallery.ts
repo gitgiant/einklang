@@ -1,12 +1,17 @@
-// Scene gallery: every v1 scene driven by the synthetic demo track, no server needed.
+// Scene gallery: every scene driven by the synthetic demo track, or by an input picked bottom left (mic,
+// tab / system audio, an audio file; analyzed in the page), no server needed. Double-tap or double-click
+// the picture to hide / show the UI.
 // URL params:
 //   scene=radial|tunnel|scope|flow|<lab scene id>   which scene (default radial)
 //   grid=1                           all four at once
 //   start=<s>                        demo-track time to start at (default 0)
 //   stop=<s>                         stop rendering at this demo time (for screenshots); sets window.__done
 //   hud=0                            hide the tab bar; hud=1 also shows the info text (key `i`)
-//   trans=<effect>|all               transitions: auto-cycle scenes every 2 bars with this effect
-//                                    (all = rotate through every effect); key `t` / the selector
+//   trans=random|<effect>|all|off    transitions: auto-cycle scenes (2 bars, longer for long
+//                                    transitions) from `scene` with a random effect per switch (the
+//                                    default), one effect, or all in order; off (or none) = stay on
+//                                    one scene; key `t` / the selector. With stop= or at= the default
+//                                    is off, and a stop= cycle counts from the first scene at time 0
 //   at=<s>                           with trans: one transition from `scene` to the next at demo
 //                                    time s instead of the cycle (for stills: add stop=<s>)
 //   len=<beats>                      transition length (default 8)
@@ -16,19 +21,22 @@
 // build without the server shows the panel disabled.
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
-import { demoSource, sectionAt } from '../core/demo.ts';
-import { FPS, TICKS_PER_BEAT } from '../core/constants.ts';
-import { TRANSITIONS, type SceneSched, type TransType } from '../core/protocol.ts';
+import { FPS } from '../core/constants.ts';
+import { DEFAULT_TRANS_BEATS, TRANSITIONS, type SceneSched } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
-import { h32 } from '../core/math.ts';
 import { VOTE_TAGS } from '../core/votes.ts';
 import { autoHideUi } from './idle.ts';
+import { toggleUiOnDoubleTap } from './doubletap.ts';
+import { galleryTrans, type GalleryTrans } from './defaults.ts';
+import { ZERO, cycleSched, holdAt, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
+import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
+import { insecure, openMic, openShare } from './capture.ts';
+import { ACCEPT, Player } from './player.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
 
 const qs = new URLSearchParams(location.search);
 const $ = (id: string) => document.getElementById(id)!;
-const F = demoSource();
 const startTick = Math.round(+(qs.get('start') ?? 0) * FPS);
 const stopTick = qs.has('stop') ? Math.round(+qs.get('stop')! * FPS) : Infinity;
 let hud = qs.get('hud') !== '0';
@@ -37,13 +45,9 @@ let info = qs.get('hud') === '1';
 const interp = qs.get('interp') !== '0';
 let grid = (qs.get('grid') ?? document.body.dataset.grid) === '1'; // data-grid: default for hosted builds
 let current = qs.get('scene') ?? 'radial';
-/** '' = transitions off; else an effect id or 'all'. */
-let trans = qs.get('trans') ?? '';
+let trans: GalleryTrans = galleryTrans(qs);
 const oneShotAt = qs.has('at') ? Math.round(+qs.get('at')! * FPS) : null;
-const beats = Math.max(0.5, Math.min(16, +(qs.get('len') ?? 8) || 8));
-/** Auto-cycle: every 2 bars, or longer so each scene holds a bar after a long transition. */
-const CYCLE = Math.max(8, Math.ceil(beats / 4) * 4 + 4) * TICKS_PER_BEAT;
-const ROTATE = TRANSITIONS.filter((t) => t !== 'cut');
+const beats = Math.max(0.5, Math.min(16, +(qs.get('len') ?? DEFAULT_TRANS_BEATS) || DEFAULT_TRANS_BEATS));
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -97,6 +101,59 @@ function votePanel(sceneOf: () => { id: string; name: string } | null) {
   return { show, send };
 }
 
+/** The input picker. `change` takes over each newly opened input. */
+function inputPanel(change: (i: Input) => void) {
+  const el = document.createElement('div'); el.id = 'input';
+  const note = document.createElement('span'); note.className = 'note';
+  const file = document.createElement('input'); file.type = 'file'; file.accept = ACCEPT; file.multiple = true; file.hidden = true; // multiple: a track and its .lrc
+  let player: Player | null = null, asked = 0, active: Input | null = null;
+  const buttons = new Map<string, HTMLButtonElement>();
+  const press = (kind: string) => { for (const [k, b] of buttons) b.setAttribute('aria-pressed', String(k === kind)); };
+  /** Open an input; a later pick wins over one still opening, and a failure keeps the current one. */
+  const pick = async (kind: string, open: () => Promise<Input>, failed: string) => {
+    const mine = ++asked;
+    note.textContent = '';
+    try {
+      const input = await open();
+      if (mine !== asked) return input.stop();
+      change(active = input); press(kind);
+    } catch (e) {
+      if (mine === asked) note.textContent = (e as Error).name === 'NotAllowedError' && kind === 'share' ? '' : `${failed}: ${(e as Error).message}${kind === 'file' ? '' : insecure()}`;
+    }
+  };
+  const demo = () => pick('demo', async () => demoInput(startTick), 'demo failed');
+  const live = (kind: string, name: string, open: () => Promise<MediaStream>) => pick(kind, async () => {
+    const input: Input = liveInput(await open(), name, () => { if (active === input) demo().then(() => { note.textContent = `${name} ended`; }); });
+    return input;
+  }, `${name} failed`);
+  file.onchange = () => {
+    const list = [...(file.files ?? [])];
+    file.value = '';
+    if (!list.length) return;
+    player ??= new Player();
+    if (!player.setFiles(list)) { note.textContent = 'no audio file there'; return; }
+    const p = player, mine = asked + 1, say = (s: string) => { if (mine === asked) note.textContent = s; };
+    pick('file', async () => {
+      const input = await fileInput(p, (x) => say(`analyzing ${(x * 100) | 0}%`), () => say('tap to start the sound'));
+      say(p.names[0]);
+      return input;
+    }, 'file failed');
+  };
+  for (const [kind, text, run] of [
+    ['demo', 'demo track', demo],
+    ['mic', 'mic', () => live('mic', 'mic', openMic)],
+    ['share', 'tab / system audio', () => live('share', 'shared audio', openShare)],
+    ['file', 'audio file', () => file.click()],
+  ] as const) {
+    const b = document.createElement('button'); b.textContent = text; b.onclick = () => { run(); };
+    buttons.set(kind, b); el.append(b);
+  }
+  el.append(note, file);
+  document.body.append(el);
+  press('demo');
+  return el;
+}
+
 async function main() {
   const gpu = await initGpu();
   const stage = $('stage'), bar = $('bar');
@@ -107,31 +164,52 @@ async function main() {
     return { cell, tag, engine: new Engine(gpu, cv) };
   });
   const ids = cells[0].engine.scenes.map((s) => s.def.id);
-  /** The local stand-in for the server's schedule: a pure function of the tick, so stills repeat. */
+  let input = demoInput(startTick), tickNow = startTick;
+  const cyc = (): Cycle => ({ ids, trans: trans || 'random', beats });
+  const idxOf = (id: string) => Math.max(0, ids.indexOf(id));
+  /** stop= stills count the cycle from time 0; otherwise it starts on `scene`. */
+  let anchor: Anchor = qs.has('stop') ? ZERO : holdAt(startTick, idxOf(current), beats);
   const schedAt = (tick: number): SceneSched | undefined => {
     if (!trans || grid) return undefined;
-    const mk = (k: number, prev: string, id: string, at: number): SceneSched => ({
-      id, prev, at, earlier: [],
-      trans: { type: (trans === 'all' ? ROTATE[mod(k, ROTATE.length)] : trans) as TransType, ticks: Math.round(beats * TICKS_PER_BEAT), seed: h32(k, 0x7a5), tpb: TICKS_PER_BEAT },
-    });
-    if (oneShotAt !== null) return mk(0, current, ids[mod(ids.indexOf(current) + 1, ids.length)], oneShotAt);
-    const k = Math.floor(tick / CYCLE);
-    return mk(k, ids[mod(k - 1, ids.length)], ids[mod(k, ids.length)], k * CYCLE);
+    if (oneShotAt !== null) return step(cyc(), 0, current, ids[(idxOf(current) + 1) % ids.length], oneShotAt);
+    return cycleSched(cyc(), anchor, tick);
   };
+  const shownId = () => cells[0].engine.scene.def.id;
   const tsel = document.createElement('select');
   tsel.add(new Option('no transitions', ''));
+  tsel.add(new Option('auto: random effects', 'random'));
   tsel.add(new Option('auto: all effects', 'all'));
   for (const t of TRANSITIONS) tsel.add(new Option(`auto: ${TRANS_NAMES[t]}`, t));
   tsel.value = trans;
-  const setTrans = (t: string) => {
+  const setTrans = (t: GalleryTrans) => {
+    if (!trans && t) { current = shownId(); anchor = holdAt(tickNow, idxOf(current), beats); } // cycle on from here
+    else if (trans && !t) current = shownId(); // stay on what's showing
     trans = t; tsel.value = t;
     if (t) grid = false;
-    try { const u = new URL(location.href); t ? u.searchParams.set('trans', t) : u.searchParams.delete('trans'); history.replaceState(null, '', u); } catch { /* sandboxed */ }
+    try { const u = new URL(location.href); t === 'random' ? u.searchParams.delete('trans') : u.searchParams.set('trans', t || 'off'); history.replaceState(null, '', u); } catch { /* sandboxed */ }
     layout();
   };
-  tsel.onchange = () => setTrans(tsel.value);
+  tsel.onchange = () => setTrans(tsel.value as GalleryTrans);
   const votes = votePanel(() => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }));
-  autoHideUi(() => [bar, document.getElementById('vote')]);
+  /** The tick space starts over (new input, looped file): sims replay, the cycle carries on from the scene showing. */
+  const restart = (tick: number) => {
+    anchor = holdAt(tick, idxOf(shownId()), beats, switchAt(cyc(), anchor, tickNow) + 1);
+    tickNow = tick;
+    for (const c of cells) c.engine.invalidate(-Infinity);
+  };
+  const picker = inputPanel((next) => {
+    input.stop(); input = next;
+    restart(Math.floor(input.tick(performance.now())));
+  });
+  autoHideUi(() => [bar, document.getElementById('vote'), picker]);
+  toggleUiOnDoubleTap((el) => el === stage || el.matches('#stage .cell, #stage canvas'));
+  /** The tab pressed and the scene voted on follow what's showing (the cycle moves it). */
+  let marked = '';
+  const mark = () => {
+    marked = shownId();
+    for (const b of bar.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.id === (grid ? 'grid' : marked)));
+    votes.show();
+  };
 
   const layout = () => {
     stage.classList.toggle('grid', grid);
@@ -141,12 +219,18 @@ async function main() {
       c.engine.transition = null;
       c.tag.textContent = grid ? c.engine.scene.def.name : '';
     });
-    for (const b of bar.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.id === (grid ? 'grid' : trans && oneShotAt === null ? '' : current)));
     $('hud').classList.toggle('hide', !info); bar.classList.toggle('hide', !hud);
-    votes.show();
+    picker.classList.toggle('hide', !hud || qs.has('stop'));
+    mark();
   };
   const go = (id: string) => {
-    if (id === 'grid') { grid = !grid; if (grid) trans = ''; tsel.value = trans; } else { grid = false; current = id; }
+    if (id === 'grid') grid = !grid;
+    else {
+      // while cycling, switch to the picked scene with a transition and carry on from it
+      if (trans && !grid) anchor = { at: tickNow, n: switchAt(cyc(), anchor, tickNow) + 1, idx: idxOf(id), prev: idxOf(shownId()) };
+      else if (trans) anchor = holdAt(tickNow, idxOf(id), beats, anchor.n);
+      grid = false; current = id;
+    }
     try {
       const u = new URL(location.href); u.searchParams.set('scene', current); grid ? u.searchParams.set('grid', '1') : u.searchParams.delete('grid');
       history.replaceState(null, '', u);
@@ -162,33 +246,37 @@ async function main() {
   }
   bar.append(tsel);
   addEventListener('keydown', (e) => {
-    if (e.key === 'h') { hud = !hud; layout(); }
+    if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
+    else if (e.key === 'h') { hud = !hud; layout(); }
     else if (e.key === 'i') { info = !info; layout(); }
     else if (e.key === 'g') go('grid');
-    else if (e.key === 't') { const opts = ['', 'all', ...TRANSITIONS]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
+    else if (e.key === 't') { const opts: GalleryTrans[] = ['', 'random', 'all', ...TRANSITIONS]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
     else if (+e.key >= 1 && +e.key <= ids.length) go(ids[+e.key - 1]);
     else if (e.key === '+' || e.key === '=') votes.send(1);
     else if (e.key === '-' || e.key === '_') votes.send(-1);
   });
   layout();
 
-  const t0 = performance.now();
-  let frames = 0, fps = 0, lastFps = t0;
+  let frames = 0, fps = 0, lastFps = performance.now();
   const loop = () => {
     const now = performance.now();
-    const tF = startTick + ((now - t0) * FPS) / 1000, tick = Math.min(Math.floor(tF), stopTick);
-    const sub = interp && tick < stopTick ? Math.floor((tF - Math.floor(tF)) * 256) : 0;
+    const tF = input.tick(now);
+    let tick = Math.min(Math.floor(tF), stopTick), sub = interp && tick < stopTick ? Math.floor((tF - Math.floor(tF)) * 256) : 0;
+    if (tick < tickNow - FPS / 2) restart(tick); // a looping file started over
+    else if (tick < tickNow) { tick = tickNow; sub = 0; } // an audio clock resync: hold rather than rewind
+    tickNow = tick;
     const active = grid ? cells : cells.slice(0, 1);
     const sched = schedAt(tick);
-    const hashes = active.map((c, i) => c.engine.frame(tick, F, undefined, i === 0 ? sched : undefined, sub));
+    const hashes = active.map((c, i) => c.engine.frame(tick, input.F, undefined, i === 0 ? sched : undefined, sub));
+    if (marked !== shownId()) mark();
     frames++;
     if (now - lastFps > 500) { fps = (frames * 1000) / (now - lastFps); frames = 0; lastFps = now; }
     if (info) {
       const sc = cells[0].engine.scene;
       $('hud').textContent = [
-        `${grid ? 'grid' : sc.def.name}  ·  demo ${(tick / FPS).toFixed(2)}s  ${sectionAt(tick)}`,
+        `${grid ? 'grid' : sc.def.name}  ·  ${input.label(tick)}`,
         `tick ${tick}  hash ${hashes.join(' ')}`,
-        trans && !grid ? `transitions: ${trans === 'all' ? 'all' : TRANS_NAMES[trans as TransType]} ${beats} beats  ·  ${(() => {
+        trans && !grid ? `transitions: ${trans === 'all' || trans === 'random' ? trans : TRANS_NAMES[trans]} ${beats} beats  ·  ${(() => {
           const tr = cells[0].engine.transition;
           return tr ? `${TRANS_NAMES[tr.type]} ${tr.from}→${tr.to} ${((tr.p16 / 65536) * 100) | 0}%` : 'between';
         })()}` : null,
