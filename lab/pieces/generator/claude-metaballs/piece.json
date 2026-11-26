@@ -1,0 +1,24 @@
+{
+  "id": "claude-metaballs",
+  "kind": "generator",
+  "name": "Metaballs",
+  "doc": "8 to 16 blobs on slow seeded orbits, each one's radius following its own spectrum band; their field merges at a soft threshold with a glowing edge and colours blend where they meet. Every onset sends a ring out from one blob, which swells as the ring leaves.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true, "doc": "each blob takes one position along the palette; stop 0 tints the background" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "count": { "type": "int", "default": 12, "min": 8, "max": 16, "doc": "number of blobs" },
+    "size": { "type": "float", "default": 0.08, "min": 0.02, "max": 0.2, "doc": "base radius in screen heights" },
+    "react": { "type": "float", "default": 1.1, "min": 0, "max": 3, "doc": "how much each blob's band swells it" },
+    "speed": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "orbit speed" },
+    "pulse": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "onset rings: speed and strength (0 = off)" },
+    "glow": { "type": "float", "default": 1.2, "min": 0, "max": 4, "doc": "edge glow and halo" },
+    "edge": { "type": "float", "default": 0.08, "min": 0.01, "max": 0.4, "doc": "edge glow width (in field units)" },
+    "depth": { "type": "float", "default": 0.9, "min": 0, "max": 2, "doc": "brightening toward the blob centres" }
+  },
+  "budget": { "ms": 0.4, "scales": "res" },
+  "tags": ["metaballs", "blobs", "organic", "spectrum"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-26", "by": "claude/claude-opus-5-5", "note": "first version" }]
+}

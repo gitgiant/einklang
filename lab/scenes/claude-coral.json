@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "claude-coral",
+  "name": "Coral",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 5, "hi": 10, "window": 20, "gain": 1.6 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#04131a #0f4c5c #2a9d8f #e36414 #fb8b24 #ffd6a5 #fff8ec", "cycle": 0, "pads": true } },
+    { "id": "rd", "piece": "claude-reaction", "params": { "cells": 360, "steps": 12, "spread": 0.9, "drive": 0.6, "seeds": 1.2, "drift": 0.0015, "glow": 1.3, "relief": 3.5, "cycle": 0.25 },
+      "bind": { "regime": { "from": "lfo.out", "range": [0.3, 0.75] }, "swirl": { "from": "mid.out", "range": [0.001, 0.006] } } }
+  ],
+  "edges": [{ "from": "pal.palette", "to": "rd.palette" }],
+  "out": "rd.out",
+  "post": { "bloom": 0.45, "threshold": 0.8 }
+}

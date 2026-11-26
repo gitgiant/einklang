@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "claude-sdf-flight",
+  "name": "SDF flight",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 32, "shape": 0 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 8, "gain": 2 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.19, "light": 0.62, "contrast": 0.6 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.55, 0.95] } } },
+    { "id": "fly", "piece": "claude-raymarch", "params": { "speed": 1.8, "surge": 1.6, "morph": 1.1, "fog": 0.085, "tunnel": 1.2, "scale": 0.6 },
+      "bind": { "glow": { "from": "high.out", "range": [1.2, 3] } } }
+  ],
+  "edges": [{ "from": "pal.palette", "to": "fly.palette" }],
+  "out": "fly.out",
+  "post": { "bloom": 0.7, "threshold": 0.6 }
+}
