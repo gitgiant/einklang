@@ -30,7 +30,7 @@ import { toggleUiOnDoubleTap } from './doubletap.ts';
 import { galleryTrans, type GalleryTrans } from './defaults.ts';
 import { ZERO, cycleSched, holdAt, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
 import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
-import { insecure, openMic, openShare } from './capture.ts';
+import { canShare, insecure, micError, openMic, openShare } from './capture.ts';
 import { ACCEPT, Player } from './player.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
@@ -118,7 +118,9 @@ function inputPanel(change: (i: Input) => void) {
       if (mine !== asked) return input.stop();
       change(active = input); press(kind);
     } catch (e) {
-      if (mine === asked) note.textContent = (e as Error).name === 'NotAllowedError' && kind === 'share' ? '' : `${failed}: ${(e as Error).message}${kind === 'file' ? '' : insecure()}`;
+      const err = e as Error;
+      if (mine === asked) note.textContent = kind === 'mic' ? micError(err, insecure(), navigator)
+        : err.name === 'NotAllowedError' && kind === 'share' ? '' : `${failed}: ${err.message}${kind === 'file' ? '' : insecure()}`;
     }
   };
   const demo = () => pick('demo', async () => demoInput(startTick), 'demo failed');
@@ -145,6 +147,7 @@ function inputPanel(change: (i: Input) => void) {
     ['share', 'tab / system audio', () => live('share', 'shared audio', openShare)],
     ['file', 'audio file', () => file.click()],
   ] as const) {
+    if (kind === 'share' && !canShare()) continue;
     const b = document.createElement('button'); b.textContent = text; b.onclick = () => { run(); };
     buttons.set(kind, b); el.append(b);
   }

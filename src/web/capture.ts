@@ -9,7 +9,25 @@ const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainCo
 /** Hint to append to a capture error (capture needs a secure context: localhost or https). */
 export const insecure = () => (isSecureContext ? '' : ' (capture needs localhost or https: open the 127.0.0.1 link, or use `tailscale serve`)');
 
-export const openMic = async (): Promise<MediaStream> => navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO });
+
+export async function openMic(): Promise<MediaStream> {
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error('no microphone access here'); // insecure context
+  return navigator.mediaDevices.getUserMedia({ audio: RAW_AUDIO });
+}
+
+/** Whether tab / system audio capture exists at all (not on iOS, nor in an insecure context). */
+export const canShare = () => !!navigator.mediaDevices?.getDisplayMedia;
+
+/** What to show when opening the mic failed. `hint` is insecure()'s; `nav` is the navigator. */
+export function micError(e: { name: string; message: string }, hint: string, nav: { userAgent: string; maxTouchPoints: number }): string {
+  if (hint || e.name !== 'NotAllowedError') return `mic failed: ${e.message}${hint}`;
+  const ua = nav.userAgent;
+  // iPadOS reports as a Mac: only the touch screen gives it away
+  if (!(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1))) return 'mic blocked: allow the microphone for this site in the browser\'s site settings';
+  const browser = /CriOS/.test(ua) ? 'Chrome' : /FxiOS/.test(ua) ? 'Firefox' : /EdgiOS/.test(ua) ? 'Edge' : /Version\/.*Safari/.test(ua) ? 'Safari' : 'your browser';
+  return `mic blocked: allow Microphone for this browser in iOS Settings → Apps → ${browser}, and for this site in the browser's site settings, then tap mic again`;
+}
+
 
 /**
  * Music already playing elsewhere: a Chrome tab ("Share tab audio") or any app via "Entire screen" +
