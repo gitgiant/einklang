@@ -2,7 +2,7 @@
   "id": "agy-halftone",
   "kind": "effect",
   "name": "Halftone screen",
-  "doc": "CMYK offset or single-ink halftone dot screen over the input; dot size follows luma/ink density and cell size breathes with bass.",
+  "doc": "CMYK offset or single-ink halftone dot screen over the input; cell size breathes with bass, dots and plates punch on onsets.",
   "ports": {
     "in": {
       "in": { "type": "tex" }
@@ -13,11 +13,11 @@
   },
   "params": {
     "mode": { "type": "enum", "default": 0, "options": ["cmyk", "single"], "doc": "four-plate CMYK offset screen or single-ink luma screen" },
-    "cell": { "type": "float", "default": 9, "min": 3, "max": 36, "doc": "halftone dot pitch in pixels at 1080p" },
+    "cell": { "type": "float", "default": 18, "min": 3, "max": 48, "doc": "halftone dot pitch in pixels at 1080p" },
     "angle": { "type": "float", "default": 15, "min": -180, "max": 180, "doc": "base screen angle in degrees" },
-    "bass": { "type": "float", "default": 0.4, "min": -0.6, "max": 1.5, "doc": "how much bass expands the cell size" },
-    "contrast": { "type": "float", "default": 1.15, "min": 0.5, "max": 2.5, "doc": "dot coverage contrast" },
-    "sharpness": { "type": "float", "default": 0.85, "min": 0.1, "max": 1, "doc": "dot edge crispness" },
+    "bass": { "type": "float", "default": 0.6, "min": -0.6, "max": 1.5, "doc": "how much bass expands the cell size" },
+    "contrast": { "type": "float", "default": 1.2, "min": 0.5, "max": 2.5, "doc": "dot coverage contrast" },
+    "sharpness": { "type": "float", "default": 0.88, "min": 0.1, "max": 1, "doc": "dot edge crispness" },
     "paper": { "type": "color", "default": "#dfd5c0", "doc": "paper stock color in CMYK mode or background in single-ink mode" },
     "ink": { "type": "color", "default": "#16141c", "doc": "ink tint in single-ink mode" },
     "mix": { "type": "float", "default": 1, "min": 0, "max": 1, "doc": "blend with original input" }
@@ -25,5 +25,12 @@
   "shader": "main.wgsl",
   "budget": { "ms": 0.3, "scales": "res" },
   "tags": ["halftone", "print", "cmyk", "stylize"],
-  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "changelog": [
+    {
+      "date": "2026-11-26",
+      "by": "agy/gemini-4-neon-medium",
+      "note": "Enlarged default dot pitch for clear visibility, added strong bass cell-size breathing, onset dot punch, CMYK plate misregistration, and audio-reactive print lighting."
+    }
+  ]
 }
