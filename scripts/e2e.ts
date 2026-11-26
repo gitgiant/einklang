@@ -116,6 +116,11 @@ try {
   da = await dbg(a); db = await dbg(b);
   const missed = effects.filter((e) => !da.transSeen.includes(e) || !db.transSeen.includes(e));
   check(tDiff === 0 && missed.length === 0, `transitions: ${effects.length} effects drawn on both (missed: ${missed.join(' ') || 'none'}), ${tShared} shared ticks, ${tDiff} mismatches`);
+  // transition vote: `.` on A votes the last effect that ran, toasted on both
+  await a.keyboard.press('.');
+  await sleep(300);
+  const tv = await toast(b);
+  check(tv.includes('👍 transition ') && (await a.$eval('#tvote .trow', (e) => e.textContent ?? '')).includes('saved'), `transition vote toast on the other host ("${tv}")`);
   if (process.env.SHOT5) {
     await a.select('#trans', 'core-iris'); await a.select('#tlen', '4'); await next();
     await a.waitForFunction(() => window.__ek!.trans === 'core-iris', { timeout: 5000 });

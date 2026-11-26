@@ -40,6 +40,8 @@ import { encodeFont, encodeSheet, sheetRgba, type Sheet } from '../../lab/api/in
 import { basename } from 'node:path';
 import { digest, feedbackMd } from './feedback.ts';
 import { parseVotes } from '../../src/core/votes.ts';
+import '../../src/server/transitions.ts'; // installs the transition registry
+import { transitions } from '../../src/core/transitions.ts';
 import { openLab, type Lab } from './browser.ts';
 import { judgeCost, judgeReactive, judgeRun, junit, reactivity, LIMITS } from './checks.ts';
 import { validateScene } from '../../src/core/graph/validate.ts';
@@ -248,7 +250,7 @@ async function main() {
     const file = resolve(opt('votes', join(LAB, '../data/votes.jsonl')));
     const votes = existsSync(file) ? parseVotes(readFileSync(file, 'utf8')) : [];
     const { reg } = await loadPieces();
-    const d = digest(votes, loadScenes(undefined, reg), reg);
+    const d = digest(votes, loadScenes(undefined, reg), reg, transitions());
     writeFileSync(join(LAB, 'feedback.json'), JSON.stringify(d, null, 1) + '\n');
     writeFileSync(join(LAB, 'FEEDBACK.md'), feedbackMd(d));
     const dir = join(LAB, 'scenes');

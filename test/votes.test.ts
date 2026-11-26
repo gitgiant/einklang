@@ -9,7 +9,10 @@ import { fileVotes, labCatalog, startServer } from '../src/server/main.ts';
 import type { WsConn } from '../src/server/ws.ts';
 import { STRIDE } from '../src/core/constants.ts';
 import { INPUT_DELAY, sceneAt, type RoomState, type ServerMsg } from '../src/core/protocol.ts';
-import { RETIRE_AT, cleanTags, parseVotes, pickWeighted, tally, weight, type Vote } from '../src/core/votes.ts';
+import { RETIRE_AT, TRANS_TAGS, cleanTags, parseVotes, pickWeighted, tally, weight, type Vote } from '../src/core/votes.ts';
+import { pickRandom, randomPool, transEffects, transitions } from '../src/core/transitions.ts';
+import { ranTransition, fixedScene } from '../src/core/protocol.ts';
+import { cycleSched, randomEffect, ZERO } from '../src/web/cycle.ts';
 import { digest, feedbackMd } from '../scripts/lab/feedback.ts';
 import { loadPieces, loadScenes, LAB } from '../scripts/lab/load.ts';
 
@@ -30,6 +33,65 @@ test('votes: tally, weights, weighted pick, parsing', () => {
   assert.deepEqual(parsed.map((v) => [v.scene, v.vote, v.tags]), [['a', 1, ['calm']], ['b', -1, []]]);
   assert.deepEqual(cleanTags(['calm', 'calm', 'nope', 7, 'boring']), ['calm', 'boring']);
   assert.deepEqual(cleanTags('calm'), []);
+});
+
+const T = (transition: string, vote: 1 | -1, tags: string[] = [], extra: object = {}): Vote => ({ transition, vote, tags, at: '2026-11-26T00:00:00.000Z', ...extra });
+
+test('votes: old scene lines and transition lines parse side by side and tally apart', () => {
+  const old = '{"scene":"radial","at":"2026-11-20T00:00:00.000Z","vote":1,"tags":["calm"],"live":true,"tick":5}';
+  const lines = [old, JSON.stringify(T('core-wipe', -1, ['too fast'], { from: 'radial', to: 'tunnel', beats: 4 })), '{"vote":1}', '{"scene":"a","transition":"core-wipe","vote":1}', '{"transition":7,"vote":1}'];
+  const v = parseVotes(lines.join('\n'));
+  assert.equal(v.length, 2);
+  assert.deepEqual([...tally(v).keys()], ['radial']);
+  assert.deepEqual([...tally(v, 'transition')], [['core-wipe', { up: 0, down: 1, tags: { 'too fast': 1 } }]]);
+  assert.deepEqual(cleanTags(['smooth', 'too busy', 'boring'], TRANS_TAGS), ['smooth', 'boring']);
+});
+
+test('transitions: weighted server pick follows the scores, skips retired ones, repeats for the same inputs', () => {
+  const E = transEffects(), rs = Array.from({ length: 4000 }, (_, i) => (i + 0.5) / 4000);
+  // no votes: uniform over everything but `last`, as before votes existed
+  const pool = E.filter((t) => t !== 'core-wipe');
+  for (const r of rs) assert.equal(pickRandom('core-wipe', r), pool[Math.floor(r * pool.length)]);
+  const scores = { 'core-blend': 2, 'core-iris': -1, 'core-melt': -2 };
+  const seen = new Map<string, number>();
+  for (const r of rs) { const t = pickRandom(null, r, scores); seen.set(t, (seen.get(t) ?? 0) + 1); assert.equal(pickRandom(null, r, { ...scores }), t); }
+  assert.equal(seen.has('core-melt'), false, 'retired');
+  assert.ok(Math.abs(seen.get('core-blend')! / seen.get('core-wipe')! - 4) < 0.1);
+  assert.ok(Math.abs(seen.get('core-iris')! / seen.get('core-wipe')! - 0.5) < 0.05);
+  // everything retired: random still picks something
+  assert.deepEqual(randomPool(Object.fromEntries(E.map((t) => [t, -5]))), E);
+});
+
+test('transitions: the gallery\'s weighted sequence is deterministic, never repeats and follows the scores', () => {
+  const scores = { 'core-blend': 3, 'core-melt': -2 };
+  const seq = (s: Record<string, number>) => Array.from({ length: 4000 }, (_, i) => randomEffect(i - 40, s));
+  const a = seq(scores);
+  assert.deepEqual(seq({ ...scores }), a);
+  // any order of evaluation gives the same answers
+  for (let i = a.length - 1; i >= 0; i -= 7) assert.equal(randomEffect(i - 40, scores), a[i]);
+  for (let i = 1; i < a.length; i++) assert.notEqual(a[i], a[i - 1], `switch ${i - 40}`);
+  assert.equal(a.includes('core-melt'), false);
+  const n = (id: string) => a.filter((t) => t === id).length;
+  assert.ok(n('core-blend') > 3 * n('core-wipe'), `${n('core-blend')} vs ${n('core-wipe')}`);
+  assert.deepEqual(seq({ 'core-blend': 0 }), seq({}), 'a zero score is no vote');
+  // a small pool alternates
+  const two = Object.fromEntries(transEffects().slice(2).map((t) => [t, -2]));
+  assert.deepEqual(new Set([randomEffect(0, two), randomEffect(1, two)]), new Set(transEffects().slice(0, 2)));
+  // the cycle uses them; a named effect ignores them
+  const c = { ids: ['a', 'b'], trans: 'random' as const, beats: 4, scores };
+  assert.equal(cycleSched(c, ZERO, 5).trans.type, randomEffect(0, scores));
+  assert.equal(cycleSched({ ...c, trans: 'core-melt' }, ZERO, 5).trans.type, 'core-melt');
+});
+
+test('ranTransition: the running or last finished switch; cuts and the starting hold are not one', () => {
+  const trans = { type: 'core-wipe', ticks: 112, seed: 1, tpb: 28 };
+  const s = { id: 'b', prev: 'a', at: 100, trans, earlier: [] };
+  assert.equal(ranTransition(s, 99), null);
+  const ran = { type: 'core-wipe', from: 'a', to: 'b', beats: 4, at: 100 };
+  assert.deepEqual(ranTransition(s, 150), ran);
+  assert.deepEqual(ranTransition(s, 9999), ran);
+  assert.equal(ranTransition(fixedScene('a'), 5), null);
+  assert.equal(ranTransition({ ...s, prev: 'b' }, 150), null);
 });
 
 function setup(opts: { catalog?: string[]; votes?: Vote[]; rand?: () => number } = {}) {
@@ -151,6 +213,31 @@ test('room: auto-rotation switches every N bars by weight, and stops when turned
   assert.equal(state().scene.at, at);
 });
 
+test('room: transition votes are stored, scored and weight random, without skipping; stored ones load', () => {
+  const { room, store, send, state, got } = setup({ rand: () => 0.5, votes: [T('core-melt', -1), T('core-melt', -1)] });
+  assert.deepEqual(state().transScores, { 'core-melt': -2 });
+  assert.deepEqual(state().scores, {}, 'transition votes are not scene votes');
+  const at = state().scene.at;
+  send({ t: 'transvote', transition: 'wipe', from: 'radial', to: 'tunnel', beats: 4, vote: -1, tags: ['jarring', 'too busy'] });
+  assert.equal(state().scene.at, at, 'no skip');
+  const rec = store.votes.at(-1)!;
+  assert.deepEqual({ ...rec, at: '', tick: 0 }, { transition: 'core-wipe', from: 'radial', to: 'tunnel', beats: 4, vote: -1, tags: ['jarring'], at: '', live: true, tick: 0 });
+  assert.deepEqual(got.filter((m) => m.t === 'transvote').at(-1), { t: 'transvote', transition: 'core-wipe', vote: -1, score: -1, retired: false, host: 'owner' });
+  assert.equal(state().transScores['core-wipe'], -1);
+  const n = store.votes.length;
+  for (const transition of ['nope', 'core-cut', undefined]) send({ t: 'transvote', transition, vote: 1 });
+  assert.equal(store.votes.length, n);
+  // a retired one never comes out of random (auto-rotation too), but stays selectable by name
+  for (let r = 0; r < 1; r += 0.02) {
+    const x = setup({ rand: () => r, votes: [T('core-melt', -1), T('core-melt', -1)] });
+    x.send({ t: 'scene', step: 1, quant: 'now', trans: { type: 'random', beats: 1 } });
+    assert.notEqual(x.state().scene.trans.type, 'core-melt');
+  }
+  send({ t: 'scene', step: 1, quant: 'now', trans: { type: 'melt', beats: 1 } });
+  assert.equal(state().scene.trans.type, 'core-melt');
+  assert.equal(room.voteTransition({ transition: 'core-melt' }, 1, [], null)?.retired, false);
+});
+
 test('server: POST /vote and GET /scores (token required), votes appended to the file', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'einklang-votes-')), file = join(dir, 'data/votes.jsonl');
   const srv = await startServer({ port: 0, pub: dir, token: 'tk', hosts: ['127.0.0.1'], scenes: ['radial', 'tunnel'], votesFile: file });
@@ -162,9 +249,15 @@ test('server: POST /vote and GET /scores (token required), votes appended to the
     assert.deepEqual(await r.json(), { score: -1, retired: false });
     assert.equal((await post({ scene: 'nope', vote: 1 })).status, 400);
     assert.equal((await post({ scene: 'tunnel', vote: 0 })).status, 400);
-    assert.deepEqual(await (await fetch(`${base}/scores?t=tk`)).json(), { scores: { tunnel: -1 }, live: ['radial', 'tunnel'] });
+    assert.deepEqual(await (await fetch(`${base}/scores?t=tk`)).json(), { scores: { tunnel: -1 }, live: ['radial', 'tunnel'], transScores: {} });
     const lines = parseVotes(readFileSync(file, 'utf8'));
     assert.deepEqual(lines.map((v) => [v.scene, v.vote, v.tags, v.live]), [['tunnel', -1, ['boring'], undefined]]);
+    const tv = await post({ transition: 'core-iris', from: 'radial', to: 'tunnel', beats: 8, vote: 1, tags: ['smooth', 'x'] });
+    assert.deepEqual(await tv.json(), { score: 1, retired: false });
+    assert.equal((await post({ transition: 'nope', vote: 1 })).status, 400);
+    assert.deepEqual((await (await fetch(`${base}/scores?t=tk`)).json()).transScores, { 'core-iris': 1 });
+    const t = parseVotes(readFileSync(file, 'utf8')).at(-1)!;
+    assert.deepEqual([t.transition, t.scene, t.tags, t.live], ['core-iris', undefined, ['smooth'], undefined]);
     // a restart reads them back
     assert.deepEqual(tally(fileVotes(file).load()).get('tunnel'), { up: 0, down: 1, tags: { boring: 1 } });
   } finally { await srv.close(); }
@@ -204,4 +297,27 @@ test('feedback: credit flows to pieces and vendors; net -2 retires', async () =>
   assert.match(md, /claude-vox-ship\*\* -2/);
   assert.match(md, /## Retired\n\n- claude-vox-fleet \(-2\)/);
   assert.equal(RETIRE_AT, -2);
+});
+
+test('feedback: transitions are scored, credited to vendors and listed', async () => {
+  const { reg } = await loadPieces();
+  const ctx = { from: 'radial', to: 'tunnel', beats: 4 };
+  const votes = [T('core-blend', 1, ['smooth'], ctx), T('core-blend', 1, [], { ...ctx, live: true }), T('core-melt', -1, ['too slow'], ctx), T('core-melt', -1), V('radial', 1, ['calm']), T('gone-effect', 1)];
+  const d = digest(votes, loadScenes(), reg, transitions());
+  assert.equal(d.votes, 6);
+  assert.deepEqual(d.transitions['core-blend'], { up: 2, down: 0, score: 2, tags: { smooth: 1 }, name: 'blend', vendor: 'core', live: 1, status: 'live', contexts: [{ ...ctx, up: 2, down: 0 }] });
+  assert.equal(d.transitions['core-melt'].status, 'retired');
+  assert.equal(d.transitions['core-cut'], undefined);
+  assert.equal(d.transitions['gone-effect'], undefined);
+  assert.equal(d.vendors.core.transitions.score, 0);
+  assert.equal(d.vendors.core.scenes.score, 1);
+  assert.deepEqual(d.transitionTags, { smooth: 1, 'too slow': 1 });
+  assert.deepEqual(d.tags, { calm: 1 });
+  assert.deepEqual(d.retired, [], 'only scenes get retired in files');
+  const md = feedbackMd(d);
+  assert.match(md, /## Top transitions[\s\S]*core-blend[\s\S]*radial→tunnel @4[\s\S]*## Bottom transitions[\s\S]*core-melt/);
+  assert.match(md, /\| core \| \+1 \(1↑ 0↓\) \|.*\| 0 \(2↑ 2↓\) \|/);
+  assert.match(md, /## Transition reason tags\n\n(smooth ×1, too slow ×1)/);
+  assert.match(md, /## Retired transitions\n\n- core-melt \(-2\)/);
+  assert.match(feedbackMd(digest([], loadScenes(), reg, transitions())), /## Top transitions\n\nNo votes yet\./);
 });

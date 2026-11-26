@@ -24,13 +24,14 @@
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { FPS } from '../core/constants.ts';
-import { TRANS_BEATS, type SceneSched } from '../core/protocol.ts';
+import { TRANS_BEATS, ranTransition, type SceneSched } from '../core/protocol.ts';
 import './transitions.ts'; // installs the transition registry (lab/transitions/)
 import { transIds, transName, transitions } from '../core/transitions.ts';
 import { VOTE_TAGS } from '../core/votes.ts';
 import { autoHideUi } from './idle.ts';
 import { tapZone, toggleUiOnDoubleTap } from './doubletap.ts';
 import { galleryBeats, galleryTrans, type GalleryTrans } from './defaults.ts';
+import { TRANS_KEYS, transRow } from './transvote.ts';
 import { ZERO, cycleSched, holdAt, retime, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
 import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
 import { canShare, insecure, micError, openMic, openShare } from './capture.ts';
@@ -59,8 +60,11 @@ const token = qs.get('t') ?? lsGet('token') ?? '';
 if (qs.get('t')) try { localStorage.setItem('token', qs.get('t')!); } catch { /* private mode */ }
 const withToken = (p: string) => (token ? `${p}?t=${encodeURIComponent(token)}` : p);
 
-/** The vote panel: 👍/👎 and reason tags for the scene shown, posted to the server. */
-function votePanel(sceneOf: () => { id: string; name: string } | null) {
+/**
+ * The vote panel: 👍/👎 and reason tags for the scene shown, and under it the row for the last transition,
+ * posted to the server. `scored`: the transition scores, whenever they arrive or change.
+ */
+function votePanel(sceneOf: () => { id: string; name: string } | null, scored: (s: Record<string, number>) => void) {
   const el = document.createElement('div'); el.id = 'vote';
   const label = document.createElement('span'), up = document.createElement('button'), down = document.createElement('button');
   const tags = document.createElement('div'); tags.className = 'tags';
@@ -72,10 +76,26 @@ function votePanel(sceneOf: () => { id: string; name: string } | null) {
     b.onclick = () => { picked.has(t) ? picked.delete(t) : picked.add(t); b.setAttribute('aria-pressed', String(picked.has(t))); };
     tags.append(b);
   }
-  el.append(label, up, down, note, tags);
+  const post = async (body: object) => {
+    const r = await fetch(withToken('/vote'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json() as { score?: number; retired?: boolean; error?: string };
+    if (!r.ok || j.score === undefined) throw new Error(j.error ?? String(r.status));
+    return { score: j.score, retired: j.retired };
+  };
+  const trans = transRow(async (t, vote, picks) => {
+    try {
+      const j = await post({ transition: t.type, from: t.from, to: t.to, beats: t.beats, vote, tags: picks });
+      transScores = { ...transScores, [t.type]: j.score };
+      trans.saved(`${vote > 0 ? '👍' : '👎'} saved ${transName(t.type)}${picks.length ? ` (${picks.join(', ')})` : ''}`);
+      scored(transScores);
+    } catch (e) { trans.note(`vote failed: ${(e as Error).message}`); }
+    show();
+  });
+  el.append(label, up, down, note, tags, trans.el);
   document.body.append(el);
-  let scores: Record<string, number> = {}, live: string[] = [], online = false;
+  let scores: Record<string, number> = {}, transScores: Record<string, number> = {}, live: string[] = [], online = false;
   const show = () => {
+    trans.show(transScores, online);
     const sc = sceneOf();
     el.classList.toggle('hide', sc === null);
     if (sc === null) return;
@@ -85,15 +105,13 @@ function votePanel(sceneOf: () => { id: string; name: string } | null) {
     up.disabled = down.disabled = !online;
   };
   fetch(withToken('/scores')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-    .then((j: { scores: Record<string, number>; live: string[] }) => { scores = j.scores; live = j.live; online = true; show(); })
+    .then((j: { scores: Record<string, number>; live: string[]; transScores?: Record<string, number> }) => { scores = j.scores; live = j.live; transScores = j.transScores ?? {}; online = true; scored(transScores); show(); })
     .catch(() => { online = false; show(); });
   const send = async (vote: 1 | -1) => {
     const id = sceneOf()?.id;
     if (!id || !online) return;
     try {
-      const r = await fetch(withToken('/vote'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scene: id, vote, tags: [...picked] }) });
-      const j = await r.json() as { score?: number; retired?: boolean; error?: string };
-      if (!r.ok || j.score === undefined) throw new Error(j.error ?? String(r.status));
+      const j = await post({ scene: id, vote, tags: [...picked] });
       scores[id] = j.score;
       if (j.retired) live = live.filter((x) => x !== id); else if (!live.includes(id)) live.push(id);
       note.textContent = `${vote > 0 ? '👍' : '👎'} saved${picked.size ? ` (${[...picked].join(', ')})` : ''}`;
@@ -102,7 +120,9 @@ function votePanel(sceneOf: () => { id: string; name: string } | null) {
     show();
   };
   up.onclick = () => send(1); down.onclick = () => send(-1);
-  return { show, send };
+  /** Key votes count only while the panel is on screen. */
+  const voteTrans = (v: 1 | -1) => { if (sceneOf()) trans.vote(v); };
+  return { show, send, voteTrans, trans };
 }
 
 /** The input picker. `change` takes over each newly opened input. */
@@ -172,17 +192,21 @@ async function main() {
   });
   const ids = cells[0].engine.scenes.map((s) => s.def.id);
   let input = demoInput(startTick), tickNow = startTick;
-  const cyc = (): Cycle => ({ ids, trans: trans || 'random', beats });
+  const cyc = (): Cycle => ({ ids, trans: trans || 'random', beats, scores });
   const idxOf = (id: string) => Math.max(0, ids.indexOf(id));
   /** stop= stills count the cycle from time 0; otherwise it starts on `scene`. */
   let anchor: Anchor = qs.has('stop') ? ZERO : holdAt(startTick, idxOf(current), beats);
   /** A newly picked length waiting for the next switch. */
   let pending: { beats: number; anchor: Anchor } | null = null;
   const applyLen = () => { if (pending) beats = pending.beats; pending = null; };
+  /** Vote scores weighting `random`: new ones apply from the next switch, so a running effect never changes. */
+  let latestScores: Record<string, number> = {}, scores = latestScores, scoredSwitch = NaN;
   const schedAt = (tick: number): SceneSched | undefined => {
     if (!trans || grid) return undefined;
     if (pending && tick >= pending.anchor.at) { anchor = pending.anchor; applyLen(); }
     if (oneShotAt !== null) return step(cyc(), 0, current, ids[(idxOf(current) + 1) % ids.length], oneShotAt);
+    const n = switchAt(cyc(), anchor, tick);
+    if (n !== scoredSwitch) { scores = latestScores; scoredSwitch = n; }
     return cycleSched(cyc(), anchor, tick);
   };
   const shownId = () => cells[0].engine.scene.def.id;
@@ -213,7 +237,10 @@ async function main() {
     if (trans && oneShotAt === null) pending = { beats: next, anchor: retime(cyc(), anchor, tickNow) };
     else beats = next;
   };
-  const votes = votePanel(() => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }));
+  const votes = votePanel(
+    () => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }),
+    (s) => { if (!qs.has('at') && !qs.has('stop')) latestScores = s; }, // stills repeat, votes or not
+  );
   /** The tick space starts over (new input, looped file): sims replay, the cycle carries on from the scene showing. */
   const restart = (tick: number) => {
     const n = switchAt(cyc(), anchor, tickNow) + 1;
@@ -290,6 +317,7 @@ async function main() {
     else if (+e.key >= 1 && +e.key <= ids.length) go(ids[+e.key - 1]);
     else if (e.key === '+' || e.key === '=') votes.send(1);
     else if (e.key === '-' || e.key === '_') votes.send(-1);
+    else if ((e.key === TRANS_KEYS.up || e.key === TRANS_KEYS.down) && !e.repeat && !e.ctrlKey && !e.metaKey) votes.voteTrans(e.key === TRANS_KEYS.up ? 1 : -1);
   });
   layout();
 
@@ -305,6 +333,7 @@ async function main() {
     const sched = schedAt(tick);
     const hashes = active.map((c, i) => c.engine.frame(tick, input.F, undefined, i === 0 ? sched : undefined, sub));
     if (marked !== shownId()) mark();
+    if (sched) votes.trans.ran(ranTransition(sched, tick));
     frames++;
     if (now - lastFps > 500) { fps = (frames * 1000) / (now - lastFps); frames = 0; lastFps = now; }
     if (info) {
@@ -317,6 +346,7 @@ async function main() {
           return tr ? `${transName(tr.type)} ${tr.from}→${tr.to} ${((tr.p16 / 65536) * 100) | 0}%` : 'between';
         })()}` : null,
         !grid && sc.status ? sc.status() : null,
+        `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  t transition  ·  g grid  ·  h UI  ·  i info`,
         `${fps.toFixed(0)} fps  ·  WebGPU ${gpu.adapterInfo}`,
       ].filter(Boolean).join('\n');
     }

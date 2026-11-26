@@ -1,4 +1,4 @@
-// Owner votes on scenes: the record format (data/votes.jsonl), scores, rotation weights and the
+// Owner votes on scenes and transitions: the record format (data/votes.jsonl), scores, rotation weights and the
 // retire rule. Shared by the server (live list) and `einklang-lab feedback` (digest). Spec: docs/prd-lab.md "Voting".
 
 /** Reason tags the gallery offers. Tags are recorded and counted in the digest; they don't change the score. */
@@ -7,9 +7,12 @@ export const VOTE_TAGS = [
   'too busy', 'boring', 'too dark', 'too bright', 'ugly colors', 'off-beat', 'glitchy',
 ] as const;
 
-/** One line of data/votes.jsonl. */
-export interface Vote {
-  scene: string;
+/** Reason tags for a vote on a transition. */
+export const TRANS_TAGS = [
+  'love it', 'smooth', 'fits the music', 'too slow', 'too fast', 'jarring', 'boring', 'glitchy',
+] as const;
+
+interface VoteBase {
   /** Server time, ISO 8601. */
   at: string;
   vote: 1 | -1;
@@ -20,20 +23,34 @@ export interface Vote {
   tick?: number;
   features?: number[];
 }
+export interface SceneVote extends VoteBase { scene: string; transition?: undefined }
+/** A vote on a transition (registered id), with the switch it was seen in: scene ids and length. */
+export interface TransVote extends VoteBase { transition: string; scene?: undefined; from?: string; to?: string; beats?: number }
+/** One line of data/votes.jsonl: `scene` or `transition` says which kind. */
+export type Vote = SceneVote | TransVote;
 
-/** At this net score or below a scene is retired: off the live list, kept in git, still remixable. */
+/**
+ * At this net score or below a scene is retired: off the live list, kept in git, still remixable. A
+ * retired transition is left out of `random`, but can still be selected by name.
+ */
 export const RETIRE_AT = -2;
 
 export interface Tally { up: number; down: number; tags: Record<string, number> }
 export const score = (t: Tally | undefined): number => (t ? t.up - t.down : 0);
 
-export function tally(votes: Iterable<Vote>): Map<string, Tally> {
+/** Count one vote into `t`. */
+export function count(t: Tally, v: Vote): Tally {
+  if (v.vote > 0) t.up++; else t.down++;
+  for (const g of v.tags) t.tags[g] = (t.tags[g] ?? 0) + 1;
+  return t;
+}
+
+/** Tallies per scene id, or per transition id. Votes of the other kind are skipped. */
+export function tally(votes: Iterable<Vote>, kind: 'scene' | 'transition' = 'scene'): Map<string, Tally> {
   const out = new Map<string, Tally>();
   for (const v of votes) {
-    const t = out.get(v.scene) ?? { up: 0, down: 0, tags: {} };
-    if (v.vote > 0) t.up++; else t.down++;
-    for (const g of v.tags) t.tags[g] = (t.tags[g] ?? 0) + 1;
-    out.set(v.scene, t);
+    const id = v[kind];
+    if (id !== undefined) out.set(id, count(out.get(id) ?? { up: 0, down: 0, tags: {} }, v));
   }
   return out;
 }
@@ -58,12 +75,13 @@ export function parseVotes(text: string): Vote[] {
     if (!line.trim()) continue;
     try {
       const v = JSON.parse(line) as Vote;
-      if (typeof v.scene === 'string' && (v.vote === 1 || v.vote === -1)) out.push({ ...v, tags: Array.isArray(v.tags) ? v.tags.filter((t) => typeof t === 'string') : [] });
+      // exactly one of `scene` / `transition`
+      if ((typeof v.scene === 'string') !== (typeof v.transition === 'string') && (v.vote === 1 || v.vote === -1)) out.push({ ...v, tags: Array.isArray(v.tags) ? v.tags.filter((t) => typeof t === 'string') : [] });
     } catch { /* a torn last line: skip */ }
   }
   return out;
 }
 
 /** Clean up untrusted tags: known ones only, no duplicates. */
-export const cleanTags = (tags: unknown): string[] =>
-  Array.isArray(tags) ? [...new Set(tags.filter((t): t is string => (VOTE_TAGS as readonly string[]).includes(t as string)))] : [];
+export const cleanTags = (tags: unknown, known: readonly string[] = VOTE_TAGS): string[] =>
+  Array.isArray(tags) ? [...new Set(tags.filter((t): t is string => known.includes(t as string)))] : [];

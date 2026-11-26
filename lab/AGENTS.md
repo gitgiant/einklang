@@ -200,6 +200,8 @@ npm run lab -- validate                            # schema, ids, curve params, 
 npm run lab -- render <id> --cpu --seconds 2      # contact sheet over p, radial -> tunnel, in lab/out/<id>/
 ```
 
+The owner votes on transitions too (`lab/FEEDBACK.md`): votes weight `random`, and at net -2 a transition drops out of it.
+
 The gate renders each new or changed transition between the two fixed scenes over the three fixtures (errors, NaN, black, blown out, frozen) and its cost over `core-blend`. Don't touch `src/`, the prelude or the `core-*` transitions: if you need a new curve or uniform, say so in your report.
 
 ## Check your work

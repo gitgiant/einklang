@@ -242,6 +242,18 @@ Hauptling workers run in containers with no GPU. The sandbox is a shell CLI, so 
 
   It commits these, so agents read the feedback with no network access.
 
+#### Transition votes
+
+- **What:** the owner also votes on the last transition that ran (the one in progress, or else the last one finished). Cuts are not votable.
+- **Where:** a row "transition: <name>" with 👍/👎 below the gallery's scene vote panel, and at the bottom right of the main app (which has no scene vote buttons). Hidden until a transition has run. Keys on both pages: `.` 👍, `,` 👎 (`+` / `-` stay the scene vote; they already are shift + `=` / `-`). No pad chord.
+- **Tags** (`TRANS_TAGS`): love it, smooth, fits the music, too slow, too fast, jarring, boring, glitchy.
+- **A live transition vote** toasts on all hosts and never skips.
+- **Store:** the same `/vote` path and file: `{transition, from, to, beats, at, vote, tags, live?, tick?, features?}`. A line has either `scene` or `transition`; older lines are unchanged. Over the socket it is the `transvote` message.
+- **`random`** (server auto-rotation, every `random` switch, and the gallery) weights transitions like scene rotation: 2^score, clamped to 1/8 .. 16. At net ≤ −2 a transition is left out of `random` but stays selectable by name (also in the gallery's `all`). If all were retired, `random` uses all. Nothing is written to `transition.json`.
+  - Room: the server picks and puts the concrete id into the synced schedule, so hosts never choose.
+  - Gallery (local schedule): a pure function of the switch number and the scores (`randomEffect`); without votes it is the old shuffled rounds. New scores apply from the next switch; `at=` / `stop=` stills ignore votes.
+- **Digest:** `transitions` (score, tags, vendor, status, from/to/beats contexts), `transitionTags` and `vendors.*.transitions` in `lab/feedback.json`; top and bottom transitions, vendor scores, tags and retired ones in `lab/FEEDBACK.md`.
+
 ### Agents (via Hauptling)
 
 - `lab/AGENTS.md` holds the contract: piece API, ports, rules, CLI use, gate, ID and author conventions. It is linked from the repo's CLAUDE.md and AGENTS.md, and agy reads AGENTS.md.
