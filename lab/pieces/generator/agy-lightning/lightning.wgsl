@@ -118,7 +118,7 @@ struct SegOut {
   // Local coordinates in pixels: x along segment [0..segLenPx], y perpendicular signed distance
   @location(0) local_px: vec2f,
   @location(1) seg_len: f32,
-  @location(2) meta: vec4f, // widthPx, intensity, palT, coreBoost
+  @location(2) props: vec4f, // widthPx, intensity, palT, coreBoost
 };
 
 @vertex fn vs_seg(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> SegOut {
@@ -149,7 +149,7 @@ struct SegOut {
   out.pos = vec4f(px.x / res.x * 2.0 - 1.0, 1.0 - px.y / res.y * 2.0, 0.0, 1.0);
   out.local_px = vec2f(along, across);
   out.seg_len = seg_len;
-  out.meta = m;
+  out.props = m;
   return out;
 }
 
@@ -158,10 +158,10 @@ struct SegOut {
   let cx = clamp(in.local_px.x, 0.0, in.seg_len);
   let dist = length(in.local_px - vec2f(cx, 0.0));
 
-  let w = max(in.meta.x, 0.65);
-  let inten = in.meta.y * u.b.x;
-  let col = pal_at(in.meta.z);
-  let core_boost = in.meta.w;
+  let w = max(in.props.x, 0.65);
+  let inten = in.props.y * u.b.x;
+  let col = pal_at(in.props.z);
+  let core_boost = in.props.w;
 
   let core = exp(-pow(dist / (w * 0.55), 2.0));
   let inner = exp(-dist / (w * 1.9));

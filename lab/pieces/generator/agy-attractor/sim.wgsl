@@ -100,9 +100,9 @@ fn cs_step(@builtin(global_invocation_id) gid: vec3u) {
   if (i >= u32(sim.a.x)) { return; }
   let kind = i32(sim.a.y);
   let cur4 = pts[i * 2u];
-  let meta = pts[i * 2u + 1u];
+  let info = pts[i * 2u + 1u];
   var p = cur4.xyz;
-  var age = meta.w;
+  var age = info.w;
   let tick_salt = u32(sim.c.z) + 17u;
 
   if (kind == 0) {

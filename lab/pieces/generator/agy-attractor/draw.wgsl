@@ -40,7 +40,7 @@ struct SplatOut {
 
 @vertex fn vs_splat(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> SplatOut {
   let pt = pts[ii * 2u];
-  let meta = pts[ii * 2u + 1u];
+  let info = pts[ii * 2u + 1u];
 
   let world = (pt.xyz - u.b.xyz) * u.b.w;
   let clip = u.view_proj * vec4f(world, 1.0);
@@ -71,7 +71,7 @@ struct SplatOut {
   let hot_col = mix(base_col, vec3f(1.0, 0.96, 0.92), clamp(pt.w * 0.42 + u.c.z * 0.2, 0.0, 0.65));
 
   // Smooth fade-in/out over particle lifecycle so respawns never pop
-  let age = meta.w;
+  let age = info.w;
   let life_fade = smoothstep(0.0, 0.06, age) * smoothstep(1.0, 0.92, age);
   let depth_atten = clamp(2.2 / (clip.w * clip.w), 0.25, 1.35);
 
