@@ -1,6 +1,6 @@
 # PRD: Einklang Lab (agent-generated pieces, a node-graph runtime, and voting)
 
-Status: agreed 2026-11-26 (grill-me interview), not started. Tickets: #20–#25.
+Status: agreed 2026-11-26 (grill-me interview), not started. Tickets: #20–#26.
 
 ## Problem
 
@@ -91,6 +91,21 @@ An edge must join equal port types. Conversions are explicit utility nodes (for 
   - **Analysis-driven:** optical-flow trails, edge→particles emitter, luma→field, motion-masked FX, band-masked FX (each band drives a region).
 - **Modulators:** band follower, envelope/ADSR, LFO, beat-synced step sequencer, random walk, MIDI CC/note, pad axis, slew, math (map, clamp, mix).
 - **Composite / utility:** blend (add, screen, multiply, difference), mask ops, crossfade, transform, camera rigs (orbit, dolly, shake), particles→tex splat, geo→tex render, field ops.
+- **Retro / aesthetic** (pieces and ready-made scene packs):
+  - **Vaporwave:** slatted sunset sun, neon grid floor, marble bust (.vox/.glb), palm silhouettes, pink/cyan palettes, Win95 windows, kanji overlays, slowed "chopped" time-stretch.
+  - **Synthwave / outrun:** chrome text, wireframe mountains, scrolling road, starfield.
+  - **VHS:** tracking lines, head-switch noise, tape wrinkle, chroma delay, REC/PLAY OSD with timestamp, pause jitter, rewind scrub, dropouts.
+  - **8/16-bit and demoscene:** Mode 7 floor, parallax layers, CGA/EGA/NES/C64 palettes, raster and copper bars, plasma, rotozoom, twister, sine scroller, dot balls, fire.
+  - **Other looks:** Y2K / Frutiger Aero (bubbles, glossy blobs, chrome); vector phosphor (Vectrex/arcade beam); PS1 (affine texture wobble, vertex snap, low-res dither, fog); Winamp/Milkdrop-style feedback presets.
+- **Text:** bitmap fonts (pixel, C64, DOS), SDF/MSDF fonts, timed lyrics (an `.lrc` file next to the track), BPM/title OSD, kinetic typography (per-letter on onset), marquee and sine scroller, matrix rain, ASCII-art renderer, text as particles, text masks, glitch text, typewriter, MIDI note names. A new `text` param type holds strings.
+- **Sprites:**
+  - **Import:** PNG sheets with Aseprite JSON, GIF, `.vox` slices.
+  - **Sprite node:** an atlas, with frame animation timed to the beat.
+  - **Uses:** sprite emitter (sprites as particles), sprite crowd/flock, stamp/tiling, palette-swap shader, outline/drop shadow, pixel-perfect scaling, a dancing sprite rig (beat-timed frames).
+- **AI-generated sprites, from two sources:**
+  - **Code-drawn (default):** agents write pixel art as code or data, like the space_sim voxel recipes + `sheet.png`. No cost, and it is reproducible.
+  - **Image API, opt-in per task:** a brief flag `imagegen: N` caps the images for that task, and a monthly cap lives in host config. `einklang-lab sprite gen "<prompt>" --size 64 --frames 8 --palette <id>` calls an image model (Gemini image or OpenAI gpt-image). The key stays in host config, and the endpoint is on the Hauptling egress allowlist. The tool then downscales, quantizes to the palette, removes the background and packs the sheet. The PNG is vendored with `license: "ai-generated"`, the model name and the prompt.
+- **Generative tools** (agent-side `einklang-lab` subcommands that emit assets or data rather than nodes): palette generator, tileset / WFC generator, voxel recipe builder (space_sim recipe style), noise/texture baker, L-system/grammar compiler, SDF scene composer, font/ASCII baker, LUT maker, MIDI pattern → visual score, sprite-sheet packer, **style-pack** bundler (palette + FX chain + fonts as a reusable look that a scene can reference).
 
 ### Sandbox: `einklang-lab` CLI
 
@@ -153,8 +168,9 @@ Hauptling workers run in containers with no GPU. The sandbox is a shell CLI, so 
 2. **#21 Port v1 to graph:** radial, tunnel, scope and flow as `core-*` pieces; post / pad FX and the transition node; show graph. Hash parity with today in e2e, then the old pipeline is deleted.
 3. **#22 `einklang-lab` CLI + gate:** validate, SwiftShader render, fixtures, GPU gate, `hauptling.json` (`gpu`, `gateGpu`), `new` scaffolds.
 4. **#23 Asset import:** the space_sim copy script, `index.json`, a `.vox` loader in `lab/api`, and one voxel generator as the exemplar.
-5. **#24 Voting:** gallery buttons and tags, keys and pad chord, server log, toast, live-skip on 👎, rotation weights, retire rule, `feedback` digest.
-6. **#25 Agents:** `lab/AGENTS.md`, `lab/BACKLOG.md` seeded from the catalog, the delegator `lab` skill, and a first batch (one generator, one color piece, one effect and one scene per vendor).
+5. **#26 Sprites + text + style packs:** sprite and atlas import (PNG/Aseprite/GIF), sprite node and emitter, the font baker (bitmap + MSDF), the `text` param type, `.lrc` lyrics, `sprite gen` (image API behind `imagegen: N` and the monthly cap), and style packs.
+6. **#24 Voting:** gallery buttons and tags, keys and pad chord, server log, toast, live-skip on 👎, rotation weights, retire rule, `feedback` digest.
+7. **#25 Agents:** `lab/AGENTS.md`, `lab/BACKLOG.md` seeded from the catalog, the delegator `lab` skill, and a first batch (one generator, one color piece, one effect and one scene per vendor).
 
 ## Open
 
