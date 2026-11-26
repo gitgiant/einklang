@@ -13,7 +13,7 @@ Newest first. Keep short; prune the oldest entries.
   - iPhone/iPad: `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>` (`tailscale serve`, server on `BIND=0.0.0.0`).
 - **Checks:**
   - `npm run typecheck`
-  - `npm test` (108)
+  - `npm test` (113)
   - `npm run build && npm run e2e` (29 checks, two headless WebGPU hosts, hashes per tick; votes + gallery vote included)
   - `npm run lab -- gate --all` (all scenes, 1080p, 3 fixtures, ~2 min)
 - **Lab CLI:** `npm run lab -- validate [--no-compile] | render <scene|piece|transition> [--fixture all] [--cpu] | gate [--all] [--junit f] | new <kind|transition> <vendor-slug> | fixtures | feedback | import-space-sim | sprite import <file> --license L | sprite gen "<prompt>" --name id | font bake <ttf|builtin:pixel5x8> --name id --license L` (usage in `scripts/lab/cli.ts`). Artifacts go to `lab/out/` (gitignored). No GPU means it falls back to SwiftShader (~50x slower, budget not enforced).
