@@ -1,0 +1,14 @@
+{
+  "id": "claude-cycle", "kind": "color", "name": "Palette cycle",
+  "doc": "Rotates the stops of the input palette (a colour wheel when unconnected) on every beat or bar: jumping in step mode, gliding from one rotation to the next in smooth mode.",
+  "ports": { "in": { "palette": { "type": "palette", "optional": true } }, "out": { "palette": { "type": "palette" } } },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["step", "smooth"] },
+    "every": { "type": "enum", "default": 0, "options": ["beat", "bar"] },
+    "stride": { "type": "int", "default": 1, "min": -7, "max": 7, "doc": "stops moved per beat or bar (negative goes backwards)" },
+    "flash": { "type": "float", "default": 0, "min": 0, "max": 0.3, "doc": "OKLab lightness lift right after each change" },
+    "loop": { "type": "bool", "default": false, "doc": "repeat the first stop at the end (palettes under 8 stops), so shaders that wrap along it show no seam" }
+  },
+  "tags": ["palette", "beat"],
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" }
+}

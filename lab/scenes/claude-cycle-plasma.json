@@ -1,0 +1,23 @@
+{
+  "format": 1, "id": "claude-cycle-plasma", "name": "Colour wheel interference", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" },
+  "status": "live", "created": "2026-11-26",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.5 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#05010f #3a0ca3 #f72585 #ffbe0b #06d6a0 #05010f" } },
+    { "id": "hit", "piece": "claude-cycle", "params": { "mode": 0, "every": 0, "stride": 1, "flash": 0.12 } },
+    { "id": "glide", "piece": "claude-cycle", "params": { "mode": 1, "every": 1, "stride": -2, "loop": true } },
+    { "id": "rings", "piece": "core-plasma", "params": { "scale": 9, "speed": 0.35, "gain": 0.75 }, "bind": { "warp": { "from": "bass.out", "range": [0, 0.9] } } },
+    { "id": "swell", "piece": "core-plasma", "params": { "scale": 3.5, "speed": 0.6, "warp": 0.5, "gain": 0.6 } },
+    { "id": "mix", "piece": "core-blend", "params": { "mode": 3 } },
+    { "id": "fold", "piece": "core-kaleido", "params": { "segments": 4, "spin": 0.012, "zoom": 1.15 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "hit.palette" }, { "from": "pal.palette", "to": "glide.palette" },
+    { "from": "hit.palette", "to": "rings.palette" }, { "from": "glide.palette", "to": "swell.palette" },
+    { "from": "rings.out", "to": "mix.a" }, { "from": "swell.out", "to": "mix.b" },
+    { "from": "mix.out", "to": "fold.in" }
+  ],
+  "out": "fold.out",
+  "post": { "bloom": 0.25, "threshold": 0.85 }
+}

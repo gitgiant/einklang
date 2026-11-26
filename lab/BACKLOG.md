@@ -53,7 +53,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Mood / genre presets
 - [ ] Key → hue (circle of fifths)
 - [ ] OKLab gradients
-- [ ] Palette cycling on the beat
+- [x] Palette cycling on the beat → claude-cycle, scene claude-cycle-plasma
 - [ ] Per-pad color
 - [ ] Contrast guard (APCA)
 - [ ] Blackbody / temperature
@@ -68,7 +68,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Bloom → core-post
 - [ ] Chromatic aberration
 - [ ] Glitch / datamosh
-- [ ] CRT / VHS
+- [x] CRT / VHS → claude-crt, scene claude-late-show
 - [ ] ASCII / dither (Bayer, error diffusion)
 - [ ] Halftone
 - [ ] Edge / toon
@@ -104,7 +104,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 ### Effects: time / feedback
 - [ ] Motion blur
 - [ ] Temporal echo stack
-- [ ] Zoom feedback (Milkdrop-style)
+- [x] Zoom feedback (Milkdrop-style) → claude-zoomfeed, scene claude-vortex
 - [ ] Rotate feedback
 - [ ] Freeze-frame stutter on the beat
 - [ ] Reverse buffer scrub

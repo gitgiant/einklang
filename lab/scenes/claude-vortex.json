@@ -1,0 +1,14 @@
+{
+  "format": 1, "id": "claude-vortex", "name": "Vortex", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" },
+  "status": "live", "created": "2026-11-26",
+  "nodes": [
+    { "id": "turn", "piece": "core-lfo", "params": { "beats": 32, "shape": 1 } },
+    { "id": "scope", "piece": "core-scope" },
+    { "id": "feed", "piece": "claude-zoomfeed", "params": { "decay": 0.93, "zoom": 0.008, "bass": 0.035, "pulse": 0.03, "swing": 0.02, "hue": 0.05 },
+      "bind": { "rotate": { "from": "turn.out", "range": [-0.035, 0.035] } } }
+  ],
+  "edges": [ { "from": "scope.out", "to": "feed.in" } ],
+  "out": "feed.out",
+  "post": { "bloom": 0.7, "threshold": 0.6 }
+}
