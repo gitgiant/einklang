@@ -17,6 +17,7 @@ import { ACCEPT, Player } from './player.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
 import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
+import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
@@ -169,7 +170,8 @@ async function playIndex(i: number, tries = 0): Promise<void> {
     msg(`uploading ${name}${tag}`);
     await fetch(withToken('/track'), { method: 'POST', headers: { 'content-type': p.type }, body: p.bytes.slice(0) });
     sendBin(p.feat.slice());
-    send({ t: 'play', name });
+    const lrc = await player.lyrics(i).catch(() => null), lyrics = lrc ? parseLrc(lrc) : [];
+    send({ t: 'play', name, ...(lyrics.length ? { lyrics } : {}) });
     send({ t: 'playlist', names: player.names, index: i });
     player.index = playing = i;
     msg(`${name}${tag}: playing in 2.5 s`);
@@ -486,7 +488,7 @@ async function start() {
     const tF = modeTickF(room, sNow() + offsetMs), f = Math.floor(tF), sub = interp ? Math.floor((tF - f) * 256) : 0;
     let F: FeatureSource, label: string;
     if (room.mode === 'file' && fileFeat) {
-      F = fileSource(fileFeat, frames);
+      F = { ...fileSource(fileFeat, frames), lyrics: room.lyrics };
       label = (f < 0 ? `starts in ${(-f / FPS).toFixed(1)}s` : `file ${f}/${frames}${room.paused !== null ? ' (paused)' : ''}`) + (audBox.checked ? '' : '  (no sound here: tick "audio here")');
     } else if (room.mode === 'live') {
       F = mapSource(live); label = leaderLive ? 'live (leader)' : 'live';

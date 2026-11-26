@@ -130,7 +130,7 @@ async function main() {
     layout();
   };
   tsel.onchange = () => setTrans(tsel.value);
-  const votes = votePanel(() => (grid ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }));
+  const votes = votePanel(() => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }));
   autoHideUi(() => [bar, document.getElementById('vote')]);
 
   const layout = () => {

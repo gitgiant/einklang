@@ -1,3 +1,4 @@
+import type { Lyric } from './lrc.ts';
 import { NB, STRIDE, K_RMS, K_ONSET, K_P0, K_PAL, WAVE_BYTES, WAVE_N } from './constants.ts';
 
 /** Read-only view of per-tick audio features. Unknown ticks read as silence. */
@@ -6,6 +7,8 @@ export interface FeatureSource {
   get(tick: number, k: number): number;
   /** Decimated L/R waveform at tick (WAVE_N interleaved int8 pairs), or null if not streamed. */
   wave(tick: number): Int8Array | null;
+  /** Timed lyrics of the track, if it came with an .lrc. */
+  lyrics?: readonly Lyric[] | null;
 }
 
 export const silence: FeatureSource = { get: () => 0, wave: () => null };

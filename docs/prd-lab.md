@@ -2,6 +2,16 @@
 
 Status: agreed 2026-11-26 (grill-me interview). **#20, #21 and #22 built 2026-11-26**; #23–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
 
+### Build notes for #26 (decided while building)
+
+- **Sprites:** one runtime format, `.spr` (`lab/api/sprite.ts`): indexed colour, equal frames, per-frame durations, tags; a texture_2d_array layer per frame. `sprite import` converts PNG grids, Aseprite JSON, GIF, `.vox` z-slices and code-drawn `*.sprite.json` recipes (`lab/assets/sprites/src/`), with node-only PNG/GIF codecs (`scripts/lab/png.ts`). Four code-drawn sheets ship: dancer, sparkle, heart, note.
+- **Pieces:** `core-sprite` (single / row / tile, frames per beat, bass bounce, palette swap, outline), `core-sprite-emitter` (closed-form particles born on onsets plus a trickle), `core-text`, `core-swatch` (hex palette from a `text` param). `core-blend` gained mode `over` (alpha-composite; sprites and text render premultiplied on transparent).
+- **Fonts:** `.efont` (`lab/api/font.ts`), `font bake`: the code-drawn 5x8 pixel font (bitmap) and MSDF from TrueType (own TTF reader + msdfgen-style edge colouring, with a true-distance fix-up). Shipped: `pixel5x8` (own) and `display-msdf` = Orbitron (OFL-1.1) renamed because Orbitron is a Reserved Font Name; its OFL text is vendored beside it.
+- **Lyrics:** `.lrc` next to the track (same name; the file picker accepts it). The loading host sends the lines with `play`; they ride in the file-mode room state; pieces get `ctx.lyric()`. Not hashed. The gallery's demo track has demo lyrics.
+- **Style packs:** `lab/styles/<id>.json` (palette, FX chain, post, font, swatch cycle); a scene sets `"style"`. Expanded into plain nodes before compiling (`src/core/graph/style.ts`): the swatch feeds every palette input (replacing the scene's palette edges), FX follow the output, the scene's post keys win, the font applies where a node offers it. Ship: `core-vaporwave`, `core-gameboy`; scenes `claude-sprite-party`, `claude-handheld`. The gate re-renders scenes when their style changes, and pieces when a declared asset changes.
+- **`sprite gen`:** refuses unless `EINKLANG_IMAGEGEN=N` (the brief) and a host monthly cap (`~/.einklang/imagegen.json` or `EINKLANG_IMAGEGEN_CONFIG`) allow it; keys from `OPENAI_API_KEY` / `GEMINI_API_KEY`; a ledger (`~/.einklang/imagegen.jsonl`) counts per task and per month. One image with N frames in a row, sliced, background removed, cropped to the union box, downscaled, quantized (palette or 16-colour median cut), vendored with `license: ai-generated`, model and prompt. `--from-png` runs the same pipeline offline. Tested against a fake API only: never called a real one here.
+- **Size:** declared assets are inlined, so the engine chunk is ~780 KB now (the MSDF atlas is most of it).
+
 ### Build notes for #24 (decided while building)
 
 - **Rotation:** live scenes had no automatic rotation, so (owner's call) `next` (`]`, `>`, R1) and the 👎 skip pick a random other scene weighted 2^score (clamped 1/8..16); `prev` stays in list order. A panel **auto** selector (off, 4, 8, 16 bars) has the server pick by weight on bar boundaries. The protocol keeps `step` ordered and adds `weighted`.
@@ -12,7 +22,7 @@ Status: agreed 2026-11-26 (grill-me interview). **#20, #21 and #22 built 2026-11
 
 ### Build notes for #22 (decided while building)
 
-- **CLI:** `npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> [--driver] | fixtures | feedback | import-space-sim` (`scripts/lab/cli.ts`).
+- **CLI:** `npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> [--driver] | fixtures | feedback | import-space-sim | sprite import | sprite gen | font bake` (`scripts/lab/cli.ts`).
 - **Fixtures** are synthetic (`src/core/fixtures.ts`: quiet, techno, dense, plus silence) and generated in code, so no binary files and no audio. A recorded `lab/fixtures/<name>.feat` (4-byte frame count, then the `fileSource` layout) can stand beside them; recording one from an audio file is still open.
 - **Render page:** `lab.html` / `src/web/lab.ts`.
   - It renders every tick (so feedback is right) and reads back every 10th for checks.

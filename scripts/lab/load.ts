@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import type { PieceDriver, PieceManifest } from '../../lab/api/index.ts';
 import { assetFile, type PieceDef, type Registry, type SceneGraph } from '../../src/core/graph/types.ts';
 import { validatePiece } from '../../src/core/graph/validate.ts';
+import { applyStyle, type StylePack } from '../../src/core/graph/style.ts';
 
 export const LAB = resolve(import.meta.dirname, '../../lab');
 
@@ -43,6 +44,15 @@ export async function loadPieces(root = join(LAB, 'pieces')): Promise<Loaded> {
   return { reg, errors };
 }
 
-export function loadScenes(root = join(LAB, 'scenes')): SceneGraph[] {
+/** Scene files as written; with `reg`, style packs expanded (throws on an unknown style). */
+export function loadScenes(root = join(LAB, 'scenes'), reg?: Registry): SceneGraph[] {
+  const raw: SceneGraph[] = readdirSync(root).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(root, f), 'utf8')));
+  if (!reg) return raw;
+  const styles = new Map(loadStyles().map((s) => [s.id, s]));
+  return raw.map((g) => applyStyle(g, styles, reg));
+}
+
+export function loadStyles(root = join(LAB, 'styles')): StylePack[] {
+  if (!existsSync(root)) return [];
   return readdirSync(root).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(root, f), 'utf8')));
 }

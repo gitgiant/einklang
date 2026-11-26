@@ -3,6 +3,7 @@
 //   binary [2][u32 frames][frames * STRIDE]([frames * WAVE_BYTES])        whole track (+ waveform)
 // The waveform blocks are optional: a frame/track without them makes the scope synthesize one.
 import { FPS, LIVE_DELAY, TICKS_PER_BEAT } from './constants.ts';
+import type { Lyric } from './lrc.ts';
 
 /** Inputs are applied this many ticks after the server receives them (100 ms of network slack). */
 export const INPUT_DELAY = 6;
@@ -10,7 +11,7 @@ export const INPUT_DELAY = 6;
 export type Mode =
   | { mode: 'idle' }
   /** `paused`: the frame the track is frozen on, or null while playing. */
-  | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null }
+  | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null; lyrics?: Lyric[] | null }
   /** `delay`: ticks every host renders behind the leader (instrument mode 2, captured audio 6). */
   | { mode: 'live'; start: number; delay: number };
 
@@ -106,7 +107,8 @@ export type ClientMsg =
   | { t: 'vote'; scene: string; vote: 1 | -1; quant?: Quant; trans?: TransReq }
   | { t: 'auto'; bars: number; trans?: TransReq }
   | { t: 'view'; host: number; view: number | null }
-  | { t: 'play'; name?: string } | { t: 'live'; delay?: number } | { t: 'stop' }
+  /** `lyrics`: the track's .lrc lines, if it came with one. */
+  | { t: 'play'; name?: string; lyrics?: Lyric[] } | { t: 'live'; delay?: number } | { t: 'stop' }
   | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
   /** Ask the playlist owner to play another track (absolute index, or a step from the current one). */
   | { t: 'track'; index?: number; step?: number }

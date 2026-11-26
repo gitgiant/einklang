@@ -4,6 +4,7 @@ import { CPU_PORTS, type Audio, type CpuCtx, type CpuOut, type ParamValue } from
 import { K_BAR, K_BPM, K_NOTE, K_ONSET, K_P0, K_PAL, K_PHASE, K_RMS, K_VEL, LOOKBACK, NB, FPS, TICKS_PER_BEAT } from '../constants.ts';
 import type { FeatureSource } from '../features.ts';
 import { FNV0, fnv, h32 } from '../math.ts';
+import { lyricAt } from '../lrc.ts';
 import { order, validateScene } from './validate.ts';
 import { splitRef, type GraphNode, type PieceDef, type PortRef, type Registry, type SceneGraph } from './types.ts';
 
@@ -83,6 +84,7 @@ export function baseCtx(tick: number, F: FeatureSource, sub = 0, seed = 0): Omit
   return {
     tick, sub, time: (tick + sub / 256) / FPS, audio, past, wave, raw: F,
     rand: (a, b = 0) => h32(h32(a | 0, b | 0), seed) / 4294967296,
+    lyric: () => lyricAt(F.lyrics, (tick + sub / 256) / FPS),
   };
 }
 

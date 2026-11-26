@@ -17,6 +17,9 @@ export interface AssetEntry {
   bytes: number;
   sha256: string;
   note?: string;
+  /** license ai-generated: the image model and the prompt. */
+  model?: string;
+  prompt?: string;
 }
 /** lab/assets/index.json: keys are paths relative to lab/ (`assets/vox/fighter.vox`). */
 export interface AssetIndex { files: Record<string, AssetEntry> }
@@ -24,6 +27,20 @@ export interface AssetIndex { files: Record<string, AssetEntry> }
 /** space_sim furniture with third-party props stamped in (space_sim assets/CREDITS.md): author and license not recorded. */
 const UNSETTLED = new Set(['furniture/shelfFood.vox', 'furniture/shelfDrinks.vox', 'furniture/shelfTools.vox', 'furniture/producestand.vox', 'furniture/orebin.vox']);
 const KEEP = /\.(vox|json|png)$/;
+
+/** Write `bytes` to lab/<key> and record it in index.json (replacing an entry with the same key). */
+export function vendorAsset(key: string, bytes: Uint8Array, meta: Omit<AssetEntry, 'bytes' | 'sha256'>): AssetEntry {
+  if (!key.startsWith('assets/') || key.includes('..')) throw new Error(`asset key ${key}: must be under assets/`);
+  if (!meta.license) throw new Error('a license is required (own, CC0-1.0, OFL-1.1, ai-generated, ...)');
+  const dst = join(LAB, key);
+  mkdirSync(dirname(dst), { recursive: true });
+  writeFileSync(dst, bytes);
+  const entry: AssetEntry = { ...meta, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+  const index = readIndex();
+  index.files[key] = entry;
+  writeFileSync(INDEX, JSON.stringify({ files: Object.fromEntries(Object.entries(index.files).sort(([a], [b]) => a.localeCompare(b))) }, null, 1) + '\n');
+  return entry;
+}
 
 export function readIndex(): AssetIndex {
   return existsSync(INDEX) ? JSON.parse(readFileSync(INDEX, 'utf8')) : { files: {} };

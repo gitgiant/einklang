@@ -1,5 +1,48 @@
 {
  "files": {
+  "assets/fonts/display-msdf.efont": {
+   "license": "OFL-1.1",
+   "source": "https://github.com/google/fonts/tree/main/ofl/orbitron (Orbitron[wght].ttf)",
+   "note": "MSDF bake of Orbitron by The Orbitron Project Authors; renamed because Orbitron is a Reserved Font Name",
+   "bytes": 285048,
+   "sha256": "0d69f6611e4784fe2167d309eddf33915d5679ec901c67aa5a2aacf8bf6a6886"
+  },
+  "assets/fonts/display-msdf.LICENSE.txt": {
+   "license": "OFL-1.1",
+   "source": "license text for assets/fonts/display-msdf.efont",
+   "bytes": 4426,
+   "sha256": "ab609b0e110d622435ff337cdf233288556e011bbf9bd0550be98846c0630819"
+  },
+  "assets/fonts/pixel5x8.efont": {
+   "license": "own",
+   "source": "code-drawn (scripts/lab/pixelfont.ts)",
+   "bytes": 10676,
+   "sha256": "d8184f855ad77baec9ade154ed68745bd9b57452ae43824091f561841c7d3efa"
+  },
+  "assets/sprites/dancer.spr": {
+   "license": "own",
+   "source": "code-drawn: lab/assets/sprites/src/dancer.sprite.json",
+   "bytes": 1074,
+   "sha256": "76db51a6338aae327d77249c0ebb1d530b72d6a6977b7faee0372a033db8f898"
+  },
+  "assets/sprites/heart.spr": {
+   "license": "own",
+   "source": "code-drawn: lab/assets/sprites/src/heart.sprite.json",
+   "bytes": 212,
+   "sha256": "6c3024af1fc0ad0b807d81d7d3a51f1143032ab642706c233bc23d75809296e3"
+  },
+  "assets/sprites/note.spr": {
+   "license": "own",
+   "source": "code-drawn: lab/assets/sprites/src/note.sprite.json",
+   "bytes": 114,
+   "sha256": "1356e9dbcf4371996eab81c5bf65f8297aa0b83313a17dccf118bd635e052b37"
+  },
+  "assets/sprites/sparkle.spr": {
+   "license": "own",
+   "source": "code-drawn: lab/assets/sprites/src/sparkle.sprite.json",
+   "bytes": 364,
+   "sha256": "4519b15bc211f3cefbf6b6706eacef4491ea4900db586c6bc1acbdc9915b0337"
+  },
   "assets/vox/aatank.vox": {
    "source": "space_sim/assets/vox/aatank.vox",
    "license": "own",

@@ -10,7 +10,7 @@ import { hashState } from '../src/core/scene.ts';
 import type { Palette } from '../lab/api/index.ts';
 
 const { reg, errors } = await loadPieces();
-const scenes = loadScenes();
+const scenes = loadScenes(undefined, reg);
 const demo = () => structuredClone(scenes.find((s) => s.id === 'core-demo')!);
 const errsOf = (g: SceneGraph) => validateScene(g, reg);
 

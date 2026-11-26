@@ -1,0 +1,12 @@
+{
+  "format": 1,
+  "id": "core-vaporwave",
+  "name": "Vaporwave",
+  "doc": "Pink, cyan, mint and lilac with a soft yellow, long glowing trails, the display font.",
+  "author": { "vendor": "core", "model": "claude-opus-5-5" },
+  "palette": ["#ff71ce", "#01cdfe", "#05ffa1", "#b967ff", "#fffb96"],
+  "cycle": 0.5,
+  "fx": [{ "piece": "core-trails", "params": { "decay": 0.78, "zoom": 0.006, "rotate": 0 } }],
+  "post": { "bloom": 0.55, "threshold": 0.7 },
+  "font": "display-msdf"
+}

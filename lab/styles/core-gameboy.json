@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "core-gameboy",
+  "name": "Handheld green",
+  "doc": "Four greens, chunky pixels quantized to four levels, the pixel font, almost no bloom.",
+  "author": { "vendor": "core", "model": "claude-opus-5-5" },
+  "palette": ["#0f380f", "#306230", "#8bac0f", "#9bbc0f"],
+  "fx": [{ "piece": "core-pixelate", "params": { "cells": 160, "levels": 4 } }],
+  "post": { "bloom": 0.15, "threshold": 0.9 },
+  "font": "pixel5x8"
+}

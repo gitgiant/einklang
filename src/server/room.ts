@@ -9,6 +9,7 @@ import {
 import { AUTO_BARS } from '../core/protocol.ts';
 import { RETIRE_AT, cleanTags, pickWeighted, score, tally, type Tally, type Vote } from '../core/votes.ts';
 import { pickRandom } from '../core/transitions.ts';
+import { cleanLyrics } from '../core/lrc.ts';
 import { stateKey } from '../core/events.ts';
 import type { WsConn } from './ws.ts';
 
@@ -217,7 +218,7 @@ export class Room {
         this.leader = c;
         this.setMode({
           mode: 'file', start: this.now() + 2500, frames: this.fileFeat.readUInt32LE(1), track: this.trackId,
-          name: String(m.name ?? '').slice(0, 200), paused: null,
+          name: String(m.name ?? '').slice(0, 200), paused: null, lyrics: cleanLyrics(m.lyrics),
         });
         for (const o of this.clients.values()) o.ws.send(this.fileFeat);
         return this.newTimeline();

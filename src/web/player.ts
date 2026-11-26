@@ -8,14 +8,18 @@ const MIME: Record<string, string> = {
   opus: 'audio/ogg', m4a: 'audio/mp4', mp4: 'audio/mp4', aac: 'audio/aac', webm: 'audio/webm', weba: 'audio/webm',
   aif: 'audio/aiff', aiff: 'audio/aiff', caf: 'audio/x-caf',
 };
-export const ACCEPT = ['audio/*', ...Object.keys(MIME).map((e) => `.${e}`)].join(',');
+/** File picker filter: audio, plus .lrc lyrics that go with a track of the same name. */
+export const ACCEPT = ['audio/*', ...Object.keys(MIME).map((e) => `.${e}`), '.lrc'].join(',');
 const ext = (name: string) => name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+const stem = (path: string) => path.replace(/\.[^./]+$/, '').toLowerCase();
 export const isAudio = (f: File) => ext(f.name) in MIME || f.type.startsWith('audio/');
 
 export interface Prepared { feat: Uint8Array<ArrayBuffer>; frames: number; bytes: ArrayBuffer; type: string }
 
 export class Player {
   files: File[] = [];
+  /** .lrc files by path without extension ("album/01 song"). */
+  private lrc = new Map<string, File>();
   index = 0;
   private cache = new Map<File, Promise<Prepared>>();
   private worker = new Worker(new URL('./analyze.worker.ts', import.meta.url), { type: 'module' });
@@ -32,9 +36,17 @@ export class Player {
   /** Audio files only, in natural path order (folders keep their track numbering). */
   setFiles(list: Iterable<File>): number {
     const path = (f: File) => f.webkitRelativePath || f.name;
-    this.files = [...list].filter(isAudio).sort((a, b) => path(a).localeCompare(path(b), undefined, { numeric: true, sensitivity: 'base' }));
+    const all = [...list];
+    this.lrc = new Map(all.filter((f) => ext(f.name) === 'lrc').map((f) => [stem(path(f)), f]));
+    this.files = all.filter(isAudio).sort((a, b) => path(a).localeCompare(path(b), undefined, { numeric: true, sensitivity: 'base' }));
     this.index = 0; this.cache.clear();
     return this.files.length;
+  }
+
+  /** The text of track i's .lrc (same name, next to it), or null. */
+  async lyrics(i: number): Promise<string | null> {
+    const f = this.files[i], l = f && this.lrc.get(stem(f.webkitRelativePath || f.name));
+    return l ? l.text() : null;
   }
 
   get names(): string[] { return this.files.map((f) => f.name.replace(/\.[^.]+$/, '')); }

@@ -1,6 +1,7 @@
 // Synthetic, fully integer "track" so scenes can be previewed (and tested) without audio.
 // 28 ticks per beat (~128.6 BPM), sections of 8 bars: intro -> build -> drop -> breakdown.
-import { NB, STRIDE, WAVE_N, TICKS_PER_BEAT as TPB, K_RMS, K_ONSET } from './constants.ts';
+import { NB, STRIDE, WAVE_N, TICKS_PER_BEAT as TPB, K_RMS, K_ONSET, FPS } from './constants.ts';
+import type { Lyric } from './lrc.ts';
 import type { FeatureSource } from './features.ts';
 import { isin, h32, clamp } from './math.ts';
 
@@ -61,6 +62,19 @@ function wave(t: number): Int8Array {
   return out;
 }
 
+/** Demo lyrics: one line per 2 bars, looping with the four sections (the gallery's stand-in for an .lrc). */
+const DEMO_LINES = [
+  'einklang', 'every screen', 'on the same beat', 'one room',
+  'build it up', 'higher', 'higher', 'here it comes',
+  'drop', 'feel the bass', 'move', 'together',
+  'breathe', 'slow down', 'still here', 'again',
+];
+export function demoLyrics(loops = 8): Lyric[] {
+  const lineS = (2 * 4 * TPB) / FPS, out: Lyric[] = [];
+  for (let k = 0; k < loops * DEMO_LINES.length; k++) out.push({ t: k * lineS, text: DEMO_LINES[k % DEMO_LINES.length] });
+  return out;
+}
+
 /** Deterministic demo source; results are memoized per tick. */
 export function demoSource(): FeatureSource {
   const cache = new Map<number, Uint8Array>(), wcache = new Map<number, Int8Array>();
@@ -70,6 +84,7 @@ export function demoSource(): FeatureSource {
     return f;
   };
   return {
+    lyrics: demoLyrics(),
     get: (t, k) => (k < STRIDE ? get(t)[k] : 0),
     wave: (t) => {
       let w = wcache.get(t);

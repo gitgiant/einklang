@@ -11,15 +11,29 @@
 //   new <kind> <vendor-slug> [--driver]   scaffold a piece (auto-shader unless --driver)
 //   fixtures                       list fixtures
 //   import-space-sim [--src dir]   copy space_sim's own .vox assets into lab/assets/vox/ (+ index.json)
+//   sprite gen "<prompt>" --name id [--size 32] [--frames 4] [--palette <style|#hex,..>] [--colors 16]
+//                                  AI sprite via the image API: only with the brief's EINKLANG_IMAGEGEN=N and the host's
+//                                  monthly cap (scripts/lab/imagegen.ts); --from-png f --license L skips the API
+//   sprite import <png|aseprite.json|gif|vox|x.sprite.json> --license L [--source S] [--name id] [--frame WxH] [--count n]
+//                                  -> lab/assets/sprites/<name>.spr (+ index.json)
+//   font bake <file.ttf|builtin:pixel5x8> --name id --license L [--source S] [--size 48] [--license-file f]
+//                                  -> lab/assets/fonts/<id>.efont (msdf from a TrueType font, bitmap for the pixel font)
 //   feedback [--votes file]        vote digest: lab/feedback.json + lab/FEEDBACK.md from data/votes.jsonl, and
 //                                  scenes at net <= -2 get status retired (commit the result)
 // Spec: docs/prd-lab.md.
 import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { loadPieces, loadScenes, LAB } from './load.ts';
+import { loadPieces, loadScenes, loadStyles, LAB } from './load.ts';
+import { applyStyle, validateStyle } from '../../src/core/graph/style.ts';
 import { lintPieces } from './lint.ts';
-import { importSpaceSim, DEFAULT_SRC } from './import.ts';
+import { importSpaceSim, DEFAULT_SRC, vendorAsset } from './import.ts';
+import { importSprite, parsePalette } from './sprites.ts';
+import { previewDir, spriteGen } from './imagegen.ts';
+import { encodePng } from './png.ts';
+import { bakeMsdf, bakePixelFont, parseTtf } from './fonts.ts';
+import { encodeFont, encodeSheet, sheetRgba, type Sheet } from '../../lab/api/index.ts';
+import { basename } from 'node:path';
 import { digest, feedbackMd } from './feedback.ts';
 import { parseVotes } from '../../src/core/votes.ts';
 import { openLab, type Lab } from './browser.ts';
@@ -42,7 +56,12 @@ const START = 600;
 
 async function validate(): Promise<{ reg: Registry; scenes: SceneGraph[]; errors: string[] }> {
   const { reg, errors } = await loadPieces();
-  const scenes = loadScenes();
+  const styleList = loadStyles(), styles = new Map(styleList.map((s) => [s.id, s]));
+  for (const s of styleList) errors.push(...validateStyle(s, reg));
+  const scenes: SceneGraph[] = [];
+  for (const g of loadScenes()) {
+    try { scenes.push(applyStyle(g, styles, reg)); } catch (e) { errors.push((e as Error).message); }
+  }
   const ids = new Set<string>();
   for (const s of scenes) {
     errors.push(...validateScene(s, reg));
@@ -146,11 +165,56 @@ async function main() {
     if (existsSync(dir)) say(`files: ${readdirSync(dir).filter((f) => f.endsWith('.feat')).join(', ') || '-'}`);
     return;
   }
+  if (cmd === 'sprite' && positional[1] === 'import') {
+    const file = positional[2];
+    if (!file) throw new Error('usage: sprite import <file> --license L [--source S] [--name id] [--frame WxH] [--count n]');
+    const fr = opt('frame', ''), m = /^(\d+)x(\d+)$/.exec(fr);
+    if (fr && !m) throw new Error('--frame is WxH, e.g. 32x32');
+    const sheet = importSprite(file, { frame: m ? [+m[1], +m[2]] : undefined, count: flag('count') ? +opt('count', '0') : undefined });
+    const name = opt('name', basename(file).replace(/\.sprite\.json$|\.[a-z]+$/i, '')), key = `assets/sprites/${name}.spr`;
+    vendorAsset(key, encodeSheet(sheet), { license: opt('license', ''), source: opt('source', basename(file)) });
+    say(`${key}: ${sheet.frames} frame(s) ${sheet.w}x${sheet.h}, ${sheet.palette.length / 4 - 1} colours${sheet.tags.length ? `, tags ${sheet.tags.map((t) => t.name).join(' ')}` : ''}`);
+    return;
+  }
+  if (cmd === 'sprite' && positional[1] === 'gen') {
+    const prompt = positional[2], name = opt('name', '');
+    if (!prompt || !name || !/^[a-z0-9-]+$/.test(name)) throw new Error('usage: sprite gen "<prompt>" --name <id> [--size 32] [--frames 4] [--palette <style id | #hex,#hex..>] [--colors 16] [--from-png file --license L]');
+    const pal = opt('palette', '');
+    const palette = !pal ? undefined : pal.startsWith('#') ? parsePalette(pal.split(/[\s,]+/).filter(Boolean)) : parsePalette(loadStyles().find((s) => s.id === pal)?.palette ?? (() => { throw new Error(`no style ${pal}`); })());
+    const fromPng = opt('from-png', '');
+    const r = await spriteGen(
+      { prompt, frames: +opt('frames', '1'), size: +opt('size', '32'), palette, colors: +opt('colors', '16'), fromPng: fromPng ? readFileSync(fromPng) : undefined },
+      { env: process.env, fetch, now: () => new Date() },
+    );
+    const key = `assets/sprites/${name}.spr`;
+    if (r.provider === 'file') vendorAsset(key, encodeSheet(r.sheet), { license: opt('license', ''), source: `sprite gen --from-png ${basename(fromPng)}`, prompt });
+    else vendorAsset(key, encodeSheet(r.sheet), { license: 'ai-generated', source: `sprite gen (${r.provider})`, model: r.model, prompt });
+    // a look at the result (and the raw image), not vendored
+    const dir = previewDir(LAB);
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, `${name}.raw.png`), r.png);
+    writeFileSync(join(dir, `${name}.png`), encodePng(sheetStrip(r.sheet)));
+    say(`${key}: ${r.sheet.frames} frame(s) ${r.sheet.w}x${r.sheet.h}, ${r.sheet.palette.length / 4 - 1} colours (${r.provider}${r.provider === 'file' ? '' : ` ${r.model}`}); preview in lab/out/sprites/${name}.png`);
+    return;
+  }
+  if (cmd === 'font' && positional[1] === 'bake') {
+    const src = positional[2], name = opt('name', '');
+    if (!src || !name || !/^[a-z0-9-]+$/.test(name)) throw new Error('usage: font bake <file.ttf|builtin:pixel5x8> --name <id> --license L [--source S] [--size 48] [--range 4] [--license-file OFL.txt]');
+    const f = src === 'builtin:pixel5x8' ? bakePixelFont(name) : bakeMsdf(parseTtf(readFileSync(src)), { name, size: +opt('size', '48'), range: +opt('range', '4') });
+    const license = opt('license', src.startsWith('builtin:') ? 'own' : ''), source = opt('source', src.startsWith('builtin:') ? `code-drawn (scripts/lab/pixelfont.ts)` : basename(src));
+    f.license = license; f.source = source;
+    const key = `assets/fonts/${name}.efont`;
+    vendorAsset(key, encodeFont(f), { license, source, note: opt('note', '') || undefined });
+    const lf = opt('license-file', '');
+    if (lf) vendorAsset(`assets/fonts/${name}.LICENSE.txt`, readFileSync(lf), { license, source: `license text for ${key}` });
+    say(`${key}: ${f.mode}, ${Object.keys(f.glyphs).length} glyphs, atlas ${f.atlasW}x${f.atlasH}`);
+    return;
+  }
   if (cmd === 'feedback') {
     const file = resolve(opt('votes', join(LAB, '../data/votes.jsonl')));
     const votes = existsSync(file) ? parseVotes(readFileSync(file, 'utf8')) : [];
     const { reg } = await loadPieces();
-    const d = digest(votes, loadScenes(), reg);
+    const d = digest(votes, loadScenes(undefined, reg), reg);
     writeFileSync(join(LAB, 'feedback.json'), JSON.stringify(d, null, 1) + '\n');
     writeFileSync(join(LAB, 'FEEDBACK.md'), feedbackMd(d));
     const dir = join(LAB, 'scenes');
@@ -213,6 +277,10 @@ async function main() {
           const m = f.match(/^lab\/pieces\/[^/]+\/([^/]+)\//), s = f.match(/^lab\/scenes\/([^/]+)\.json$/);
           if (m && v.reg.has(m[1])) pieceIds.add(m[1]);
           if (s && v.scenes.some((x) => x.id === s[1])) sceneIds.add(s[1]);
+          // a style pack changes every scene that uses it; a shared asset every piece that declares it
+          const st = f.match(/^lab\/styles\/([^/]+)\.json$/);
+          if (st) for (const x of v.scenes) if (x.style === st[1]) sceneIds.add(x.id);
+          if (f.startsWith('lab/assets/')) for (const [id, d] of v.reg) if (d.manifest.assets?.some((a) => `lab/${a.path}` === f)) pieceIds.add(id);
         }
         // an edited piece changes every scene that uses it
         for (const s of v.scenes) if (s.nodes.some((n) => pieceIds.has(n.piece))) sceneIds.add(s.id);
@@ -248,6 +316,16 @@ async function main() {
   }
   say(`usage: npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> | fixtures | feedback | import-space-sim   (see scripts/lab/cli.ts)`);
   process.exit(cmd ? 1 : 0);
+}
+
+/** A sheet's frames side by side, 4x scaled, for looking at. */
+function sheetStrip(s: Sheet, k = 4): { w: number; h: number; data: Uint8Array } {
+  const w = s.w * s.frames * k, h = s.h * k, data = new Uint8Array(w * h * 4);
+  for (let f = 0; f < s.frames; f++) {
+    const px = sheetRgba(s, f);
+    for (let y = 0; y < h; y++) for (let x = 0; x < s.w * k; x++) data.set(px.subarray(((Math.floor(y / k) * s.w) + Math.floor(x / k)) * 4, ((Math.floor(y / k) * s.w) + Math.floor(x / k)) * 4 + 4), (y * w + f * s.w * k + x) * 4);
+  }
+  return { w, h, data };
 }
 
 function writeJunit(cases: Parameters<typeof junit>[1]): void {

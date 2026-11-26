@@ -116,7 +116,12 @@ export interface CpuCtx {
   raw: RawFeatures;
   /** Seeded hash noise: same on every host. Returns 0..1. */
   rand(a: number, b?: number): number;
+  /** The lyric line showing now (`.lrc` next to the playing track), or null. Not part of the sync hash. */
+  lyric(): LyricLine | null;
 }
+
+/** A timed lyric line: text, index, start and end (s into the track; end null on the last line), progress 0..1. */
+export interface LyricLine { text: string; index: number; start: number; end: number | null; progress: number }
 
 /** What cpu() returns: a value per CPU output port, plus `state` for synced pieces. */
 export type CpuOut = Record<string, unknown> & { state?: Int32Array };
@@ -183,6 +188,8 @@ export const definePiece = (d: PieceDriver): PieceDriver => d;
 // ---------------------------------------------------------------- helpers
 
 export { parseVox, voxSurface, voxWorld, type VoxFile, type VoxModel, type VoxInstance, type VoxWorld } from './vox.ts';
+export { parseSheet, encodeSheet, sheetRgba, sheetTexture, frameAt, type Sheet, type SpriteTag } from './sprite.ts';
+export { parseFont, encodeFont, fontTexture, layoutText, MSDF_WGSL, type Font, type FontInfo, type Glyph, type Quad, type Layout } from './font.ts';
 
 /** OKLab -> linear sRGB (Björn Ottosson). */
 export function oklabToLinear([L, a, b]: [number, number, number]): [number, number, number] {
@@ -195,6 +202,23 @@ export function oklabToLinear([L, a, b]: [number, number, number]): [number, num
     -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
     -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
   ];
+}
+
+/** Linear sRGB -> OKLab (Björn Ottosson). */
+export function linearToOklab([r, g, b]: [number, number, number]): [number, number, number] {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s];
+}
+/** 8-bit sRGB -> linear. */
+export const srgbToLinear = (c: number): number => { const x = c / 255; return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+/** '#rrggbb' -> OKLab, or null when it isn't one. */
+export function hexToOklab(hex: string): [number, number, number] | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return linearToOklab([srgbToLinear(n >> 16), srgbToLinear((n >> 8) & 255), srgbToLinear(n & 255)]);
 }
 
 /** OKLCh (lightness 0..1, chroma ~0..0.37, hue in turns) -> OKLab. */

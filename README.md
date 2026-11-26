@@ -42,6 +42,7 @@ To verify sync, open the debug panel (`d`) and check that the `hash` matches acr
   - The live list is every lab scene not retired by votes. `[` (or `<`) steps back in list order; `]` (or `>`) picks another scene at random, weighted by votes. The picker jumps straight to one. Switches land on the next beat, bar, or immediately (the "on" selector).
   - **auto**: the server switches every 4, 8 or 16 bars to a vote-weighted pick, with the transition chosen when it was turned on.
   - Space sends a manual hit. `h` hides all the UI.
+  - **Lyrics**: put a `.lrc` file next to a track with the same name (`song.mp3` + `song.lrc`) and pick both (or the folder). Text pieces show the current line on every host.
   - **Votes** (owner only: anyone with the token): `+` / `-` vote on the scene showing; a toast appears on every host. `-` also skips to a weighted pick at the next boundary. Score = ups - downs; a 👍 doubles a scene's rotation weight and a 👎 halves it, and at -2 the scene leaves the live list. Votes go to `data/votes.jsonl`. The gallery has 👍/👎 and reason tags too (it needs the server for that).
   - **hosts** lists connected hosts and lets you override each one's view. `?name=` names a host.
 - **MIDI**: press **midi** on any Chrome host that has a MIDI device (the choice is remembered). Enable it on only one host per device, or every note arrives twice.

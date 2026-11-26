@@ -29,6 +29,8 @@ export interface SceneGraph {
   edges: { from: PortRef; to: PortRef }[];
   /** The scene's image output, a tex port. */
   out: PortRef;
+  /** A style pack id (lab/styles/<id>.json): palette, FX chain, post and font, expanded before compiling. */
+  style?: string;
   /** Settings for the show's post node (trails, bloom, exposure); unset keys use POST_DEFAULT. */
   post?: Partial<PostParams>;
 }

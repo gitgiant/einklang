@@ -132,5 +132,6 @@ export function withEvents(F: FeatureSource, log: EventLog): FeatureSource {
       return k < STRIDE ? F.get(t, k) : log.input(t, k);
     },
     wave: (t) => F.wave(t),
+    lyrics: F.lyrics,
   };
 }
