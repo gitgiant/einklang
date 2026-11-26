@@ -1,0 +1,24 @@
+{
+  "id": "agy-blackbody",
+  "kind": "color",
+  "name": "Blackbody temperature",
+  "doc": "Maps temperature range (Kelvin) to blackbody radiation colors from deep ember red through molten orange to incandescent white-blue, heating up with audio energy or an input signal.",
+  "ports": {
+    "in": {
+      "energy": { "type": "signal", "optional": true, "doc": "optional 0..1 heat signal; defaults to audio energy when unconnected" }
+    },
+    "out": {
+      "palette": { "type": "palette" }
+    }
+  },
+  "params": {
+    "min_k": { "type": "float", "default": 1000, "min": 600, "max": 8000, "doc": "coldest stop temperature in Kelvin" },
+    "max_k": { "type": "float", "default": 6000, "min": 1500, "max": 20000, "doc": "hottest stop temperature in Kelvin at zero energy" },
+    "heat": { "type": "float", "default": 7500, "min": 0, "max": 16000, "doc": "extra Kelvin added at full energy" },
+    "offset": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "manual heat offset (0..1, bindable)" },
+    "gamma": { "type": "float", "default": 1.3, "min": 0.4, "max": 3, "doc": "temperature curve across stops" },
+    "bright": { "type": "float", "default": 1, "min": 0.3, "max": 1.4, "doc": "overall brightness scale" }
+  },
+  "tags": ["palette", "blackbody", "temperature", "fire"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}

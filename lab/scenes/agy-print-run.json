@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "id": "agy-print-run",
+  "name": "Print run",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.8 } },
+    { "id": "drift", "piece": "core-lfo", "params": { "beats": 32, "shape": 0 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#101426 #00b4d8 #f72585 #ffbe0b #fb5607", "cycle": 0.25 } },
+    { "id": "wave", "piece": "core-plasma", "params": { "scale": 3.2, "speed": 0.45, "gain": 0.9 },
+      "bind": { "warp": { "from": "bass.out", "range": [0.15, 1.35] } } },
+    { "id": "rings", "piece": "core-radial" },
+    { "id": "mix", "piece": "core-blend", "params": { "mode": 1, "amount": 0.9 } },
+    { "id": "print", "piece": "agy-halftone", "params": { "mode": 0, "cell": 10, "bass": 0.65, "contrast": 1.25, "sharpness": 0.88, "paper": "#dfd5c0" },
+      "bind": { "angle": { "from": "drift.out", "range": [-25, 55] } } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "wave.palette" },
+    { "from": "wave.out", "to": "mix.a" },
+    { "from": "rings.out", "to": "mix.b" },
+    { "from": "mix.out", "to": "print.in" }
+  ],
+  "out": "print.out",
+  "post": { "bloom": 0.15, "threshold": 0.92 }
+}
