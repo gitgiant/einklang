@@ -208,13 +208,13 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 
 ### Transitions
 How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug>/` (contract: "Transitions" in `lab/AGENTS.md`). Core ones: cut, blend, flash, wipe, iris, dissolve, luma, zoom, glitch, stutter, swirl, melt, audio mask, pixelate.
-- [ ] Page turn (curl from a corner, the back shaded)
-- [ ] Cube rotate (A and B as two faces)
+- [x] Page turn (curl from a corner, the back shaded) → claude-page-turn
+- [x] Cube rotate (A and B as two faces) → claude-cube
 - [ ] Ripple (rings from the centre carry B in)
 - [x] Ink bleed (B spreads like ink in water, noisy edge) → agy-ink
-- [ ] Shatter (A breaks into seeded shards that fall away)
+- [x] Shatter (A breaks into seeded shards that fall away) → claude-shatter
 - [ ] Slide / push (B pushes A off in a seeded direction)
-- [ ] Barn doors (A splits and opens)
+- [x] Barn doors (A splits and opens) → claude-barn-doors
 - [ ] Venetian blinds (slats rotate from A to B)
 - [ ] Checker flip (cells flip in a seeded order)
 - [ ] Radial clock wipe
