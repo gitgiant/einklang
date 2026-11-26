@@ -1,8 +1,9 @@
 import { definePiece, oklch, type Palette } from '../../../api/index.ts';
 
-// SDF fly-through. The camera's distance along the tube is integrated per frame (host-local float
-// state, not synced): a base speed, a surge at the start of every beat and a push from the bass.
-// The march renders at `scale` of the output and is upscaled with a bilinear pass.
+// SDF fly-through. The camera's distance along the tube is closed-form in time and the beat count, so
+// every host shows the same spot: a base speed plus a surge that peaks on each beat and eases out
+// (its integral over a beat is 1/5 beat). The bass widens the lens. The march renders at `scale` of
+// the output and is upscaled with a bilinear pass.
 
 const FLOATS = 44 + 8 * 4;
 
@@ -29,7 +30,7 @@ export default definePiece({
     const samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
     const data = new Float32Array(FLOATS);
     let low: GPUTexture | null = null, upBg: GPUBindGroup | null = null;
-    let z = 0, lastTime = NaN;
+    let z = 0;
 
     return {
       frame({ enc, out, in: ins, params, audio, time, past, width, height }) {
@@ -44,13 +45,12 @@ export default definePiece({
         const bass = (audio.bands[0] + audio.bands[1] + audio.bands[2]) / 3;
         let kick = 0;
         for (let ago = 0; ago < 30; ago++) if (past(ago).onset) kick = Math.max(kick, Math.exp(-ago / 8));
-        // speed: cells per second; the surge peaks right on the beat and eases out over it
-        const surge = (1 - audio.phase) ** 4;
-        const speed = (params.speed as number) * (1 + (params.surge as number) * surge + 1.2 * bass);
-        const dt = Number.isFinite(lastTime) ? Math.min(0.1, Math.max(0, time - lastTime)) : 0;
-        if (!Number.isFinite(lastTime) || time < lastTime) z = time * (params.speed as number);
-        z += dt * speed;
-        lastTime = time;
+        // v = speed * (1 + surge * (1 - phase)^4)  =>  z = speed * (t + surge * E / (5 * bps)),
+        // E = whole beats so far + 1 - (1 - phase)^5 (continuous across the beat boundary)
+        const bps = (audio.bpm > 0 ? audio.bpm : 120) / 60;
+        const ph = audio.bpm > 0 ? audio.phase : (time * bps) % 1;
+        const E = Math.round(time * bps - ph) + 1 - (1 - ph) ** 5;
+        z = (params.speed as number) * (time + ((params.surge as number) * E) / (5 * bps));
 
         const [ex, ey] = path(z), [tx, ty] = path(z + 3);
         const eye = [ex, ey, z], fwd = norm([tx - ex, ty - ey, 3]);
@@ -62,7 +62,7 @@ export default definePiece({
         const pal = (ins.palette as Palette | undefined)?.stops ?? Array.from({ length: 6 }, (_, i) => oklch(0.4 + i * 0.08, 0.15, audio.pal + i / 6));
         data.fill(0);
         data.set([lw, lh, time, width / height], 0);
-        data.set([...eye, 1.1 + 0.15 * kick], 4);
+        data.set([...eye, 1.15 + 0.15 * kick - 0.3 * bass], 4);
         data.set(right, 8); data.set(upv, 12); data.set(fwd, 16);
         data.set([bass, kick, params.morph as number, params.glow as number], 20);
         data.set([params.fog as number, audio.rms, Math.min(8, pal.length), params.tunnel as number], 24);

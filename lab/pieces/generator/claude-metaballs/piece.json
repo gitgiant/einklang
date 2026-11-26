@@ -11,7 +11,7 @@
     "count": { "type": "int", "default": 12, "min": 8, "max": 16, "doc": "number of blobs" },
     "size": { "type": "float", "default": 0.08, "min": 0.02, "max": 0.2, "doc": "base radius in screen heights" },
     "react": { "type": "float", "default": 1.1, "min": 0, "max": 3, "doc": "how much each blob's band swells it" },
-    "speed": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "orbit speed" },
+    "speed": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "orbit speed (positions are closed-form in time: keep it fixed, binding it to a signal makes the blobs jump)" },
     "pulse": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "onset rings: speed and strength (0 = off)" },
     "glow": { "type": "float", "default": 1.2, "min": 0, "max": 4, "doc": "edge glow and halo" },
     "edge": { "type": "float", "default": 0.08, "min": 0.01, "max": 0.4, "doc": "edge glow width (in field units)" },

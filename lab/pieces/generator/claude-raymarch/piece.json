@@ -2,13 +2,13 @@
   "id": "claude-raymarch",
   "kind": "generator",
   "name": "SDF flight",
-  "doc": "A raymarched fly-through of an endless lattice of tumbling rounded boxes, along a winding tube carved through it. Each box listens to one spectrum band: it swells, rounds toward a sphere and glows with it; the camera surges on every beat and speeds up with the bass. Rendered at reduced resolution and upscaled.",
+  "doc": "A raymarched fly-through of an endless lattice of tumbling rounded boxes, along a winding tube carved through it. Each box listens to one spectrum band: it swells, rounds toward a sphere and glows with it; the camera surges on every beat (closed-form in time and beat count, so hosts agree) and the lens widens with the bass. Rendered at reduced resolution and upscaled.",
   "ports": {
     "in": { "palette": { "type": "palette", "optional": true, "doc": "boxes pick a stop per cell; stop 0 tints the fog, the last stop the rims" } },
     "out": { "out": { "type": "tex" } }
   },
   "params": {
-    "speed": { "type": "float", "default": 1.6, "min": 0, "max": 8, "doc": "base flight speed, units per second" },
+    "speed": { "type": "float", "default": 1.6, "min": 0, "max": 8, "doc": "base flight speed, units per second (scales the closed-form distance: keep it fixed, binding it to a signal makes the camera jump)" },
     "surge": { "type": "float", "default": 1.5, "min": 0, "max": 4, "doc": "extra speed at the start of each beat" },
     "morph": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "how much band energy swells and rounds the boxes" },
     "glow": { "type": "float", "default": 1.5, "min": 0, "max": 5, "doc": "band glow and haze" },
