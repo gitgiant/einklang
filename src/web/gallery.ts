@@ -1,6 +1,7 @@
 // Scene gallery: every scene driven by the synthetic demo track, or by an input picked bottom left (mic,
 // tab / system audio, an audio file; analyzed in the page), no server needed. Double-tap or double-click
-// the picture to hide / show the UI.
+// the picture to hide / show the UI. A single tap or click on its right / left third (also with the UI
+// hidden), or the right / left arrow key, goes to the next / previous scene.
 // URL params:
 //   scene=radial|tunnel|scope|flow|<lab scene id>   which scene (default radial)
 //   grid=1                           all four at once
@@ -14,7 +15,8 @@
 //                                    is off, and a stop= cycle counts from the first scene at time 0
 //   at=<s>                           with trans: one transition from `scene` to the next at demo
 //                                    time s instead of the cycle (for stills: add stop=<s>)
-//   len=<beats>                      transition length (default 8)
+//   len=<beats>                      transition length (default: the length selector's choice,
+//                                    remembered per device, else 8; stills ignore the remembered one)
 //   interp=0                         whole ticks only (no display-rate interpolation)
 //   t=<token>                        room token, for voting through the server (remembered like the app's)
 // Voting: 👍/👎 plus reason tags for the scene shown (keys + / -), posted to the server's /vote. A static
@@ -22,13 +24,13 @@
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { FPS } from '../core/constants.ts';
-import { DEFAULT_TRANS_BEATS, TRANSITIONS, type SceneSched } from '../core/protocol.ts';
+import { TRANS_BEATS, TRANSITIONS, type SceneSched } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
 import { VOTE_TAGS } from '../core/votes.ts';
 import { autoHideUi } from './idle.ts';
-import { toggleUiOnDoubleTap } from './doubletap.ts';
-import { galleryTrans, type GalleryTrans } from './defaults.ts';
-import { ZERO, cycleSched, holdAt, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
+import { tapZone, toggleUiOnDoubleTap } from './doubletap.ts';
+import { galleryBeats, galleryTrans, type GalleryTrans } from './defaults.ts';
+import { ZERO, cycleSched, holdAt, retime, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
 import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
 import { canShare, insecure, micError, openMic, openShare } from './capture.ts';
 import { ACCEPT, Player } from './player.ts';
@@ -47,10 +49,11 @@ let grid = (qs.get('grid') ?? document.body.dataset.grid) === '1'; // data-grid:
 let current = qs.get('scene') ?? 'radial';
 let trans: GalleryTrans = galleryTrans(qs);
 const oneShotAt = qs.has('at') ? Math.round(+qs.get('at')! * FPS) : null;
-const beats = Math.max(0.5, Math.min(16, +(qs.get('len') ?? DEFAULT_TRANS_BEATS) || DEFAULT_TRANS_BEATS));
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+/** Transition length in beats. Its own key: the app's `tlen` would also count as a choice for the room. */
+let beats = galleryBeats(qs, lsGet('gallery.tlen'));
 const token = qs.get('t') ?? lsGet('token') ?? '';
 if (qs.get('t')) try { localStorage.setItem('token', qs.get('t')!); } catch { /* private mode */ }
 const withToken = (p: string) => (token ? `${p}?t=${encodeURIComponent(token)}` : p);
@@ -172,8 +175,12 @@ async function main() {
   const idxOf = (id: string) => Math.max(0, ids.indexOf(id));
   /** stop= stills count the cycle from time 0; otherwise it starts on `scene`. */
   let anchor: Anchor = qs.has('stop') ? ZERO : holdAt(startTick, idxOf(current), beats);
+  /** A newly picked length waiting for the next switch. */
+  let pending: { beats: number; anchor: Anchor } | null = null;
+  const applyLen = () => { if (pending) beats = pending.beats; pending = null; };
   const schedAt = (tick: number): SceneSched | undefined => {
     if (!trans || grid) return undefined;
+    if (pending && tick >= pending.anchor.at) { anchor = pending.anchor; applyLen(); }
     if (oneShotAt !== null) return step(cyc(), 0, current, ids[(idxOf(current) + 1) % ids.length], oneShotAt);
     return cycleSched(cyc(), anchor, tick);
   };
@@ -185,6 +192,7 @@ async function main() {
   for (const t of TRANSITIONS) tsel.add(new Option(`auto: ${TRANS_NAMES[t]}`, t));
   tsel.value = trans;
   const setTrans = (t: GalleryTrans) => {
+    if (!trans || !t) applyLen();
     if (!trans && t) { current = shownId(); anchor = holdAt(tickNow, idxOf(current), beats); } // cycle on from here
     else if (trans && !t) current = shownId(); // stay on what's showing
     trans = t; tsel.value = t;
@@ -193,10 +201,23 @@ async function main() {
     layout();
   };
   tsel.onchange = () => setTrans(tsel.value as GalleryTrans);
+  const lsel = document.createElement('select');
+  lsel.title = 'transition length (beats)';
+  for (const b of [...new Set<number>([...TRANS_BEATS.filter((b) => b > 0), beats])].sort((a, b) => a - b)) lsel.add(new Option(b === 0.5 ? '½' : String(b), String(b))); // no 0: the effect list has `cut`
+  lsel.value = String(beats);
+  lsel.onchange = () => {
+    const next = +lsel.value;
+    try { localStorage.setItem('gallery.tlen', lsel.value); } catch { /* private mode */ }
+    try { const u = new URL(location.href); if (u.searchParams.has('len')) { u.searchParams.set('len', lsel.value); history.replaceState(null, '', u); } } catch { /* sandboxed */ }
+    if (trans && oneShotAt === null) pending = { beats: next, anchor: retime(cyc(), anchor, tickNow) };
+    else beats = next;
+  };
   const votes = votePanel(() => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }));
   /** The tick space starts over (new input, looped file): sims replay, the cycle carries on from the scene showing. */
   const restart = (tick: number) => {
-    anchor = holdAt(tick, idxOf(shownId()), beats, switchAt(cyc(), anchor, tickNow) + 1);
+    const n = switchAt(cyc(), anchor, tickNow) + 1;
+    applyLen();
+    anchor = holdAt(tick, idxOf(shownId()), beats, n);
     tickNow = tick;
     for (const c of cells) c.engine.invalidate(-Infinity);
   };
@@ -205,7 +226,12 @@ async function main() {
     restart(Math.floor(input.tick(performance.now())));
   });
   autoHideUi(() => [bar, document.getElementById('vote'), picker]);
-  toggleUiOnDoubleTap((el) => el === stage || el.matches('#stage .cell, #stage canvas'));
+  /** The next / previous scene in tab order, with the current transition. Not in the grid. */
+  const stepScene = (by: -1 | 1) => { if (!grid) go(ids[mod(idxOf(shownId()) + by, ids.length)]); };
+  toggleUiOnDoubleTap((el) => el === stage || el.matches('#stage .cell, #stage canvas'), (x) => {
+    const zone = tapZone(x, innerWidth);
+    if (zone) stepScene(zone);
+  });
   /** The tab pressed and the scene voted on follow what's showing (the cycle moves it). */
   let marked = '';
   const mark = () => {
@@ -230,7 +256,9 @@ async function main() {
     if (id === 'grid') grid = !grid;
     else {
       // while cycling, switch to the picked scene with a transition and carry on from it
-      if (trans && !grid) anchor = { at: tickNow, n: switchAt(cyc(), anchor, tickNow) + 1, idx: idxOf(id), prev: idxOf(shownId()) };
+      const n = switchAt(cyc(), anchor, tickNow);
+      applyLen();
+      if (trans && !grid) anchor = { at: tickNow, n: n + 1, idx: idxOf(id), prev: idxOf(shownId()) };
       else if (trans) anchor = holdAt(tickNow, idxOf(id), beats, anchor.n);
       grid = false; current = id;
     }
@@ -247,12 +275,16 @@ async function main() {
     b.onclick = () => go(id);
     bar.append(b);
   }
-  bar.append(tsel);
+  bar.append(tsel, lsel);
   addEventListener('keydown', (e) => {
     if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
     else if (e.key === 'h') { hud = !hud; layout(); }
     else if (e.key === 'i') { info = !info; layout(); }
     else if (e.key === 'g') go('grid');
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      // a focused selector keeps its arrows; Alt / Cmd + arrow stays the browser's back / forward
+      if (!(e.target instanceof HTMLSelectElement) && !e.altKey && !e.ctrlKey && !e.metaKey) stepScene(e.key === 'ArrowLeft' ? -1 : 1);
+    }
     else if (e.key === 't') { const opts: GalleryTrans[] = ['', 'random', 'all', ...TRANSITIONS]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
     else if (+e.key >= 1 && +e.key <= ids.length) go(ids[+e.key - 1]);
     else if (e.key === '+' || e.key === '=') votes.send(1);
