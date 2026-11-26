@@ -47,7 +47,7 @@ import { parseVotes } from '../../src/core/votes.ts';
 import '../../src/server/transitions.ts'; // installs the transition registry
 import { transitions } from '../../src/core/transitions.ts';
 import { openLab, type Lab } from './browser.ts';
-import { profileCompact, profileMd, profileShow } from './profile.ts';
+import { profileMd, profileShow } from './profile.ts';
 import { judgeCost, judgeReactive, judgeRun, junit, reactivity, LIMITS } from './checks.ts';
 import { validateScene } from '../../src/core/graph/validate.ts';
 import { harness } from '../../src/core/graph/harness.ts';
@@ -170,7 +170,6 @@ async function checkTransition(lab: Lab, id: string, fixtures: string[], seconds
   return { id, failures, notes, ms, dir };
 }
 
-let lastCompact = '';
 /** The switch profile in a browser of its own (cold: no shader cache); markdown lines, also in lab/out/profile.md. */
 async function runProfile(w: number, h: number, transitions: string[], scenes: string[], o: { cpu: boolean; quick: boolean; gpuOnly?: boolean }): Promise<string[]> {
   const lab = await openLab({ width: w, height: h, cpu: o.cpu, cold: true, log: say });
@@ -181,7 +180,6 @@ async function runProfile(w: number, h: number, transitions: string[], scenes: s
     mkdirSync(OUT, { recursive: true });
     writeFileSync(join(OUT, 'profile.md'), md.join('\n') + '\n');
     writeFileSync(join(OUT, 'profile.json'), JSON.stringify(r, null, 1));
-    lastCompact = profileCompact(r);
     return md;
   } finally { await lab.close(); }
 }
@@ -370,8 +368,8 @@ async function main() {
       try {
         const md = await runProfile(w, h, v.transitions, v.scenes.map((s) => s.id), { cpu: false, quick: false, gpuOnly: true });
         for (const l of md) say(l);
-        return [{ name: 'switch profile', classname: 'lab.profile', out: md.join('\n'), failure: 'TEMP numbers\n' + lastCompact }];
-      } catch (e) { say(`profile failed: ${(e as Error).message}`); return [{ name: 'switch profile', classname: 'lab.profile', out: `failed: ${(e as Error).message}`, failure: `profile failed: ${(e as Error).message}` }]; }
+        return [{ name: 'switch profile', classname: 'lab.profile', out: md.join('\n')}];
+      } catch (e) { say(`profile failed: ${(e as Error).message}`); return [{ name: 'switch profile', classname: 'lab.profile', out: `failed: ${(e as Error).message}` }]; }
     };
     if (!items.length) {
       const pr = gate && !flag('cpu') ? await profile(false) : [];

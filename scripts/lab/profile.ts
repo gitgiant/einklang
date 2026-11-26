@@ -5,7 +5,7 @@
 //   warm    the same switch again
 //   scenes  radial -> each scene, first time that scene draws (its own cold start) + A+B steady cost
 //   trans   radial -> tunnel with each transition: first frame + the mix's own cost
-// Numbers only; nothing here fails the gate.
+// Numbers only; nothing here fails the gate (a switch that can't run is listed as not profiled).
 import type { Lab } from './browser.ts';
 import type { ProfileFrame, ProfileOpts } from '../../src/web/lab.ts';
 import { TICKS_PER_BEAT } from '../../src/core/constants.ts';
@@ -63,7 +63,7 @@ export function statTable(rows: SwitchStat[]): string[] {
   ];
 }
 
-export interface ProfileReport { adapter: string; res: string; timestamps: boolean; cold: SwitchStat[]; scenes: SwitchStat[]; transitions: SwitchStat[] }
+export interface ProfileReport { adapter: string; res: string; timestamps: boolean; cold: SwitchStat[]; scenes: SwitchStat[]; transitions: SwitchStat[]; skipped: string[] }
 
 /**
  * Run the profile in `lab` (a page of its own: it reloads it for the cold start). `quick` (no GPU):
@@ -73,27 +73,29 @@ export async function profileShow(lab: Lab, o: { scenes: string[]; transitions: 
   await lab.reload();
   const fixture = o.fixture ?? 'techno', beat = TICKS_PER_BEAT;
   let tick = 600, timestamps = false;
-  const one = async (label: string, x: Omit<ProfileOpts, 'fixture' | 'start'>): Promise<SwitchStat> => {
+  const skipped: string[] = [];
+  /** One profiled switch; a row that can't run (a scene the page skipped, say) is logged and left out. */
+  const one = async (label: string, x: Omit<ProfileOpts, 'fixture' | 'start'>): Promise<SwitchStat[]> => {
     const r = await lab.profile({ ...x, fixture, start: tick, sub: 128 });
     tick += x.before + x.ticks + x.after + 1;
-    if (!r.ok) throw new Error(`profile ${label}: ${r.error}`);
+    if (!r.ok) { o.log(`profile ${label}: ${r.error}`); skipped.push(`${label}: ${r.error}`); return []; }
     timestamps = r.timestamps;
-    return summarize(label, r.frames, x.ticks);
+    return [summarize(label, r.frames, x.ticks)];
   };
   const cold: SwitchStat[] = [], scenes: SwitchStat[] = [], transitions: SwitchStat[] = [];
   const long = { before: 60, ticks: 8 * beat, after: 30 };
-  cold.push(await one(`cold: ${o.from} → ${o.to}, core-blend 8 beats (fresh page)`, { from: o.from, to: o.to, trans: 'core-blend', ...long }));
-  cold.push(await one(`warm: the same switch again`, { from: o.from, to: o.to, trans: 'core-blend', ...long }));
-  o.log(`profile: cold switch first frame ${ms(cold[0].first)} ms, max ${ms(cold[0].max)} ms; warm ${ms(cold[1].first)} / ${ms(cold[1].max)} ms`);
+  cold.push(...await one(`cold: ${o.from} → ${o.to}, core-blend 8 beats (fresh page)`, { from: o.from, to: o.to, trans: 'core-blend', ...long }));
+  cold.push(...await one(`warm: the same switch again`, { from: o.from, to: o.to, trans: 'core-blend', ...long }));
+  for (const c of cold) o.log(`profile: ${c.label.split(',')[0]}: first frame ${ms(c.first)} ms, worst ${ms(c.max)} ms`);
   const short = { before: 30, ticks: 4 * beat, after: 10 };
   for (const s of o.quick ? [] : o.scenes.filter((x) => x !== o.from && x !== o.to)) {
-    scenes.push(await one(`${o.from} → ${s}`, { from: o.from, to: s, trans: 'core-blend', ...short }));
+    scenes.push(...await one(`${o.from} → ${s}`, { from: o.from, to: s, trans: 'core-blend', ...short }));
   }
   const effects = o.transitions.filter((t) => t !== CUT_ID); // a cut never draws a transition
   for (const t of o.quick ? effects.slice(0, 2) : effects) {
-    transitions.push(await one(t, { from: o.from, to: o.to, trans: t, before: 20, ticks: 4 * beat, after: 5 }));
+    transitions.push(...await one(t, { from: o.from, to: o.to, trans: t, before: 20, ticks: 4 * beat, after: 5 }));
   }
-  return { adapter: lab.adapter, res: o.res, timestamps, cold, scenes, transitions };
+  return { adapter: lab.adapter, res: o.res, timestamps, cold, scenes, transitions, skipped };
 }
 
 export function profileMd(r: ProfileReport): string[] {
@@ -104,13 +106,6 @@ export function profileMd(r: ProfileReport): string[] {
     '### First switch', '', ...statTable(r.cold), '',
     ...(r.scenes.length ? ['### Into each scene (its first time on screen, core-blend 4 beats)', '', ...statTable(r.scenes), ''] : []),
     '### Each transition (radial → tunnel, 4 beats, warm)', '', ...statTable(r.transitions), '',
+    ...(r.skipped.length ? ['Not profiled:', '', ...r.skipped.map((x) => `- ${x}`), ''] : []),
   ];
-}
-
-/** Compact, a few switches per line, for logs that only carry a short message. */
-export function profileCompact(r: ProfileReport): string {
-  const g = (x: SwitchStat, k: string) => (x.gpu ? ms(x.gpu[k] ?? 0) : '-');
-  const f = (x: SwitchStat) => `${x.label.split(/[,:]/)[0].replace('radial → ', '')} ${ms(x.first)}/${ms(x.p50)}/${ms(x.p95)}/${ms(x.max)} b${g(x, 'b')} m${g(x, 'mix')}`;
-  const pack = (xs: SwitchStat[]) => Array.from({ length: Math.ceil(xs.length / 4) }, (_, i) => xs.slice(i * 4, i * 4 + 4).map(f).join(' ; '));
-  return [`${r.adapter} ts=${r.timestamps} first/p50/p95/max`, ...r.cold.map(f), ...pack(r.transitions), ...pack(r.scenes)].join('\n');
 }
