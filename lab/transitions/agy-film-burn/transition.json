@@ -1,0 +1,33 @@
+{
+  "id": "agy-film-burn",
+  "name": "film burn",
+  "vendor": "agy",
+  "model": "gemini-4-neon-medium",
+  "description": "A seeded hot spot burns through A with a glowing orange ember rim and char, revealing B behind.",
+  "curve": "smoothstep",
+  "uses": ["flash"],
+  "params": {
+    "jagged": {
+      "default": 0.28,
+      "min": 0.05,
+      "max": 0.6,
+      "doc": "burn edge irregularity"
+    },
+    "glow": {
+      "default": 1.35,
+      "min": 0.3,
+      "max": 2.5,
+      "doc": "orange ember rim brightness"
+    },
+    "char_width": {
+      "default": 0.08,
+      "min": 0.02,
+      "max": 0.2,
+      "doc": "charred border width"
+    }
+  },
+  "budget": {
+    "ms": 0.25
+  },
+  "tags": ["organic", "fire", "film"]
+}
