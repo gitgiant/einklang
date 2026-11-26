@@ -1,0 +1,160 @@
+// Einklang Lab piece API. This is the only module a piece may import (see lab/AGENTS.md).
+// A piece is a folder lab/pieces/<kind>/<id>/ with piece.json, optional driver.ts, and *.wgsl.
+// Spec: docs/prd-lab.md.
+
+/** What can flow along a graph edge. An edge joins equal types only. */
+export type PortType =
+  | 'tex' | 'mask' | 'field' | 'particles' | 'geo' | 'camera'
+  | 'palette' | 'signal' | 'trigger' | 'spectrum' | 'wave';
+
+export const PORT_TYPES: readonly PortType[] = ['tex', 'mask', 'field', 'particles', 'geo', 'camera', 'palette', 'signal', 'trigger', 'spectrum', 'wave'];
+/** Ports that live on the CPU (computed by `cpu()` each tick); the rest are GPU resources. */
+export const CPU_PORTS: readonly PortType[] = ['camera', 'palette', 'signal', 'trigger', 'spectrum', 'wave'];
+/** GPU image ports and the texture format each one uses. */
+export const TEX_FORMAT = { tex: 'rgba16float', mask: 'r16float', field: 'rg16float' } as const;
+export type TexPort = keyof typeof TEX_FORMAT;
+export const isTexPort = (t: PortType): t is TexPort => t in TEX_FORMAT;
+
+export type PieceKind = 'generator' | 'color' | 'effect' | 'modulator' | 'utility';
+export const PIECE_KINDS: readonly PieceKind[] = ['generator', 'color', 'effect', 'modulator', 'utility'];
+
+export interface PortSpec { type: PortType; optional?: boolean; doc?: string }
+
+export type ParamType = 'float' | 'int' | 'bool' | 'enum' | 'color' | 'text';
+export interface ParamSpec {
+  type: ParamType;
+  default: number | boolean | string;
+  /** float / int range. A bound signal (0..1) maps onto [min, max] unless the binding says otherwise. */
+  min?: number; max?: number;
+  /** enum choices; the value is the index into this list. */
+  options?: string[];
+  doc?: string;
+}
+export type ParamValue = number | boolean | string;
+
+export interface PieceManifest {
+  id: string;
+  kind: PieceKind;
+  name: string;
+  doc?: string;
+  ports: { in?: Record<string, PortSpec>; out: Record<string, PortSpec> };
+  params?: Record<string, ParamSpec>;
+  tags?: string[];
+  /** Cost at 1080p; `scales` says what it grows with. Checked by the gate. */
+  budget?: { ms: number; scales?: 'res' | 'n' | 'none' };
+  author: { vendor: string; model?: string };
+  /** State is integer/deterministic and returned from cpu() as `state`: it joins the sync hash. */
+  synced?: boolean;
+  /** Auto-shader pieces: the WGSL file holding `fn shade(uv: vec2f) -> vec4f`. */
+  shader?: string;
+  /** Auto-shader pieces: bind this node's previous output as `in_prev` (feedback, trails). */
+  feedback?: boolean;
+  assets?: { path: string; license: string; source?: string }[];
+  changelog?: { date: string; by: string; note: string }[];
+}
+
+// ---------------------------------------------------------------- CPU values
+
+/** Up to 8 stops in OKLab (L, a, b), evenly spaced 0..1. */
+export interface Palette { stops: [number, number, number][] }
+export interface Camera { view: Float32Array; proj: Float32Array; pos: [number, number, number] }
+/** Count of events on this tick (0 = none). */
+export type Trigger = number;
+
+/** Per-tick audio + input frame (see src/core/constants.ts for the raw key layout). */
+export interface Audio {
+  /** 16 log bands, 0..1. */
+  bands: Float32Array;
+  rms: number;
+  onset: boolean;
+  /** Beat phase 0..1 and beat-in-bar 0..3 while a clock runs (MIDI or the fixed grid). */
+  phase: number; bar: number; bpm: number;
+  /** MIDI note-on this tick: pitch 0..127 and velocity 0..1, or note = -1. */
+  note: number; vel: number;
+  /** MIDI CC params 0..1 (mod wheel, cutoff, resonance, pan). */
+  cc: [number, number, number, number];
+  /** Pads' palette step 0..1 (wraps). */
+  pal: number;
+}
+
+export interface CpuCtx {
+  /** Integer tick (60 Hz) and the display sub-tick 0..255. */
+  tick: number; sub: number;
+  /** Seconds, fractional: (tick + sub / 256) / 60. Use this for closed-form motion. */
+  time: number;
+  params: Record<string, ParamValue>;
+  /** Connected CPU inputs by port name (unconnected optional inputs are undefined). */
+  in: Record<string, unknown>;
+  audio: Audio;
+  /** Audio frame `ago` ticks back (0 = now, max 600): for followers, envelopes, smoothing. */
+  past(ago: number): Audio;
+  /** Decimated L/R waveform at this tick (512 interleaved pairs, -1..1), or null if not streamed. */
+  wave(): Float32Array | null;
+  /** Seeded hash noise: same on every host. Returns 0..1. */
+  rand(a: number, b?: number): number;
+}
+
+/** What cpu() returns: a value per CPU output port, plus `state` for synced pieces. */
+export type CpuOut = Record<string, unknown> & { state?: Int32Array };
+
+// ---------------------------------------------------------------- GPU side
+
+export interface GpuInit {
+  device: GPUDevice;
+  /** Compile a WGSL file from the piece folder (the shared prelude is prepended). */
+  shader(file: string): GPUShaderModule;
+  /** Raw WGSL text of a file in the piece folder. */
+  wgsl(file: string): string;
+  /** Fullscreen-triangle vertex entry `vs_full` exists in every module (uv 0,0 = top-left). */
+  formats: typeof TEX_FORMAT;
+}
+
+/** A GPU input: textures for tex/mask/field, `Particles` for particles, `Geo` for geo. */
+export interface Particles { buffer: GPUBuffer; count: number; /** bytes per particle; layout pos.xy vel.xy color.rgba age size: 48 */ stride: number }
+export interface Geo { encode(enc: GPUCommandEncoder, color: GPUTexture, depth: GPUTexture, cam: Camera): void }
+
+export interface GpuCtx extends CpuCtx {
+  device: GPUDevice;
+  enc: GPUCommandEncoder;
+  width: number; height: number;
+  /** Inputs: GPUTexture for image ports, Particles, Geo, or CPU values. */
+  in: Record<string, unknown>;
+  /** Image outputs, allocated by the runtime at width x height: render into these. */
+  out: Record<string, GPUTexture>;
+  /** CPU outputs of this node's own cpu(), if it has one. */
+  cpu: CpuOut;
+}
+
+export interface GpuInstance {
+  /** Encode this frame. Return non-image outputs (particles, geo). */
+  frame(ctx: GpuCtx): Record<string, unknown> | void;
+  dispose?(): void;
+}
+
+export interface PieceDriver {
+  /** Pure function of (tick, audio, params, inputs): no state between calls. */
+  cpu?(ctx: CpuCtx): CpuOut;
+  gpu?(init: GpuInit): GpuInstance;
+}
+
+/** Identity helper so drivers get type checking: `export default definePiece({ ... })`. */
+export const definePiece = (d: PieceDriver): PieceDriver => d;
+
+// ---------------------------------------------------------------- helpers
+
+/** OKLab -> linear sRGB (Björn Ottosson). */
+export function oklabToLinear([L, a, b]: [number, number, number]): [number, number, number] {
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+  const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+}
+
+/** OKLCh (lightness 0..1, chroma ~0..0.37, hue in turns) -> OKLab. */
+export const oklch = (L: number, C: number, h: number): [number, number, number] =>
+  [L, C * Math.cos(h * 2 * Math.PI), C * Math.sin(h * 2 * Math.PI)];

@@ -1,0 +1,13 @@
+{
+  "id": "core-trails", "kind": "effect", "name": "Feedback trails",
+  "doc": "Keeps the brighter of the input and its own last frame, zoomed, rotated and decayed (Milkdrop-style feedback).",
+  "ports": { "in": { "in": { "type": "tex" } }, "out": { "out": { "type": "tex" } } },
+  "params": {
+    "decay": { "type": "float", "default": 0.85, "min": 0, "max": 0.99 },
+    "zoom": { "type": "float", "default": 0.01, "min": -0.1, "max": 0.1 },
+    "rotate": { "type": "float", "default": 0.004, "min": -0.1, "max": 0.1 }
+  },
+  "shader": "trails.wgsl", "feedback": true, "budget": { "ms": 0.15, "scales": "res" },
+  "tags": ["feedback", "trails", "core"],
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

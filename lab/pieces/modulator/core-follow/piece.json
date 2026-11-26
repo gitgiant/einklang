@@ -1,0 +1,12 @@
+{
+  "id": "core-follow", "kind": "modulator", "name": "Band follower",
+  "doc": "Smoothed level of a band range, with gain. Closed-form over the last 'window' ticks.",
+  "ports": { "out": { "out": { "type": "signal" } } },
+  "params": {
+    "lo": { "type": "int", "default": 0, "min": 0, "max": 15 },
+    "hi": { "type": "int", "default": 2, "min": 0, "max": 15 },
+    "window": { "type": "int", "default": 8, "min": 1, "max": 120, "doc": "smoothing in ticks" },
+    "gain": { "type": "float", "default": 1.5, "min": 0, "max": 8 }
+  },
+  "tags": ["audio", "follower", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

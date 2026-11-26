@@ -74,7 +74,7 @@ export class PostChain {
   private tex(tw: number, th: number, label: string): GPUTexture {
     return this.device.createTexture({
       size: [Math.max(1, tw), Math.max(1, th)], format: HDR, label,
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST, // COPY_DST: graph scenes copy their output in
     });
   }
 

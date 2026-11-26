@@ -1,0 +1,15 @@
+{
+  "format": 1, "id": "core-retro", "name": "Lab retro plasma", "version": 1,
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-26",
+  "nodes": [
+    { "id": "kick", "piece": "core-follow", "params": { "lo": 0, "hi": 1, "window": 4, "gain": 2 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "hue": 0.85, "scheme": 2, "chroma": 0.2, "light": 0.6, "contrast": 0.7 } },
+    { "id": "plasma", "piece": "core-plasma", "params": { "scale": 6, "speed": 0.8, "gain": 0.5 }, "bind": { "warp": { "from": "kick.out" } } },
+    { "id": "pix", "piece": "core-pixelate", "params": { "cells": 60, "levels": 6 }, "bind": { "cells": { "from": "kick.out", "range": [90, 30] } } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "plasma.palette" },
+    { "from": "plasma.out", "to": "pix.in" }
+  ],
+  "out": "pix.out"
+}

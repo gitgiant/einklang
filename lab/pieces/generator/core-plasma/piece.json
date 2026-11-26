@@ -1,0 +1,14 @@
+{
+  "id": "core-plasma", "kind": "generator", "name": "Plasma",
+  "doc": "Demoscene plasma: summed sines mapped through the palette, warped by a signal.",
+  "ports": { "in": { "palette": { "type": "palette", "optional": true } }, "out": { "out": { "type": "tex" } } },
+  "params": {
+    "scale": { "type": "float", "default": 3, "min": 0.5, "max": 20 },
+    "speed": { "type": "float", "default": 0.4, "min": 0, "max": 4 },
+    "warp": { "type": "float", "default": 0.3, "min": 0, "max": 2, "doc": "bind to a follower for audio warp" },
+    "gain": { "type": "float", "default": 0.8, "min": 0, "max": 4 }
+  },
+  "shader": "plasma.wgsl", "budget": { "ms": 0.3, "scales": "res" },
+  "tags": ["demoscene", "retro", "core"],
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

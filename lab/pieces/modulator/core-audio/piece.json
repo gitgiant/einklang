@@ -1,0 +1,10 @@
+{
+  "id": "core-audio", "kind": "modulator", "name": "Audio",
+  "doc": "The room's audio frame as ports: bass/mid/high/rms signals 0..1, onset trigger, beat phase, 16-band spectrum, L/R waveform.",
+  "ports": { "out": {
+    "bass": { "type": "signal" }, "mid": { "type": "signal" }, "high": { "type": "signal" }, "rms": { "type": "signal" },
+    "phase": { "type": "signal", "doc": "beat phase 0..1" },
+    "onset": { "type": "trigger" }, "spectrum": { "type": "spectrum" }, "wave": { "type": "wave" }
+  } },
+  "tags": ["audio", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

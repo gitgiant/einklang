@@ -1,6 +1,28 @@
 # PRD: Einklang Lab (agent-generated pieces, a node-graph runtime, and voting)
 
-Status: agreed 2026-11-26 (grill-me interview), not started. Tickets: #20–#26.
+Status: agreed 2026-11-26 (grill-me interview). **#20 built 2026-11-26**; #21–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
+
+### Build notes for #20 (decided while building)
+
+- **Code layout:**
+  - `lab/api/index.ts` holds the piece API types plus OKLab helpers.
+  - `src/core/graph/` holds `types`, `validate` (pieces, scenes, evaluation order) and `eval` (`compile` and `evalCpu`, which covers the CPU half and the hash).
+  - `src/web/graph/` holds `registry` (Vite globs), `auto` (auto-shader prelude), `runner` (GPU) and `scene` (the `GpuScene` adapter).
+  - `scripts/lab/load.ts` is the node loader for tests and the CLI.
+- **Auto-shader pieces:** `"shader": "x.wgsl"` defining `fn shade(uv) -> vec4f`, with no driver.
+  - The generated prelude provides `time() aspect() resolution() rms() onset() phase() bar() bpm() band(i) bass() palette(x) oklab_to_linear()`, plus `p_<param>()`, `tex_<input>(uv)` and `prev(uv)` when `"feedback": true`.
+  - These pieces have exactly one tex/mask/field output, and their inputs are only tex/mask/field/palette. Signals reach them through param bindings.
+- **CPU ports** (signal, trigger, palette, spectrum, wave, camera) come from `cpu()`, a pure function of the tick, audio (`past(ago)` reaches up to 600 ticks back), params and inputs. Modulator and color pieces are CPU only.
+- **Bindings** map 0..1 onto `range` (default: the param's min..max) and are clamped to min..max. Int params are rounded.
+- **Hash:** scene id hash, version, tick, feature keys 0..28, every resolved param (numbers × 4096 rounded, bools, string hashes), plus `state` from `synced` pieces. It is evaluated at sub = 0; drawing uses sub.
+- **Textures:**
+  - A pool reuses textures once their last reader has run.
+  - Feedback pieces keep their own ping-pong pair.
+  - The output port is copied into the scene's HDR target, which is why the post targets gained `COPY_DST`.
+  - An unconnected optional image input reads 1×1 black.
+  - An unconnected palette is an OKLCh rainbow that follows the pads' palette step.
+- **Where lab scenes show:** only in the gallery for now (`new Engine(gpu, cv, { lab: true })`, `?scene=core-demo`). The live list waits for #21 and #24.
+- **Starter pieces (vendor `core`):** audio, lfo, follow, harmony, plasma, bars, kaleido, trails, pixelate, blend. Scenes: `core-demo`, `core-retro`.
 
 ## Problem
 

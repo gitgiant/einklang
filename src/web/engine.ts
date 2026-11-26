@@ -2,6 +2,7 @@ import type { Gpu } from './gpu/gpu.ts';
 import { PostChain, type PostParams } from './gpu/post.ts';
 import { TransitionPass } from './gpu/transition.ts';
 import { createScenes, type FlowBudget, type GpuScene } from './scenes.ts';
+import { labScenes } from './graph/scene.ts';
 import type { FeatureSource } from '../core/features.ts';
 import { hashState } from '../core/scene.ts';
 import { hex8 } from '../core/math.ts';
@@ -31,13 +32,15 @@ export class Engine {
   private gpu: Gpu;
   private canvas: HTMLCanvasElement;
 
-  constructor(gpu: Gpu, canvas: HTMLCanvasElement) {
+  /** `lab`: append the lab scene graphs (gallery only until #21 brings them to the live list). */
+  constructor(gpu: Gpu, canvas: HTMLCanvasElement, opts: { lab?: boolean } = {}) {
     this.gpu = gpu; this.canvas = canvas;
     this.ctx = canvas.getContext('webgpu')!;
     this.ctx.configure({ device: gpu.device, format: gpu.format, alphaMode: 'opaque' });
     this.post = new PostChain(gpu.device, gpu.format);
     this.trans = new TransitionPass(gpu.device);
     this.scenes = createScenes(gpu.device, this.budget);
+    if (opts.lab) this.scenes.push(...labScenes(gpu.device));
   }
 
   get scene(): GpuScene { return this.scenes[this.idx]; }

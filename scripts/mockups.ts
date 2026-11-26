@@ -24,6 +24,8 @@ const shots: [string, string, number][] = [
   ['scope-build', 'scene=scope', 24.1],
   ['flow', 'scene=flow', 38.87],
   ['grid', 'grid=1', 38.43],
+  ['lab-demo', 'scene=core-demo', 38.43],
+  ['lab-retro', 'scene=core-retro', 38.43],
   ['hud-flow', 'scene=flow&hud=1', 39.5],
   // transition stills: a 4-beat transition from `scene` to the next scene starting at `at`
   ...(['blend', 'flash', 'wipe', 'iris', 'dissolve', 'luma', 'zoom', 'glitch', 'stutter', 'swirl', 'melt', 'audio', 'pixelate'] as const)

@@ -1,0 +1,23 @@
+{
+  "format": 1, "id": "core-demo", "name": "Lab demo", "version": 1,
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-26",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 10, "gain": 1.4 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 16, "shape": 0 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 4, "chroma": 0.18, "light": 0.62 }, "bind": { "hue": { "from": "lfo.out", "range": [0.5, 0.8] } } },
+    { "id": "plasma", "piece": "core-plasma", "params": { "scale": 4, "gain": 0.22 }, "bind": { "warp": { "from": "bass.out", "range": [0, 1.5] } } },
+    { "id": "bars", "piece": "core-bars", "params": { "glow": 1 } },
+    { "id": "mix", "piece": "core-blend", "params": { "mode": 0 } },
+    { "id": "kal", "piece": "core-kaleido", "params": { "segments": 8 } },
+    { "id": "trails", "piece": "core-trails", "params": { "decay": 0.8 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "plasma.palette" },
+    { "from": "pal.palette", "to": "bars.palette" },
+    { "from": "plasma.out", "to": "mix.a" },
+    { "from": "bars.out", "to": "mix.b" },
+    { "from": "mix.out", "to": "kal.in" },
+    { "from": "kal.out", "to": "trails.in" }
+  ],
+  "out": "trails.out"
+}

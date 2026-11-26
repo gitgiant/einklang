@@ -1,6 +1,6 @@
 // Scene gallery: every v1 scene driven by the synthetic demo track, no server needed.
 // URL params:
-//   scene=radial|tunnel|scope|flow   which scene (default radial)
+//   scene=radial|tunnel|scope|flow|<lab scene id>   which scene (default radial)
 //   grid=1                           all four at once
 //   start=<s>                        demo-track time to start at (default 0)
 //   stop=<s>                         stop rendering at this demo time (for screenshots); sets window.__done
@@ -45,7 +45,7 @@ async function main() {
     const cell = document.createElement('div'); cell.className = 'cell';
     const cv = document.createElement('canvas'), tag = document.createElement('div'); tag.className = 'tag';
     cell.append(cv, tag); stage.append(cell);
-    return { cell, tag, engine: new Engine(gpu, cv) };
+    return { cell, tag, engine: new Engine(gpu, cv, { lab: true }) };
   });
   const ids = cells[0].engine.scenes.map((s) => s.def.id);
   /** The local stand-in for the server's schedule: a pure function of the tick, so stills repeat. */
