@@ -2,8 +2,9 @@
 // a bar-quantized scene switch landing on both, per-host views, and equal scene-state hashes
 // at equal ticks (including after a manual hit event). Usage: npm run build && npm run e2e
 import puppeteer, { type Page } from 'puppeteer-core';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, join, resolve } from 'node:path';
 import { startServer } from '../src/server/main.ts';
 
 const chrome = process.env.CHROME ?? ['C:/Program Files/Google/Chrome/Application/chrome.exe', '/usr/bin/google-chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(existsSync);
@@ -32,7 +33,7 @@ try {
     const p = await browsers[i].newPage();
     await p.setViewport({ width: 640, height: 360 });
     p.on('pageerror', (e) => { console.log('pageerror', e); failed = true; });
-    await p.goto(`http://127.0.0.1:${port}/?t=${TOKEN}&${q}`);
+    await p.goto(`http://127.0.0.1:${port}/?t=${TOKEN}&debug=1&${q}`);
     await p.waitForFunction(() => window.__ek && window.__ek.hashes.size > 30, { timeout: 20000 });
     return p;
   };
@@ -96,12 +97,47 @@ try {
   check(c.shared > 20 && c.diff === 0, `midi: ${c.shared} shared ticks, ${c.diff} mismatches`);
   const hudA = await a.$eval('#hud', (e) => e.textContent ?? '');
   check(/midi 120 bpm/.test(hudA) && /cc 1:90/.test(hudA), `midi clock + cc shown in HUD (${/midi .*/.exec(hudA)?.[0]})`);
-  await a.keyboard.press('d');
   await sleep(600);
   const dtext = await a.$eval('#debug pre', (e) => e.textContent ?? '');
   check(/room clock master: midi-box/.test(dtext) && /fps \d/.test(dtext), 'debug panel shows frames, network and clock master');
   if (process.env.SHOT) await a.screenshot({ path: process.env.SHOT });
   m.close();
+
+  // playlist: two tracks loaded on A (generated WAVs, or TRACKS=a.mp3,b.flac for real files),
+  // paused / sought / resumed from B, then A auto-advances to the second track
+  const tracks = process.env.TRACKS?.split(',') ?? [1, 2].map((k) => {
+    const sr = 22050, n = sr * 4, buf = Buffer.alloc(44 + n * 2);
+    buf.write('RIFF', 0); buf.writeUInt32LE(36 + n * 2, 4); buf.write('WAVEfmt ', 8); buf.writeUInt32LE(16, 16);
+    buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(sr, 24); buf.writeUInt32LE(sr * 2, 28);
+    buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34); buf.write('data', 36); buf.writeUInt32LE(n * 2, 40);
+    for (let i = 0; i < n; i++) buf.writeInt16LE(Math.round(Math.sin((i * 2 * Math.PI * 110 * k) / sr) * ((i % (sr / 2)) < 2000 ? 20000 : 3000)), 44 + i * 2);
+    const p = join(mkdtempSync(join(tmpdir(), 'ek-')), `${k}-tone.wav`); writeFileSync(p, buf); return p;
+  });
+  const input = (await a.$('#file'))!;
+  await (input as unknown as { uploadFile(...p: string[]): Promise<void> }).uploadFile(...tracks);
+  const name0 = basename(tracks[0]).replace(/\.[^.]+$/, '');
+  await b.waitForFunction((n) => document.getElementById('tName')!.textContent!.startsWith(n), { timeout: 60000 }, name0);
+  check(true, `track 1 "${name0}" playing on B`);
+  await b.waitForFunction(() => !/starts in/.test(document.getElementById('tTime')!.textContent!), { timeout: 10000 });
+  await sleep(700);
+  await b.click('#tPlay'); // pause from the other host
+  await sleep(400);
+  const tA = await a.$eval('#tTime', (e) => e.textContent), tB = await b.$eval('#tTime', (e) => e.textContent);
+  check(tA === tB && (await a.$eval('#tPlay', (e) => e.textContent)) === '▶', `paused on both at ${tA} / ${tB}`);
+  await b.keyboard.press('ArrowRight'); // seek while paused (clamped to the end on short tracks)
+  await sleep(300);
+  da = await dbg(a); db = await dbg(b);
+  c = compare(da, db);
+  check(c.diff === 0, `paused + seek: ${c.diff} mismatches`);
+  if (!process.env.TRACKS) {
+    await a.click('#tPrev'); // restart track 1
+    await sleep(300);
+    await b.click('#tPlay');
+    const name1 = basename(tracks[1]).replace(/\.[^.]+$/, '');
+    await b.waitForFunction((n) => document.getElementById('tName')!.textContent!.startsWith(n), { timeout: 20000 }, name1);
+    check(true, `auto-advanced to "${name1}"`);
+  }
+  if (process.env.SHOT2) await b.screenshot({ path: process.env.SHOT2 });
 } catch (e) {
   console.log('FAIL', e); failed = true;
 } finally {

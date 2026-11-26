@@ -9,6 +9,7 @@ import { initGpu } from './gpu/gpu.ts';
 import { VIEWS } from './gpu/post.ts';
 import { Engine } from './engine.ts';
 import { MidiRelay } from './midi.ts';
+import { ACCEPT, Player } from './player.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
@@ -50,7 +51,7 @@ function pingBurst() { for (let i = 0; i < 5; i++) setTimeout(() => send({ t: 'p
 
 let room: RoomState = {
   mode: 'idle', epoch: -1, scene: { id: DEFAULT_PRESETS[0], prev: DEFAULT_PRESETS[0], at: 0 },
-  presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null,
+  presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null, playlist: null,
 };
 let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
@@ -95,38 +96,63 @@ function connect() {
       events.add(m.ev);
       if (window.__ek) window.__ek.events++;
       if (m.ev.tick <= lastTick) { net.lateEvents++; listeners.lateEvent.forEach((f) => f(m.ev.tick)); } // arrived late: replay
-    }
+    } else if (m.t === 'track') playIndex(m.index);
   };
 }
 connect();
 setInterval(pingBurst, 3000);
 
-// ---- leader: file ----
-$<HTMLInputElement>('file').onchange = async () => {
-  const f = $<HTMLInputElement>('file').files?.[0]; if (!f) return;
+// ---- leader: file(s) / folder ----
+// The host that loads tracks owns the playlist: any host's prev/next is relayed to it, and it
+// auto-advances at the end of each track, preparing the next one while the current one plays.
+const player = new Player();
+let playing = -1, advancing = false;
+const fileIn = $<HTMLInputElement>('file'), folderIn = $<HTMLInputElement>('folder');
+fileIn.accept = ACCEPT;
+fileIn.onchange = () => loadFiles(fileIn.files);
+folderIn.onchange = () => loadFiles(folderIn.files);
+$('fileBtn').onclick = () => fileIn.click();
+$('folderBtn').onclick = () => folderIn.click();
+
+function loadFiles(list: FileList | null) {
+  if (!list?.length) return;
+  const n = player.setFiles(list);
+  fileIn.value = ''; folderIn.value = '';
+  if (!n) { msg('no audio files there'); return; }
   if (!audBox.checked) { audBox.checked = true; audBox.onchange?.(new Event('change')); } // the uploader usually wants to hear it
-  msg('uploading');
-  const buf = await f.arrayBuffer();
-  await fetch(withToken('/track'), { method: 'POST', headers: { 'content-type': f.type || 'application/octet-stream' }, body: buf.slice(0) });
-  msg('decoding');
-  const ac = new AudioContext();
-  const ab = await ac.decodeAudioData(buf);
-  ac.close();
-  const n = ab.length, mono = new Float32Array(n);
-  for (let ch = 0; ch < ab.numberOfChannels; ch++) { const d = ab.getChannelData(ch); for (let i = 0; i < n; i++) mono[i] += d[i] / ab.numberOfChannels; }
-  const an = new Analyzer(ab.sampleRate), nf = Math.ceil((n / ab.sampleRate) * FPS);
-  const out = new Uint8Array(5 + nf * STRIDE), td = new Float32Array(N);
-  new DataView(out.buffer).setUint32(1, nf, true); out[0] = 2;
-  for (let fr = 0; fr < nf; fr++) {
-    const c = Math.round((fr * ab.sampleRate) / FPS) - N / 2;
-    for (let i = 0; i < N; i++) { const s = c + i; td[i] = s >= 0 && s < n ? mono[s] : 0; }
-    out.set(an.frame(td), 5 + fr * STRIDE);
-    if (fr % 600 === 0) { msg(`analyzing ${((100 * fr) / nf) | 0}%`); await new Promise((r) => setTimeout(r)); }
+  playing = -1;
+  playIndex(0);
+}
+
+async function playIndex(i: number, tries = 0): Promise<void> {
+  const n = player.files.length;
+  if (!n) return;
+  i = ((i % n) + n) % n;
+  const name = player.names[i], tag = n > 1 ? ` (${i + 1}/${n})` : '';
+  try {
+    const p = await player.prepare(i, (x) => msg(`analyzing ${name}${tag} ${(x * 100) | 0}%`));
+    msg(`uploading ${name}${tag}`);
+    await fetch(withToken('/track'), { method: 'POST', headers: { 'content-type': p.type }, body: p.bytes.slice(0) });
+    sendBin(p.feat.slice());
+    send({ t: 'play', name });
+    send({ t: 'playlist', names: player.names, index: i });
+    player.index = playing = i;
+    msg(`${name}${tag}: playing in 2.5 s`);
+    if (n > 1) player.prepare((i + 1) % n).catch(() => {}); // ready before this one ends
+  } catch (e) {
+    msg((e as Error).message);
+    if (n > 1 && tries < n - 1) return playIndex(i + 1, tries + 1);
   }
-  sendBin(out);
-  send({ t: 'play' });
-  msg('playing in 2.5 s');
-};
+}
+
+// auto-advance: the owner moves on once the track has ended everywhere
+setInterval(() => {
+  if (advancing || playing < 0 || room.mode !== 'file' || room.paused !== null || room.playlist?.owner !== me) return;
+  if (modeTick(room, sNow()) < room.frames + 30) return;
+  advancing = true;
+  if (player.files.length > 1) playIndex(playing + 1).finally(() => { advancing = false; });
+  else { send({ t: 'pause' }); advancing = false; }
+}, 200);
 
 // ---- leader: live (capture needs a secure context: localhost or https) ----
 const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
@@ -197,6 +223,7 @@ audBox.checked = lsGet('audioHere') === '1';
 audBox.onchange = () => { lsSet('audioHere', audBox.checked ? '1' : '0'); if (audBox.checked && room.mode === 'file') loadAudio(); else au.pause(); };
 setInterval(() => {
   if (!$<HTMLInputElement>('aud').checked || room.mode !== 'file' || !au.src) return;
+  if (room.paused !== null) { au.pause(); return; }
   const t = (sNow() - room.start) / 1000;
   if (t < 0 || t > frames / FPS) { au.pause(); return; }
   if (au.paused) { au.currentTime = t; au.play().catch(() => msg('click page to allow audio')); return; }
@@ -212,6 +239,47 @@ pick.onchange = () => send({ t: 'scene', id: pick.value, quant: quant() });
 $('prev').onclick = () => send({ t: 'scene', step: -1, quant: quant() });
 $('next').onclick = () => send({ t: 'scene', step: 1, quant: quant() });
 $('hit').onclick = () => send({ t: 'ev', type: 'hit' });
+
+// ---- transport bar (any host drives it; the server keeps everyone on the same position) ----
+const fmt = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`;
+function playPause() {
+  if (room.mode === 'file') send({ t: room.paused !== null ? 'resume' : 'pause' });
+  else if (room.playlist) send({ t: 'track', index: room.playlist.index });
+  else fileIn.click();
+}
+$('tPlay').onclick = playPause;
+$('tPrev').onclick = () => {
+  // like any player: restart the track unless we're near its start
+  if (room.mode === 'file' && modeTick(room, sNow()) > 3 * FPS) send({ t: 'seek', frame: 0 });
+  else send({ t: 'track', step: -1 });
+};
+$('tNext').onclick = () => send({ t: 'track', step: 1 });
+const prog = $('prog');
+const seekAt = (x: number) => {
+  if (room.mode !== 'file') return;
+  const r = prog.getBoundingClientRect();
+  send({ t: 'seek', frame: Math.round(Math.max(0, Math.min(1, (x - r.left) / r.width)) * room.frames) });
+};
+let dragging = false;
+prog.onpointerdown = (e) => { dragging = true; prog.setPointerCapture(e.pointerId); showSeek(e.clientX); };
+prog.onpointermove = (e) => { if (dragging) showSeek(e.clientX); };
+prog.onpointerup = (e) => { if (dragging) { dragging = false; seekAt(e.clientX); } };
+function showSeek(x: number) {
+  const r = prog.getBoundingClientRect();
+  $('progFill').style.width = `${Math.max(0, Math.min(1, (x - r.left) / r.width)) * 100}%`;
+}
+
+/** Called every frame: position, time, title, buttons. */
+function updateBar(f: number) {
+  const r = room, pl = r.playlist, file = r.mode === 'file' ? r : null;
+  const pos = file ? Math.max(0, Math.min(f, file.frames)) : 0;
+  if (!dragging) $('progFill').style.width = file?.frames ? `${(pos / file.frames) * 100}%` : '0';
+  $('tTime').textContent = file ? (f < 0 ? `starts in ${(-f / FPS).toFixed(1)}s` : `${fmt(pos / FPS)} / ${fmt(file.frames / FPS)}`) : r.mode === 'live' ? 'live' : '';
+  const title = file ? file.name || 'track' : pl ? `${pl.names[pl.index]} (stopped)` : r.mode === 'live' ? 'live input' : 'no track: load files or a folder';
+  $('tName').textContent = title + (pl && pl.names.length > 1 ? `  ·  ${pl.index + 1}/${pl.names.length}` : '');
+  $('tPlay').textContent = file && file.paused === null ? '❚❚' : '▶';
+  prog.classList.toggle('off', !file);
+}
 
 // ---- MIDI (opt-in per host, remembered: two hosts on one device would double every note) ----
 const midi = new MidiRelay(send, (perf) => perf + clockOff);
@@ -298,7 +366,11 @@ async function start() {
   if (qs.get('debug') === '1') panel.toggle(true);
   addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
-    if (e.key === 'h') { hudOn = !hudOn; for (const id of ['hud', 'panel']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
+    if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
+    else if (e.key === 'p') playPause();
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      if (room.mode === 'file') send({ t: 'seek', frame: Math.max(0, Math.min(room.frames, modeTick(room, sNow())) + (e.key === 'ArrowLeft' ? -10 : 10) * FPS) });
+    }
     else if (e.key === 'd') panel.toggle();
     else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
     else if (e.key === '[') send({ t: 'scene', step: -1, quant: quant() });
@@ -312,7 +384,7 @@ async function start() {
     let F: FeatureSource, label: string;
     if (room.mode === 'file' && fileFeat) {
       F = fileSource(fileFeat, frames);
-      label = (f < 0 ? `starts in ${(-f / FPS).toFixed(1)}s` : `file ${f}/${frames}`) + (audBox.checked ? '' : '  (no sound here: tick "audio here")');
+      label = (f < 0 ? `starts in ${(-f / FPS).toFixed(1)}s` : `file ${f}/${frames}${room.paused !== null ? ' (paused)' : ''}`) + (audBox.checked ? '' : '  (no sound here: tick "audio here")');
     } else if (room.mode === 'live') {
       F = mapSource(live); label = leaderLive ? 'live (leader)' : 'live';
       for (const k of live.keys()) if (k < f - 2000) live.delete(k);
@@ -329,7 +401,8 @@ async function start() {
     lastTick = Math.max(lastTick, f);
     const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0 });
     dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view;
-    if (hudOn) {
+    if (hudOn) updateBar(f);
+    if (panel.shown) {
       const st = engine.scene.status?.();
       const pending = room.scene.at > f ? `  →  ${names.get(room.scene.id)} in ${((room.scene.at - f) / FPS).toFixed(2)}s` : '';
       $('hud').textContent = [

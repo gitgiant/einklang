@@ -33,14 +33,15 @@ Not done yet:
 
 Requires Node 22.6+ and a Chrome with WebGPU.
 
-To verify sync, check that the `hash` in the HUD matches across hosts.
+To verify sync, open the debug panel (`d`) and check that the `hash` matches across hosts.
 
-- **File mode**: any host drops in a track. It gets analyzed once, the features go to every host, and playback starts 2.5 s later. Tick "audio here" on hosts that should play sound.
+- **File mode**: any host loads tracks with **files** (one or more) or **folder** (every audio file in it, in natural path order). Formats are whatever Chrome decodes: mp3, wav, flac, ogg/opus, m4a/aac, webm. Each track is decoded and analyzed (in a worker) on that host, the features go to every host, and playback starts 2.5 s later. The next track is prepared while the current one plays, and the list auto-advances and wraps. Tick "audio here" on hosts that should play sound.
+- **Transport bar** (bottom, on every host): prev (restarts the track if past 3 s), play/pause (`p`), next, track name and position, and a progress bar you click or drag to seek (`←`/`→` seek ±10 s). Pause freezes the picture on every host. Prev/next from any host are relayed to the host that holds the files; if that host leaves, the list goes with it.
 - **Live mode**: the leader captures from a mic or line-in and streams features. Everyone renders 100 ms behind to absorb network jitter. Browsers only allow audio capture on localhost or https, so run the leader on the server machine at `http://localhost:8080`, or use `tailscale serve 8080` to get https.
 - **offset ms**: a per-host trim for display latency (TV vs. panel). It's saved per device.
 - **Scene, quantize, hit, hosts**:
   - `[` and `]`, or the arrows, step through the presets; the picker jumps straight to one. Switches land on the next beat, bar, or immediately (the "on" selector).
-  - Space sends a manual hit.
+  - Space sends a manual hit. `h` hides all the UI.
   - **hosts** lists connected hosts and lets you override each one's view. `?name=` names a host.
 - **MIDI**: press **midi** on any Chrome host that has a MIDI device (the choice is remembered). Enable it on only one host per device, or every note arrives twice.
   - **Clock**: the first host to send one is the master until it goes silent for 2 s. Its tempo and beat phase set the room's beat grid, so beat and bar quantizing follow the clock. MIDI start makes the next beat a downbeat. In the radial scene the core thumps on every beat.

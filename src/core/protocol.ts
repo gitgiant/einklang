@@ -8,7 +8,8 @@ export const INPUT_DELAY = 6;
 
 export type Mode =
   | { mode: 'idle' }
-  | { mode: 'file'; start: number; frames: number; track: number }
+  /** `paused`: the frame the track is frozen on, or null while playing. */
+  | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null }
   | { mode: 'live'; start: number };
 
 /** Scene schedule: `id` is active from tick `at` on, `prev` before it. */
@@ -19,6 +20,8 @@ export interface SceneSched { id: string; prev: string; at: number }
  * fractional). Fixed 28 ticks/beat until a MIDI clock master re-anchors it.
  */
 export interface Grid { origin: number; tpb: number }
+
+export interface Playlist { owner: number; names: string[]; index: number }
 
 /** MIDI clock master: a host's beat `n` happened at server time `at` (ms), at tempo `bpm`. */
 export interface ClockMsg { t: 'clock'; at: number; bpm: number; n: number }
@@ -36,6 +39,8 @@ export type RoomState = Mode & {
   hosts: HostInfo[];
   /** Host id of the MIDI clock master, if any. */
   clock: number | null;
+  /** Track list of the host that loaded a folder / several files (it uploads each in turn). */
+  playlist: Playlist | null;
 };
 
 /** An input event, stamped by the server with the tick on which every host applies it. */
@@ -50,21 +55,27 @@ export type ClientMsg =
   | ClockMsg
   | { t: 'scene'; id?: string; step?: number; quant: Quant }
   | { t: 'view'; host: number; view: number | null }
-  | { t: 'play' } | { t: 'live' } | { t: 'stop' };
+  | { t: 'play'; name?: string } | { t: 'live' } | { t: 'stop' }
+  | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
+  /** Ask the playlist owner to play another track (absolute index, or a step from the current one). */
+  | { t: 'track'; index?: number; step?: number }
+  | { t: 'playlist'; names: string[]; index: number };
 
 export type ServerMsg =
   | { t: 'pong'; c: number; s: number }
   | { t: 'welcome'; you: number }
   | ({ t: 'state' } & RoomState)
   | { t: 'ev'; ev: TickEvent }
-  | { t: 'log'; epoch: number; events: TickEvent[] };
+  | { t: 'log'; epoch: number; events: TickEvent[] }
+  /** To the playlist owner: play track `index`. */
+  | { t: 'track'; index: number };
 
 /** The tick every host renders at server time `ms` (before its own display offset). */
 export const modeTick = (m: Mode, ms: number): number => Math.floor(modeTickF(m, ms));
 
 /** Fractional modeTick, for placing timed inputs (MIDI clock) between ticks. */
 export function modeTickF(m: Mode, ms: number): number {
-  if (m.mode === 'file') return ((ms - m.start) * FPS) / 1000;
+  if (m.mode === 'file') return m.paused !== null ? m.paused : ((ms - m.start) * FPS) / 1000;
   if (m.mode === 'live') return ((ms - m.start) * FPS) / 1000 - LIVE_DELAY;
   return (ms * FPS) / 1000;
 }

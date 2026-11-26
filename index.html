@@ -19,13 +19,23 @@
   #debug { position: fixed; top: 8px; right: 8px; background: #000d; padding: 8px; border-radius: 6px; max-width: min(640px, 60vw); max-height: 92vh; overflow: auto; }
   #debug canvas { width: 600px; max-width: 100%; height: 90px; }
   #debug pre { margin: 6px 0 0; white-space: pre-wrap; font-size: 11px; line-height: 1.35; }
+  #bar { position: fixed; left: 8px; right: 8px; bottom: 8px; background: #000c; padding: 6px 8px; border-radius: 6px; display: flex; gap: 8px; align-items: center; }
+  #bar button { min-width: 2.4em; }
+  #tName { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #bbb; }
+  #prog { flex: 1; height: 10px; background: #333; border-radius: 5px; cursor: pointer; position: relative; overflow: hidden; touch-action: none; }
+  #prog.off { opacity: .35; cursor: default; }
+  #progFill { position: absolute; inset: 0 auto 0 0; width: 0; background: #7fe3ff; border-radius: 5px; }
+  #tTime { min-width: 8em; text-align: right; font-variant-numeric: tabular-nums; }
   .hide { display: none !important; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="panel">
-  <label>track <input type="file" id="file" accept="audio/*"></label>
+  <button id="fileBtn" title="one or more audio files (mp3, wav, flac, ogg, m4a, ...)">files</button>
+  <button id="folderBtn" title="every audio file in a folder, played in order">folder</button>
+  <input type="file" id="file" multiple hidden>
+  <input type="file" id="folder" webkitdirectory multiple hidden>
   <button id="capture" title="Use music already playing in another tab or app">capture tab / app audio</button>
   <button id="live">mic / line-in</button>
   <button id="stop">stop</button>
@@ -42,7 +52,15 @@
   <span id="msg"></span>
 </div>
 <div id="hosts" class="hide"></div>
-<div id="hud"></div>
+<div id="hud" class="hide"></div>
+<div id="bar">
+  <button id="tPrev" title="previous / restart">⏮</button>
+  <button id="tPlay" title="play / pause (p)">▶</button>
+  <button id="tNext" title="next track">⏭</button>
+  <span id="tName"></span>
+  <div id="prog" title="click or drag to seek (← → ±10 s)"><div id="progFill"></div></div>
+  <span id="tTime"></span>
+</div>
 <div id="err"></div>
 <audio id="au" preload="auto"></audio>
 <script type="module" src="/src/web/main.ts"></script>

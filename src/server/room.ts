@@ -42,7 +42,7 @@ export class Room {
   state: RoomState = {
     mode: 'idle', epoch: 0,
     scene: { id: DEFAULT_PRESETS[0], prev: DEFAULT_PRESETS[0], at: 0 },
-    presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null,
+    presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null, playlist: null,
   };
   private now: () => number;
 
@@ -59,6 +59,7 @@ export class Room {
       this.clients.delete(c.id);
       if (this.leader === c) this.leader = null;
       if (this.clock?.id === c.id) { this.clock = null; this.state.clock = null; }
+      if (this.state.playlist?.owner === c.id) this.state.playlist = null;
       if (c.name !== null) this.broadcastState();
     };
     this.send(c, { t: 'welcome', you: c.id });
@@ -82,8 +83,8 @@ export class Room {
   /** New timeline: tick space restarts, so the logs and the scene schedule restart too. */
   private setMode(m: Mode): void {
     const cur = sceneAt(this.state.scene, this.tickNow());
-    const { epoch, presets, hosts, clock } = this.state;
-    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, scene: { id: cur, prev: cur, at: 0 }, grid: { ...DEFAULT_GRID } };
+    const { epoch, presets, hosts, clock, playlist } = this.state;
+    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene: { id: cur, prev: cur, at: 0 }, grid: { ...DEFAULT_GRID } };
     this.ring = []; this.log = [];
     if (this.clock) this.clock.beatTick = -Infinity;
   }
@@ -131,9 +132,36 @@ export class Room {
       case 'play':
         if (!this.fileFeat) return;
         this.leader = c;
-        this.setMode({ mode: 'file', start: this.now() + 2500, frames: this.fileFeat.readUInt32LE(1), track: this.trackId });
+        this.setMode({
+          mode: 'file', start: this.now() + 2500, frames: this.fileFeat.readUInt32LE(1), track: this.trackId,
+          name: String(m.name ?? '').slice(0, 200), paused: null,
+        });
         for (const o of this.clients.values()) o.ws.send(this.fileFeat);
         return this.newTimeline();
+      case 'pause': case 'resume': case 'seek': {
+        const s = this.state;
+        if (s.mode !== 'file') return;
+        const pos = s.paused ?? Math.max(0, Math.min(s.frames, this.tickNow()));
+        const frame = m.t === 'seek' ? Math.max(0, Math.min(s.frames - 1, Math.floor(+m.frame || 0))) : pos;
+        const paused = m.t === 'pause' || (m.t === 'seek' && s.paused !== null) ? frame : null;
+        if (m.t === 'pause' && s.paused !== null) return;
+        if (m.t === 'resume' && s.paused === null) return;
+        // playing: the track (re)starts at `frame` 300 ms from now, long enough for the state to arrive
+        this.setMode({ ...s, mode: 'file', start: this.now() + 300 - (frame * 1000) / FPS, paused });
+        return this.newTimeline();
+      }
+      case 'playlist': {
+        if (!Array.isArray(m.names)) return;
+        const names = m.names.slice(0, 1000).map((n) => String(n).slice(0, 120));
+        this.state.playlist = { owner: c.id, names, index: Math.max(0, Math.min(names.length - 1, m.index | 0)) };
+        return this.broadcastState();
+      }
+      case 'track': {
+        const pl = this.state.playlist, owner = pl && this.clients.get(pl.owner);
+        if (!pl || !owner || !pl.names.length) return;
+        const n = pl.names.length, i = m.index !== undefined ? m.index | 0 : pl.index + ((m.step ?? 1) | 0);
+        return this.send(owner, { t: 'track', index: ((i % n) + n) % n });
+      }
       case 'live':
         this.leader = c;
         this.setMode({ mode: 'live', start: this.now() + 300 });
@@ -159,6 +187,7 @@ export class Room {
     }
     const k = this.clock!;
     k.last = now;
+    if (this.state.mode === 'file' && this.state.paused !== null) return; // frozen timeline: no beats to place
     const bpm100 = Math.round(m.bpm * 100), beatMs = 6e6 / bpm100, tpb = (6000 * FPS) / bpm100;
     let n = m.n + 1, at = m.at + beatMs;
     const earliest = this.tickNow() + INPUT_DELAY;
@@ -196,7 +225,9 @@ export class Room {
       next = presets[(((i + (step ?? 1)) % presets.length) + presets.length) % presets.length];
     }
     if (!presets.includes(next)) return;
-    this.state.scene = { id: next, prev: showing, at: nextBoundary(t + INPUT_DELAY, grid, quant) };
+    // a paused track never reaches a later tick: switch on the frozen one
+    const frozen = this.state.mode === 'file' && this.state.paused !== null;
+    this.state.scene = { id: next, prev: showing, at: frozen ? t : nextBoundary(t + INPUT_DELAY, grid, quant) };
     this.broadcastState();
   }
 }
