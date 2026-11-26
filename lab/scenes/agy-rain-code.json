@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "id": "agy-rain-code",
+  "name": "Rain code",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.8 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 2.0 } },
+    { "id": "breath", "piece": "core-lfo", "params": { "beats": 32, "shape": 0 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#020b12 #004e64 #00d98b #52ffe8 #e8fff9", "cycle": 0.12 } },
+    {
+      "id": "rain",
+      "piece": "agy-matrix",
+      "params": {
+        "columns": 64,
+        "speed": 1.15,
+        "trail": 0.72,
+        "density": 0.84,
+        "flare": 1.25,
+        "depth": 0.68,
+        "glitch": 0.4,
+        "glow": 1.15
+      },
+      "bind": {
+        "glow": { "from": "bass.out", "range": [0.9, 1.85] },
+        "glitch": { "from": "hi.out", "range": [0.22, 0.92] },
+        "trail": { "from": "breath.out", "range": [0.55, 0.92] }
+      }
+    },
+    { "id": "trails", "piece": "core-trails", "params": { "decay": 0.52, "zoom": 0.003, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "rain.palette" },
+    { "from": "rain.out", "to": "trails.in" }
+  ],
+  "out": "trails.out",
+  "post": { "bloom": 0.52, "threshold": 0.72 }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "agy-ascii",
+  "kind": "effect",
+  "name": "ASCII / Bayer dither",
+  "doc": "Renders its input as procedural ASCII glyph cells mapped by luma or as an ordered 8x8 Bayer dither, with cell size breathing with bass and phosphor accents pulsing on onsets.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex" },
+      "palette": { "type": "palette", "optional": true, "doc": "optional palette for palette-colorized ASCII or Bayer dither" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["ascii", "bayer", "hybrid"], "doc": "pure ASCII ramp, ordered 8x8 Bayer dither, or Bayer-dithered ASCII glyphs" },
+    "cell": { "type": "float", "default": 14, "min": 4, "max": 36, "doc": "glyph cell height in pixels at 1080p" },
+    "bass": { "type": "float", "default": 0.6, "min": -0.5, "max": 1.5, "doc": "how much bass breathes the cell size" },
+    "color": { "type": "enum", "default": 0, "options": ["source", "phosphor", "palette"], "doc": "glyph tinting: original source color, monochrome phosphor ink, or palette" },
+    "levels": { "type": "int", "default": 4, "min": 2, "max": 16, "doc": "quantization levels in Bayer dither mode" },
+    "contrast": { "type": "float", "default": 1.2, "min": 0.5, "max": 2.5, "doc": "luma contrast into glyph density or dither" },
+    "ink": { "type": "color", "default": "#38ff7a", "doc": "foreground phosphor color in phosphor mode" },
+    "bg": { "type": "color", "default": "#040a06", "doc": "cell background color" },
+    "scanlines": { "type": "float", "default": 0.18, "min": 0, "max": 0.6, "doc": "subtle CRT scanline darkening" },
+    "mix": { "type": "float", "default": 1, "min": 0, "max": 1, "doc": "blend with original input" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.35, "scales": "res" },
+  "tags": ["ascii", "dither", "bayer", "terminal", "retro", "stylize"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}
