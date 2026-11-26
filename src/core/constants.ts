@@ -7,8 +7,8 @@ export const W = 1280, H = 720;
 export const LIVE_DELAY = 6;
 /** Stateless scenes may look at most this many ticks into the past. */
 export const LOOKBACK = 600;
-/** Decimated waveform: WAVE_N interleaved L/R int8 pairs per tick. */
-export const WAVE_N = 512;
+/** Decimated waveform: WAVE_N interleaved L/R int8 pairs per tick (WAVE_BYTES), covering one tick of audio. */
+export const WAVE_N = 512, WAVE_BYTES = WAVE_N * 2;
 /** Sims reseed on this grid (8 bars of the 28-tick beat used until beat tracking lands). */
 export const TICKS_PER_BEAT = 28, RESEED_TICKS = TICKS_PER_BEAT * 4 * 8;
 /**

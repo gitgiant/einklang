@@ -144,7 +144,18 @@ try {
   await b.waitForFunction((n) => document.getElementById('tName')!.textContent!.startsWith(n), { timeout: 60000 }, name0);
   check(true, `track 1 "${name0}" playing on B`);
   await b.waitForFunction(() => !/starts in/.test(document.getElementById('tTime')!.textContent!), { timeout: 10000 });
-  await sleep(700);
+  // the scope draws the track's real waveform (shipped with the features), same on both hosts
+  await a.select('#scene', 'scope');
+  await sleep(1500);
+  da = await dbg(a); db = await dbg(b);
+  c = compare(da, db);
+  const hasWave = await a.evaluate(() => (window.__ek as unknown as { wave?: boolean }).wave);
+  check(c.diff === 0 && c.shared > 20 && hasWave === true, `scope on the track waveform: ${c.shared} shared ticks, ${c.diff} mismatches, wave ${hasWave}`);
+  if (process.env.SHOT4) {
+    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar', 'hosts']) document.getElementById(id)!.classList.add('hide'); });
+    await a.screenshot({ path: process.env.SHOT4 });
+    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar']) document.getElementById(id)!.classList.remove('hide'); });
+  }
   await b.click('#tPlay'); // pause from the other host
   await sleep(400);
   const tA = await a.$eval('#tTime', (e) => e.textContent), tB = await b.$eval('#tTime', (e) => e.textContent);

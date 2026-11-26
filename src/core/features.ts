@@ -1,4 +1,4 @@
-import { NB, STRIDE, K_RMS, K_ONSET, K_P0, K_PAL } from './constants.ts';
+import { NB, STRIDE, K_RMS, K_ONSET, K_P0, K_PAL, WAVE_BYTES, WAVE_N } from './constants.ts';
 
 /** Read-only view of per-tick audio features. Unknown ticks read as silence. */
 export interface FeatureSource {
@@ -10,17 +10,38 @@ export interface FeatureSource {
 
 export const silence: FeatureSource = { get: () => 0, wave: () => null };
 
-/** Whole-track features as sent by the file-mode leader. */
+/** Whole-track features (+ optional waveform block after them) as sent by the file-mode leader. */
 export function fileSource(feat: Uint8Array, frames: number): FeatureSource {
+  const hasWave = feat.length >= frames * (STRIDE + WAVE_BYTES);
   return {
     get: (t, k) => (t < 0 || t >= frames || k >= STRIDE ? 0 : feat[t * STRIDE + k]),
-    wave: () => null,
+    wave: (t) => (hasWave && t >= 0 && t < frames
+      ? new Int8Array(feat.buffer, feat.byteOffset + frames * STRIDE + t * WAVE_BYTES, WAVE_BYTES) : null),
   };
 }
 
-/** Sparse live features keyed by tick. */
+/** Sparse live frames keyed by tick: STRIDE feature bytes, optionally followed by a waveform block. */
 export function mapSource(m: Map<number, Uint8Array>): FeatureSource {
-  return { get: (t, k) => m.get(t)?.[k] ?? 0, wave: () => null };
+  return {
+    get: (t, k) => (k < STRIDE ? m.get(t)?.[k] ?? 0 : 0),
+    wave: (t) => {
+      const u = m.get(t);
+      return u && u.length >= STRIDE + WAVE_BYTES ? new Int8Array(u.buffer, u.byteOffset + STRIDE, WAVE_BYTES) : null;
+    },
+  };
+}
+
+/**
+ * Decimate one tick of stereo audio (`span` samples starting at `start`) to WAVE_N int8 pairs
+ * in `out` at `off`. Out-of-range samples read as silence.
+ */
+export function decimateWave(L: Float32Array, R: Float32Array, start: number, span: number, out: Uint8Array, off: number): void {
+  const n = L.length;
+  for (let i = 0; i < WAVE_N; i++) {
+    const s = Math.floor(start + (i * span) / WAVE_N), ok = s >= 0 && s < n;
+    out[off + i * 2] = Math.max(-127, Math.min(127, Math.round((ok ? L[s] : 0) * 127))) & 255;
+    out[off + i * 2 + 1] = Math.max(-127, Math.min(127, Math.round((ok ? R[s] : 0) * 127))) & 255;
+  }
 }
 
 /** Triangular-weighted average of feature k over the last n ticks. */

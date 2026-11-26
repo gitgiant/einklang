@@ -1,6 +1,6 @@
 // Room: the server-authoritative state (mode, scene schedule, presets, beat grid, host views),
 // the tick-stamped event stream, and the replay logs late joiners need to catch up.
-import { FPS, RESEED_TICKS, STRIDE } from '../core/constants.ts';
+import { FPS, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import {
   DEFAULT_GRID, DEFAULT_PRESETS, INPUT_DELAY, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type RoomState, type ServerMsg, type TickEvent,
@@ -254,8 +254,9 @@ export class Room {
   }
 
   private onBinary(c: Client, m: Buffer): void {
-    if (m[0] === 2 && m.length >= 5 && m.length === 5 + m.readUInt32LE(1) * STRIDE) this.fileFeat = m;
-    else if (m[0] === 1 && m.length === 5 + STRIDE && this.state.mode === 'live' && c === this.leader) {
+    const frames = m.length >= 5 ? m.readUInt32LE(1) : 0;
+    if (m[0] === 2 && (m.length === 5 + frames * STRIDE || m.length === 5 + frames * (STRIDE + WAVE_BYTES))) this.fileFeat = m;
+    else if (m[0] === 1 && (m.length === 5 + STRIDE || m.length === 5 + STRIDE + WAVE_BYTES) && this.state.mode === 'live' && c === this.leader) {
       this.ring.push(m); if (this.ring.length > KEEP_TICKS) this.ring.shift();
       for (const o of this.clients.values()) if (o !== c) o.ws.send(m);
     }

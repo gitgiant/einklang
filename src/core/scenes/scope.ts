@@ -1,5 +1,5 @@
 // Oscilloscope / Lissajous: XY plot of the decimated L/R waveform, rotated 45 degrees so a mono
-// signal is a vertical line. Until the waveform stream (#7) lands it synthesizes one from the bands.
+// signal is a vertical line. Uses the leader's waveform stream; without one it synthesizes from the bands.
 import { W, H, WAVE_N, K_RMS } from '../constants.ts';
 import { derive, type FeatureSource } from '../features.ts';
 import { hsv, isin, clamp } from '../math.ts';
@@ -35,8 +35,12 @@ export const scope: SceneDef = {
     L.push(OP_RING, cx, cy, 300, 0, hsv(hue, 120, 90), 110, 1);
     L.push(OP_LINE, cx - 330, cy, cx + 330, cy, hsv(hue, 120, 70), 80, 1);
     L.push(OP_LINE, cx, cy - 330, cx, cy + 330, hsv(hue, 120, 70), 80, 1);
-    const ptx = (i: number) => cx + ((((w[i * 2] - w[i * 2 + 1]) * 181) >> 8) * k);
-    const pty = (i: number) => cy - ((((w[i * 2] + w[i * 2 + 1]) * 181) >> 8) * k);
+    // auto-gain: the onset kick (k) still applies, but the trace never leaves the 320 px circle
+    let peak = 1;
+    for (let i = 0; i < WAVE_N; i++) peak = Math.max(peak, Math.abs(w[i * 2] - w[i * 2 + 1]), Math.abs(w[i * 2] + w[i * 2 + 1]));
+    const g = Math.min(k * 256, Math.floor((320 * 256 * 256) / (((peak * 181) >> 8) * 256 || 1)));
+    const ptx = (i: number) => cx + (((((w[i * 2] - w[i * 2 + 1]) * 181) >> 8) * g) >> 8);
+    const pty = (i: number) => cy - (((((w[i * 2] + w[i * 2 + 1]) * 181) >> 8) * g) >> 8);
     const al = clamp(120 + E, 0, 255);
     for (let i = 1; i < WAVE_N; i++)
       L.push(OP_LINE, ptx(i - 1), pty(i - 1), ptx(i), pty(i), hsv(hue + (i >> 3), 150, 255), al, 2);

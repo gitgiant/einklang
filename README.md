@@ -17,7 +17,6 @@ TypeScript + Vite, **WebGPU only** for now (the WebGL2/naga fallback in the spec
 
 Not done yet:
 - Without a MIDI clock the beat grid is a fixed 28 ticks per beat, until beat tracking (#14) lands. The flow sim's reseed period stays on that fixed grid.
-- The scope builds its waveform from the bands until the waveform stream (#7) exists.
 - There is no display-rate interpolation yet (#12).
 - MIDI CCs use a fixed map (no MIDI learn), and MIDI start/stop doesn't start or stop file playback. Drift mode (pads) and WebHID extras aren't implemented.
 

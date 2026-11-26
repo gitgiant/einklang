@@ -68,7 +68,7 @@ test('flow sim hash is pinned', () => {
 
 // Golden values from a known-good run. A change here means scene output changed on purpose
 // (update deliberately) or determinism broke (don't).
-const GOLDEN: Record<string, string> = { radial: 'a0bc1e47', tunnel: '91c3f9ad', scope: '3a3414b0', flow: '11563bcb' };
+const GOLDEN: Record<string, string> = { radial: 'a0bc1e47', tunnel: '91c3f9ad', scope: '00b3a9da', flow: '11563bcb' };
 const GOLDEN_FLOW = 'cedfe7d5';
 
 test('a tick-stamped hit acts as an onset on exactly that tick', async () => {

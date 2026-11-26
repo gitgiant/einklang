@@ -1,7 +1,7 @@
 // Synced app page. The server owns the room state (mode, scene schedule, presets, views); this
 // page renders it through WebGPU on the shared tick and relays this host's inputs as events.
-import { CC_PARAMS, FPS, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE } from '../core/constants.ts';
-import { fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
+import { CC_PARAMS, FPS, K_BAR, K_BPM, K_PHASE, N_PARAMS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
+import { decimateWave, fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
 import { Analyzer, N } from '../core/analysis.ts';
 import { modeTick, sceneAt, DEFAULT_PRESETS, DEFAULT_GRID, type ClientMsg, type Quant, type RoomState, type ServerMsg } from '../core/protocol.ts';
@@ -15,7 +15,7 @@ import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
-declare global { interface Window { __ek?: { hashes: Map<number, string>; scene: string; view: number; events: number } } }
+declare global { interface Window { __ek?: { hashes: Map<number, string>; scene: string; view: number; events: number; wave?: boolean } } }
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -59,7 +59,12 @@ let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
 const events = new EventLog();
 const listeners = { state: [] as (() => void)[], lateEvent: [] as ((tick: number) => void)[] };
-let leaderLive: { an: Analyzer; analyser: AnalyserNode; td: Float32Array<ArrayBuffer>; last: number; ac: AudioContext; stream: MediaStream; pending: boolean } | null = null;
+interface LeaderLive {
+  an: Analyzer; analyser: AnalyserNode; td: Float32Array<ArrayBuffer>; last: number; ac: AudioContext; stream: MediaStream; pending: boolean;
+  /** Per-channel taps for the waveform stream. */
+  wl: AnalyserNode; wr: AnalyserNode; bl: Float32Array<ArrayBuffer>; br: Float32Array<ArrayBuffer>;
+}
+let leaderLive: LeaderLive | null = null;
 
 function connect() {
   ws = new WebSocket(withToken(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`));
@@ -70,7 +75,7 @@ function connect() {
     net.msgsIn++; net.bytesIn += typeof e.data === 'string' ? e.data.length : (e.data as ArrayBuffer).byteLength;
     if (typeof e.data !== 'string') {
       const u = new Uint8Array(e.data), dv = new DataView(e.data);
-      if (u[0] === 1) live.set(dv.getUint32(1, true), u.slice(5, 5 + STRIDE));
+      if (u[0] === 1) live.set(dv.getUint32(1, true), u.slice(5));
       else if (u[0] === 2) { frames = dv.getUint32(1, true); fileFeat = u.slice(5); }
       return;
     }
@@ -165,8 +170,16 @@ function startLive(stream: MediaStream, label: string) {
   stopLeaderLive();
   const ac = new AudioContext(), analyser = ac.createAnalyser();
   analyser.fftSize = N;
-  ac.createMediaStreamSource(stream).connect(analyser); // analysis only: not routed to the speakers
-  leaderLive = { an: new Analyzer(ac.sampleRate), analyser, td: new Float32Array(N), last: -1, ac, stream, pending: true };
+  const src = ac.createMediaStreamSource(stream);
+  src.connect(analyser); // analysis only: not routed to the speakers
+  // stereo taps for the scope; a mono source feeds the same signal to both (splitter upmixes)
+  const split = ac.createChannelSplitter(2), wl = ac.createAnalyser(), wr = ac.createAnalyser();
+  wl.fftSize = wr.fftSize = 2048;
+  src.connect(split); split.connect(wl, 0); split.connect(wr, 1);
+  leaderLive = {
+    an: new Analyzer(ac.sampleRate), analyser, td: new Float32Array(N), last: -1, ac, stream, pending: true,
+    wl, wr, bl: new Float32Array(2048), br: new Float32Array(2048),
+  };
   // the user pressed "Stop sharing" in Chrome's bar, or the device went away
   for (const t of stream.getAudioTracks()) t.onended = () => { if (leaderLive?.stream === stream) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); } };
   send({ t: 'live' });
@@ -206,11 +219,14 @@ setInterval(() => {
   if (cur < 0) return;
   if (L.last < cur - 30) L.last = cur - 1; // don't burst after a stall
   L.analyser.getFloatTimeDomainData(L.td);
+  L.wl.getFloatTimeDomainData(L.bl); L.wr.getFloatTimeDomainData(L.br);
+  const span = L.ac.sampleRate / FPS;
   while (L.last < cur) {
     L.last++;
-    const b = L.an.frame(L.td), m = new Uint8Array(5 + STRIDE);
+    const b = L.an.frame(L.td), m = new Uint8Array(5 + STRIDE + WAVE_BYTES);
     m[0] = 1; new DataView(m.buffer).setUint32(1, L.last, true); m.set(b, 5);
-    live.set(L.last, b); sendBin(m);
+    decimateWave(L.bl, L.br, L.bl.length - span, span, m, 5 + STRIDE); // the newest tick of audio
+    live.set(L.last, m.slice(5)); sendBin(m);
   }
 }, 8);
 
@@ -332,6 +348,7 @@ async function start() {
   const nameOf = (id: number | null) => (id === null ? 'none' : (room.hosts.find((h) => h.id === id)?.name ?? `#${id}`) + (id === me ? ' (this)' : ''));
   const panel = new DebugPanel(() => {
     const r = rate.sample(net), f = lastF;
+    const hasWave = window.__ek?.wave ? 'streamed' : 'none (scope synthesizes)';
     const ageS = net.lastPong ? ((performance.now() - net.lastPong) / 1000).toFixed(1) : '-';
     const rtts = samples.map((x) => x.rtt), minR = rtts.length ? Math.min(...rtts) : 0, maxR = rtts.length ? Math.max(...rtts) : 0;
     let newest = -Infinity; for (const k of live.keys()) if (k > newest) newest = k;
@@ -349,6 +366,7 @@ async function start() {
       ['room', [
         `mode ${room.mode}  epoch ${room.epoch}${room.mode === 'file' ? `  track ${room.track}  frames ${room.frames}` : ''}  tick ${f}  hash ${lastHash}`,
         `scene ${room.scene.id} (prev ${room.scene.prev}, at ${room.scene.at})  presets ${room.presets.join(' ')}`,
+        `waveform ${hasWave}`,
         `grid origin ${room.grid.origin} tpb ${room.grid.tpb} (${((60 * FPS) / room.grid.tpb).toFixed(2)} bpm)`,
         `hosts: ${room.hosts.map((h) => `${h.name}#${h.id}${h.view === null ? '' : ` v${h.view}`}`).join(', ') || 'none'}`,
       ]],
@@ -414,8 +432,8 @@ async function start() {
     lastHash = hash; lastF = f;
     panel.frame(f);
     lastTick = Math.max(lastTick, f);
-    const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0 });
-    dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view;
+    const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0, wave: false });
+    dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view; dbg.wave = F.wave(f) !== null;
     if (hudOn) updateBar(f);
     if (panel.shown) {
       const st = engine.scene.status?.();

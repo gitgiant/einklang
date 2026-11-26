@@ -1,6 +1,7 @@
 // Wire protocol shared by the server and every host. JSON for control, binary for features:
-//   binary [1][u32 tick][STRIDE bytes]          one live feature frame
-//   binary [2][u32 frames][frames * STRIDE]     whole-track features (file mode)
+//   binary [1][u32 tick][STRIDE bytes]([WAVE_BYTES])                       one live frame (+ waveform)
+//   binary [2][u32 frames][frames * STRIDE]([frames * WAVE_BYTES])        whole track (+ waveform)
+// The waveform blocks are optional: a frame/track without them makes the scope synthesize one.
 import { FPS, LIVE_DELAY, TICKS_PER_BEAT } from './constants.ts';
 
 /** Inputs are applied this many ticks after the server receives them (100 ms of network slack). */
