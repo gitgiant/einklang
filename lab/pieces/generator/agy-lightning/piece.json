@@ -1,0 +1,83 @@
+{
+  "id": "agy-lightning",
+  "kind": "generator",
+  "name": "Onset lightning & lasers",
+  "doc": "Fractal branching lightning bolts triggered on audio onsets paired with beat-locked sweeping volumetric concert laser fans.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true
+      },
+      "onset": {
+        "type": "trigger",
+        "optional": true,
+        "doc": "Optional onset trigger; also inspects recent audio onsets for smooth bolt decay."
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "lasers": {
+      "type": "int",
+      "default": 10,
+      "min": 2,
+      "max": 20,
+      "doc": "number of sweeping volumetric laser beams"
+    },
+    "bolts": {
+      "type": "int",
+      "default": 5,
+      "min": 1,
+      "max": 8,
+      "doc": "maximum simultaneous lightning strikes"
+    },
+    "jagged": {
+      "type": "float",
+      "default": 0.32,
+      "min": 0.05,
+      "max": 0.8,
+      "doc": "fractal lightning displacement"
+    },
+    "sweep": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.15,
+      "max": 2.5,
+      "doc": "laser fan sweep speed"
+    },
+    "intensity": {
+      "type": "float",
+      "default": 1.4,
+      "min": 0.3,
+      "max": 3.5,
+      "doc": "arc and laser brightness"
+    },
+    "haze": {
+      "type": "float",
+      "default": 0.45,
+      "min": 0,
+      "max": 1.2,
+      "doc": "concert stage atmospheric haze"
+    }
+  },
+  "budget": {
+    "ms": 0.6,
+    "scales": "res"
+  },
+  "tags": [
+    "lightning",
+    "lasers",
+    "onset",
+    "beams",
+    "concert"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  }
+}

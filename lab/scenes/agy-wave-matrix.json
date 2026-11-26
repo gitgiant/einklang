@@ -1,0 +1,134 @@
+{
+  "format": 1,
+  "id": "agy-wave-matrix",
+  "name": "Resonant Matrix",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "mid",
+      "piece": "core-follow",
+      "params": {
+        "lo": 4,
+        "hi": 9,
+        "window": 10,
+        "gain": 1.6
+      }
+    },
+    {
+      "id": "high",
+      "piece": "core-follow",
+      "params": {
+        "lo": 10,
+        "hi": 15,
+        "window": 8,
+        "gain": 1.9
+      }
+    },
+    {
+      "id": "lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 24,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 5,
+        "chroma": 0.21,
+        "light": 0.7,
+        "contrast": 0.45
+      },
+      "bind": {
+        "hue": {
+          "from": "lfo.out",
+          "range": [0.22, 0.46]
+        }
+      }
+    },
+    {
+      "id": "strings",
+      "piece": "agy-strings",
+      "params": {
+        "strings": 12,
+        "damping": 0.945,
+        "glow": 1.35
+      },
+      "bind": {
+        "pluck": {
+          "from": "bass.out",
+          "range": [1.0, 2.1]
+        },
+        "tension": {
+          "from": "mid.out",
+          "range": [0.42, 0.82]
+        },
+        "harmonics": {
+          "from": "high.out",
+          "range": [0.45, 1.05]
+        }
+      }
+    },
+    {
+      "id": "led",
+      "piece": "agy-led-matrix",
+      "params": {
+        "cols": 64,
+        "dot": 0.8,
+        "spec_mix": 0.62,
+        "bezel": 0.22,
+        "decay": 0.84
+      },
+      "bind": {
+        "bloom": {
+          "from": "bass.out",
+          "range": [0.35, 0.95]
+        }
+      }
+    },
+    {
+      "id": "mix",
+      "piece": "core-blend",
+      "params": {
+        "mode": 1,
+        "amount": 0.65
+      }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "strings.palette" },
+    { "from": "audio.wave", "to": "strings.wave" },
+    { "from": "strings.out", "to": "led.in" },
+    { "from": "pal.palette", "to": "led.palette" },
+    { "from": "led.out", "to": "mix.a" },
+    { "from": "strings.out", "to": "mix.b" }
+  ],
+  "out": "mix.out",
+  "post": {
+    "bloom": 0.48,
+    "threshold": 0.74,
+    "exposure": 1.05
+  }
+}

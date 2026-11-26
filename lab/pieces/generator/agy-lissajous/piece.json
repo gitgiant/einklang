@@ -1,0 +1,83 @@
+{
+  "id": "agy-lissajous",
+  "kind": "generator",
+  "name": "Phosphor Lissajous",
+  "doc": "Stereo L/R waveform Lissajous vector beam and dual-trace oscilloscope with velocity-modulated phosphor brightness and CRT graticule.",
+  "ports": {
+    "in": {
+      "wave": {
+        "type": "wave",
+        "optional": true,
+        "doc": "Interleaved L/R waveform (-1..1); falls back to room waveform."
+      },
+      "palette": {
+        "type": "palette",
+        "optional": true
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "gain": {
+      "type": "float",
+      "default": 1.35,
+      "min": 0.2,
+      "max": 3.5,
+      "doc": "beam deflection amplitude"
+    },
+    "width": {
+      "type": "float",
+      "default": 0.011,
+      "min": 0.003,
+      "max": 0.04,
+      "doc": "electron beam width"
+    },
+    "glow": {
+      "type": "float",
+      "default": 1.55,
+      "min": 0.2,
+      "max": 4.0,
+      "doc": "beam brightness"
+    },
+    "twist": {
+      "type": "float",
+      "default": 0.45,
+      "min": 0,
+      "max": 2.0,
+      "doc": "Lissajous rotation and phase echo"
+    },
+    "scope_mix": {
+      "type": "float",
+      "default": 0.55,
+      "min": 0,
+      "max": 1.0,
+      "doc": "dual-trace time-domain scope level"
+    },
+    "grid": {
+      "type": "float",
+      "default": 0.28,
+      "min": 0,
+      "max": 1.0,
+      "doc": "CRT graticule brightness"
+    }
+  },
+  "budget": {
+    "ms": 0.6,
+    "scales": "res"
+  },
+  "tags": [
+    "scope",
+    "lissajous",
+    "waveform",
+    "vector",
+    "phosphor"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "agy-phosphor",
+  "kind": "effect",
+  "name": "Vector phosphor",
+  "doc": "Analog CRT vector-phosphor look: dual-stage tinted afterglow persistence, glass halation, radial beam convergence fringe, subtle curvature and aperture grille.",
+  "ports": {
+    "in": {
+      "in": {
+        "type": "tex"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "persistence": {
+      "type": "float",
+      "default": 0.86,
+      "min": 0,
+      "max": 0.96,
+      "doc": "phosphor afterglow decay"
+    },
+    "halation": {
+      "type": "float",
+      "default": 0.45,
+      "min": 0,
+      "max": 1.5,
+      "doc": "CRT glass scatter halo"
+    },
+    "curve": {
+      "type": "float",
+      "default": 0.12,
+      "min": 0,
+      "max": 0.4,
+      "doc": "screen barrel curvature"
+    },
+    "grille": {
+      "type": "float",
+      "default": 0.22,
+      "min": 0,
+      "max": 0.7,
+      "doc": "scanline and phosphor mask texture"
+    },
+    "aberration": {
+      "type": "float",
+      "default": 0.35,
+      "min": 0,
+      "max": 1.5,
+      "doc": "radial beam convergence fringe"
+    },
+    "tint": {
+      "type": "color",
+      "default": "#38f0b8",
+      "doc": "long-decay phosphor afterglow tint"
+    }
+  },
+  "shader": "phosphor.wgsl",
+  "feedback": true,
+  "budget": {
+    "ms": 0.35,
+    "scales": "res"
+  },
+  "tags": [
+    "phosphor",
+    "crt",
+    "vector",
+    "feedback",
+    "trails"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  }
+}

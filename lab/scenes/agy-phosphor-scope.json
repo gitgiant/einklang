@@ -1,0 +1,113 @@
+{
+  "format": 1,
+  "id": "agy-phosphor-scope",
+  "name": "Phosphor Lissajous",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "high",
+      "piece": "core-follow",
+      "params": {
+        "lo": 10,
+        "hi": 15,
+        "window": 8,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 32,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 3,
+        "chroma": 0.2,
+        "light": 0.74,
+        "contrast": 0.45
+      },
+      "bind": {
+        "hue": {
+          "from": "lfo.out",
+          "range": [0.38, 0.56]
+        }
+      }
+    },
+    {
+      "id": "liss",
+      "piece": "agy-lissajous",
+      "params": {
+        "width": 0.011,
+        "scope_mix": 0.55,
+        "grid": 0.26
+      },
+      "bind": {
+        "gain": {
+          "from": "bass.out",
+          "range": [1.1, 1.85]
+        },
+        "twist": {
+          "from": "high.out",
+          "range": [0.25, 1.15]
+        },
+        "glow": {
+          "from": "audio.rms",
+          "range": [1.25, 2.2]
+        }
+      }
+    },
+    {
+      "id": "phos",
+      "piece": "agy-phosphor",
+      "params": {
+        "persistence": 0.87,
+        "halation": 0.48,
+        "curve": 0.12,
+        "grille": 0.22,
+        "tint": "#38f0b8"
+      },
+      "bind": {
+        "aberration": {
+          "from": "bass.out",
+          "range": [0.18, 0.78]
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "audio.wave", "to": "liss.wave" },
+    { "from": "pal.palette", "to": "liss.palette" },
+    { "from": "liss.out", "to": "phos.in" }
+  ],
+  "out": "phos.out",
+  "post": {
+    "bloom": 0.6,
+    "threshold": 0.68,
+    "exposure": 1.08
+  }
+}

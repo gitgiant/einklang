@@ -1,0 +1,120 @@
+{
+  "format": 1,
+  "id": "agy-onset-tesla",
+  "name": "Onset Tesla",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 5,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "mid",
+      "piece": "core-follow",
+      "params": {
+        "lo": 3,
+        "hi": 8,
+        "window": 10,
+        "gain": 1.6
+      }
+    },
+    {
+      "id": "high",
+      "piece": "core-follow",
+      "params": {
+        "lo": 10,
+        "hi": 15,
+        "window": 6,
+        "gain": 2.0
+      }
+    },
+    {
+      "id": "lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 24,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 2,
+        "chroma": 0.22,
+        "light": 0.73,
+        "contrast": 0.45
+      },
+      "bind": {
+        "hue": {
+          "from": "lfo.out",
+          "range": [0.6, 0.82]
+        }
+      }
+    },
+    {
+      "id": "bolt",
+      "piece": "agy-lightning",
+      "params": {
+        "lasers": 12,
+        "bolts": 6,
+        "sweep": 1.05
+      },
+      "bind": {
+        "intensity": {
+          "from": "bass.out",
+          "range": [1.15, 2.05]
+        },
+        "jagged": {
+          "from": "high.out",
+          "range": [0.22, 0.52]
+        },
+        "haze": {
+          "from": "mid.out",
+          "range": [0.3, 0.72]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.72,
+        "rotate": 0.002
+      },
+      "bind": {
+        "zoom": {
+          "from": "bass.out",
+          "range": [0.004, 0.016]
+        }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "bolt.palette" },
+    { "from": "audio.onset", "to": "bolt.onset" },
+    { "from": "bolt.out", "to": "trails.in" }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.7,
+    "threshold": 0.66,
+    "exposure": 1.02
+  }
+}
