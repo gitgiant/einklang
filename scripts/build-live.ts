@@ -4,13 +4,14 @@ import { build } from 'vite';
 import { readFileSync, writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
+import { labAssets } from './lab/vite-assets.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const out = resolve(process.argv[2] ?? join(root, 'dist-live/einklang-gallery.html'));
 const tmp = mkdtempSync(join(tmpdir(), 'einklang-live-'));
 
 await build({
-  root, logLevel: 'warn', configFile: false,
+  root, logLevel: 'warn', configFile: false, plugins: [labAssets()],
   build: {
     outDir: tmp, emptyOutDir: true, target: 'es2022',
     lib: { entry: join(root, 'src/web/gallery.ts'), formats: ['iife'], name: 'einklang', fileName: () => 'gallery.js' },

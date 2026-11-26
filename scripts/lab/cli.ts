@@ -10,12 +10,14 @@
 //                                  errors, NaN, black, blown out, frozen, no audio reaction, ms/frame
 //   new <kind> <vendor-slug> [--driver]   scaffold a piece (auto-shader unless --driver)
 //   fixtures                       list fixtures
+//   import-space-sim [--src dir]   copy space_sim's own .vox assets into lab/assets/vox/ (+ index.json)
 // Spec: docs/prd-lab.md.
 import { mkdirSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { loadPieces, loadScenes, LAB } from './load.ts';
 import { lintPieces } from './lint.ts';
+import { importSpaceSim, DEFAULT_SRC } from './import.ts';
 import { openLab, type Lab } from './browser.ts';
 import { judgeCost, judgeReactive, judgeRun, junit, reactivity, LIMITS } from './checks.ts';
 import { validateScene } from '../../src/core/graph/validate.ts';
@@ -140,6 +142,11 @@ async function main() {
     if (existsSync(dir)) say(`files: ${readdirSync(dir).filter((f) => f.endsWith('.feat')).join(', ') || '-'}`);
     return;
   }
+  if (cmd === 'import-space-sim') {
+    const r = importSpaceSim(opt('src', DEFAULT_SRC));
+    say(`copied ${r.files} files (${(r.bytes / 1048576).toFixed(1)} MB) into lab/assets/, provenance in lab/assets/index.json`);
+    return;
+  }
   if (cmd === 'new') {
     const kind = positional[1] as PieceKind, id = positional[2];
     if (!PIECE_KINDS.includes(kind) || !id || !/^[a-z0-9]+(-[a-z0-9]+)+$/.test(id)) throw new Error(`usage: new <${PIECE_KINDS.join('|')}> <vendor-slug> [--driver]`);
@@ -220,7 +227,7 @@ async function main() {
     }
     return;
   }
-  say(`usage: npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> | fixtures   (see scripts/lab/cli.ts)`);
+  say(`usage: npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> | fixtures | import-space-sim   (see scripts/lab/cli.ts)`);
   process.exit(cmd ? 1 : 0);
 }
 

@@ -1,9 +1,11 @@
 // Piece rules the manifest schema can't express: imports and folder size.
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve, relative, sep } from 'node:path';
 import { LAB } from './load.ts';
+import { assetFile } from '../../src/core/graph/types.ts';
+import type { PieceManifest } from '../../lab/api/index.ts';
 
-/** Per-piece folder cap (assets included). */
+/** Per-piece cap: the folder plus the shared lab/assets files it declares. */
 export const PIECE_BYTES = 2 * 1024 * 1024;
 /** Globals a driver must not touch: the page, network, storage, timers. */
 const BANNED = /\b(document|window|localStorage|sessionStorage|indexedDB|fetch|XMLHttpRequest|WebSocket|setTimeout|setInterval|navigator|location|eval|Function\s*\()\b/;
@@ -37,16 +39,43 @@ function size(dir: string): number {
   return n;
 }
 
-/** Lint every piece folder (imports of every .ts file, folder size). */
-export function lintPieces(root = join(LAB, 'pieces')): string[] {
+/** lab/assets/index.json: provenance and license of each shared asset, keyed by path relative to lab/. */
+type Index = { files: Record<string, { license: string }> };
+
+/**
+ * A piece's declared assets: each exists, shared ones (`assets/...`) are in lab/assets/index.json with the same
+ * license. Returns the errors and the bytes of the shared files (piece-folder files count via the folder size).
+ */
+export function lintAssets(m: Pick<PieceManifest, 'id' | 'kind' | 'assets'>, index: Index, lab = LAB): { errs: string[]; shared: number } {
   const errs: string[] = [];
+  let shared = 0;
+  for (const a of m.assets ?? []) {
+    if (typeof a.path !== 'string') continue; // the manifest validator reports it
+    const rel = assetFile(m, a.path), file = join(lab, rel);
+    if (!existsSync(file)) { errs.push(`${m.id}: asset ${a.path} not found (${rel})`); continue; }
+    if (!a.path.startsWith('assets/')) continue;
+    shared += statSync(file).size;
+    const e = index.files[rel];
+    if (!e) errs.push(`${m.id}: asset ${a.path} is not in lab/assets/index.json (add it with its source and license)`);
+    else if (e.license !== a.license) errs.push(`${m.id}: asset ${a.path} license '${a.license}' but index.json says '${e.license}'`);
+  }
+  return { errs, shared };
+}
+
+/** Lint every piece folder (imports of every .ts file, declared assets, size). */
+export function lintPieces(root = join(LAB, 'pieces')): string[] {
+  const errs: string[] = [], idx = join(root, '../assets/index.json');
+  const index: Index = existsSync(idx) ? JSON.parse(readFileSync(idx, 'utf8')) : { files: {} };
   for (const kind of readdirSync(root)) for (const id of readdirSync(join(root, kind))) {
     const dir = join(root, kind, id);
-    let core = false;
-    try { core = JSON.parse(readFileSync(join(dir, 'piece.json'), 'utf8')).author?.vendor === 'core'; } catch { /* reported by the loader */ }
+    let m: PieceManifest | null = null;
+    try { m = JSON.parse(readFileSync(join(dir, 'piece.json'), 'utf8')); } catch { /* reported by the loader */ }
+    const core = m?.author?.vendor === 'core';
     for (const f of readdirSync(dir).filter((x) => x.endsWith('.ts'))) for (const e of lintDriver(readFileSync(join(dir, f), 'utf8'), dir, core)) errs.push(`${id}/${f}: ${e}`);
-    const bytes = size(dir);
-    if (bytes > PIECE_BYTES) errs.push(`${id}: folder is ${(bytes / 1048576).toFixed(1)} MB (cap ${PIECE_BYTES / 1048576} MB)`);
+    const a = m ? lintAssets({ id, kind: kind as PieceManifest['kind'], assets: m.assets }, index, join(root, '..')) : { errs: [], shared: 0 };
+    errs.push(...a.errs);
+    const bytes = size(dir) + a.shared;
+    if (bytes > PIECE_BYTES) errs.push(`${id}: ${(bytes / 1048576).toFixed(1)} MB with its assets (cap ${PIECE_BYTES / 1048576} MB)`);
   }
   return errs;
 }

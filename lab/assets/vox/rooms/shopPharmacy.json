@@ -1,0 +1,11 @@
+{
+ "name": "shopPharmacy",
+ "kind": "room",
+ "role": "shop",
+ "types": ["hospital"],
+ "shop": "pharmacy",
+ "voxelSize": 0.5,
+ "size": [24,10,16],
+ "sockets": [{"face":"s","at":2,"size":"M","door":"glassdoor"},{"face":"s","at":18,"size":"M","door":"glassdoor"}],
+ "status": "draft"
+}

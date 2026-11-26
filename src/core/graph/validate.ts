@@ -62,7 +62,14 @@ export function validatePiece(def: PieceDef, folder?: string): string[] {
     }
   }
   if (m.feedback && !m.shader) err('feedback is for auto-shader pieces (drivers keep their own textures)');
-  for (const a of m.assets ?? []) if (!a.license) err(`asset ${a.path}: license required`);
+  const seen = new Set<string>();
+  for (const a of m.assets ?? []) {
+    if (typeof a.path !== 'string' || !a.path || /^\/|\\|(^|\/)\.\.(\/|$)|^[a-z]:/i.test(a.path)) err(`asset ${a.path}: a relative path with forward slashes, no ..`);
+    if (seen.has(a.path)) err(`asset ${a.path}: listed twice`);
+    seen.add(a.path);
+    if (!a.license) err(`asset ${a.path}: license required`);
+    else if (a.license === 'unsettled') err(`asset ${a.path}: license unsettled, can't be used yet`);
+  }
   return errs;
 }
 

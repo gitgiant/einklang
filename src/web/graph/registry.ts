@@ -1,6 +1,7 @@
 // Browser registry: every lab piece and scene, bundled by Vite (a new piece needs a rebuild).
 import type { PieceDriver, PieceManifest } from '../../../lab/api/index.ts';
-import type { PieceDef, Registry, SceneGraph } from '../../core/graph/types.ts';
+import { assetFile, type PieceDef, type Registry, type SceneGraph } from '../../core/graph/types.ts';
+import assetFiles from 'virtual:lab-assets';
 import { validatePiece } from '../../core/graph/validate.ts';
 
 const manifests = import.meta.glob<PieceManifest>('../../../lab/pieces/*/*/piece.json', { eager: true, import: 'default' });
@@ -10,13 +11,26 @@ const libFiles = import.meta.glob<string>('../../../lab/api/*.wgsl', { eager: tr
 const sceneFiles = import.meta.glob<SceneGraph>('../../../lab/scenes/*.json', { eager: true, import: 'default' });
 
 const dirOf = (p: string) => p.slice(0, p.lastIndexOf('/'));
+const unb64 = (s: string) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+const decoded = new Map<string, Uint8Array>();
+/** A piece's declared assets by manifest path (decoded once, shared between pieces). */
+function assetsOf(m: PieceManifest): Record<string, Uint8Array> {
+  const out: Record<string, Uint8Array> = {};
+  for (const a of m.assets ?? []) {
+    const f = assetFile(m, a.path), b64 = assetFiles[f];
+    if (b64 === undefined) continue;
+    if (!decoded.has(f)) decoded.set(f, unb64(b64));
+    out[a.path] = decoded.get(f)!;
+  }
+  return out;
+}
 
 function build(): Registry {
   const reg: Registry = new Map();
   for (const [path, manifest] of Object.entries(manifests)) {
     const dir = dirOf(path), wgsl: Record<string, string> = {};
     for (const [sp, src] of Object.entries(shaders)) if (dirOf(sp) === dir) wgsl[sp.slice(dir.length + 1)] = src;
-    const def: PieceDef = { manifest, driver: drivers[`${dir}/driver.ts`], wgsl };
+    const def: PieceDef = { manifest, driver: drivers[`${dir}/driver.ts`], wgsl, assets: assetsOf(manifest) };
     const errs = validatePiece(def, dir.slice(dir.lastIndexOf('/') + 1));
     if (errs.length) { console.error(`lab piece skipped:\n${errs.join('\n')}`); continue; }
     reg.set(manifest.id, def);

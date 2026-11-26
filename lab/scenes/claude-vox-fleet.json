@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "id": "claude-vox-fleet",
+  "name": "Voxel fleet",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 32, "shape": 0 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.17, "light": 0.7 }, "bind": { "hue": { "from": "lfo.out", "range": [0.45, 0.75] } } },
+    { "id": "ship", "piece": "claude-vox-ship", "params": { "model": 2, "spin": 0.3, "shatter": 1, "glow": 2.5, "tint": 0.3 } }
+  ],
+  "edges": [{ "from": "pal.palette", "to": "ship.palette" }],
+  "out": "ship.out",
+  "post": { "bloom": 0.5, "threshold": 0.7 }
+}

@@ -34,8 +34,16 @@ export interface SceneGraph {
 }
 
 /** A loaded piece: manifest, optional driver, WGSL sources by file name. */
-export interface PieceDef { manifest: PieceManifest; driver?: PieceDriver; wgsl: Record<string, string> }
+export interface PieceDef {
+  manifest: PieceManifest; driver?: PieceDriver; wgsl: Record<string, string>;
+  /** Bytes of the declared assets by manifest path (absent ones are missing on disk: lint reports them). */
+  assets?: Record<string, Uint8Array>;
+}
 export type Registry = Map<string, PieceDef>;
+
+/** Where a declared asset lives, relative to lab/: `assets/...` is shared, anything else is in the piece folder. */
+export const assetFile = (m: Pick<PieceManifest, 'kind' | 'id'>, path: string): string =>
+  path.startsWith('assets/') ? path : `pieces/${m.kind}/${m.id}/${path}`;
 
 export const splitRef = (r: PortRef): [string, string] => {
   const i = r.indexOf('.');

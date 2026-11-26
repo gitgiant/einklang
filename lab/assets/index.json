@@ -1,0 +1,3417 @@
+{
+ "files": {
+  "assets/vox/aatank.vox": {
+   "source": "space_sim/assets/vox/aatank.vox",
+   "license": "own",
+   "bytes": 18771,
+   "sha256": "ac2cb6e69f6e42a8d2fac3c0f4520fe2d80e4ad3316480e5d7b305d14ca1e2f5"
+  },
+  "assets/vox/aaturret.vox": {
+   "source": "space_sim/assets/vox/aaturret.vox",
+   "license": "own",
+   "bytes": 9505,
+   "sha256": "cd50bb6651904226837f5c0467743fb99ea5004d219887c46a8c8fd437a31e6c"
+  },
+  "assets/vox/agent-ship/bastionKite.recipe.json": {
+   "source": "space_sim/assets/agent/ship/bastionKite.recipe.json",
+   "license": "own",
+   "bytes": 3584,
+   "sha256": "216b22521c12d6a6b6578d21213b94795162d0e5b603f9b26821e22d406473fa"
+  },
+  "assets/vox/agent-ship/bastionKite.sheet.png": {
+   "source": "space_sim/assets/agent/ship/bastionKite.sheet.png",
+   "license": "own",
+   "bytes": 61475,
+   "sha256": "f8b7a9f25611e7bef87a46a84b09d9e1d63fd6a99c2a3d0e16e5514095e3f4bf"
+  },
+  "assets/vox/agent-ship/bastionKiteMartian.json": {
+   "source": "space_sim/assets/agent/ship/bastionKiteMartian.json",
+   "license": "own",
+   "bytes": 104217,
+   "sha256": "3186b7e673a7113db1a683b5256c67b826ffacf62ab171f2466fcc890a6fbf68"
+  },
+  "assets/vox/agent-ship/bastionKiteMartian.vox": {
+   "source": "space_sim/assets/agent/ship/bastionKiteMartian.vox",
+   "license": "own",
+   "bytes": 68914,
+   "sha256": "a31246e0402a189311cbc8f0d74ddcb12ab63a40f3ce027e8324e2300515e13b"
+  },
+  "assets/vox/agent-ship/bastionKitePirate.json": {
+   "source": "space_sim/assets/agent/ship/bastionKitePirate.json",
+   "license": "own",
+   "bytes": 78050,
+   "sha256": "537e73cf115f8ce03bbbb1158a105ec659217e9d5f5090089c250a5cf4628626"
+  },
+  "assets/vox/agent-ship/bastionKitePirate.vox": {
+   "source": "space_sim/assets/agent/ship/bastionKitePirate.vox",
+   "license": "own",
+   "bytes": 68914,
+   "sha256": "041c4b7510b98b182fe8f571fe892617bee735b4b860d3f050346122e1e21dc3"
+  },
+  "assets/vox/agent-ship/bastionKiteTerran.json": {
+   "source": "space_sim/assets/agent/ship/bastionKiteTerran.json",
+   "license": "own",
+   "bytes": 98785,
+   "sha256": "c00c0d5096751f284ccab7a1b1a2c42a498251b6a207073267eeb9a461e8fd10"
+  },
+  "assets/vox/agent-ship/bastionKiteTerran.vox": {
+   "source": "space_sim/assets/agent/ship/bastionKiteTerran.vox",
+   "license": "own",
+   "bytes": 68914,
+   "sha256": "041c4b7510b98b182fe8f571fe892617bee735b4b860d3f050346122e1e21dc3"
+  },
+  "assets/vox/agent-ship/halberd.recipe.json": {
+   "source": "space_sim/assets/agent/ship/halberd.recipe.json",
+   "license": "own",
+   "bytes": 6112,
+   "sha256": "7a408dcc52870e3e47b112a6480a94163679261e786c41e198d40aacf0e9d0c5"
+  },
+  "assets/vox/agent-ship/halberd.sheet.png": {
+   "source": "space_sim/assets/agent/ship/halberd.sheet.png",
+   "license": "own",
+   "bytes": 85545,
+   "sha256": "262e7cf7d007c00cb16c99be7a39700bd5c30a974edb1806e42dda566eb259d6"
+  },
+  "assets/vox/agent-ship/halberdMartian.json": {
+   "source": "space_sim/assets/agent/ship/halberdMartian.json",
+   "license": "own",
+   "bytes": 400274,
+   "sha256": "6d13f0302b34e6f5ca17497b34a8f2c3cd82dd842f3df675783a45799a96646f"
+  },
+  "assets/vox/agent-ship/halberdMartian.vox": {
+   "source": "space_sim/assets/agent/ship/halberdMartian.vox",
+   "license": "own",
+   "bytes": 215395,
+   "sha256": "0b0a7572a123c096bf7b8947117bf71958f6edd6eb1f0cb51c4da4ea28a7611c"
+  },
+  "assets/vox/agent-ship/halberdPirate.json": {
+   "source": "space_sim/assets/agent/ship/halberdPirate.json",
+   "license": "own",
+   "bytes": 277586,
+   "sha256": "9f21569777b7c6181af6a1332c2e2755f334a95d0ff58ddf75ab8453707697aa"
+  },
+  "assets/vox/agent-ship/halberdPirate.vox": {
+   "source": "space_sim/assets/agent/ship/halberdPirate.vox",
+   "license": "own",
+   "bytes": 218259,
+   "sha256": "d992f4b5f437c2345b2ca5b5af82d2d85221334f40f588d85144e0f269dfa164"
+  },
+  "assets/vox/agent-ship/halberdTerran.json": {
+   "source": "space_sim/assets/agent/ship/halberdTerran.json",
+   "license": "own",
+   "bytes": 383012,
+   "sha256": "7799ec54e3e0db91525c2185d398a30187da5a8702200778752ca5af2b8fffc9"
+  },
+  "assets/vox/agent-ship/halberdTerran.vox": {
+   "source": "space_sim/assets/agent/ship/halberdTerran.vox",
+   "license": "own",
+   "bytes": 215395,
+   "sha256": "d3ec627961baa0f15a9afe7550a546eae877b6d90e0d1041157f18d6221b3634"
+  },
+  "assets/vox/agent-ship/kestrelFork.recipe.json": {
+   "source": "space_sim/assets/agent/ship/kestrelFork.recipe.json",
+   "license": "own",
+   "bytes": 3267,
+   "sha256": "9177d687c83ff701227aaffd330a824b3d1c326e43dae2cb9834e8ce958c7a16"
+  },
+  "assets/vox/agent-ship/kestrelFork.sheet.png": {
+   "source": "space_sim/assets/agent/ship/kestrelFork.sheet.png",
+   "license": "own",
+   "bytes": 71682,
+   "sha256": "4f2cb9af7154160708aa97bf0a9ed89f47ba2890acf63ff1b2354175bd649f7c"
+  },
+  "assets/vox/agent-ship/kestrelForkMartian.json": {
+   "source": "space_sim/assets/agent/ship/kestrelForkMartian.json",
+   "license": "own",
+   "bytes": 67858,
+   "sha256": "718ebbcd11d3c770afc8da2375e4353fb963069119a0ba93de6e4daed6fe8b10"
+  },
+  "assets/vox/agent-ship/kestrelForkMartian.vox": {
+   "source": "space_sim/assets/agent/ship/kestrelForkMartian.vox",
+   "license": "own",
+   "bytes": 45715,
+   "sha256": "34e083452a21f8a6cb8ee8ec010fecc3aafa87a2d1487e8c5f3e72d694665733"
+  },
+  "assets/vox/agent-ship/kestrelForkPirate.json": {
+   "source": "space_sim/assets/agent/ship/kestrelForkPirate.json",
+   "license": "own",
+   "bytes": 38883,
+   "sha256": "c68a8c9ccd94206e2e57bb4d9017248414dda589de7e235f9d3daf85bd9ff6ba"
+  },
+  "assets/vox/agent-ship/kestrelForkPirate.vox": {
+   "source": "space_sim/assets/agent/ship/kestrelForkPirate.vox",
+   "license": "own",
+   "bytes": 45715,
+   "sha256": "af9e8089b49edba14acc3c4585476f250b4d616cf102cc04f609ceea64ba58c3"
+  },
+  "assets/vox/agent-ship/kestrelForkTerran.json": {
+   "source": "space_sim/assets/agent/ship/kestrelForkTerran.json",
+   "license": "own",
+   "bytes": 64209,
+   "sha256": "426361b820ac5d2b3c6ece0b1916193bcb15c4c7cbbd95ef2b65eee15726420f"
+  },
+  "assets/vox/agent-ship/kestrelForkTerran.vox": {
+   "source": "space_sim/assets/agent/ship/kestrelForkTerran.vox",
+   "license": "own",
+   "bytes": 45715,
+   "sha256": "af9e8089b49edba14acc3c4585476f250b4d616cf102cc04f609ceea64ba58c3"
+  },
+  "assets/vox/agent-ship/longwake.recipe.json": {
+   "source": "space_sim/assets/agent/ship/longwake.recipe.json",
+   "license": "own",
+   "bytes": 4400,
+   "sha256": "b2b8c9661384a088d6c5d29201c12799d7c2ca6201be7ed863727af3fe16a52b"
+  },
+  "assets/vox/agent-ship/longwake.sheet.png": {
+   "source": "space_sim/assets/agent/ship/longwake.sheet.png",
+   "license": "own",
+   "bytes": 67567,
+   "sha256": "70d1cdc0dda70ad5aed39c5aa62f09e19e2cbcbbc7368074087c0344c7e69497"
+  },
+  "assets/vox/agent-ship/longwakeMartian.json": {
+   "source": "space_sim/assets/agent/ship/longwakeMartian.json",
+   "license": "own",
+   "bytes": 557426,
+   "sha256": "b6d3cdcbd28aa782a48f7e72936ae7cbde6c94961d305b2572459dc86f3cf8fd"
+  },
+  "assets/vox/agent-ship/longwakeMartian.vox": {
+   "source": "space_sim/assets/agent/ship/longwakeMartian.vox",
+   "license": "own",
+   "bytes": 260194,
+   "sha256": "2e44d075c945c8798facf814e690936bd3579905acfd0acd191e52721d3ffb90"
+  },
+  "assets/vox/agent-ship/longwakePirate.json": {
+   "source": "space_sim/assets/agent/ship/longwakePirate.json",
+   "license": "own",
+   "bytes": 439759,
+   "sha256": "6deb6c577300af04bd394f26142e5ec345a3ba165af5ff4886083ce1e327ba64"
+  },
+  "assets/vox/agent-ship/longwakePirate.vox": {
+   "source": "space_sim/assets/agent/ship/longwakePirate.vox",
+   "license": "own",
+   "bytes": 265122,
+   "sha256": "b78447d237759e0e9d39a4a0df5944860361261e77c550388eb784209e53d88d"
+  },
+  "assets/vox/agent-ship/longwakeTerran.json": {
+   "source": "space_sim/assets/agent/ship/longwakeTerran.json",
+   "license": "own",
+   "bytes": 541858,
+   "sha256": "c82f5fdb66c9e0b6c534ad8961f65aa48f5f578a2cea33d130a10531ae5acab5"
+  },
+  "assets/vox/agent-ship/longwakeTerran.vox": {
+   "source": "space_sim/assets/agent/ship/longwakeTerran.vox",
+   "license": "own",
+   "bytes": 260194,
+   "sha256": "d376e0b1639ac46d55ba371a61d89bf0a24694063e260541f57f937864432ff2"
+  },
+  "assets/vox/agent-ship/shale.recipe.json": {
+   "source": "space_sim/assets/agent/ship/shale.recipe.json",
+   "license": "own",
+   "bytes": 3403,
+   "sha256": "107120a130fd692c96bd003f99b306c0a8b4bcaadbf421fa898f21932e6088b2"
+  },
+  "assets/vox/agent-ship/shale.sheet.png": {
+   "source": "space_sim/assets/agent/ship/shale.sheet.png",
+   "license": "own",
+   "bytes": 67195,
+   "sha256": "15961a06cbdb95d00c8f3d43f637d89db6f23c5aae70009d482390962a426197"
+  },
+  "assets/vox/agent-ship/shaleMartian.json": {
+   "source": "space_sim/assets/agent/ship/shaleMartian.json",
+   "license": "own",
+   "bytes": 153453,
+   "sha256": "8c5b0cfe06fd7e95f46d020c6956f4602ef388344dd2a154db05d0bb1f9d8992"
+  },
+  "assets/vox/agent-ship/shaleMartian.vox": {
+   "source": "space_sim/assets/agent/ship/shaleMartian.vox",
+   "license": "own",
+   "bytes": 83565,
+   "sha256": "0a117a3fe0b3a358a451f34beeeb92697b15f7853152bfda0e9765c778291a71"
+  },
+  "assets/vox/agent-ship/shalePirate.json": {
+   "source": "space_sim/assets/agent/ship/shalePirate.json",
+   "license": "own",
+   "bytes": 92138,
+   "sha256": "6afb2d4156190be80da4cb7355e52969890f261052ea791f7909448d019fa12d"
+  },
+  "assets/vox/agent-ship/shalePirate.vox": {
+   "source": "space_sim/assets/agent/ship/shalePirate.vox",
+   "license": "own",
+   "bytes": 84189,
+   "sha256": "34677f710a0cff690300d8e2ee4411c69c2ab4b4ed99397e6d6578e6d18a743c"
+  },
+  "assets/vox/agent-ship/shaleTerran.json": {
+   "source": "space_sim/assets/agent/ship/shaleTerran.json",
+   "license": "own",
+   "bytes": 141871,
+   "sha256": "c5d3aa1eb14a388ccd1de4ea96745b9b0919505ef72571c750824d610606a936"
+  },
+  "assets/vox/agent-ship/shaleTerran.vox": {
+   "source": "space_sim/assets/agent/ship/shaleTerran.vox",
+   "license": "own",
+   "bytes": 83565,
+   "sha256": "b21dfa487a83c71db13ed62deeee0bf6702675a5811a09effb6689e7adc4495f"
+  },
+  "assets/vox/agent-ship/shrike.recipe.json": {
+   "source": "space_sim/assets/agent/ship/shrike.recipe.json",
+   "license": "own",
+   "bytes": 4652,
+   "sha256": "7dfbe307eaf0f531bed07390c84344f81966fef92eb93176f39b95f9ebcfeac7"
+  },
+  "assets/vox/agent-ship/shrike.sheet.png": {
+   "source": "space_sim/assets/agent/ship/shrike.sheet.png",
+   "license": "own",
+   "bytes": 64222,
+   "sha256": "1e489b725869f4f0fa72989ad1816b70ed22d59bdd3616db3486924b3e928451"
+  },
+  "assets/vox/agent-ship/shrikeMartian.json": {
+   "source": "space_sim/assets/agent/ship/shrikeMartian.json",
+   "license": "own",
+   "bytes": 46236,
+   "sha256": "44b7f4748a1441b778e7d010b5d47b4e310507fd310d2ea5f0155eb12325c59d"
+  },
+  "assets/vox/agent-ship/shrikeMartian.vox": {
+   "source": "space_sim/assets/agent/ship/shrikeMartian.vox",
+   "license": "own",
+   "bytes": 29175,
+   "sha256": "1fb7a3443688ec179dea7adc06be107cda3bc0eb90f9a4f11738e8a340650c77"
+  },
+  "assets/vox/agent-ship/shrikePirate.json": {
+   "source": "space_sim/assets/agent/ship/shrikePirate.json",
+   "license": "own",
+   "bytes": 33876,
+   "sha256": "ed70620d80d46c2154c06b09af063f1863b552c58109388f963999ea544e6a36"
+  },
+  "assets/vox/agent-ship/shrikePirate.vox": {
+   "source": "space_sim/assets/agent/ship/shrikePirate.vox",
+   "license": "own",
+   "bytes": 28503,
+   "sha256": "67c093b8c68b7413128d2be2adb977343701f5fad1fb06d537f51f97ac506aa2"
+  },
+  "assets/vox/agent-ship/shrikeTerran.json": {
+   "source": "space_sim/assets/agent/ship/shrikeTerran.json",
+   "license": "own",
+   "bytes": 41615,
+   "sha256": "7f1ea6df8b1629f55290b0899e85139ad24cb80e99b14218c1f67a6b373f5245"
+  },
+  "assets/vox/agent-ship/shrikeTerran.vox": {
+   "source": "space_sim/assets/agent/ship/shrikeTerran.vox",
+   "license": "own",
+   "bytes": 28591,
+   "sha256": "dea1339b3bcd996285207dd3c4dd671a60604841b8a5c04a925f9b8399fccc46"
+  },
+  "assets/vox/agent-ship/sounder.recipe.json": {
+   "source": "space_sim/assets/agent/ship/sounder.recipe.json",
+   "license": "own",
+   "bytes": 3676,
+   "sha256": "6b47618d5345352be2798c75f015d933df2ee190dbc03fd7bece4bafbd032a62"
+  },
+  "assets/vox/agent-ship/sounder.sheet.png": {
+   "source": "space_sim/assets/agent/ship/sounder.sheet.png",
+   "license": "own",
+   "bytes": 62513,
+   "sha256": "f72360a909b904554ce6b2c028a420e55a40cade6913b1d2ed2f2896afc04727"
+  },
+  "assets/vox/agent-ship/sounderMartian.json": {
+   "source": "space_sim/assets/agent/ship/sounderMartian.json",
+   "license": "own",
+   "bytes": 256007,
+   "sha256": "32f82d5b2f5769b83267b34da5cd9b794124a9a1283e0b892e4ca640d5977317"
+  },
+  "assets/vox/agent-ship/sounderMartian.vox": {
+   "source": "space_sim/assets/agent/ship/sounderMartian.vox",
+   "license": "own",
+   "bytes": 136570,
+   "sha256": "688cb67f6fe438f07fb347eb4e460861833c923ac583d4fc79e8a21a0dd559e3"
+  },
+  "assets/vox/agent-ship/sounderPirate.json": {
+   "source": "space_sim/assets/agent/ship/sounderPirate.json",
+   "license": "own",
+   "bytes": 183350,
+   "sha256": "993c07f7dd0a648dcb5cd6ecd4861096928ac8edb21b5903ddc332edcfacea2b"
+  },
+  "assets/vox/agent-ship/sounderPirate.vox": {
+   "source": "space_sim/assets/agent/ship/sounderPirate.vox",
+   "license": "own",
+   "bytes": 138786,
+   "sha256": "7e3477a0d54128d6cb5bd8328c964fc12a218a4c0e61b4202ae28f557ac1f128"
+  },
+  "assets/vox/agent-ship/sounderTerran.json": {
+   "source": "space_sim/assets/agent/ship/sounderTerran.json",
+   "license": "own",
+   "bytes": 242203,
+   "sha256": "064ac76de69b13ff86492baa9c6c220ade3073b68568c674058013da475db8b0"
+  },
+  "assets/vox/agent-ship/sounderTerran.vox": {
+   "source": "space_sim/assets/agent/ship/sounderTerran.vox",
+   "license": "own",
+   "bytes": 136570,
+   "sha256": "1cba3138df9e0ca5125498e07de5af71929346038e12f69cea7fdf2db347db64"
+  },
+  "assets/vox/agent-ship/stoneward.recipe.json": {
+   "source": "space_sim/assets/agent/ship/stoneward.recipe.json",
+   "license": "own",
+   "bytes": 5448,
+   "sha256": "48dd9862f69b2c2554367902a32e8ec6e2821f30e4f5442a7cb05cb25e3e5ab2"
+  },
+  "assets/vox/agent-ship/stoneward.sheet.png": {
+   "source": "space_sim/assets/agent/ship/stoneward.sheet.png",
+   "license": "own",
+   "bytes": 79101,
+   "sha256": "57793dedda5365455e4db35b7d994a3a24f2d2e4b9f7a453eb657f94a17fef1f"
+  },
+  "assets/vox/agent-ship/stonewardMartian.json": {
+   "source": "space_sim/assets/agent/ship/stonewardMartian.json",
+   "license": "own",
+   "bytes": 2059833,
+   "sha256": "1b73a90f6a9531463387dc481936ac1f501e7fc3f320bdea9380eb3e2134fb18"
+  },
+  "assets/vox/agent-ship/stonewardMartian.vox": {
+   "source": "space_sim/assets/agent/ship/stonewardMartian.vox",
+   "license": "own",
+   "bytes": 854615,
+   "sha256": "a50553bf9dd04a0993a4eb41a0e6496aebd0d1a42d79c2619b770236c90d725c"
+  },
+  "assets/vox/agent-ship/stonewardPirate.json": {
+   "source": "space_sim/assets/agent/ship/stonewardPirate.json",
+   "license": "own",
+   "bytes": 1549895,
+   "sha256": "c9f0613d2b4c8896272355782c12365d0d98f1f59f47b3f3c1090a56e0d96a38"
+  },
+  "assets/vox/agent-ship/stonewardPirate.vox": {
+   "source": "space_sim/assets/agent/ship/stonewardPirate.vox",
+   "license": "own",
+   "bytes": 861719,
+   "sha256": "e6101b884894fb820421fd28d3d6633ed039140a7dc51da6fd7e0ee62334fe94"
+  },
+  "assets/vox/agent-ship/stonewardTerran.json": {
+   "source": "space_sim/assets/agent/ship/stonewardTerran.json",
+   "license": "own",
+   "bytes": 2042319,
+   "sha256": "2078f66ce4dc6d6e2945358723c84ab79a4a37d7ba531bc410fa35f4eaa47245"
+  },
+  "assets/vox/agent-ship/stonewardTerran.vox": {
+   "source": "space_sim/assets/agent/ship/stonewardTerran.vox",
+   "license": "own",
+   "bytes": 854615,
+   "sha256": "105798d45af1f7dee242a707b22561d5dbbf7817a107672d2c1432c5f7f15617"
+  },
+  "assets/vox/agent-ship/sunder.recipe.json": {
+   "source": "space_sim/assets/agent/ship/sunder.recipe.json",
+   "license": "own",
+   "bytes": 4454,
+   "sha256": "440b9417cd5f6d59124b846f8d51c24e93aa78daaa41d8ba8208bf7916548fe3"
+  },
+  "assets/vox/agent-ship/sunder.sheet.png": {
+   "source": "space_sim/assets/agent/ship/sunder.sheet.png",
+   "license": "own",
+   "bytes": 75595,
+   "sha256": "747cd79cf93ffb27f08454ce48e68cf788c3e6fd0c46bf084d72ba4a47cc5e4a"
+  },
+  "assets/vox/agent-ship/sunderMartian.json": {
+   "source": "space_sim/assets/agent/ship/sunderMartian.json",
+   "license": "own",
+   "bytes": 98067,
+   "sha256": "8a2f17e05ca942bcddda720361ebfd92861644d4324bb444f997a0b77000689f"
+  },
+  "assets/vox/agent-ship/sunderMartian.vox": {
+   "source": "space_sim/assets/agent/ship/sunderMartian.vox",
+   "license": "own",
+   "bytes": 65184,
+   "sha256": "974d8182190c12ac777c3570b6cb20393ead1abc116d4d2d24085b2f674ae42d"
+  },
+  "assets/vox/agent-ship/sunderPirate.json": {
+   "source": "space_sim/assets/agent/ship/sunderPirate.json",
+   "license": "own",
+   "bytes": 73086,
+   "sha256": "f55d0e2bd2e08128f07b2c7256e429a684f7aaa7d41421267d13ddc2eae2a7ce"
+  },
+  "assets/vox/agent-ship/sunderPirate.vox": {
+   "source": "space_sim/assets/agent/ship/sunderPirate.vox",
+   "license": "own",
+   "bytes": 65344,
+   "sha256": "03830851fbaf0bc47acd56ba9c36f135190f546485d8273e4f81d07c4c503258"
+  },
+  "assets/vox/agent-ship/sunderTerran.json": {
+   "source": "space_sim/assets/agent/ship/sunderTerran.json",
+   "license": "own",
+   "bytes": 90713,
+   "sha256": "85027d2a1750513e23ce4ae35f40b0e88a6d4dcfc643a944fb44f03bcd70a2df"
+  },
+  "assets/vox/agent-ship/sunderTerran.vox": {
+   "source": "space_sim/assets/agent/ship/sunderTerran.vox",
+   "license": "own",
+   "bytes": 65184,
+   "sha256": "9ae0d38620cbba2db511456bf98c48b76704e39369e90b34468f5d50d7d5acfa"
+  },
+  "assets/vox/agent-ship/watchglass.recipe.json": {
+   "source": "space_sim/assets/agent/ship/watchglass.recipe.json",
+   "license": "own",
+   "bytes": 4936,
+   "sha256": "c517d3ad0d913a95a777efbac6e469edbb4356b347be9546c8aa2a19577808d1"
+  },
+  "assets/vox/agent-ship/watchglass.sheet.png": {
+   "source": "space_sim/assets/agent/ship/watchglass.sheet.png",
+   "license": "own",
+   "bytes": 71751,
+   "sha256": "72bf1e64b6687688e03de945c8c422a1c75705e1a206e8c2770f21095da5c3f3"
+  },
+  "assets/vox/agent-ship/watchglassMartian.json": {
+   "source": "space_sim/assets/agent/ship/watchglassMartian.json",
+   "license": "own",
+   "bytes": 839784,
+   "sha256": "943655eae612b26d75c945f76800e8949d6b574968da4f838141f9162659c95d"
+  },
+  "assets/vox/agent-ship/watchglassMartian.vox": {
+   "source": "space_sim/assets/agent/ship/watchglassMartian.vox",
+   "license": "own",
+   "bytes": 468429,
+   "sha256": "e24b792e6bc7bb396730394d139d446acad96c31a808e2365bed798420ae4714"
+  },
+  "assets/vox/agent-ship/watchglassPirate.json": {
+   "source": "space_sim/assets/agent/ship/watchglassPirate.json",
+   "license": "own",
+   "bytes": 566661,
+   "sha256": "3b2723e8ecce3815b54b9e8caa806c5abcd817a9bed47636c4695be8e9b7bc91"
+  },
+  "assets/vox/agent-ship/watchglassPirate.vox": {
+   "source": "space_sim/assets/agent/ship/watchglassPirate.vox",
+   "license": "own",
+   "bytes": 470053,
+   "sha256": "94c18dfbf98ba4fbbc5774e85424e4796a164dda97ca8970f23ffbd66afffa69"
+  },
+  "assets/vox/agent-ship/watchglassTerran.json": {
+   "source": "space_sim/assets/agent/ship/watchglassTerran.json",
+   "license": "own",
+   "bytes": 800372,
+   "sha256": "933e97c8b73413b72082cfc48083dec43126d182282844f7bf3c0e4c69b773ac"
+  },
+  "assets/vox/agent-ship/watchglassTerran.vox": {
+   "source": "space_sim/assets/agent/ship/watchglassTerran.vox",
+   "license": "own",
+   "bytes": 468429,
+   "sha256": "df8d976ea4ec80fef260d270bb0fbce552de6cf120f64f5a748d2b9173096f2d"
+  },
+  "assets/vox/barracks.vox": {
+   "source": "space_sim/assets/vox/barracks.vox",
+   "license": "own",
+   "bytes": 22181,
+   "sha256": "b42126cd1b6a352407d2eb4dff809729a3089100b7e9ba77fe652929c20ecd8d"
+  },
+  "assets/vox/bomber.vox": {
+   "source": "space_sim/assets/vox/bomber.vox",
+   "license": "own",
+   "bytes": 47345,
+   "sha256": "8813dc94eaf91da137b39ec52c47a2ffb30f19d987a40da5b3e19bdf1fc7ac26"
+  },
+  "assets/vox/bunkerAA.vox": {
+   "source": "space_sim/assets/vox/bunkerAA.vox",
+   "license": "own",
+   "bytes": 9354,
+   "sha256": "8853354ad115d9907b6096d27005336ef25337a33cabcfed0ae08245e531e565"
+  },
+  "assets/vox/bunkerGun.vox": {
+   "source": "space_sim/assets/vox/bunkerGun.vox",
+   "license": "own",
+   "bytes": 8903,
+   "sha256": "d607b9756a2fb8c9c078a8c8298d8a4d000ee558e1c96fec29d34047b1255030"
+  },
+  "assets/vox/cave/broad.vox": {
+   "source": "space_sim/assets/vox/cave/broad.vox",
+   "license": "own",
+   "bytes": 58072,
+   "sha256": "d4a5e659672db7c35e9d6b2408bb3aec2ca7a93a8ca067b6374148fe0a1456e5"
+  },
+  "assets/vox/cave/stalk.vox": {
+   "source": "space_sim/assets/vox/cave/stalk.vox",
+   "license": "own",
+   "bytes": 46408,
+   "sha256": "4750b252774118e1d19225f691ba1c97d07987129170bbe6ff16c9962912441b"
+  },
+  "assets/vox/cave/trio.vox": {
+   "source": "space_sim/assets/vox/cave/trio.vox",
+   "license": "own",
+   "bytes": 12260,
+   "sha256": "b6422566e0e8d980878e1e44b806c0b279af35c4df7ab4a267e15ee62307c81f"
+  },
+  "assets/vox/corvette.vox": {
+   "source": "space_sim/assets/vox/corvette.vox",
+   "license": "own",
+   "bytes": 64384,
+   "sha256": "000109610b77c605cf3ed5b49725d73fe6f31d25f384ae978b9ba5cc34345a34"
+  },
+  "assets/vox/cratesA.vox": {
+   "source": "space_sim/assets/vox/cratesA.vox",
+   "license": "own",
+   "bytes": 1439,
+   "sha256": "622061032c7c82899157cd9e497a522ba4db8325c07c21e4bbccbdd946490953"
+  },
+  "assets/vox/cratesB.vox": {
+   "source": "space_sim/assets/vox/cratesB.vox",
+   "license": "own",
+   "bytes": 1655,
+   "sha256": "2bb999b6be500d72c89c6710651854af49e2df3eb4e925ea8c4c91cd09436216"
+  },
+  "assets/vox/dropship.vox": {
+   "source": "space_sim/assets/vox/dropship.vox",
+   "license": "own",
+   "bytes": 211206,
+   "sha256": "79c69bf4db060af486c280a8f4ca4a517f8941f5146c3173969ff1fdc4d23411"
+  },
+  "assets/vox/fighter.vox": {
+   "source": "space_sim/assets/vox/fighter.vox",
+   "license": "own",
+   "bytes": 47614,
+   "sha256": "68cc4ece61b16e8c74a0c61803cd4f4587b9165ca914a83063c5f08cd0ba94fb"
+  },
+  "assets/vox/freighter.vox": {
+   "source": "space_sim/assets/vox/freighter.vox",
+   "license": "own",
+   "bytes": 957147,
+   "sha256": "8eca1edc559d9eb9274a52b6a08102eb5fcb8f826dce40188b26947f8c2931a8"
+  },
+  "assets/vox/frigate.vox": {
+   "source": "space_sim/assets/vox/frigate.vox",
+   "license": "own",
+   "bytes": 419988,
+   "sha256": "eacf85aea0e2cb4219a8c6e2427f55d66f5fd479b3b80049cc4dd0175833ba44"
+  },
+  "assets/vox/fuelTank.vox": {
+   "source": "space_sim/assets/vox/fuelTank.vox",
+   "license": "own",
+   "bytes": 14643,
+   "sha256": "ff1f1c8ef410ab54861b8f56df0895ce36451c2f1461cfd01e7ab4777e684425"
+  },
+  "assets/vox/furniture/armchair.vox": {
+   "source": "space_sim/assets/vox/furniture/armchair.vox",
+   "license": "own",
+   "bytes": 6056,
+   "sha256": "a24eff3bde7061498b5d49cad45c42ffb1f50aff55deb7f98be69c1e8ce59672"
+  },
+  "assets/vox/furniture/barrel.vox": {
+   "source": "space_sim/assets/vox/furniture/barrel.vox",
+   "license": "own",
+   "bytes": 8264,
+   "sha256": "05f310649b90e409bbfb5522d97834abf5e48eecc70e7145d70e356e82c35729"
+  },
+  "assets/vox/furniture/bathcabinet.vox": {
+   "source": "space_sim/assets/vox/furniture/bathcabinet.vox",
+   "license": "own",
+   "bytes": 3316,
+   "sha256": "4c31b431afe5273def59c7a107487c8429b49ba78d044a0ecb03af3d9e383c0d"
+  },
+  "assets/vox/furniture/bathtub.vox": {
+   "source": "space_sim/assets/vox/furniture/bathtub.vox",
+   "license": "own",
+   "bytes": 6272,
+   "sha256": "5db60231fa18d9eb012b899dfef539a3c77a833eb616056efee93024b102cbd8"
+  },
+  "assets/vox/furniture/bed.vox": {
+   "source": "space_sim/assets/vox/furniture/bed.vox",
+   "license": "own",
+   "bytes": 10472,
+   "sha256": "bb2df4e6366ad9f8f6bee5a4c9779ff65c3d6705ba768fe54765a9023f3e66f1"
+  },
+  "assets/vox/furniture/bench.vox": {
+   "source": "space_sim/assets/vox/furniture/bench.vox",
+   "license": "own",
+   "bytes": 3208,
+   "sha256": "bac3c6846735b3520bf848f67789b31d615f4803090ed393f81591fa4ba7f5c7"
+  },
+  "assets/vox/furniture/bin.vox": {
+   "source": "space_sim/assets/vox/furniture/bin.vox",
+   "license": "own",
+   "bytes": 2912,
+   "sha256": "90bb4cbcf79fddcba5241486319729d5c73883fb5d230bfadd8804980c72ed4f"
+  },
+  "assets/vox/furniture/blinds.vox": {
+   "source": "space_sim/assets/vox/furniture/blinds.vox",
+   "license": "own",
+   "bytes": 3872,
+   "sha256": "681a198ebeab5baed1d74f83eeda96f6d1eeae16665fb2829994204bbeacee0e"
+  },
+  "assets/vox/furniture/bookshelf.vox": {
+   "source": "space_sim/assets/vox/furniture/bookshelf.vox",
+   "license": "own",
+   "bytes": 13136,
+   "sha256": "4a4d626ee9012c28de698fa82da53e133046488ffd4d82ec436dabf5e8d33a80"
+  },
+  "assets/vox/furniture/bunk.vox": {
+   "source": "space_sim/assets/vox/furniture/bunk.vox",
+   "license": "own",
+   "bytes": 19768,
+   "sha256": "f0cab65c389e3100365a1803d6996d553d3f957fa23d675b13155993e22945b3"
+  },
+  "assets/vox/furniture/cabletray.vox": {
+   "source": "space_sim/assets/vox/furniture/cabletray.vox",
+   "license": "own",
+   "bytes": 3144,
+   "sha256": "ba68bc2570d8811021a466abad29aecde67212ae9780fac8b190ccca2d37c6d0"
+  },
+  "assets/vox/furniture/cargonet.vox": {
+   "source": "space_sim/assets/vox/furniture/cargonet.vox",
+   "license": "own",
+   "bytes": 10400,
+   "sha256": "14db23044ef0d2072d56ab75b40944c66c48467d67a7b8efe06f3ad740520001"
+  },
+  "assets/vox/furniture/chair.vox": {
+   "source": "space_sim/assets/vox/furniture/chair.vox",
+   "license": "own",
+   "bytes": 1960,
+   "sha256": "52b17d416c7e15a7d1175711406dd7b9669156d2e9e6ffab9eefee700494e739"
+  },
+  "assets/vox/furniture/childbed.vox": {
+   "source": "space_sim/assets/vox/furniture/childbed.vox",
+   "license": "own",
+   "bytes": 7696,
+   "sha256": "804feb0dba9ee139e68a8e439f41a7993dd772959500e0d03d16e0c1a97a0ef8"
+  },
+  "assets/vox/furniture/coffeetable.vox": {
+   "source": "space_sim/assets/vox/furniture/coffeetable.vox",
+   "license": "own",
+   "bytes": 3272,
+   "sha256": "5be9cee9130ecab4d4f281254e25230a2a88ec4bde6a1867397fd661c340022e"
+  },
+  "assets/vox/furniture/console.vox": {
+   "source": "space_sim/assets/vox/furniture/console.vox",
+   "license": "own",
+   "bytes": 8432,
+   "sha256": "806176c6a42f692c84c65755e3cb20ea1e0675219fe33922a609a0b7d2c47c53"
+  },
+  "assets/vox/furniture/conveyor.vox": {
+   "source": "space_sim/assets/vox/furniture/conveyor.vox",
+   "license": "own",
+   "bytes": 8528,
+   "sha256": "827bfb6c2dc126ad0828f59845046d2fd73b0d1b1f460062baae2e7880a3c47a"
+  },
+  "assets/vox/furniture/counter.vox": {
+   "source": "space_sim/assets/vox/furniture/counter.vox",
+   "license": "own",
+   "bytes": 18016,
+   "sha256": "3ce9558b4b5140b113f0b52d832bd7c5a3be5d28dbe0d4c460380ce695bd7043"
+  },
+  "assets/vox/furniture/crate.vox": {
+   "source": "space_sim/assets/vox/furniture/crate.vox",
+   "license": "own",
+   "bytes": 17480,
+   "sha256": "f091caaaa35e1e377b36a14f80285a9c1701e66b398d85b0c3bd7bc127c5274b"
+  },
+  "assets/vox/furniture/crusher.vox": {
+   "source": "space_sim/assets/vox/furniture/crusher.vox",
+   "license": "own",
+   "bytes": 75992,
+   "sha256": "632ae52614133188d4d92972893178ca7fb5f063337f2ad21981c9a4316cdd6c"
+  },
+  "assets/vox/furniture/desk.vox": {
+   "source": "space_sim/assets/vox/furniture/desk.vox",
+   "license": "own",
+   "bytes": 7128,
+   "sha256": "7b01c89b53cd94d72c4d180fa9a3ec3f856560d5fffb1ee7a95fac803d180836"
+  },
+  "assets/vox/furniture/deskchair.vox": {
+   "source": "space_sim/assets/vox/furniture/deskchair.vox",
+   "license": "own",
+   "bytes": 1944,
+   "sha256": "a2e8ba96666d85cd6df3399393f3656ed898a2d4c6f12d6cdb825b2b222e2418"
+  },
+  "assets/vox/furniture/dispenser.vox": {
+   "source": "space_sim/assets/vox/furniture/dispenser.vox",
+   "license": "own",
+   "bytes": 9784,
+   "sha256": "82705c2e4125bd6ffbd874c60ebabd45f97c84a677f3bf1085dbe66607e835d4"
+  },
+  "assets/vox/furniture/displaycase.vox": {
+   "source": "space_sim/assets/vox/furniture/displaycase.vox",
+   "license": "own",
+   "bytes": 8548,
+   "sha256": "9dafb1aed84ba817eb236c385cc43a3b5f775992f02641563e05290845166dfd"
+  },
+  "assets/vox/furniture/doublebed.vox": {
+   "source": "space_sim/assets/vox/furniture/doublebed.vox",
+   "license": "own",
+   "bytes": 20400,
+   "sha256": "d6191a027c8c4af68ac70a6bc1b3e2d5b27b1a54e24e9d5015a83c10c8b90561"
+  },
+  "assets/vox/furniture/dresser.vox": {
+   "source": "space_sim/assets/vox/furniture/dresser.vox",
+   "license": "own",
+   "bytes": 11336,
+   "sha256": "410a9a77ac166370ec3a5de51c2c833c266802248b2cec6c6bd6e6c126be5c46"
+  },
+  "assets/vox/furniture/extinguisher.vox": {
+   "source": "space_sim/assets/vox/furniture/extinguisher.vox",
+   "license": "own",
+   "bytes": 1360,
+   "sha256": "c094155565a84f9f0696d4ff6fe4759d3f87024e5c6928456b2fa97fd519a996"
+  },
+  "assets/vox/furniture/floorlamp.vox": {
+   "source": "space_sim/assets/vox/furniture/floorlamp.vox",
+   "license": "own",
+   "bytes": 3336,
+   "sha256": "62fe07aa4c0f12b0442d5579b0d96c6ad984824c86330605f089292f35dc43ae"
+  },
+  "assets/vox/furniture/footlocker.vox": {
+   "source": "space_sim/assets/vox/furniture/footlocker.vox",
+   "license": "own",
+   "bytes": 5192,
+   "sha256": "ddece7b02bdde09922ea895134063be0ffc63e50722524fffa5c6304efc55e6d"
+  },
+  "assets/vox/furniture/fridge.vox": {
+   "source": "space_sim/assets/vox/furniture/fridge.vox",
+   "license": "own",
+   "bytes": 17996,
+   "sha256": "88a8b965cfa8121c6a651ea5eb86d4370343131631ba0e3d8c2db1455f222522"
+  },
+  "assets/vox/furniture/growbed.vox": {
+   "source": "space_sim/assets/vox/furniture/growbed.vox",
+   "license": "own",
+   "bytes": 14696,
+   "sha256": "11747b12f8b8cc9e09b266c913496180db00656ed87d26c9e202a0bc19360e4a"
+  },
+  "assets/vox/furniture/gunwall.vox": {
+   "source": "space_sim/assets/vox/furniture/gunwall.vox",
+   "license": "own",
+   "bytes": 9988,
+   "sha256": "87694db1e0c3811f19512cedcff58d974c4bed64b4afe704b9988d762debe03c"
+  },
+  "assets/vox/furniture/handrail.vox": {
+   "source": "space_sim/assets/vox/furniture/handrail.vox",
+   "license": "own",
+   "bytes": 2328,
+   "sha256": "3ca766ecf320b83e89175374684460884cbaf772ef74b48677546c8a45c8f490"
+  },
+  "assets/vox/furniture/holotable.vox": {
+   "source": "space_sim/assets/vox/furniture/holotable.vox",
+   "license": "own",
+   "bytes": 10760,
+   "sha256": "ce7948ea96b1713cd58e4f6c40237cd6788e61be3a9bdbc4964bf53b0ae4ee27"
+  },
+  "assets/vox/furniture/kitchensink.vox": {
+   "source": "space_sim/assets/vox/furniture/kitchensink.vox",
+   "license": "own",
+   "bytes": 17856,
+   "sha256": "6bd9f0e83996687f9d0fa21dec9e9df042cf00f6c9917449033e8822f538b814"
+  },
+  "assets/vox/furniture/ladder.vox": {
+   "source": "space_sim/assets/vox/furniture/ladder.vox",
+   "license": "own",
+   "bytes": 1800,
+   "sha256": "732f1529e2cc55ae6ea17dc94cadc9ef83b9c3fc266457490d355f148dd200a1"
+  },
+  "assets/vox/furniture/locker.vox": {
+   "source": "space_sim/assets/vox/furniture/locker.vox",
+   "license": "own",
+   "bytes": 9288,
+   "sha256": "153ff24d7ba535df4a7fa41190a82e6033f1764ebaa875e9f871e48e9030d95a"
+  },
+  "assets/vox/furniture/mapboard.vox": {
+   "source": "space_sim/assets/vox/furniture/mapboard.vox",
+   "license": "own",
+   "bytes": 4168,
+   "sha256": "cf8465e4843818f1053d4d33c30c911452e827dfa844d824e9b899bce5e93f8b"
+  },
+  "assets/vox/furniture/materialstack.vox": {
+   "source": "space_sim/assets/vox/furniture/materialstack.vox",
+   "license": "own",
+   "bytes": 12800,
+   "sha256": "8bed4e1c7be41418110b2fe5a8a219f4f2639b7f82a0761b9fd47ccac2e70dbd"
+  },
+  "assets/vox/furniture/medbed.vox": {
+   "source": "space_sim/assets/vox/furniture/medbed.vox",
+   "license": "own",
+   "bytes": 11656,
+   "sha256": "85fd2d7d002fe75c94090674cee035869efa45a7f2a9b1052946c64224ed1fe3"
+  },
+  "assets/vox/furniture/medcabinet.vox": {
+   "source": "space_sim/assets/vox/furniture/medcabinet.vox",
+   "license": "own",
+   "bytes": 3408,
+   "sha256": "f1d20f21203b0cc8b313fd7a90da3792b34c14eb44761084faa1095a23c3e18d"
+  },
+  "assets/vox/furniture/microwave.vox": {
+   "source": "space_sim/assets/vox/furniture/microwave.vox",
+   "license": "own",
+   "bytes": 2348,
+   "sha256": "cc25bb2f215b70a556ccd0f3e8890a8917f60e51194bd5ee44911842f049102b"
+  },
+  "assets/vox/furniture/mirror.vox": {
+   "source": "space_sim/assets/vox/furniture/mirror.vox",
+   "license": "own",
+   "bytes": 2120,
+   "sha256": "9cdf81d3b3c3cadb6ed1906afabc17ff9fd5861fa94586e19ae1cb2976e63346"
+  },
+  "assets/vox/furniture/missionterm.vox": {
+   "source": "space_sim/assets/vox/furniture/missionterm.vox",
+   "license": "own",
+   "bytes": 10104,
+   "sha256": "0e79b680565a9788a560b202ee6a579aaaeff67bd8309f67de7f74ccd2e6701f"
+  },
+  "assets/vox/furniture/nightstand.vox": {
+   "source": "space_sim/assets/vox/furniture/nightstand.vox",
+   "license": "own",
+   "bytes": 3832,
+   "sha256": "95619562f0754a41203adf51f39dcb9339624f1e1798eb9c4d48f57c9c82547e"
+  },
+  "assets/vox/furniture/orebin.vox": {
+   "source": "space_sim/assets/vox/furniture/orebin.vox",
+   "license": "unsettled",
+   "bytes": 25548,
+   "sha256": "04514987f055f62a17bb9e1ffb05ae0e06cd4851f557613d8c6bac81d2b50084",
+   "note": "contains third-party props (space_sim assets/CREDITS.md); author and license not recorded"
+  },
+  "assets/vox/furniture/pallet.vox": {
+   "source": "space_sim/assets/vox/furniture/pallet.vox",
+   "license": "own",
+   "bytes": 25224,
+   "sha256": "2d691fa192382bf1b582d2ad239b006edfe75edefe2971f62ecd80b9e4eb09a9"
+  },
+  "assets/vox/furniture/partsdisplay.vox": {
+   "source": "space_sim/assets/vox/furniture/partsdisplay.vox",
+   "license": "own",
+   "bytes": 11800,
+   "sha256": "d93fd0853dc5c917de4cf8add64b14227e06c25fb65744e53e29244a18fc7472"
+  },
+  "assets/vox/furniture/picture.vox": {
+   "source": "space_sim/assets/vox/furniture/picture.vox",
+   "license": "own",
+   "bytes": 2632,
+   "sha256": "d72de36866a1bc436af7fd9357775d27f5cd8bd785f518d54fecf85ed858eb09"
+  },
+  "assets/vox/furniture/pilotchair.vox": {
+   "source": "space_sim/assets/vox/furniture/pilotchair.vox",
+   "license": "own",
+   "bytes": 3632,
+   "sha256": "c61eae7dcfe8a2dadf8d7ef74e1a865660bd9716e15883f0731ec65bda1c9f38"
+  },
+  "assets/vox/furniture/pipes.vox": {
+   "source": "space_sim/assets/vox/furniture/pipes.vox",
+   "license": "own",
+   "bytes": 3224,
+   "sha256": "21e540a767bfef0c9de443983218a2281a69f8defc2aa034f3b8cff274c39ad9"
+  },
+  "assets/vox/furniture/plant.vox": {
+   "source": "space_sim/assets/vox/furniture/plant.vox",
+   "license": "own",
+   "bytes": 3408,
+   "sha256": "54a7fdcf82e15f557a5481379216506a737e1a8cdf43eaf3ef25008181738f43"
+  },
+  "assets/vox/furniture/planter.vox": {
+   "source": "space_sim/assets/vox/furniture/planter.vox",
+   "license": "own",
+   "bytes": 7364,
+   "sha256": "d68472cc9cceed274104a3c0b676c09a436728de414efa2d6d059ffef2164487"
+  },
+  "assets/vox/furniture/plantHanging.vox": {
+   "source": "space_sim/assets/vox/furniture/plantHanging.vox",
+   "license": "own",
+   "bytes": 2308,
+   "sha256": "af089be3a710b857588c370a7833635d2cafaf6af56b4a09fd5c616bf0117fca"
+  },
+  "assets/vox/furniture/plantTall.vox": {
+   "source": "space_sim/assets/vox/furniture/plantTall.vox",
+   "license": "own",
+   "bytes": 4344,
+   "sha256": "49f2873a4b0a919f1b3d66f799d2d0fb099702b9899aada82437a57fe4ef2a96"
+  },
+  "assets/vox/furniture/producestand.vox": {
+   "source": "space_sim/assets/vox/furniture/producestand.vox",
+   "license": "unsettled",
+   "bytes": 17364,
+   "sha256": "c061acbea6d27081f121ff022b8fcf741368e5ce3e0bbf71b49bbf11bab7365a",
+   "note": "contains third-party props (space_sim assets/CREDITS.md); author and license not recorded"
+  },
+  "assets/vox/furniture/rug.vox": {
+   "source": "space_sim/assets/vox/furniture/rug.vox",
+   "license": "own",
+   "bytes": 4168,
+   "sha256": "c086baa15dd9c23003d54a7bb9484e3d77df5965e81839598fdcf4ec6f1de1b8"
+  },
+  "assets/vox/furniture/scannerarch.vox": {
+   "source": "space_sim/assets/vox/furniture/scannerarch.vox",
+   "license": "own",
+   "bytes": 15432,
+   "sha256": "2417f9c881d9a0d8bcbbfeaeb2044d71f10a02a1ab54ac7af2f5aaea5c8baf53"
+  },
+  "assets/vox/furniture/serverrack.vox": {
+   "source": "space_sim/assets/vox/furniture/serverrack.vox",
+   "license": "own",
+   "bytes": 24136,
+   "sha256": "0811f70cadbb77d4e9771ee49369cf353ea90d68de7411cd7b6a5924e39ad0b2"
+  },
+  "assets/vox/furniture/shelf.vox": {
+   "source": "space_sim/assets/vox/furniture/shelf.vox",
+   "license": "own",
+   "bytes": 1876,
+   "sha256": "78016dfbac1a447a957ed5a077a22114dd152db43fd1d768e88736fbc3ba8e90"
+  },
+  "assets/vox/furniture/shelfDrinks.vox": {
+   "source": "space_sim/assets/vox/furniture/shelfDrinks.vox",
+   "license": "unsettled",
+   "bytes": 22560,
+   "sha256": "2f6b40ebc9ad513b973bdfea1e009300f2bd6bf6f22d19163e4dcc384bf73542",
+   "note": "contains third-party props (space_sim assets/CREDITS.md); author and license not recorded"
+  },
+  "assets/vox/furniture/shelfFood.vox": {
+   "source": "space_sim/assets/vox/furniture/shelfFood.vox",
+   "license": "unsettled",
+   "bytes": 17816,
+   "sha256": "aba0ce40ed908455a0861f23b7bc88c421f1f82e1777f3c06549a2702be7033f",
+   "note": "contains third-party props (space_sim assets/CREDITS.md); author and license not recorded"
+  },
+  "assets/vox/furniture/shelfTools.vox": {
+   "source": "space_sim/assets/vox/furniture/shelfTools.vox",
+   "license": "unsettled",
+   "bytes": 17140,
+   "sha256": "80a5193b1e9665610eb652d132eda60f42b05cb7b1de24f2207fa6b580e6dfc1",
+   "note": "contains third-party props (space_sim assets/CREDITS.md); author and license not recorded"
+  },
+  "assets/vox/furniture/shipdealer.vox": {
+   "source": "space_sim/assets/vox/furniture/shipdealer.vox",
+   "license": "own",
+   "bytes": 9872,
+   "sha256": "e2f566a130ea1461e69cef197b770729faf0180640dc36ece92cc62a532e9fd1"
+  },
+  "assets/vox/furniture/shower.vox": {
+   "source": "space_sim/assets/vox/furniture/shower.vox",
+   "license": "own",
+   "bytes": 8952,
+   "sha256": "0b2595326b2d09d08e36edee54f20f5e5bf8b66734e57f8270fe571b687156fa"
+  },
+  "assets/vox/furniture/signBar.vox": {
+   "source": "space_sim/assets/vox/furniture/signBar.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "fb57b03ca26626dc2c4dcff2793720dbe6ae21240ae3fb9e3bce984fda777411"
+  },
+  "assets/vox/furniture/signClinic.vox": {
+   "source": "space_sim/assets/vox/furniture/signClinic.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "59b7c3e2f7b689a3398f742c0f0fe7222770a2877316c01768bc6363d7696315"
+  },
+  "assets/vox/furniture/signFood.vox": {
+   "source": "space_sim/assets/vox/furniture/signFood.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "b7ca55819cf8e3ffac751e0449173fc8c48384c2c71c17b2c7136fe84d8dbbe6"
+  },
+  "assets/vox/furniture/signGoods.vox": {
+   "source": "space_sim/assets/vox/furniture/signGoods.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "d1e35a889f23d2acf6b18dc5d664434add46c0de57ee8b27150c70b306d5c5f2"
+  },
+  "assets/vox/furniture/signGuns.vox": {
+   "source": "space_sim/assets/vox/furniture/signGuns.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "60bad6234140054541aedbe94663f0bf394a8365d406214bc4de9fdad89250ba"
+  },
+  "assets/vox/furniture/signHome.vox": {
+   "source": "space_sim/assets/vox/furniture/signHome.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "9ee742d753063c32f66a224bb9df9b3a25c4b724edfc46e0c7eeb8ef9565d51d"
+  },
+  "assets/vox/furniture/signMaterials.vox": {
+   "source": "space_sim/assets/vox/furniture/signMaterials.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "d00c86b455bf810832b7e3811a4fee978372c8371ae9a15df89e93a5e22e5ec1"
+  },
+  "assets/vox/furniture/signMeds.vox": {
+   "source": "space_sim/assets/vox/furniture/signMeds.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "0319ad1a336d4d44b2bc6796b822158dfa75808a681ffffd5bdf6c549f0d519f"
+  },
+  "assets/vox/furniture/signOffice.vox": {
+   "source": "space_sim/assets/vox/furniture/signOffice.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "942f45630a02c15209643790f5d65904778d4dd2845a92572f03e5899eff1925"
+  },
+  "assets/vox/furniture/signOre.vox": {
+   "source": "space_sim/assets/vox/furniture/signOre.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "7b15f4f081025e39ebe30d0ddee29cffed947517ff7afd4f2e13d449699b18ad"
+  },
+  "assets/vox/furniture/signParts.vox": {
+   "source": "space_sim/assets/vox/furniture/signParts.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "d4aa8310dcebef4722654613673989a6b78b7e77f0391b9ce65131c8faae97fa"
+  },
+  "assets/vox/furniture/signShips.vox": {
+   "source": "space_sim/assets/vox/furniture/signShips.vox",
+   "license": "own",
+   "bytes": 5704,
+   "sha256": "5dbc0167ffaf0a7954d324bf6f0c3f6c8e44bd507d5042d957a624f6cbe2042d"
+  },
+  "assets/vox/furniture/sink.vox": {
+   "source": "space_sim/assets/vox/furniture/sink.vox",
+   "license": "own",
+   "bytes": 3568,
+   "sha256": "e2e0f0c51d2cd2f277a2deb80bed36bff692c414e84e8167c0a93a59ed3ccf9d"
+  },
+  "assets/vox/furniture/sofa.vox": {
+   "source": "space_sim/assets/vox/furniture/sofa.vox",
+   "license": "own",
+   "bytes": 13944,
+   "sha256": "7a7fb6b81f20c635f3c880f8162e3bdaa8c7f5cf87f91707abdf30454688be3c"
+  },
+  "assets/vox/furniture/stool.vox": {
+   "source": "space_sim/assets/vox/furniture/stool.vox",
+   "license": "own",
+   "bytes": 1736,
+   "sha256": "22fdaa0dba46c23d469772e92b43b10c85d0522ea6b042cd1a3313017aeefeeb"
+  },
+  "assets/vox/furniture/stove.vox": {
+   "source": "space_sim/assets/vox/furniture/stove.vox",
+   "license": "own",
+   "bytes": 9688,
+   "sha256": "7cdd40cb94d0c049986522fc570340118a898113ee7b80be106b56137b703203"
+  },
+  "assets/vox/furniture/table.vox": {
+   "source": "space_sim/assets/vox/furniture/table.vox",
+   "license": "own",
+   "bytes": 4808,
+   "sha256": "57a9b869505cf5e6e3b9bb3fdb7e5e51ad131be6f5801797785faaf08a54beaf"
+  },
+  "assets/vox/furniture/table2.vox": {
+   "source": "space_sim/assets/vox/furniture/table2.vox",
+   "license": "own",
+   "bytes": 5832,
+   "sha256": "ac4d178359953421abd77127c9d300e9e52d478ebba3edc5f91c2c24bd7ba021"
+  },
+  "assets/vox/furniture/terminal.vox": {
+   "source": "space_sim/assets/vox/furniture/terminal.vox",
+   "license": "own",
+   "bytes": 4264,
+   "sha256": "bc2f3129303667f6b67cfb07f95b8be71697a93711912788a5faa0920023b909"
+  },
+  "assets/vox/furniture/toilet.vox": {
+   "source": "space_sim/assets/vox/furniture/toilet.vox",
+   "license": "own",
+   "bytes": 3568,
+   "sha256": "4adc12a29e0a0257eb785c08d151367b98fc59860fb76543ca7c78bf3652f752"
+  },
+  "assets/vox/furniture/toolbench.vox": {
+   "source": "space_sim/assets/vox/furniture/toolbench.vox",
+   "license": "own",
+   "bytes": 8640,
+   "sha256": "b0b9ad6e8b07cfec1d91a6a1a231836f7146404042145dc8fe6987fb703da666"
+  },
+  "assets/vox/furniture/towelrail.vox": {
+   "source": "space_sim/assets/vox/furniture/towelrail.vox",
+   "license": "own",
+   "bytes": 1760,
+   "sha256": "9abbd10956eb7c6fb9fe415a8a7fdff8f731376986e544e9d626d9e5acd0931b"
+  },
+  "assets/vox/furniture/tradecounter.vox": {
+   "source": "space_sim/assets/vox/furniture/tradecounter.vox",
+   "license": "own",
+   "bytes": 21248,
+   "sha256": "9db1ff8481447ab13dfa1d447270d7b5824f0b6bd12f5aa03775d5e279c54c0a"
+  },
+  "assets/vox/furniture/tvstand.vox": {
+   "source": "space_sim/assets/vox/furniture/tvstand.vox",
+   "license": "own",
+   "bytes": 7144,
+   "sha256": "2ba85f327d9e267a0a1d9d95460eceab21f093e4bc742186efba9db072c1cd31"
+  },
+  "assets/vox/furniture/vent.vox": {
+   "source": "space_sim/assets/vox/furniture/vent.vox",
+   "license": "own",
+   "bytes": 2248,
+   "sha256": "f2232252c0f7ebb429d063bf22382ab3138cc59b901463ecbedf2b1744aba115"
+  },
+  "assets/vox/furniture/wallcabinet.vox": {
+   "source": "space_sim/assets/vox/furniture/wallcabinet.vox",
+   "license": "own",
+   "bytes": 10216,
+   "sha256": "722237d200bbf06d2c3d8a853be0999fb389fbc069573474b4fd5fedbb1e29c3"
+  },
+  "assets/vox/furniture/wallscreen.vox": {
+   "source": "space_sim/assets/vox/furniture/wallscreen.vox",
+   "license": "own",
+   "bytes": 2632,
+   "sha256": "c890f7542ee0518b9ba6e26593666df3531b6bf17b522a21cca6ee2bc561f063"
+  },
+  "assets/vox/furniture/wallscreenWide.vox": {
+   "source": "space_sim/assets/vox/furniture/wallscreenWide.vox",
+   "license": "own",
+   "bytes": 5192,
+   "sha256": "43f97edac7a457876ea9886fb86e6b007754440c66c8102dd757affe595bf989"
+  },
+  "assets/vox/furniture/wardrobe.vox": {
+   "source": "space_sim/assets/vox/furniture/wardrobe.vox",
+   "license": "own",
+   "bytes": 17480,
+   "sha256": "6da16a9959d7b4f62bd39bee9ea50d3115760e786391d9df3c0f5d2785c4c6d7"
+  },
+  "assets/vox/furniture/washer.vox": {
+   "source": "space_sim/assets/vox/furniture/washer.vox",
+   "license": "own",
+   "bytes": 9848,
+   "sha256": "6e476cef5e48fa36cbe231517de498978dd2ec44bcccf76f10d7969ea8da7da4"
+  },
+  "assets/vox/furniture/watertank.vox": {
+   "source": "space_sim/assets/vox/furniture/watertank.vox",
+   "license": "own",
+   "bytes": 55272,
+   "sha256": "60a2d72141a01770ee8ec73a4f8e485879b5430cbedaf3ca1e059fe52ebf57d9"
+  },
+  "assets/vox/furniture/weaponrack.vox": {
+   "source": "space_sim/assets/vox/furniture/weaponrack.vox",
+   "license": "own",
+   "bytes": 4792,
+   "sha256": "4073669c577bdb148767884137c8b130be8e90eb9acf2f0ef00501068b04184f"
+  },
+  "assets/vox/furniture/whiteboard.vox": {
+   "source": "space_sim/assets/vox/furniture/whiteboard.vox",
+   "license": "own",
+   "bytes": 4264,
+   "sha256": "2d8f2bad64f64200f40958f25cdceba48cbb698af4970cc5ea8b923e1af4483c"
+  },
+  "assets/vox/garage.vox": {
+   "source": "space_sim/assets/vox/garage.vox",
+   "license": "own",
+   "bytes": 25567,
+   "sha256": "a2d5545c38f8929e64ef4bad03bb1596fb7019af60f142c0b39a005184655e20"
+  },
+  "assets/vox/gateHome.vox": {
+   "source": "space_sim/assets/vox/gateHome.vox",
+   "license": "own",
+   "bytes": 16721,
+   "sha256": "b6313082fe1f27e813214e4ce747b96507dd415073020769e506ff3fd090c629"
+  },
+  "assets/vox/gatePirate.vox": {
+   "source": "space_sim/assets/vox/gatePirate.vox",
+   "license": "own",
+   "bytes": 16721,
+   "sha256": "231ce77185f2da8f0e1267c75061d057bdfe9720e7ea951e2551ac45280e9a41"
+  },
+  "assets/vox/guardpost.vox": {
+   "source": "space_sim/assets/vox/guardpost.vox",
+   "license": "own",
+   "bytes": 28121,
+   "sha256": "9cf4d7d7bb5f19c96b04182cb3550eaadf6e25a7d1e6a2b5903fbbd67fac0187"
+  },
+  "assets/vox/gunturret.vox": {
+   "source": "space_sim/assets/vox/gunturret.vox",
+   "license": "own",
+   "bytes": 9054,
+   "sha256": "ed771efd963979bd6738379a591cca6a37dd1cd650504b28172adb2315412834"
+  },
+  "assets/vox/hab.vox": {
+   "source": "space_sim/assets/vox/hab.vox",
+   "license": "own",
+   "bytes": 17164,
+   "sha256": "7c3b06264e001b4147d8b6bf52c356578288ce64bcd100c273afdb79e8a67ec0"
+  },
+  "assets/vox/hangarL.vox": {
+   "source": "space_sim/assets/vox/hangarL.vox",
+   "license": "own",
+   "bytes": 116899,
+   "sha256": "a6b2c23630751eb41b4f7d22925f1d042bf884669c9e5ba4b3cbee1fb20519e6"
+  },
+  "assets/vox/hangarS.vox": {
+   "source": "space_sim/assets/vox/hangarS.vox",
+   "license": "own",
+   "bytes": 50777,
+   "sha256": "4f14112854f6c990a1dbaa70d3b5a4ddb8ee13406d43e47cefa33d36abd00c75"
+  },
+  "assets/vox/ifv.vox": {
+   "source": "space_sim/assets/vox/ifv.vox",
+   "license": "own",
+   "bytes": 16782,
+   "sha256": "e736f00f6837ed41f30a46bf3e51b6ad636afbd956783467b6deb28470a3cdfd"
+  },
+  "assets/vox/local/BotArachnoid.json": {
+   "source": "space_sim/assets/vox/local/BotArachnoid.json",
+   "license": "own",
+   "bytes": 34341,
+   "sha256": "037d002c6167ac593828989730c4f82610466166ea3a22932d7cdd0ab8d368e9"
+  },
+  "assets/vox/local/BotArachnoid.unrigged.json": {
+   "source": "space_sim/assets/vox/local/BotArachnoid.unrigged.json",
+   "license": "own",
+   "bytes": 33438,
+   "sha256": "64ff56f119a24b4de1301b086e5393f2991823413db0ee92f85f180f2f8011a5"
+  },
+  "assets/vox/local/BotArachnoid.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/BotArachnoid.unrigged.vox",
+   "license": "own",
+   "bytes": 17342,
+   "sha256": "1fbc465ce60ec7adc97109b5a3de74dcec363297983f2d3dccd5404228bb7ed3"
+  },
+  "assets/vox/local/BotArachnoid.vox": {
+   "source": "space_sim/assets/vox/local/BotArachnoid.vox",
+   "license": "own",
+   "bytes": 18169,
+   "sha256": "d066b024fde96f61363ca1c9ce3789633ef09bbb7b56959bb1628c8717a3037d"
+  },
+  "assets/vox/local/BotCompanion.json": {
+   "source": "space_sim/assets/vox/local/BotCompanion.json",
+   "license": "own",
+   "bytes": 16543,
+   "sha256": "ce4af66e390a262bb55c72ddf44d5f949b16e2784d01de2e36c83272d4fb327d"
+  },
+  "assets/vox/local/BotCompanion.unrigged.json": {
+   "source": "space_sim/assets/vox/local/BotCompanion.unrigged.json",
+   "license": "own",
+   "bytes": 16789,
+   "sha256": "17017fc16217eda5e97642ad06e48ec657365e745ff8ce6de29f6026866e7428"
+  },
+  "assets/vox/local/BotCompanion.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/BotCompanion.unrigged.vox",
+   "license": "own",
+   "bytes": 12125,
+   "sha256": "2d3e63a787c6b3b2e2d97cceaf3fd499ba7ee2e513d01fa8b98b605c415a7658"
+  },
+  "assets/vox/local/BotCompanion.vox": {
+   "source": "space_sim/assets/vox/local/BotCompanion.vox",
+   "license": "own",
+   "bytes": 12715,
+   "sha256": "1d77d8c9478ee20359ace27ac2c19b439d8df03e04baf471068705b78055f58d"
+  },
+  "assets/vox/local/BotGolem.json": {
+   "source": "space_sim/assets/vox/local/BotGolem.json",
+   "license": "own",
+   "bytes": 159755,
+   "sha256": "c78efa1e76989775dec76084bba0660393635e92b4541a2752dec772ac6f2c82"
+  },
+  "assets/vox/local/BotGolem.unrigged.json": {
+   "source": "space_sim/assets/vox/local/BotGolem.unrigged.json",
+   "license": "own",
+   "bytes": 147654,
+   "sha256": "5d8fde885798e19f8876a18187d768f286cb5cf6060007b8f8d3d3164e76d493"
+  },
+  "assets/vox/local/BotGolem.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/BotGolem.unrigged.vox",
+   "license": "own",
+   "bytes": 71906,
+   "sha256": "00f24cdb36a75ed79050c323a4d394197ce8b23cb12e16fd243a4c61c20b4600"
+  },
+  "assets/vox/local/BotGolem.vox": {
+   "source": "space_sim/assets/vox/local/BotGolem.vox",
+   "license": "own",
+   "bytes": 72061,
+   "sha256": "8ccdb3b1d1479a1490f7ca432813ae68ac1b2c83c87fe1dfaf0b3622ea0cea12"
+  },
+  "assets/vox/local/BotQuadTank.json": {
+   "source": "space_sim/assets/vox/local/BotQuadTank.json",
+   "license": "own",
+   "bytes": 29724,
+   "sha256": "e8d6f67afc40689b83e261ea0c49a185be8751aa0763b405242874371e12dd2d"
+  },
+  "assets/vox/local/BotQuadTank.unrigged.json": {
+   "source": "space_sim/assets/vox/local/BotQuadTank.unrigged.json",
+   "license": "own",
+   "bytes": 22567,
+   "sha256": "3e16e00ecfaf439a29a2616ec31feda41c622f89826d6ef4c7af3b607ab6937e"
+  },
+  "assets/vox/local/BotQuadTank.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/BotQuadTank.unrigged.vox",
+   "license": "own",
+   "bytes": 114910,
+   "sha256": "7a26df73f004fb6cabc4feff81aac1381b2296b48930ff049dc7f1ee4ced8daf"
+  },
+  "assets/vox/local/BotQuadTank.vox": {
+   "source": "space_sim/assets/vox/local/BotQuadTank.vox",
+   "license": "own",
+   "bytes": 115065,
+   "sha256": "be31dfe78f00201df50b8774aad8b28be29860285fe1107b4baa4f568338ce94"
+  },
+  "assets/vox/local/BotRecon.json": {
+   "source": "space_sim/assets/vox/local/BotRecon.json",
+   "license": "own",
+   "bytes": 81034,
+   "sha256": "130e9042bbe7810d5a495f41060444d7d6587b1d7e06fb7430f1fb4317472c2b"
+  },
+  "assets/vox/local/BotRecon.unrigged.json": {
+   "source": "space_sim/assets/vox/local/BotRecon.unrigged.json",
+   "license": "own",
+   "bytes": 82530,
+   "sha256": "59646168c9d4cc405bf85d264493d27e75e7295b84f18e3aa7f1330c21545402"
+  },
+  "assets/vox/local/BotRecon.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/BotRecon.unrigged.vox",
+   "license": "own",
+   "bytes": 42814,
+   "sha256": "7cc7ec3e8830a1917a7505a8de655e47720b47c652dff6d49fc7410d90f7ee12"
+  },
+  "assets/vox/local/BotRecon.vox": {
+   "source": "space_sim/assets/vox/local/BotRecon.vox",
+   "license": "own",
+   "bytes": 42969,
+   "sha256": "a18775927e27c6acad0429099416c2541179394d6d376499b29792adf49b528a"
+  },
+  "assets/vox/local/BotStorage.json": {
+   "source": "space_sim/assets/vox/local/BotStorage.json",
+   "license": "own",
+   "bytes": 149623,
+   "sha256": "280684a240c6042a892ea1dacd325a2f4b426298dff740561b3aae8b164c0a7b"
+  },
+  "assets/vox/local/BotStorage.unrigged.json": {
+   "source": "space_sim/assets/vox/local/BotStorage.unrigged.json",
+   "license": "own",
+   "bytes": 148512,
+   "sha256": "da8e9444dcc72bbc569ab5f14ade92e80b534d5dea9f52462e3d890f2c6990b8"
+  },
+  "assets/vox/local/BotStorage.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/BotStorage.unrigged.vox",
+   "license": "own",
+   "bytes": 70030,
+   "sha256": "b1f8d5fab4fddd08e9de64dbb25dd8c2c29f3a729fedb82222e05fa898562013"
+  },
+  "assets/vox/local/BotStorage.vox": {
+   "source": "space_sim/assets/vox/local/BotStorage.vox",
+   "license": "own",
+   "bytes": 70185,
+   "sha256": "2d509849a1b163516fcc5af6973efa1e9a7755d70f9c2687e4c2d45ff9c3420f"
+  },
+  "assets/vox/local/MechaTrooper-sheet.png": {
+   "source": "space_sim/assets/vox/local/MechaTrooper-sheet.png",
+   "license": "own",
+   "bytes": 24816,
+   "sha256": "220ded794bcf3231cdb66bcbe01f6e73d7b8ab90a44a87c4a1a4be7b513cc99c"
+  },
+  "assets/vox/local/MechaTrooper.json": {
+   "source": "space_sim/assets/vox/local/MechaTrooper.json",
+   "license": "own",
+   "bytes": 91468,
+   "sha256": "fd99829db72c6544d2f56f5b37391e2ef63eec02e12f84d67f75bae307c7e2a0"
+  },
+  "assets/vox/local/MechaTrooper.rig1.json": {
+   "source": "space_sim/assets/vox/local/MechaTrooper.rig1.json",
+   "license": "own",
+   "bytes": 74651,
+   "sha256": "f5acd61fca2cfd09aef821e9c7901b0000568df25a76fa9ad4a19659e18e77bc"
+  },
+  "assets/vox/local/MechaTrooper.rig1.vox": {
+   "source": "space_sim/assets/vox/local/MechaTrooper.rig1.vox",
+   "license": "own",
+   "bytes": 87365,
+   "sha256": "6928ff81ebed1da329472896e6944fd0d4ebeb09af7837818d39daafd505179a"
+  },
+  "assets/vox/local/MechaTrooper.unrigged.json": {
+   "source": "space_sim/assets/vox/local/MechaTrooper.unrigged.json",
+   "license": "own",
+   "bytes": 72130,
+   "sha256": "bb98b116b4129cf9edb4f823c98da061133e37cefa6a75256eaf99c52ddab8b3"
+  },
+  "assets/vox/local/MechaTrooper.unrigged.vox": {
+   "source": "space_sim/assets/vox/local/MechaTrooper.unrigged.vox",
+   "license": "own",
+   "bytes": 87050,
+   "sha256": "f72555cb74ea35dfc056d3247d14b2c01eefe2cd8394a203e17ecbf6de572e39"
+  },
+  "assets/vox/local/MechaTrooper.vox": {
+   "source": "space_sim/assets/vox/local/MechaTrooper.vox",
+   "license": "own",
+   "bytes": 87670,
+   "sha256": "c66710f5cea0937019a69630daef130bd37205bdd19171454493800d4449d7dd"
+  },
+  "assets/vox/mast.vox": {
+   "source": "space_sim/assets/vox/mast.vox",
+   "license": "own",
+   "bytes": 4208,
+   "sha256": "c575933ed4adac73168b8c4e5ddc85a52e02be20119c8580d38728188fb43561"
+  },
+  "assets/vox/miner.vox": {
+   "source": "space_sim/assets/vox/miner.vox",
+   "license": "own",
+   "bytes": 139072,
+   "sha256": "81b526928b1609a0d3d7cccf94210dca269e7162d77f2dd5fa3c160ae4179a55"
+  },
+  "assets/vox/outpostTower.vox": {
+   "source": "space_sim/assets/vox/outpostTower.vox",
+   "license": "own",
+   "bytes": 30460,
+   "sha256": "f93f6666f2638e79bc28d688a5e27f7e2d40ebce568da3456b30b3b5d54bcfe3"
+  },
+  "assets/vox/parts/airlock.vox": {
+   "source": "space_sim/assets/vox/parts/airlock.vox",
+   "license": "own",
+   "bytes": 12163,
+   "sha256": "5549d090c403ceb4dbcc7bd1c69093e9ed43aa9e9d4627bd8007b91a44262565"
+  },
+  "assets/vox/parts/airlockL.vox": {
+   "source": "space_sim/assets/vox/parts/airlockL.vox",
+   "license": "own",
+   "bytes": 36381,
+   "sha256": "b6c0c685932b43f7a5530281e1ed1ea420c06f3b9090a62e8c520f3f4516b1ce"
+  },
+  "assets/vox/parts/airlockLopen.vox": {
+   "source": "space_sim/assets/vox/parts/airlockLopen.vox",
+   "license": "own",
+   "bytes": 10161,
+   "sha256": "59c9fa70a91e26668af0d53769e0956ce3266a8f4a7e29a4004ef0c0daafedcf"
+  },
+  "assets/vox/parts/airlockopen.vox": {
+   "source": "space_sim/assets/vox/parts/airlockopen.vox",
+   "license": "own",
+   "bytes": 6973,
+   "sha256": "51457ae171a4d0014a43d0e839593c59ee1f097821d7a3137be9a7f09b3122b6"
+  },
+  "assets/vox/parts/airlockXL.vox": {
+   "source": "space_sim/assets/vox/parts/airlockXL.vox",
+   "license": "own",
+   "bytes": 32771,
+   "sha256": "9475dc7044879f514b4e02b5825bb8b5f10042b1d4c5105eb7beec193ef52635"
+  },
+  "assets/vox/parts/airlockXLopen.vox": {
+   "source": "space_sim/assets/vox/parts/airlockXLopen.vox",
+   "license": "own",
+   "bytes": 7213,
+   "sha256": "4ff13e9d1bf461f1948c831d57d141f638e4c7a2df3473fa1f90ffa009131dbd"
+  },
+  "assets/vox/parts/barracks.vox": {
+   "source": "space_sim/assets/vox/parts/barracks.vox",
+   "license": "own",
+   "bytes": 13384,
+   "sha256": "6d3cea383f971ce3565934e14d4b387463c67d2b4a74d5c262cd05359297461f"
+  },
+  "assets/vox/parts/battery.vox": {
+   "source": "space_sim/assets/vox/parts/battery.vox",
+   "license": "own",
+   "bytes": 12685,
+   "sha256": "891fb757daf8d45785ec52e0d52a7a25d93dba045b450db05be2777315a7ab7c"
+  },
+  "assets/vox/parts/batteryL.vox": {
+   "source": "space_sim/assets/vox/parts/batteryL.vox",
+   "license": "own",
+   "bytes": 12453,
+   "sha256": "c28ea2e6c9a27527c9edf9a41e6d047c5bf4a5799225d7005e121de6ef2de8ed"
+  },
+  "assets/vox/parts/batteryM.vox": {
+   "source": "space_sim/assets/vox/parts/batteryM.vox",
+   "license": "own",
+   "bytes": 12729,
+   "sha256": "0413e1de631b60d9a2b4775bcde748c0f92c13f751dd10e3107a314f1f6ae659"
+  },
+  "assets/vox/parts/batteryXL.vox": {
+   "source": "space_sim/assets/vox/parts/batteryXL.vox",
+   "license": "own",
+   "bytes": 12429,
+   "sha256": "d157df437e25ebe81977b0a501bb761fa11fd60e0204db57a73b114d8d6d4a6d"
+  },
+  "assets/vox/parts/beam.vox": {
+   "source": "space_sim/assets/vox/parts/beam.vox",
+   "license": "own",
+   "bytes": 6892,
+   "sha256": "61692c92be01cd1912a0fb68c68298e10824886d1138c0a72490366e0be34671"
+  },
+  "assets/vox/parts/beamL.vox": {
+   "source": "space_sim/assets/vox/parts/beamL.vox",
+   "license": "own",
+   "bytes": 7054,
+   "sha256": "5db4e716347a0439402170058e03ecba9fd0c6fa18f0833bbbf7111ca08e24bd"
+  },
+  "assets/vox/parts/beamM.vox": {
+   "source": "space_sim/assets/vox/parts/beamM.vox",
+   "license": "own",
+   "bytes": 6892,
+   "sha256": "61692c92be01cd1912a0fb68c68298e10824886d1138c0a72490366e0be34671"
+  },
+  "assets/vox/parts/beamXL.vox": {
+   "source": "space_sim/assets/vox/parts/beamXL.vox",
+   "license": "own",
+   "bytes": 7054,
+   "sha256": "5db4e716347a0439402170058e03ecba9fd0c6fa18f0833bbbf7111ca08e24bd"
+  },
+  "assets/vox/parts/bombrack.vox": {
+   "source": "space_sim/assets/vox/parts/bombrack.vox",
+   "license": "own",
+   "bytes": 11983,
+   "sha256": "82e7cefa17feeb302cf3d10c7eb5653d66f50edab0bc943362f490f630e20309"
+  },
+  "assets/vox/parts/bombrackL.vox": {
+   "source": "space_sim/assets/vox/parts/bombrackL.vox",
+   "license": "own",
+   "bytes": 11983,
+   "sha256": "a00dbdfac3a5ebbc17f9fd8db304879674ae79875244a28f9c1e5b4af4d68c53"
+  },
+  "assets/vox/parts/bombrackM.vox": {
+   "source": "space_sim/assets/vox/parts/bombrackM.vox",
+   "license": "own",
+   "bytes": 11983,
+   "sha256": "a4dc83bf8391ad0da401d49fb3d5b399a854d281b982658e042a350be0024f23"
+  },
+  "assets/vox/parts/bombrackXL.vox": {
+   "source": "space_sim/assets/vox/parts/bombrackXL.vox",
+   "license": "own",
+   "bytes": 11983,
+   "sha256": "a0f2c181a267575fe8a8545872955ad4ef883e05a3403592485b3319ee0c1f20"
+  },
+  "assets/vox/parts/cannonL.vox": {
+   "source": "space_sim/assets/vox/parts/cannonL.vox",
+   "license": "own",
+   "bytes": 13312,
+   "sha256": "d7268cc0f19fe83400b4dbd9355b17a1ac8fde5f7ad966a80610931c712bedc9"
+  },
+  "assets/vox/parts/cannonM.vox": {
+   "source": "space_sim/assets/vox/parts/cannonM.vox",
+   "license": "own",
+   "bytes": 13052,
+   "sha256": "3883a06c2590022f2b12fc01e31057a61b24e2ed885c15d80a620b23968f271d"
+  },
+  "assets/vox/parts/cannonS.vox": {
+   "source": "space_sim/assets/vox/parts/cannonS.vox",
+   "license": "own",
+   "bytes": 14817,
+   "sha256": "974cfd7b81b40e6a63b892155d3ef1bdfdbae32883f23383fa99566b5ffb5576"
+  },
+  "assets/vox/parts/cannonXL.vox": {
+   "source": "space_sim/assets/vox/parts/cannonXL.vox",
+   "license": "own",
+   "bytes": 14513,
+   "sha256": "56e45d69fa575e43f1cfbc6b6ca064e320a55a27be717000f84d6a951e9df40a"
+  },
+  "assets/vox/parts/canopyBubbleL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyBubbleL.vox",
+   "license": "own",
+   "bytes": 7890,
+   "sha256": "63c4f76ba1669cecf3a142df3a9db2a6dbb85873462b414a61a358efca918054"
+  },
+  "assets/vox/parts/canopyBubbleM.vox": {
+   "source": "space_sim/assets/vox/parts/canopyBubbleM.vox",
+   "license": "own",
+   "bytes": 7803,
+   "sha256": "d43128868d313e2fd08ece577dc9336de66ce55a9376dda15857c9280454e625"
+  },
+  "assets/vox/parts/canopyBubbleS.vox": {
+   "source": "space_sim/assets/vox/parts/canopyBubbleS.vox",
+   "license": "own",
+   "bytes": 7707,
+   "sha256": "0ad7a7907d609dec9c474611365d941aecae21ade88de53fdfe2da6e624f5e8c"
+  },
+  "assets/vox/parts/canopyBubbleXL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyBubbleXL.vox",
+   "license": "own",
+   "bytes": 7890,
+   "sha256": "e795c034f4acf6e810f114fee7554a66119ff894daeddeed1e5dd4fd377c7ae0"
+  },
+  "assets/vox/parts/canopyPortL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyPortL.vox",
+   "license": "own",
+   "bytes": 9646,
+   "sha256": "9af19063132f11768136583f170fb79a8ccb926af9920d72dd8dfffccab7115f"
+  },
+  "assets/vox/parts/canopyPortM.vox": {
+   "source": "space_sim/assets/vox/parts/canopyPortM.vox",
+   "license": "own",
+   "bytes": 9549,
+   "sha256": "594d89d2ed2d383cbca990f5fc704fd05d8592ce98709de376afb4151b52420b"
+  },
+  "assets/vox/parts/canopyPortS.vox": {
+   "source": "space_sim/assets/vox/parts/canopyPortS.vox",
+   "license": "own",
+   "bytes": 9549,
+   "sha256": "866fbf3a706fde322dbc918ad3a688a91d9945575c47c8da9597996e063ba61d"
+  },
+  "assets/vox/parts/canopyPortXL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyPortXL.vox",
+   "license": "own",
+   "bytes": 9646,
+   "sha256": "4634dcd3c573034874318278218de870ba8389969e22da131d3433956cc103a5"
+  },
+  "assets/vox/parts/canopyStripL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyStripL.vox",
+   "license": "own",
+   "bytes": 7507,
+   "sha256": "c3264a32b9c6d57c884654945686c6118612ccbda2e1d944aaceb7c5e179260e"
+  },
+  "assets/vox/parts/canopyStripM.vox": {
+   "source": "space_sim/assets/vox/parts/canopyStripM.vox",
+   "license": "own",
+   "bytes": 7507,
+   "sha256": "780a9c6f9eea0393b9a8f2a7944d51c888ecda9fd8641dfc5bf5331dd0daa521"
+  },
+  "assets/vox/parts/canopyStripS.vox": {
+   "source": "space_sim/assets/vox/parts/canopyStripS.vox",
+   "license": "own",
+   "bytes": 7507,
+   "sha256": "0cc8f3853b583d3c7ebee9da9e0f6f76d45ba43d8f5ff20872ff88670e3896da"
+  },
+  "assets/vox/parts/canopyStripXL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyStripXL.vox",
+   "license": "own",
+   "bytes": 7507,
+   "sha256": "7013f88a41183ecad0b6b6017243b547aff2ed47d23dbe5c6f2938430deedb37"
+  },
+  "assets/vox/parts/canopyWrapL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyWrapL.vox",
+   "license": "own",
+   "bytes": 9925,
+   "sha256": "567eaa16215cf2cd79b23497005e875eeac8d119beec73b8845db079893153ca"
+  },
+  "assets/vox/parts/canopyWrapM.vox": {
+   "source": "space_sim/assets/vox/parts/canopyWrapM.vox",
+   "license": "own",
+   "bytes": 9917,
+   "sha256": "7303cd97d373ff05fe3e3e3edfe51dbe76672a959940cab7ccf9bc4fac1e95b9"
+  },
+  "assets/vox/parts/canopyWrapS.vox": {
+   "source": "space_sim/assets/vox/parts/canopyWrapS.vox",
+   "license": "own",
+   "bytes": 9917,
+   "sha256": "13a7d286668fbb1c8f3b7e5299f36277272384b0700af9a119d16765a3d1d4d3"
+  },
+  "assets/vox/parts/canopyWrapXL.vox": {
+   "source": "space_sim/assets/vox/parts/canopyWrapXL.vox",
+   "license": "own",
+   "bytes": 9925,
+   "sha256": "40f4db335a9d018bb46af4ed30566ef79611626fbdd1ca4c6be85681d9d9217c"
+  },
+  "assets/vox/parts/chaffLauncher.vox": {
+   "source": "space_sim/assets/vox/parts/chaffLauncher.vox",
+   "license": "own",
+   "bytes": 10034,
+   "sha256": "fb719c67e8289c0c0c9f7194f09b9e69d781012c9933d5b0faaa50787610d7a7"
+  },
+  "assets/vox/parts/clampL.vox": {
+   "source": "space_sim/assets/vox/parts/clampL.vox",
+   "license": "own",
+   "bytes": 61504,
+   "sha256": "ec9609814ac663fc546ed0ec29cd2b78a8ab6bd31f7619450655ae76325f5be6"
+  },
+  "assets/vox/parts/clampM.vox": {
+   "source": "space_sim/assets/vox/parts/clampM.vox",
+   "license": "own",
+   "bytes": 57440,
+   "sha256": "dbb74311b223ef7c3e2583551d004c29865164505efcd38965aa9a5d7d9ea13b"
+  },
+  "assets/vox/parts/cloak.vox": {
+   "source": "space_sim/assets/vox/parts/cloak.vox",
+   "license": "own",
+   "bytes": 13759,
+   "sha256": "966ad5677b3841da7c79411591fd18fbe39deba82c093c00c69ddb8ceac3f548"
+  },
+  "assets/vox/parts/cloakL.vox": {
+   "source": "space_sim/assets/vox/parts/cloakL.vox",
+   "license": "own",
+   "bytes": 18002,
+   "sha256": "6cd92d8fcbcf737f6d2becc9a2497c80ec514a51dd95235e3fccfa97a1411425"
+  },
+  "assets/vox/parts/cloakM.vox": {
+   "source": "space_sim/assets/vox/parts/cloakM.vox",
+   "license": "own",
+   "bytes": 13759,
+   "sha256": "60e8009163759b2b847fcf5710395c1421e42057f7b610b86fc59a63b87bcc29"
+  },
+  "assets/vox/parts/cloakXL.vox": {
+   "source": "space_sim/assets/vox/parts/cloakXL.vox",
+   "license": "own",
+   "bytes": 18002,
+   "sha256": "7aa20e4c275d68cedba6da9a2027168aed4fa14fdfc654a6ebbea184bc4f6d12"
+  },
+  "assets/vox/parts/cockpit.vox": {
+   "source": "space_sim/assets/vox/parts/cockpit.vox",
+   "license": "own",
+   "bytes": 12634,
+   "sha256": "afbc71b5f9fc4034e49f2750035a9182375bd6a6dbe4daf4fb5a6b61f8793596"
+  },
+  "assets/vox/parts/coreL.vox": {
+   "source": "space_sim/assets/vox/parts/coreL.vox",
+   "license": "own",
+   "bytes": 16781,
+   "sha256": "4cfd7b368b60271b466aafe7fe1bdb8d6c9825d61ee759226a2677f54610c68b"
+  },
+  "assets/vox/parts/coreM.vox": {
+   "source": "space_sim/assets/vox/parts/coreM.vox",
+   "license": "own",
+   "bytes": 19453,
+   "sha256": "4eff0b7f859c12b7d395bfd288ac422b644db96eb14383da3d60385a59d0e201"
+  },
+  "assets/vox/parts/coreS.vox": {
+   "source": "space_sim/assets/vox/parts/coreS.vox",
+   "license": "own",
+   "bytes": 19453,
+   "sha256": "3e303cd299e0206cbf02b705d927f9d31527705d8fdf865f9720ed70ae5e06d5"
+  },
+  "assets/vox/parts/coreXL.vox": {
+   "source": "space_sim/assets/vox/parts/coreXL.vox",
+   "license": "own",
+   "bytes": 16781,
+   "sha256": "a6fcd38649a48ff2568e91d043be6fd2991500af8fd37307520a915044a8a99e"
+  },
+  "assets/vox/parts/dock.vox": {
+   "source": "space_sim/assets/vox/parts/dock.vox",
+   "license": "own",
+   "bytes": 20377,
+   "sha256": "bcf7044338879929150b37f799237390fd7279c881b8fa0e5dcdeccfe47beb98"
+  },
+  "assets/vox/parts/dockopen.vox": {
+   "source": "space_sim/assets/vox/parts/dockopen.vox",
+   "license": "own",
+   "bytes": 13985,
+   "sha256": "e19d9be33f3f1dffe9ef713244345f0e99ff80663f15ff21d9f84846d468cf65"
+  },
+  "assets/vox/parts/flakgun.vox": {
+   "source": "space_sim/assets/vox/parts/flakgun.vox",
+   "license": "own",
+   "bytes": 14665,
+   "sha256": "601bb8bb57a48be0af31f15729c4c34fd850aa3ae1ae332b25432a016487c100"
+  },
+  "assets/vox/parts/flakgunL.vox": {
+   "source": "space_sim/assets/vox/parts/flakgunL.vox",
+   "license": "own",
+   "bytes": 14665,
+   "sha256": "04dfcad3a51dcc60465c88366b1acd576ed9f04adbc5fcdb0de47bbdef33168a"
+  },
+  "assets/vox/parts/flakgunM.vox": {
+   "source": "space_sim/assets/vox/parts/flakgunM.vox",
+   "license": "own",
+   "bytes": 14665,
+   "sha256": "601bb8bb57a48be0af31f15729c4c34fd850aa3ae1ae332b25432a016487c100"
+  },
+  "assets/vox/parts/flakgunXL.vox": {
+   "source": "space_sim/assets/vox/parts/flakgunXL.vox",
+   "license": "own",
+   "bytes": 14665,
+   "sha256": "04dfcad3a51dcc60465c88366b1acd576ed9f04adbc5fcdb0de47bbdef33168a"
+  },
+  "assets/vox/parts/flareLauncher.vox": {
+   "source": "space_sim/assets/vox/parts/flareLauncher.vox",
+   "license": "own",
+   "bytes": 9664,
+   "sha256": "8f0c0c8d6bd669fb161cb3ec53dda6e0a73597468ebb1ad6d4a3fd4ba0bc652f"
+  },
+  "assets/vox/parts/gatling.vox": {
+   "source": "space_sim/assets/vox/parts/gatling.vox",
+   "license": "own",
+   "bytes": 9672,
+   "sha256": "e6e842ec2769a83aecddfc18d38cdd09436831cd28ac8f0ea89f06bc34f85fb5"
+  },
+  "assets/vox/parts/gatlingL.vox": {
+   "source": "space_sim/assets/vox/parts/gatlingL.vox",
+   "license": "own",
+   "bytes": 9768,
+   "sha256": "162dbcb666bcb22a0d75384974934d92942376a68ce498a5300a30d55cb36bdf"
+  },
+  "assets/vox/parts/gatlingM.vox": {
+   "source": "space_sim/assets/vox/parts/gatlingM.vox",
+   "license": "own",
+   "bytes": 9672,
+   "sha256": "fb92513a33a162087ed2e4ae40a6069eb1f99d8a98090563cdada62c71e7388a"
+  },
+  "assets/vox/parts/gatlingXL.vox": {
+   "source": "space_sim/assets/vox/parts/gatlingXL.vox",
+   "license": "own",
+   "bytes": 9768,
+   "sha256": "d033cc8b58f06dd7df136c0fd62f42cc0975daa88fbc03e4187d2ae45763a04e"
+  },
+  "assets/vox/parts/gravgenL.vox": {
+   "source": "space_sim/assets/vox/parts/gravgenL.vox",
+   "license": "own",
+   "bytes": 21191,
+   "sha256": "7a5169fe283bceb32fcff01208c176357db0a0a0757659ed6e23f1ea370d06dd"
+  },
+  "assets/vox/parts/gravgenM.vox": {
+   "source": "space_sim/assets/vox/parts/gravgenM.vox",
+   "license": "own",
+   "bytes": 17889,
+   "sha256": "4f5253e494dddbd2b6cb396ae09684816a5147877f65ff6170977425cd055d82"
+  },
+  "assets/vox/parts/gravgenS.vox": {
+   "source": "space_sim/assets/vox/parts/gravgenS.vox",
+   "license": "own",
+   "bytes": 17847,
+   "sha256": "4a4c60db512b35529edd9318129ab8ae08caa07f2a2f373636cc2d4ddf4b0e93"
+  },
+  "assets/vox/parts/gravgenXL.vox": {
+   "source": "space_sim/assets/vox/parts/gravgenXL.vox",
+   "license": "own",
+   "bytes": 21075,
+   "sha256": "03c399edf32e2b0cadc857a5f2faa467fb83f37fb3c6d4bd66922ebaee7eb947"
+  },
+  "assets/vox/parts/hoverpad.vox": {
+   "source": "space_sim/assets/vox/parts/hoverpad.vox",
+   "license": "own",
+   "bytes": 16027,
+   "sha256": "fdcd8aadf9324179fd7987b452ec4ac55ff92764eea2c0dab1c44e8ed3acd646"
+  },
+  "assets/vox/parts/hoverpadL.vox": {
+   "source": "space_sim/assets/vox/parts/hoverpadL.vox",
+   "license": "own",
+   "bytes": 16027,
+   "sha256": "511dff6d70d486f42e249fef4d7d1d96fe4f5f71f21834b0ad1b32991e1f52a3"
+  },
+  "assets/vox/parts/hoverpadM.vox": {
+   "source": "space_sim/assets/vox/parts/hoverpadM.vox",
+   "license": "own",
+   "bytes": 16027,
+   "sha256": "5f1ca85fa90df0c4231c0b6a50504d47781bd6279faf67cd5d2260b9b7605434"
+  },
+  "assets/vox/parts/hoverpadXL.vox": {
+   "source": "space_sim/assets/vox/parts/hoverpadXL.vox",
+   "license": "own",
+   "bytes": 16027,
+   "sha256": "af30bc7f78b4c74fda2beb45c2dde585fff1a189fe605ede1f39be484ada9bd8"
+  },
+  "assets/vox/parts/ion.vox": {
+   "source": "space_sim/assets/vox/parts/ion.vox",
+   "license": "own",
+   "bytes": 15317,
+   "sha256": "fd361e61f1efe10f6d2a2bad5418fd4a5e24d3044c16f10afa5b9503fcd6e7fe"
+  },
+  "assets/vox/parts/ionL.vox": {
+   "source": "space_sim/assets/vox/parts/ionL.vox",
+   "license": "own",
+   "bytes": 16613,
+   "sha256": "185509004eed49b257d58217f6c7657cb2c0fbf799142d29d8596f6288f64db4"
+  },
+  "assets/vox/parts/ionM.vox": {
+   "source": "space_sim/assets/vox/parts/ionM.vox",
+   "license": "own",
+   "bytes": 15317,
+   "sha256": "fd361e61f1efe10f6d2a2bad5418fd4a5e24d3044c16f10afa5b9503fcd6e7fe"
+  },
+  "assets/vox/parts/ionXL.vox": {
+   "source": "space_sim/assets/vox/parts/ionXL.vox",
+   "license": "own",
+   "bytes": 16613,
+   "sha256": "185509004eed49b257d58217f6c7657cb2c0fbf799142d29d8596f6288f64db4"
+  },
+  "assets/vox/parts/jammerL.vox": {
+   "source": "space_sim/assets/vox/parts/jammerL.vox",
+   "license": "own",
+   "bytes": 18953,
+   "sha256": "3021d9ba00ade17a7ebe9922e508114bf7110fe37fdd90f5ec13f877b1c7e321"
+  },
+  "assets/vox/parts/jammerM.vox": {
+   "source": "space_sim/assets/vox/parts/jammerM.vox",
+   "license": "own",
+   "bytes": 15824,
+   "sha256": "2da661b193f6734585135b725d2af110cbf7b7594922d267a2917325f0a18da5"
+  },
+  "assets/vox/parts/jammerS.vox": {
+   "source": "space_sim/assets/vox/parts/jammerS.vox",
+   "license": "own",
+   "bytes": 15852,
+   "sha256": "f2c122254bac6c74cb27e67a7a9ea8605da02810b2b0e2f6ad89606803ab4c64"
+  },
+  "assets/vox/parts/jammerXL.vox": {
+   "source": "space_sim/assets/vox/parts/jammerXL.vox",
+   "license": "own",
+   "bytes": 18977,
+   "sha256": "c907e94b24235335498b32ddc68054ab97082322e2146495540923ee631b38b2"
+  },
+  "assets/vox/parts/laser.vox": {
+   "source": "space_sim/assets/vox/parts/laser.vox",
+   "license": "own",
+   "bytes": 5465,
+   "sha256": "6a2a91ace076aa2140701cb4e89950c1e484f568e570d3f53421a0be0dcc47b6"
+  },
+  "assets/vox/parts/lasergunL.vox": {
+   "source": "space_sim/assets/vox/parts/lasergunL.vox",
+   "license": "own",
+   "bytes": 5541,
+   "sha256": "e1387fd09c22d5a487169013bd28a2c57479e38cb1df8886da9c76b51f2ca58a"
+  },
+  "assets/vox/parts/lasergunM.vox": {
+   "source": "space_sim/assets/vox/parts/lasergunM.vox",
+   "license": "own",
+   "bytes": 5465,
+   "sha256": "6a2a91ace076aa2140701cb4e89950c1e484f568e570d3f53421a0be0dcc47b6"
+  },
+  "assets/vox/parts/lasergunXL.vox": {
+   "source": "space_sim/assets/vox/parts/lasergunXL.vox",
+   "license": "own",
+   "bytes": 5541,
+   "sha256": "e1387fd09c22d5a487169013bd28a2c57479e38cb1df8886da9c76b51f2ca58a"
+  },
+  "assets/vox/parts/laserL.vox": {
+   "source": "space_sim/assets/vox/parts/laserL.vox",
+   "license": "own",
+   "bytes": 19081,
+   "sha256": "40813e5beea3b593e54bdff9e66bd1222468bbc6007f139c968c550ad886f653"
+  },
+  "assets/vox/parts/laserM.vox": {
+   "source": "space_sim/assets/vox/parts/laserM.vox",
+   "license": "own",
+   "bytes": 16864,
+   "sha256": "e93fe24a9ef8bddddee960e20a894fb80588a950f42d7013bf6322286065e40f"
+  },
+  "assets/vox/parts/laserXL.vox": {
+   "source": "space_sim/assets/vox/parts/laserXL.vox",
+   "license": "own",
+   "bytes": 20274,
+   "sha256": "f836db57d2810359e4cfc2212d2d450ee1aa0512ad9404c175a12903b9609eae"
+  },
+  "assets/vox/parts/medbay.vox": {
+   "source": "space_sim/assets/vox/parts/medbay.vox",
+   "license": "own",
+   "bytes": 8401,
+   "sha256": "0fbcc3cbaefd2e65d69783209604f74710edac930248e721a3c0fcec09910458"
+  },
+  "assets/vox/parts/mininglaser.vox": {
+   "source": "space_sim/assets/vox/parts/mininglaser.vox",
+   "license": "own",
+   "bytes": 4744,
+   "sha256": "5e0612085a7b6df939f40e850ad7d1ccae492f58ebeee3f09c626855c77398c9"
+  },
+  "assets/vox/parts/missile.vox": {
+   "source": "space_sim/assets/vox/parts/missile.vox",
+   "license": "own",
+   "bytes": 3237,
+   "sha256": "9ceba5a55956c009898eb45176825e92aeda1daa5a445dbfa855731b49fb55f0"
+  },
+  "assets/vox/parts/missileL.vox": {
+   "source": "space_sim/assets/vox/parts/missileL.vox",
+   "license": "own",
+   "bytes": 3323,
+   "sha256": "0224e94ee75ed81637b607f22bf00c4bb0113e33419a8cf2eae503ed86834261"
+  },
+  "assets/vox/parts/missileS.vox": {
+   "source": "space_sim/assets/vox/parts/missileS.vox",
+   "license": "own",
+   "bytes": 3237,
+   "sha256": "9ceba5a55956c009898eb45176825e92aeda1daa5a445dbfa855731b49fb55f0"
+  },
+  "assets/vox/parts/missileXL.vox": {
+   "source": "space_sim/assets/vox/parts/missileXL.vox",
+   "license": "own",
+   "bytes": 3323,
+   "sha256": "0224e94ee75ed81637b607f22bf00c4bb0113e33419a8cf2eae503ed86834261"
+  },
+  "assets/vox/parts/mturretL.vox": {
+   "source": "space_sim/assets/vox/parts/mturretL.vox",
+   "license": "own",
+   "bytes": 14647,
+   "sha256": "d3a53aca364292d23fbd29c7388ae2644eedf0dbcbbc87846f6b3da72d7efb33"
+  },
+  "assets/vox/parts/mturretM.vox": {
+   "source": "space_sim/assets/vox/parts/mturretM.vox",
+   "license": "own",
+   "bytes": 14411,
+   "sha256": "d04df72bd0b8d69a9643d0a53f3513a549b6f5a48b66d810e4976c1a302c658e"
+  },
+  "assets/vox/parts/mturretS.vox": {
+   "source": "space_sim/assets/vox/parts/mturretS.vox",
+   "license": "own",
+   "bytes": 16160,
+   "sha256": "13e376c923d7ea340ce9b82ebd1bbce6258c8a5312b3df6057a278e9c3155d94"
+  },
+  "assets/vox/parts/mturretXL.vox": {
+   "source": "space_sim/assets/vox/parts/mturretXL.vox",
+   "license": "own",
+   "bytes": 15860,
+   "sha256": "1d2ae20f05edc8784fc0859241650e8cf5acb8206c26d385a0873fb68318e7e2"
+  },
+  "assets/vox/parts/parts.json": {
+   "source": "space_sim/assets/vox/parts/parts.json",
+   "license": "own",
+   "bytes": 5,
+   "sha256": "8e1d794b49e35ea828279c6a8c95282bbb9a0787cf5c9385256c2cc9d17baeb7"
+  },
+  "assets/vox/parts/pdL.vox": {
+   "source": "space_sim/assets/vox/parts/pdL.vox",
+   "license": "own",
+   "bytes": 13944,
+   "sha256": "00aa1dfd4cd5e6efa22f9954469bb4391f4c4af4c64b4bd877e7f4d4f2bb14f2"
+  },
+  "assets/vox/parts/pdM.vox": {
+   "source": "space_sim/assets/vox/parts/pdM.vox",
+   "license": "own",
+   "bytes": 13640,
+   "sha256": "16eafd179a26918453910c76d1590dfc8c25dfd3f29f7bb54da2428d01b9d57c"
+  },
+  "assets/vox/parts/pdS.vox": {
+   "source": "space_sim/assets/vox/parts/pdS.vox",
+   "license": "own",
+   "bytes": 15441,
+   "sha256": "29f724143f6842b490b8817466f946c47e6b3e74465b17a1336915d9c718f503"
+  },
+  "assets/vox/parts/pdXL.vox": {
+   "source": "space_sim/assets/vox/parts/pdXL.vox",
+   "license": "own",
+   "bytes": 15141,
+   "sha256": "5caf19557778017e662abd64f0c5a3c7c9ca3c97dc40f486d1dfbeb853b6c883"
+  },
+  "assets/vox/parts/podLauncherL.vox": {
+   "source": "space_sim/assets/vox/parts/podLauncherL.vox",
+   "license": "own",
+   "bytes": 23576,
+   "sha256": "9ba575760e3308ce0aaa7d0b591dbe6f59301cb326eb806da2e87a99d8f3a17e"
+  },
+  "assets/vox/parts/podLauncherXL.vox": {
+   "source": "space_sim/assets/vox/parts/podLauncherXL.vox",
+   "license": "own",
+   "bytes": 24700,
+   "sha256": "e1c2283d17341e3286db227cf5136f3e02bd93a3fa07da0b23d1661b30b2669e"
+  },
+  "assets/vox/parts/radar.vox": {
+   "source": "space_sim/assets/vox/parts/radar.vox",
+   "license": "own",
+   "bytes": 7835,
+   "sha256": "0663b679de24d4adf45c0254e4ed0c65fbdea3a1e45c0d4a900dfebe2a3930ff"
+  },
+  "assets/vox/parts/radarL.vox": {
+   "source": "space_sim/assets/vox/parts/radarL.vox",
+   "license": "own",
+   "bytes": 11110,
+   "sha256": "599fcbb0455855ca11bb530dacb92500241f5036c4902128ea4c2a45a4c6931c"
+  },
+  "assets/vox/parts/radarM.vox": {
+   "source": "space_sim/assets/vox/parts/radarM.vox",
+   "license": "own",
+   "bytes": 7835,
+   "sha256": "59c8fd474b78e857fecd3aa63fe6a95304b066e52eecc12a6db2287a9cb52b35"
+  },
+  "assets/vox/parts/radarMissile.vox": {
+   "source": "space_sim/assets/vox/parts/radarMissile.vox",
+   "license": "own",
+   "bytes": 3365,
+   "sha256": "efefb55040c5867ff15bbda95a581e049daa8b8003e42e306ce704e2dd09db5e"
+  },
+  "assets/vox/parts/radarMissileL.vox": {
+   "source": "space_sim/assets/vox/parts/radarMissileL.vox",
+   "license": "own",
+   "bytes": 3451,
+   "sha256": "2c468d90c0d5bd0fb267969cbe2d83cdb643e22e17dce86ad120a2474c5ae643"
+  },
+  "assets/vox/parts/radarMissileS.vox": {
+   "source": "space_sim/assets/vox/parts/radarMissileS.vox",
+   "license": "own",
+   "bytes": 3365,
+   "sha256": "efefb55040c5867ff15bbda95a581e049daa8b8003e42e306ce704e2dd09db5e"
+  },
+  "assets/vox/parts/radarMissileXL.vox": {
+   "source": "space_sim/assets/vox/parts/radarMissileXL.vox",
+   "license": "own",
+   "bytes": 3451,
+   "sha256": "2c468d90c0d5bd0fb267969cbe2d83cdb643e22e17dce86ad120a2474c5ae643"
+  },
+  "assets/vox/parts/radarXL.vox": {
+   "source": "space_sim/assets/vox/parts/radarXL.vox",
+   "license": "own",
+   "bytes": 11146,
+   "sha256": "b3b283bdd66fc9f8c5eca6e4954dc6131d7e8837db7987b9792f010acfd6da60"
+  },
+  "assets/vox/parts/railgun.vox": {
+   "source": "space_sim/assets/vox/parts/railgun.vox",
+   "license": "own",
+   "bytes": 10248,
+   "sha256": "0a32e3d48b73b6175b1e1ebd28c5ac871f74f8a880c9c2b7d00922a85e48da90"
+  },
+  "assets/vox/parts/railgunL.vox": {
+   "source": "space_sim/assets/vox/parts/railgunL.vox",
+   "license": "own",
+   "bytes": 10504,
+   "sha256": "66ef68f588d37cfb2ed7dee40c62d3634a61e6b7e3168de897365ba36d5c4620"
+  },
+  "assets/vox/parts/railgunS.vox": {
+   "source": "space_sim/assets/vox/parts/railgunS.vox",
+   "license": "own",
+   "bytes": 10248,
+   "sha256": "0a32e3d48b73b6175b1e1ebd28c5ac871f74f8a880c9c2b7d00922a85e48da90"
+  },
+  "assets/vox/parts/railgunXL.vox": {
+   "source": "space_sim/assets/vox/parts/railgunXL.vox",
+   "license": "own",
+   "bytes": 10504,
+   "sha256": "66ef68f588d37cfb2ed7dee40c62d3634a61e6b7e3168de897365ba36d5c4620"
+  },
+  "assets/vox/parts/reactor.vox": {
+   "source": "space_sim/assets/vox/parts/reactor.vox",
+   "license": "own",
+   "bytes": 18005,
+   "sha256": "43ade88a317464b77eb7cf65242f533331c7b6caaf01ea798d8c4988404aaf6c"
+  },
+  "assets/vox/parts/reactorL.vox": {
+   "source": "space_sim/assets/vox/parts/reactorL.vox",
+   "license": "own",
+   "bytes": 19999,
+   "sha256": "372847eb2472c13e84d140e7d018726265ba67bbf250c572cbaa6dde80ce46e6"
+  },
+  "assets/vox/parts/reactorM.vox": {
+   "source": "space_sim/assets/vox/parts/reactorM.vox",
+   "license": "own",
+   "bytes": 18108,
+   "sha256": "f9f307713a4232da309984a80b531d7e8c900881dbdd28fca262477f5048aef1"
+  },
+  "assets/vox/parts/reactorXL.vox": {
+   "source": "space_sim/assets/vox/parts/reactorXL.vox",
+   "license": "own",
+   "bytes": 20269,
+   "sha256": "f891e5beefd52c413d5104f63695deec749d997910d330f7a3fd863d9662dec3"
+  },
+  "assets/vox/parts/rocketpod.vox": {
+   "source": "space_sim/assets/vox/parts/rocketpod.vox",
+   "license": "own",
+   "bytes": 20667,
+   "sha256": "3b04f1a5ee5681efd6b7df2124806cfa8a2ceab5febe426ac0c1a900a2013b55"
+  },
+  "assets/vox/parts/rocketpodL.vox": {
+   "source": "space_sim/assets/vox/parts/rocketpodL.vox",
+   "license": "own",
+   "bytes": 20667,
+   "sha256": "d3e9db6373c838780bc1aca639110a12dbd120f7b40e81aa9fc740eef47a8c1c"
+  },
+  "assets/vox/parts/rocketpodM.vox": {
+   "source": "space_sim/assets/vox/parts/rocketpodM.vox",
+   "license": "own",
+   "bytes": 20667,
+   "sha256": "b8ee469892d8dfbf1159e1959bf3f81f3e78a2894ff54809fc6468e99b36afeb"
+  },
+  "assets/vox/parts/rocketpodXL.vox": {
+   "source": "space_sim/assets/vox/parts/rocketpodXL.vox",
+   "license": "own",
+   "bytes": 20667,
+   "sha256": "d935f4d794688db45ba0543af5376d40d193c7227bb73d6b1fd3e37a9bd0b437"
+  },
+  "assets/vox/parts/sentry.vox": {
+   "source": "space_sim/assets/vox/parts/sentry.vox",
+   "license": "own",
+   "bytes": 5129,
+   "sha256": "3005204b55a60dfaa3408bf5f4e90285394b2ca35868fec7a2d5cf987e87b8bf"
+  },
+  "assets/vox/parts/servicePad.vox": {
+   "source": "space_sim/assets/vox/parts/servicePad.vox",
+   "license": "own",
+   "bytes": 27499,
+   "sha256": "a20a5e65b5d0ee759844cc5838261ab1e05d61a19dfdab674b5b1b984e4e6a7f"
+  },
+  "assets/vox/parts/shieldgen.vox": {
+   "source": "space_sim/assets/vox/parts/shieldgen.vox",
+   "license": "own",
+   "bytes": 17073,
+   "sha256": "744329783c60579a96bc08078a4043bc77b674962823c3fa3b346a1f00ea5c44"
+  },
+  "assets/vox/parts/shieldgenL.vox": {
+   "source": "space_sim/assets/vox/parts/shieldgenL.vox",
+   "license": "own",
+   "bytes": 17283,
+   "sha256": "1160eaa6374558b27329a73acdc011033c211ca874a7cec05104e07443f9373e"
+  },
+  "assets/vox/parts/shieldgenM.vox": {
+   "source": "space_sim/assets/vox/parts/shieldgenM.vox",
+   "license": "own",
+   "bytes": 17073,
+   "sha256": "744329783c60579a96bc08078a4043bc77b674962823c3fa3b346a1f00ea5c44"
+  },
+  "assets/vox/parts/shieldgenXL.vox": {
+   "source": "space_sim/assets/vox/parts/shieldgenXL.vox",
+   "license": "own",
+   "bytes": 17283,
+   "sha256": "1160eaa6374558b27329a73acdc011033c211ca874a7cec05104e07443f9373e"
+  },
+  "assets/vox/parts/smartbomb.vox": {
+   "source": "space_sim/assets/vox/parts/smartbomb.vox",
+   "license": "own",
+   "bytes": 10261,
+   "sha256": "fed9a7121fd674219f055b70cee1d899bdd53cdfdb8ad7da64cf910761143cf3"
+  },
+  "assets/vox/parts/smartbombL.vox": {
+   "source": "space_sim/assets/vox/parts/smartbombL.vox",
+   "license": "own",
+   "bytes": 10261,
+   "sha256": "2adff9aa898d6e4d4cc9162d92fd522b90f97faa43bdc5a927974287e6424c87"
+  },
+  "assets/vox/parts/smartbombM.vox": {
+   "source": "space_sim/assets/vox/parts/smartbombM.vox",
+   "license": "own",
+   "bytes": 10261,
+   "sha256": "4e38f9cc95aed7fee3f023a7567c6fe176c4b316a23d0a1ebb092961dc978d47"
+  },
+  "assets/vox/parts/smartbombXL.vox": {
+   "source": "space_sim/assets/vox/parts/smartbombXL.vox",
+   "license": "own",
+   "bytes": 10261,
+   "sha256": "a7a079e219a2ef7e5676cd6b5d2a181b9d4e3a665159bb3e4cf36a88c4bc2a9e"
+  },
+  "assets/vox/parts/survey.vox": {
+   "source": "space_sim/assets/vox/parts/survey.vox",
+   "license": "own",
+   "bytes": 16766,
+   "sha256": "c56f5897382b9a46ad054d6f1264d3d47ada8a8445ba565bea446a9e50353e89"
+  },
+  "assets/vox/parts/surveyL.vox": {
+   "source": "space_sim/assets/vox/parts/surveyL.vox",
+   "license": "own",
+   "bytes": 16844,
+   "sha256": "c02b6a72cdec5be1dd4fb0faae19ebf41ce8cd05913dd9846fd6179266e783cf"
+  },
+  "assets/vox/parts/surveyM.vox": {
+   "source": "space_sim/assets/vox/parts/surveyM.vox",
+   "license": "own",
+   "bytes": 16722,
+   "sha256": "5d068ecb5848bd726420cac20e24315e05cd30ecda3c071e38cbe558b66e5e00"
+  },
+  "assets/vox/parts/surveyXL.vox": {
+   "source": "space_sim/assets/vox/parts/surveyXL.vox",
+   "license": "own",
+   "bytes": 16836,
+   "sha256": "7b5ac039dc0ae0f0258fae6f2b26b1d9c50f44c93852267d96561a7c7c0582a9"
+  },
+  "assets/vox/parts/swarm.vox": {
+   "source": "space_sim/assets/vox/parts/swarm.vox",
+   "license": "own",
+   "bytes": 39248,
+   "sha256": "88c01a33b8d9c8ec1afe97cd8812dba6badcb0c81ea0d4b117716873f93b2b3b"
+  },
+  "assets/vox/parts/swarmL.vox": {
+   "source": "space_sim/assets/vox/parts/swarmL.vox",
+   "license": "own",
+   "bytes": 39680,
+   "sha256": "c2e078106fbcd96d58c0fbfb340fc509836740a582293f1d5ee9f93042d39a2b"
+  },
+  "assets/vox/parts/swarmM.vox": {
+   "source": "space_sim/assets/vox/parts/swarmM.vox",
+   "license": "own",
+   "bytes": 39248,
+   "sha256": "01db42cde053f1d68fca666e44914b3ac0496a88f85a03aab1ff0a9238ac7a19"
+  },
+  "assets/vox/parts/swarmXL.vox": {
+   "source": "space_sim/assets/vox/parts/swarmXL.vox",
+   "license": "own",
+   "bytes": 39680,
+   "sha256": "5457a3e683499d14cd326a56b05ed18f6b7366211598b32fb9e355df1d7542da"
+  },
+  "assets/vox/parts/thruster.vox": {
+   "source": "space_sim/assets/vox/parts/thruster.vox",
+   "license": "own",
+   "bytes": 14770,
+   "sha256": "8921a37d22bda37680a8a8d1bb3066ec786bb9a4a6031e9dbd0e8d0cb4ec3a3d"
+  },
+  "assets/vox/parts/thrusterL.vox": {
+   "source": "space_sim/assets/vox/parts/thrusterL.vox",
+   "license": "own",
+   "bytes": 15255,
+   "sha256": "edfa0d70a65da40b034327458d2afd38b2bdc68efcf61882a4d34e5ed7883aff"
+  },
+  "assets/vox/parts/thrusterS.vox": {
+   "source": "space_sim/assets/vox/parts/thrusterS.vox",
+   "license": "own",
+   "bytes": 14694,
+   "sha256": "1116b36154c8abed7cf093b2357744d9428fb614a6548fadde7ddcc0a4b025a2"
+  },
+  "assets/vox/parts/thrusterXL.vox": {
+   "source": "space_sim/assets/vox/parts/thrusterXL.vox",
+   "license": "own",
+   "bytes": 15215,
+   "sha256": "2c0b158deed23e16a4119f22b2c80e6fe10fba8236f7e7c8a47ec3310721789a"
+  },
+  "assets/vox/parts/torpedo.vox": {
+   "source": "space_sim/assets/vox/parts/torpedo.vox",
+   "license": "own",
+   "bytes": 6415,
+   "sha256": "334843f8e93744ff99f10d3e4c4be45c9cceb042e36ddab4986defb4bd7e1d5a"
+  },
+  "assets/vox/parts/torpedoL.vox": {
+   "source": "space_sim/assets/vox/parts/torpedoL.vox",
+   "license": "own",
+   "bytes": 6447,
+   "sha256": "ff30bda1007b5d4fc5c1a0070b754f5189e65f744cc65f677cfb5d37fcc7ae6d"
+  },
+  "assets/vox/parts/torpedoS.vox": {
+   "source": "space_sim/assets/vox/parts/torpedoS.vox",
+   "license": "own",
+   "bytes": 6415,
+   "sha256": "23a98946c877adf5c2209245dcb0b24459afb4f9ad8462dc5bb2390fa8ed42a3"
+  },
+  "assets/vox/parts/torpedoXL.vox": {
+   "source": "space_sim/assets/vox/parts/torpedoXL.vox",
+   "license": "own",
+   "bytes": 6447,
+   "sha256": "802edb37a032375a39cc23cbfb744d2f466ff923d28af4579696611be91d7fd1"
+  },
+  "assets/vox/parts/turret.vox": {
+   "source": "space_sim/assets/vox/parts/turret.vox",
+   "license": "own",
+   "bytes": 6668,
+   "sha256": "a160834913e4542a0991206cce299da4d3dab9cb0ddf5a5073899752b89e0868"
+  },
+  "assets/vox/parts/vls.vox": {
+   "source": "space_sim/assets/vox/parts/vls.vox",
+   "license": "own",
+   "bytes": 15857,
+   "sha256": "83ad41fe3d454df3459c90f341a56a214b81cb4cbbcc90ce586fa57afa528da3"
+  },
+  "assets/vox/parts/vlsL.vox": {
+   "source": "space_sim/assets/vox/parts/vlsL.vox",
+   "license": "own",
+   "bytes": 15857,
+   "sha256": "20eb4616c8019d34c66fbaa1853b212aebc143c22bd1c114fa969bcf782925e8"
+  },
+  "assets/vox/parts/vlsS.vox": {
+   "source": "space_sim/assets/vox/parts/vlsS.vox",
+   "license": "own",
+   "bytes": 15857,
+   "sha256": "83ad41fe3d454df3459c90f341a56a214b81cb4cbbcc90ce586fa57afa528da3"
+  },
+  "assets/vox/parts/vlsXL.vox": {
+   "source": "space_sim/assets/vox/parts/vlsXL.vox",
+   "license": "own",
+   "bytes": 15857,
+   "sha256": "20eb4616c8019d34c66fbaa1853b212aebc143c22bd1c114fa969bcf782925e8"
+  },
+  "assets/vox/rooms/armoury.json": {
+   "source": "space_sim/assets/vox/rooms/armoury.json",
+   "license": "own",
+   "bytes": 285,
+   "sha256": "00d3f8c26313f76cbcb5152fa58c3e31cc7f6c0e365798a9a57b50fd287e2993"
+  },
+  "assets/vox/rooms/armoury.vox": {
+   "source": "space_sim/assets/vox/rooms/armoury.vox",
+   "license": "own",
+   "bytes": 8369,
+   "sha256": "49fd286a01986db10b739acc8fb5c2df03bcae87418e7dc9918de1d30dcc31e8"
+  },
+  "assets/vox/rooms/armouryM.json": {
+   "source": "space_sim/assets/vox/rooms/armouryM.json",
+   "license": "own",
+   "bytes": 275,
+   "sha256": "0a8c882c2802fb0ec4caeeb5cb00b776ee7a20c310cf8bbf31f2f21d954eddeb"
+  },
+  "assets/vox/rooms/armouryM.vox": {
+   "source": "space_sim/assets/vox/rooms/armouryM.vox",
+   "license": "own",
+   "bytes": 12473,
+   "sha256": "d39fe2daaa6f22b9e66cdb776a36f149a3bf8d0f1b0d4269e68fc1eaf5faa960"
+  },
+  "assets/vox/rooms/bar.json": {
+   "source": "space_sim/assets/vox/rooms/bar.json",
+   "license": "own",
+   "bytes": 274,
+   "sha256": "4c04a654377f0205017ad24f872a56fb0a4e59849effc7896f47d3614917a5b5"
+  },
+  "assets/vox/rooms/bar.vox": {
+   "source": "space_sim/assets/vox/rooms/bar.vox",
+   "license": "own",
+   "bytes": 9843,
+   "sha256": "116f004298c49cac47636188342b2da7636cb7a6808cc4e671a76be95483fefd"
+  },
+  "assets/vox/rooms/barL.json": {
+   "source": "space_sim/assets/vox/rooms/barL.json",
+   "license": "own",
+   "bytes": 264,
+   "sha256": "5dd6446e7a14a37824a660e9be0efd1245906be9c1da071888679b1faa8dd016"
+  },
+  "assets/vox/rooms/barL.vox": {
+   "source": "space_sim/assets/vox/rooms/barL.vox",
+   "license": "own",
+   "bytes": 24042,
+   "sha256": "60863c40d25b9725397b5c6457571b7df401e5da22ff222fb99ed72006bec400"
+  },
+  "assets/vox/rooms/barM.json": {
+   "source": "space_sim/assets/vox/rooms/barM.json",
+   "license": "own",
+   "bytes": 264,
+   "sha256": "d14f6c39f46e8b23f715e692183ad1d665474a90b84fb2d7faf26252dddb1b07"
+  },
+  "assets/vox/rooms/barM.vox": {
+   "source": "space_sim/assets/vox/rooms/barM.vox",
+   "license": "own",
+   "bytes": 13955,
+   "sha256": "4f5b4059e3bf43b15846c8d89799e83125b132576a25327494427f414ff49003"
+  },
+  "assets/vox/rooms/barracks.json": {
+   "source": "space_sim/assets/vox/rooms/barracks.json",
+   "license": "own",
+   "bytes": 262,
+   "sha256": "fd0e68b351698ad0bc772cb69e658387d4e8beb86f2081f05cf73043f19868e2"
+  },
+  "assets/vox/rooms/barracks.vox": {
+   "source": "space_sim/assets/vox/rooms/barracks.vox",
+   "license": "own",
+   "bytes": 9058,
+   "sha256": "571d025cdb16e1b341ee2ebd318941d9b5594b31dca6178429c499c33d84a634"
+  },
+  "assets/vox/rooms/barracksL.json": {
+   "source": "space_sim/assets/vox/rooms/barracksL.json",
+   "license": "own",
+   "bytes": 253,
+   "sha256": "9480dcb6abf6000bee22295eae99d92f0ddb00485158d9a32dda9b70ff60da95"
+  },
+  "assets/vox/rooms/barracksL.vox": {
+   "source": "space_sim/assets/vox/rooms/barracksL.vox",
+   "license": "own",
+   "bytes": 22714,
+   "sha256": "83726eaeac95ebc20cece02ad1a10c6f0a558cd9dc35ad33f48d9c3a372a5a2d"
+  },
+  "assets/vox/rooms/barracksM.json": {
+   "source": "space_sim/assets/vox/rooms/barracksM.json",
+   "license": "own",
+   "bytes": 253,
+   "sha256": "6b777f638d4a648e8bd8710c8996a2c2bb5d7f880e7ffae12bb3290d3daf5da5"
+  },
+  "assets/vox/rooms/barracksM.vox": {
+   "source": "space_sim/assets/vox/rooms/barracksM.vox",
+   "license": "own",
+   "bytes": 13164,
+   "sha256": "d00436c0b8b69cf5774be40e80dff026b39f9fcad018ea3d15223f2e9acaca3d"
+  },
+  "assets/vox/rooms/clinic.json": {
+   "source": "space_sim/assets/vox/rooms/clinic.json",
+   "license": "own",
+   "bytes": 258,
+   "sha256": "8e2e7f4920ea87fb3e5f219ca7ae8730f062bed5a93d4881e4989227d8529de7"
+  },
+  "assets/vox/rooms/clinic.vox": {
+   "source": "space_sim/assets/vox/rooms/clinic.vox",
+   "license": "own",
+   "bytes": 8507,
+   "sha256": "8e3dca9faf9b756e0d422a316b4d846337c51d406ea1c882179e71278e11e0ee"
+  },
+  "assets/vox/rooms/clinicL.json": {
+   "source": "space_sim/assets/vox/rooms/clinicL.json",
+   "license": "own",
+   "bytes": 259,
+   "sha256": "66cfdc49f2b9bb2c0058fb43d0b570d3b8a2b1918518ffeb4acb9d9784ae425b"
+  },
+  "assets/vox/rooms/clinicL.vox": {
+   "source": "space_sim/assets/vox/rooms/clinicL.vox",
+   "license": "own",
+   "bytes": 21410,
+   "sha256": "f70e5f3c06512f26d2c65255a3361c509a46a49a87e8262a01318918ca75d047"
+  },
+  "assets/vox/rooms/clinicM.json": {
+   "source": "space_sim/assets/vox/rooms/clinicM.json",
+   "license": "own",
+   "bytes": 259,
+   "sha256": "ed333037626e3ec87e21d97f332f3eb22f78e1c4881cd08b16d2b482db480898"
+  },
+  "assets/vox/rooms/clinicM.vox": {
+   "source": "space_sim/assets/vox/rooms/clinicM.vox",
+   "license": "own",
+   "bytes": 12610,
+   "sha256": "b667398d8625001cd9d44fcf0cd59134fbd075bde00b6bf4459f3f50fee57a35"
+  },
+  "assets/vox/rooms/command.json": {
+   "source": "space_sim/assets/vox/rooms/command.json",
+   "license": "own",
+   "bytes": 255,
+   "sha256": "0e599dfca4321a7ceef221cbf4496b770f97538aa85f552994f0ae4e52c40ad7"
+  },
+  "assets/vox/rooms/command.vox": {
+   "source": "space_sim/assets/vox/rooms/command.vox",
+   "license": "own",
+   "bytes": 7817,
+   "sha256": "011f6966283329db42588dae443b19562ca420f2434861229583212cbc078746"
+  },
+  "assets/vox/rooms/commandL.json": {
+   "source": "space_sim/assets/vox/rooms/commandL.json",
+   "license": "own",
+   "bytes": 246,
+   "sha256": "704c7c0f3118e9ecb006e9fe9e0cf42627c0d51bd447b3f95fe7e9856a7c41bf"
+  },
+  "assets/vox/rooms/commandL.vox": {
+   "source": "space_sim/assets/vox/rooms/commandL.vox",
+   "license": "own",
+   "bytes": 20235,
+   "sha256": "9a7e07c1c61e5eb16001cc1f6bfd491ef50ef5916f1fc27075fa608b8995a766"
+  },
+  "assets/vox/rooms/commandM.json": {
+   "source": "space_sim/assets/vox/rooms/commandM.json",
+   "license": "own",
+   "bytes": 246,
+   "sha256": "094cef8e8c360847699c2dda7e54ec76577c21b81abe4dec34ec1eeb3923051f"
+  },
+  "assets/vox/rooms/commandM.vox": {
+   "source": "space_sim/assets/vox/rooms/commandM.vox",
+   "license": "own",
+   "bytes": 11917,
+   "sha256": "b157e274750b5271d5df2509c509f011639db840278d1a9f61ac6067b071f78b"
+  },
+  "assets/vox/rooms/growHall.json": {
+   "source": "space_sim/assets/vox/rooms/growHall.json",
+   "license": "own",
+   "bytes": 261,
+   "sha256": "14b18de67aaadc8ec5f142af55c67a63979f8ec665601bb18d9fa193bcbf6f23"
+  },
+  "assets/vox/rooms/growHall.vox": {
+   "source": "space_sim/assets/vox/rooms/growHall.vox",
+   "license": "own",
+   "bytes": 8544,
+   "sha256": "1a9444321fccc2358afc4834cd1603e5bb826e4d24d3acfa680137d17847439a"
+  },
+  "assets/vox/rooms/growHallL.json": {
+   "source": "space_sim/assets/vox/rooms/growHallL.json",
+   "license": "own",
+   "bytes": 262,
+   "sha256": "549ec6ad36edc19bd3d09445cb43e488838c6f58377fbee941d0ec3fcfca4aff"
+  },
+  "assets/vox/rooms/growHallL.vox": {
+   "source": "space_sim/assets/vox/rooms/growHallL.vox",
+   "license": "own",
+   "bytes": 21720,
+   "sha256": "5c22f8253f6fab8930490509897ce07a6aae04773d167e7a708018d333d6f52e"
+  },
+  "assets/vox/rooms/growHallM.json": {
+   "source": "space_sim/assets/vox/rooms/growHallM.json",
+   "license": "own",
+   "bytes": 262,
+   "sha256": "fd937cf4e66b61e0cf8b9403e7e4cb51f03a205f1bc84d60f7f8a31178242b4f"
+  },
+  "assets/vox/rooms/growHallM.vox": {
+   "source": "space_sim/assets/vox/rooms/growHallM.vox",
+   "license": "own",
+   "bytes": 12652,
+   "sha256": "a46cd780b0fcd5f9d7421a8cbb88671b58e27f93246f1592f0358db36c44b64c"
+  },
+  "assets/vox/rooms/lobby.json": {
+   "source": "space_sim/assets/vox/rooms/lobby.json",
+   "license": "own",
+   "bytes": 306,
+   "sha256": "6c06c11895bc55eb178d3e59dc3b3658e4fc68622ffef59d2d55123c7e376102"
+  },
+  "assets/vox/rooms/lobby.vox": {
+   "source": "space_sim/assets/vox/rooms/lobby.vox",
+   "license": "own",
+   "bytes": 8802,
+   "sha256": "7c9cbd02d70455dae83c943bca9a1bd0f530911a57049f3683bd30bd072ea95e"
+  },
+  "assets/vox/rooms/lobbyL.json": {
+   "source": "space_sim/assets/vox/rooms/lobbyL.json",
+   "license": "own",
+   "bytes": 297,
+   "sha256": "62a963bf5a5f1d1ef0fa0a2462bee40162542fbf2402b286dd56a4244e3688a8"
+  },
+  "assets/vox/rooms/lobbyL.vox": {
+   "source": "space_sim/assets/vox/rooms/lobbyL.vox",
+   "license": "own",
+   "bytes": 20970,
+   "sha256": "bef9ded7d7c873a855397b3bbcf55f8caa642abce6e2904b2b5e3298d8066e8f"
+  },
+  "assets/vox/rooms/lobbyM.json": {
+   "source": "space_sim/assets/vox/rooms/lobbyM.json",
+   "license": "own",
+   "bytes": 297,
+   "sha256": "0257c18433af5e17a3dc1f1bc0df09a592fc81da5a3e0298afd569ddaceb9eb9"
+  },
+  "assets/vox/rooms/lobbyM.vox": {
+   "source": "space_sim/assets/vox/rooms/lobbyM.vox",
+   "license": "own",
+   "bytes": 11866,
+   "sha256": "06f3e015c1ac05dfb797263731c69a150f5c1db2512ced605e6ecf4919b57bd4"
+  },
+  "assets/vox/rooms/lounge.json": {
+   "source": "space_sim/assets/vox/rooms/lounge.json",
+   "license": "own",
+   "bytes": 263,
+   "sha256": "e35c4a253ade56fc00e762c9aa635030096e54e10152c39e633efa7a632558ea"
+  },
+  "assets/vox/rooms/lounge.vox": {
+   "source": "space_sim/assets/vox/rooms/lounge.vox",
+   "license": "own",
+   "bytes": 9015,
+   "sha256": "7fe612eeb118c8140f3fccb4a4cef07deb273af434b8e6afb16b7f75ae4b690f"
+  },
+  "assets/vox/rooms/loungeL.json": {
+   "source": "space_sim/assets/vox/rooms/loungeL.json",
+   "license": "own",
+   "bytes": 254,
+   "sha256": "723c3bbd624c52ae670a3df887d0d451405f5a971ff8a6b13420e3c94db7b287"
+  },
+  "assets/vox/rooms/loungeL.vox": {
+   "source": "space_sim/assets/vox/rooms/loungeL.vox",
+   "license": "own",
+   "bytes": 22327,
+   "sha256": "fbb530ece2469d50a97606c7bdcd0c96f762afff654a6c46772ec7941a69ad07"
+  },
+  "assets/vox/rooms/loungeM.json": {
+   "source": "space_sim/assets/vox/rooms/loungeM.json",
+   "license": "own",
+   "bytes": 254,
+   "sha256": "5f48f16f2331a718df7e06e8a1d1052d044b6aa184de1a7f2357ff6750dad02b"
+  },
+  "assets/vox/rooms/loungeM.vox": {
+   "source": "space_sim/assets/vox/rooms/loungeM.vox",
+   "license": "own",
+   "bytes": 13122,
+   "sha256": "1e69e1b8e2b6706100657063b1b199c684d0ab7d0af56bd216825ffc374a1109"
+  },
+  "assets/vox/rooms/office.json": {
+   "source": "space_sim/assets/vox/rooms/office.json",
+   "license": "own",
+   "bytes": 253,
+   "sha256": "114972da6b15be826ad129b4b31260bfcf6446e9de94135078bb5a615638f458"
+  },
+  "assets/vox/rooms/office.vox": {
+   "source": "space_sim/assets/vox/rooms/office.vox",
+   "license": "own",
+   "bytes": 9088,
+   "sha256": "6a2478640207aa043bf9ad0b38f9e0e0097944790ce69e3c01feac7e47cba465"
+  },
+  "assets/vox/rooms/officeL.json": {
+   "source": "space_sim/assets/vox/rooms/officeL.json",
+   "license": "own",
+   "bytes": 244,
+   "sha256": "458b3f57dcfa8d3fcaa41d225510ab296c0d6721180501c4bdc1c0ffe505bc8d"
+  },
+  "assets/vox/rooms/officeL.vox": {
+   "source": "space_sim/assets/vox/rooms/officeL.vox",
+   "license": "own",
+   "bytes": 22519,
+   "sha256": "79c80b4e845cd560636f055697b92b17cd6140dd32ae9a65bb5a905eb32ea10c"
+  },
+  "assets/vox/rooms/officeM.json": {
+   "source": "space_sim/assets/vox/rooms/officeM.json",
+   "license": "own",
+   "bytes": 244,
+   "sha256": "b7154c6cd263a39a629682e5492830503bcd09cd44dc14c7d6d7390ada6a78e6"
+  },
+  "assets/vox/rooms/officeM.vox": {
+   "source": "space_sim/assets/vox/rooms/officeM.vox",
+   "license": "own",
+   "bytes": 13194,
+   "sha256": "1b3729583e240709dc5bce1ad7a204bf3bd08049f0d53b1838dbf091f5f0d379"
+  },
+  "assets/vox/rooms/oreHall.json": {
+   "source": "space_sim/assets/vox/rooms/oreHall.json",
+   "license": "own",
+   "bytes": 246,
+   "sha256": "c284f788f773a29b6efc0c830931db395669dab0305cfd4e7584240bcaf703f0"
+  },
+  "assets/vox/rooms/oreHall.vox": {
+   "source": "space_sim/assets/vox/rooms/oreHall.vox",
+   "license": "own",
+   "bytes": 9024,
+   "sha256": "3fbbd787d82e355095a3f586e859e98ebe942380462ec9e581d4d5dd9975e58f"
+  },
+  "assets/vox/rooms/oreHallL.json": {
+   "source": "space_sim/assets/vox/rooms/oreHallL.json",
+   "license": "own",
+   "bytes": 247,
+   "sha256": "441604f5e48e9c315cc04b29ea7f96d8ead022b960aefa3e810f904503df0ff9"
+  },
+  "assets/vox/rooms/oreHallL.vox": {
+   "source": "space_sim/assets/vox/rooms/oreHallL.vox",
+   "license": "own",
+   "bytes": 22316,
+   "sha256": "9523e45a1fcc0ac2347520a1ce601fa35041d279a89d67cc63b112b4cf377087"
+  },
+  "assets/vox/rooms/oreHallM.json": {
+   "source": "space_sim/assets/vox/rooms/oreHallM.json",
+   "license": "own",
+   "bytes": 247,
+   "sha256": "348bc26631ad998d8a04e2c8710aa4bcf118a4ae2dfc89552f2bc2eddf7f4af8"
+  },
+  "assets/vox/rooms/oreHallM.vox": {
+   "source": "space_sim/assets/vox/rooms/oreHallM.vox",
+   "license": "own",
+   "bytes": 13133,
+   "sha256": "028954f5b4a530b215c85c301f08a0675673aaeec1462b78569bd4f1d106aa31"
+  },
+  "assets/vox/rooms/processing.json": {
+   "source": "space_sim/assets/vox/rooms/processing.json",
+   "license": "own",
+   "bytes": 254,
+   "sha256": "1ae1f67b5d8402360de8f4d30e946d536c72db4cdc55850ea567824a75e9b6de"
+  },
+  "assets/vox/rooms/processing.vox": {
+   "source": "space_sim/assets/vox/rooms/processing.vox",
+   "license": "own",
+   "bytes": 8799,
+   "sha256": "981f8aee9269a075cf9469a3e08725d592870b1ae0900dc0d5180ac7f1918993"
+  },
+  "assets/vox/rooms/processingL.json": {
+   "source": "space_sim/assets/vox/rooms/processingL.json",
+   "license": "own",
+   "bytes": 255,
+   "sha256": "d1587a196ec4d6361ed18abc04c1fb8b716299259883c580a4da1d93183f895f"
+  },
+  "assets/vox/rooms/processingL.vox": {
+   "source": "space_sim/assets/vox/rooms/processingL.vox",
+   "license": "own",
+   "bytes": 21341,
+   "sha256": "8b7fe4d05f5f1dcb8c34b2d119de9be8435325ca13b47f46d8cfe537e591327c"
+  },
+  "assets/vox/rooms/processingM.json": {
+   "source": "space_sim/assets/vox/rooms/processingM.json",
+   "license": "own",
+   "bytes": 255,
+   "sha256": "00dfc6463fb3f0562249f2821f4ee74f4f3569fb75416ad3f3fd5e93510d6ce6"
+  },
+  "assets/vox/rooms/processingM.vox": {
+   "source": "space_sim/assets/vox/rooms/processingM.vox",
+   "license": "own",
+   "bytes": 12902,
+   "sha256": "5a1410224b97c4d87e43674a21c6d7d5d903a08d907328bac7a2ddbd6b080fee"
+  },
+  "assets/vox/rooms/quarters.json": {
+   "source": "space_sim/assets/vox/rooms/quarters.json",
+   "license": "own",
+   "bytes": 257,
+   "sha256": "d86363eead5b5cb9e38bbf6f23538bab921bf39bc023713d409e726c237bb567"
+  },
+  "assets/vox/rooms/quarters.vox": {
+   "source": "space_sim/assets/vox/rooms/quarters.vox",
+   "license": "own",
+   "bytes": 9479,
+   "sha256": "100d7798e59735f1d2d253d22e67f1daed54e558dcbc0ca88d1b42aad5d8e94d"
+  },
+  "assets/vox/rooms/quartersL.json": {
+   "source": "space_sim/assets/vox/rooms/quartersL.json",
+   "license": "own",
+   "bytes": 248,
+   "sha256": "1348ea9d66d183e23ddfb8a5f80a567a067b40a4649dbdb03bfb755f25195fd4"
+  },
+  "assets/vox/rooms/quartersL.vox": {
+   "source": "space_sim/assets/vox/rooms/quartersL.vox",
+   "license": "own",
+   "bytes": 23383,
+   "sha256": "618a3a32676043be4a654497bfa707b63400861633b0c0fcdba1da62da68e78c"
+  },
+  "assets/vox/rooms/quartersM.json": {
+   "source": "space_sim/assets/vox/rooms/quartersM.json",
+   "license": "own",
+   "bytes": 248,
+   "sha256": "15893b648a3f4c3237025afb6625bd355c95f35521fb6f33681955f4a19ca903"
+  },
+  "assets/vox/rooms/quartersM.vox": {
+   "source": "space_sim/assets/vox/rooms/quartersM.vox",
+   "license": "own",
+   "bytes": 13589,
+   "sha256": "7d15db36fcb51a72ab3f06c396e35ac7be105c07e054c0ceac3cfd6966c9addd"
+  },
+  "assets/vox/rooms/reception.json": {
+   "source": "space_sim/assets/vox/rooms/reception.json",
+   "license": "own",
+   "bytes": 264,
+   "sha256": "9e2746d06f2ef306d0c349cda804654bb6e1fe076e2353bd5cb5fd8206de48d1"
+  },
+  "assets/vox/rooms/reception.vox": {
+   "source": "space_sim/assets/vox/rooms/reception.vox",
+   "license": "own",
+   "bytes": 8414,
+   "sha256": "8d2055f455fec1d61fddf8d26ad3b3a30aefc6c1dde40eacb26f2b8b0346404f"
+  },
+  "assets/vox/rooms/receptionL.json": {
+   "source": "space_sim/assets/vox/rooms/receptionL.json",
+   "license": "own",
+   "bytes": 265,
+   "sha256": "8ec7560355bc664e269eb3e553c1a3f0c983f67acd4948f6681ccc56073cc62e"
+  },
+  "assets/vox/rooms/receptionL.vox": {
+   "source": "space_sim/assets/vox/rooms/receptionL.vox",
+   "license": "own",
+   "bytes": 21445,
+   "sha256": "666c2393dfff5eabff785269c0b3d377f968a7bb1f7de1467d1f76c198149e8a"
+  },
+  "assets/vox/rooms/receptionM.json": {
+   "source": "space_sim/assets/vox/rooms/receptionM.json",
+   "license": "own",
+   "bytes": 265,
+   "sha256": "eb0faf2ab67a56a4657b041356c88a13839853ca0f01750450882033a5032c68"
+  },
+  "assets/vox/rooms/receptionM.vox": {
+   "source": "space_sim/assets/vox/rooms/receptionM.vox",
+   "license": "own",
+   "bytes": 12519,
+   "sha256": "043802bdda4970b5c3efd5629a8c34c2b2918d30be515beb54b665191feee2dd"
+  },
+  "assets/vox/rooms/shopFurniture.json": {
+   "source": "space_sim/assets/vox/rooms/shopFurniture.json",
+   "license": "own",
+   "bytes": 293,
+   "sha256": "52d721c7ed7871a853b4bae20114d0c3d9988dbddd14bb84a9bd13bf30afbc6b"
+  },
+  "assets/vox/rooms/shopFurniture.vox": {
+   "source": "space_sim/assets/vox/rooms/shopFurniture.vox",
+   "license": "own",
+   "bytes": 9122,
+   "sha256": "06f90519d78231545c76c44376bc88c0f4c0dd875e4afeb77677ce4165fd4678"
+  },
+  "assets/vox/rooms/shopFurnitureM.json": {
+   "source": "space_sim/assets/vox/rooms/shopFurnitureM.json",
+   "license": "own",
+   "bytes": 283,
+   "sha256": "ed1932fb8ea2fbf2fc29398d5e5603ce0092a014aa4ab5da4d5fb23fc0e4a6d4"
+  },
+  "assets/vox/rooms/shopFurnitureM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopFurnitureM.vox",
+   "license": "own",
+   "bytes": 13229,
+   "sha256": "df9b23718fb6b01ef612011ace32045b7b4f3cbe4363f9410e96fe0531d52c35"
+  },
+  "assets/vox/rooms/shopGeneral.json": {
+   "source": "space_sim/assets/vox/rooms/shopGeneral.json",
+   "license": "own",
+   "bytes": 287,
+   "sha256": "f0d1bc1581794c21fb6ddaafada8b1fa48bb6a0a7806fd82f08501493761276f"
+  },
+  "assets/vox/rooms/shopGeneral.vox": {
+   "source": "space_sim/assets/vox/rooms/shopGeneral.vox",
+   "license": "own",
+   "bytes": 8390,
+   "sha256": "13c3e35756d07f7e5c2a19ffeb26daa004a6adbc63e931a65a7d1bb77d768d0f"
+  },
+  "assets/vox/rooms/shopGeneralM.json": {
+   "source": "space_sim/assets/vox/rooms/shopGeneralM.json",
+   "license": "own",
+   "bytes": 277,
+   "sha256": "aa46523057d3d9890e2d38742e4462ef3d53b13b9cb26ed007aa0a3a4812ef03"
+  },
+  "assets/vox/rooms/shopGeneralM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopGeneralM.vox",
+   "license": "own",
+   "bytes": 12494,
+   "sha256": "de17045011a1a2ea10ef4bf8ba8e87d98f596fd1a58c0b58769e837a934041ed"
+  },
+  "assets/vox/rooms/shopGrocer.json": {
+   "source": "space_sim/assets/vox/rooms/shopGrocer.json",
+   "license": "own",
+   "bytes": 297,
+   "sha256": "5c8d2965e943b76d072f3c44ef53e44769e4d5f213e0998e5f03fbfd2a04835a"
+  },
+  "assets/vox/rooms/shopGrocer.vox": {
+   "source": "space_sim/assets/vox/rooms/shopGrocer.vox",
+   "license": "own",
+   "bytes": 8327,
+   "sha256": "a3e7c8af584a88b1caa08a628066179ef42ae9a6aad8ddc507412a9c766aaef7"
+  },
+  "assets/vox/rooms/shopGrocerM.json": {
+   "source": "space_sim/assets/vox/rooms/shopGrocerM.json",
+   "license": "own",
+   "bytes": 287,
+   "sha256": "2dd90eb1f0a53622c8460af6f7bbbedf011c2c225c1f9db3ae76a8417c848c4c"
+  },
+  "assets/vox/rooms/shopGrocerM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopGrocerM.vox",
+   "license": "own",
+   "bytes": 12431,
+   "sha256": "6592d526874c2a07584c23cdaf2bba3710eac0f52fcd9c8b293bde6770b55feb"
+  },
+  "assets/vox/rooms/shopGuns.json": {
+   "source": "space_sim/assets/vox/rooms/shopGuns.json",
+   "license": "own",
+   "bytes": 283,
+   "sha256": "9e92d2cfba0a38e3817ef00713f3cb539222c34e01b662cb8ba3e5537716d73a"
+  },
+  "assets/vox/rooms/shopGuns.vox": {
+   "source": "space_sim/assets/vox/rooms/shopGuns.vox",
+   "license": "own",
+   "bytes": 8335,
+   "sha256": "f94fa00b1b8378becd620b0865bd2455b510bf7404cdf633a9c77d79c8005fb0"
+  },
+  "assets/vox/rooms/shopGunsM.json": {
+   "source": "space_sim/assets/vox/rooms/shopGunsM.json",
+   "license": "own",
+   "bytes": 273,
+   "sha256": "e46427872936ca732575d4220f45b6be896febfac30f6eb341efdf3b0ce6a6f3"
+  },
+  "assets/vox/rooms/shopGunsM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopGunsM.vox",
+   "license": "own",
+   "bytes": 12439,
+   "sha256": "75e898d8372b8c037566325747e03a0c85c94634057097bc9facf28a5509e1ab"
+  },
+  "assets/vox/rooms/shopMaterials.json": {
+   "source": "space_sim/assets/vox/rooms/shopMaterials.json",
+   "license": "own",
+   "bytes": 313,
+   "sha256": "4e8a39c50423de4a0e1e48177ee691ef9cc31beb065617544d939c9e4a288689"
+  },
+  "assets/vox/rooms/shopMaterials.vox": {
+   "source": "space_sim/assets/vox/rooms/shopMaterials.vox",
+   "license": "own",
+   "bytes": 8474,
+   "sha256": "e103e40cb8e4ee3de568f5a32ca21476987adc83f685b9c30b2fe6b33ab398dd"
+  },
+  "assets/vox/rooms/shopMaterialsM.json": {
+   "source": "space_sim/assets/vox/rooms/shopMaterialsM.json",
+   "license": "own",
+   "bytes": 303,
+   "sha256": "f77c55c2a1d641e711dae6ffcde170abe5c8e559eaa11b1faf8bea62584abf67"
+  },
+  "assets/vox/rooms/shopMaterialsM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopMaterialsM.vox",
+   "license": "own",
+   "bytes": 12578,
+   "sha256": "aeedec783f427336c6fe97fed48675f5990522b3864861d22fa729fe0d570444"
+  },
+  "assets/vox/rooms/shopOre.json": {
+   "source": "space_sim/assets/vox/rooms/shopOre.json",
+   "license": "own",
+   "bytes": 290,
+   "sha256": "6c9315c36da6a9774787f847153b340c485c6013599cd9a7b15e53597feaf842"
+  },
+  "assets/vox/rooms/shopOre.vox": {
+   "source": "space_sim/assets/vox/rooms/shopOre.vox",
+   "license": "own",
+   "bytes": 8384,
+   "sha256": "4a32f142be55894cfa73b3df340d4e687f8ea343b153fe8274261fcf494b9424"
+  },
+  "assets/vox/rooms/shopOreM.json": {
+   "source": "space_sim/assets/vox/rooms/shopOreM.json",
+   "license": "own",
+   "bytes": 280,
+   "sha256": "cf37e954e399f76a91292adfcd6f812c36e10ae5944fa879a78ba4bb49ebf45f"
+  },
+  "assets/vox/rooms/shopOreM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopOreM.vox",
+   "license": "own",
+   "bytes": 12488,
+   "sha256": "f40a28ce2466d7819a86014c81c37e25f1d47079af678a476875c89a91315a53"
+  },
+  "assets/vox/rooms/shopParts.json": {
+   "source": "space_sim/assets/vox/rooms/shopParts.json",
+   "license": "own",
+   "bytes": 300,
+   "sha256": "98f82d2ae733321be54fdee8e40207778dff2d154f343fcfe2e70e840d87a13c"
+  },
+  "assets/vox/rooms/shopParts.vox": {
+   "source": "space_sim/assets/vox/rooms/shopParts.vox",
+   "license": "own",
+   "bytes": 8425,
+   "sha256": "1850c213b622010be8d11c9aca1ea2de7c21ea66be3db7747fd50574a54627fb"
+  },
+  "assets/vox/rooms/shopPartsM.json": {
+   "source": "space_sim/assets/vox/rooms/shopPartsM.json",
+   "license": "own",
+   "bytes": 290,
+   "sha256": "ecfb86a8ed15b5840721204d9aed516ceb8dc91e3cced693fb5c51eb5b2e0cae"
+  },
+  "assets/vox/rooms/shopPartsM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopPartsM.vox",
+   "license": "own",
+   "bytes": 12529,
+   "sha256": "60030682b9583892de7f93f31131e6d3f186bd4f0c5fc08cfe53e9c1193ddc07"
+  },
+  "assets/vox/rooms/shopPharmacy.json": {
+   "source": "space_sim/assets/vox/rooms/shopPharmacy.json",
+   "license": "own",
+   "bytes": 283,
+   "sha256": "a07f114a4109fa5971b00681a06576662e6493ba0c1a9b0a5a23fa4491b42bce"
+  },
+  "assets/vox/rooms/shopPharmacy.vox": {
+   "source": "space_sim/assets/vox/rooms/shopPharmacy.vox",
+   "license": "own",
+   "bytes": 8331,
+   "sha256": "5c6ebd8fbd0728610e246f9b1247bb3304c0ce374c47a98d89d4dd456dab1d96"
+  },
+  "assets/vox/rooms/shopPharmacyM.json": {
+   "source": "space_sim/assets/vox/rooms/shopPharmacyM.json",
+   "license": "own",
+   "bytes": 284,
+   "sha256": "1859e2e2477a1bec47a5b2231a2fd519fa811423514f2710697cbef8548d64ff"
+  },
+  "assets/vox/rooms/shopPharmacyM.vox": {
+   "source": "space_sim/assets/vox/rooms/shopPharmacyM.vox",
+   "license": "own",
+   "bytes": 12434,
+   "sha256": "5ee964eb984ad27e5f02283e97d0fe4eb60a57d630194740e5177dc085bfbe0b"
+  },
+  "assets/vox/rooms/showroom.json": {
+   "source": "space_sim/assets/vox/rooms/showroom.json",
+   "license": "own",
+   "bytes": 262,
+   "sha256": "0971fd89fecf2c8ac4c69aa45d967969b5acfcafed0765ee3f3ddf0634846635"
+  },
+  "assets/vox/rooms/showroom.vox": {
+   "source": "space_sim/assets/vox/rooms/showroom.vox",
+   "license": "own",
+   "bytes": 8176,
+   "sha256": "d9067512bfa5982d157e78137ac9a4de1bc6b68872c4bd3e6151b00a50d2794f"
+  },
+  "assets/vox/rooms/showroomL.json": {
+   "source": "space_sim/assets/vox/rooms/showroomL.json",
+   "license": "own",
+   "bytes": 263,
+   "sha256": "b971be81c5408cdca35d7c20e2213fc2ad94ca9e0e8072e9476ec3cd43a00eaf"
+  },
+  "assets/vox/rooms/showroomL.vox": {
+   "source": "space_sim/assets/vox/rooms/showroomL.vox",
+   "license": "own",
+   "bytes": 20731,
+   "sha256": "b8e166942a0fa73e8ce46a3088c61daba048dcf47288639a206dcc7824c365d2"
+  },
+  "assets/vox/rooms/showroomM.json": {
+   "source": "space_sim/assets/vox/rooms/showroomM.json",
+   "license": "own",
+   "bytes": 263,
+   "sha256": "6fe7fb75960e8a8b3b433d06eb3232d4e5ed91a67bafa05cb3d2dcba738cf4e3"
+  },
+  "assets/vox/rooms/showroomM.vox": {
+   "source": "space_sim/assets/vox/rooms/showroomM.vox",
+   "license": "own",
+   "bytes": 12279,
+   "sha256": "cea5783bfa4ee1206663798240d270d1db916ddfe745cf24650363df95aa4568"
+  },
+  "assets/vox/rooms/ward.json": {
+   "source": "space_sim/assets/vox/rooms/ward.json",
+   "license": "own",
+   "bytes": 254,
+   "sha256": "1bf47341357da49f41cf4a3f785fd42a92aeb24260c53f89c28eda6eae245888"
+  },
+  "assets/vox/rooms/ward.vox": {
+   "source": "space_sim/assets/vox/rooms/ward.vox",
+   "license": "own",
+   "bytes": 8356,
+   "sha256": "7c02d0c06076e8339d6bf281f1b8217f7612e681db6d2704ca900a19ba85055f"
+  },
+  "assets/vox/rooms/wardL.json": {
+   "source": "space_sim/assets/vox/rooms/wardL.json",
+   "license": "own",
+   "bytes": 255,
+   "sha256": "1c3938568b8595b9b42fcda7a0cbbb7e6468ff47dac2c9fa1d15285a8a2390d0"
+  },
+  "assets/vox/rooms/wardL.vox": {
+   "source": "space_sim/assets/vox/rooms/wardL.vox",
+   "license": "own",
+   "bytes": 21402,
+   "sha256": "3a9f09832b2601998e416e085cd761e1875f5fff204457f29de7318d44b1d617"
+  },
+  "assets/vox/rooms/wardM.json": {
+   "source": "space_sim/assets/vox/rooms/wardM.json",
+   "license": "own",
+   "bytes": 255,
+   "sha256": "6ac5e84f42d0fd97530f0b7c7030b3aa1f2af75a9340b33d8b100fca526a2f6c"
+  },
+  "assets/vox/rooms/wardM.vox": {
+   "source": "space_sim/assets/vox/rooms/wardM.vox",
+   "license": "own",
+   "bytes": 12458,
+   "sha256": "abfc33ece0cdfc24d3fdbe0104ca8e62f2a7b91b01c9b6c796dc376317fe4ca1"
+  },
+  "assets/vox/rooms/warehouse.json": {
+   "source": "space_sim/assets/vox/rooms/warehouse.json",
+   "license": "own",
+   "bytes": 259,
+   "sha256": "aa5cea76431e4b90920024d40a903808cc309b91c66c7c5bf57bd2fcd6a3f70d"
+  },
+  "assets/vox/rooms/warehouse.vox": {
+   "source": "space_sim/assets/vox/rooms/warehouse.vox",
+   "license": "own",
+   "bytes": 9414,
+   "sha256": "5880f889997f3a73323546cb3b63a9b31b97d513f8da9787fdf70e1a803c17f6"
+  },
+  "assets/vox/rooms/warehouseL.json": {
+   "source": "space_sim/assets/vox/rooms/warehouseL.json",
+   "license": "own",
+   "bytes": 250,
+   "sha256": "319f669f046b8cbef3206ef1abab9c8dd79fe17ef0da9ccb6607601387a08aeb"
+  },
+  "assets/vox/rooms/warehouseL.vox": {
+   "source": "space_sim/assets/vox/rooms/warehouseL.vox",
+   "license": "own",
+   "bytes": 23454,
+   "sha256": "22ff93dead9f7bc0ae9480297a3139b2f26acd42c37bb00fec446273e098d728"
+  },
+  "assets/vox/rooms/warehouseM.json": {
+   "source": "space_sim/assets/vox/rooms/warehouseM.json",
+   "license": "own",
+   "bytes": 250,
+   "sha256": "18c5770e5efb6d9d1f537913ca7b1cb0c14df596da61be8e86f16628dddb020f"
+  },
+  "assets/vox/rooms/warehouseM.vox": {
+   "source": "space_sim/assets/vox/rooms/warehouseM.vox",
+   "license": "own",
+   "bytes": 13529,
+   "sha256": "9f58ae227c1521f880cbc37c62534c0727d6ce5a675065338edee9178dc47a9d"
+  },
+  "assets/vox/rooms/washroom.json": {
+   "source": "space_sim/assets/vox/rooms/washroom.json",
+   "license": "own",
+   "bytes": 265,
+   "sha256": "72a35805fc65fe2103ccb24275d1936b86cc946ff3b7d3a4d0de67bfa2908130"
+  },
+  "assets/vox/rooms/washroom.vox": {
+   "source": "space_sim/assets/vox/rooms/washroom.vox",
+   "license": "own",
+   "bytes": 9389,
+   "sha256": "5a545c4ae9fddcdf11750189da5bfff783dd59761d4473e35c7b10e407c5f342"
+  },
+  "assets/vox/rooms/washroomL.json": {
+   "source": "space_sim/assets/vox/rooms/washroomL.json",
+   "license": "own",
+   "bytes": 256,
+   "sha256": "4fb3f1c276f8b8fd426481c2a9f6a7ae386e5326de44edca7f906ec57b9ef3f6"
+  },
+  "assets/vox/rooms/washroomL.vox": {
+   "source": "space_sim/assets/vox/rooms/washroomL.vox",
+   "license": "own",
+   "bytes": 23454,
+   "sha256": "618d28dc8f7048f6ccadb21494555b054b4a65fbaabef26aca2bb06fe33f5ad8"
+  },
+  "assets/vox/rooms/washroomM.json": {
+   "source": "space_sim/assets/vox/rooms/washroomM.json",
+   "license": "own",
+   "bytes": 256,
+   "sha256": "f5c3bdf7edf12ee174d51d47280f9c2f4acc446212e28143a85bd77a93be4524"
+  },
+  "assets/vox/rooms/washroomM.vox": {
+   "source": "space_sim/assets/vox/rooms/washroomM.vox",
+   "license": "own",
+   "bytes": 13493,
+   "sha256": "6cba04e585d8f53e50aee1cc0884afd4b59b0439b13b19c438a50b7b1c55994c"
+  },
+  "assets/vox/rooms/workshop.json": {
+   "source": "space_sim/assets/vox/rooms/workshop.json",
+   "license": "own",
+   "bytes": 249,
+   "sha256": "5a1fd7800a8fd07d451e7ae02f19e4d6cc0516f16cc247990702c4197f5e0619"
+  },
+  "assets/vox/rooms/workshop.vox": {
+   "source": "space_sim/assets/vox/rooms/workshop.vox",
+   "license": "own",
+   "bytes": 8789,
+   "sha256": "3c5f1435a061296ac6989b5fcfd400d1bac728e9cdea005f1d84636033fe14ad"
+  },
+  "assets/vox/rooms/workshopL.json": {
+   "source": "space_sim/assets/vox/rooms/workshopL.json",
+   "license": "own",
+   "bytes": 250,
+   "sha256": "92be1d7d9111d0a68d03bffba9585f9f8ea0749e641d5ed8201f630aa3270463"
+  },
+  "assets/vox/rooms/workshopL.vox": {
+   "source": "space_sim/assets/vox/rooms/workshopL.vox",
+   "license": "own",
+   "bytes": 21967,
+   "sha256": "e2c981fb425896a2f010fdd0ddd9c28dd605cbd03c899bc796f95a19b0c9d3b4"
+  },
+  "assets/vox/rooms/workshopM.json": {
+   "source": "space_sim/assets/vox/rooms/workshopM.json",
+   "license": "own",
+   "bytes": 250,
+   "sha256": "963d0ebe0454cb5d2a0b3fcd71c27fbc48395556d31871432dbcd0a76c450747"
+  },
+  "assets/vox/rooms/workshopM.vox": {
+   "source": "space_sim/assets/vox/rooms/workshopM.vox",
+   "license": "own",
+   "bytes": 12896,
+   "sha256": "34b86f93344d5df27723eb9ebe1c1185d054e0eec9bbd1becd3dcf98e5d8efc3"
+  },
+  "assets/vox/scrapShackA.vox": {
+   "source": "space_sim/assets/vox/scrapShackA.vox",
+   "license": "own",
+   "bytes": 3793,
+   "sha256": "dc2d2c24c369422a2a2963fa07d545fca5e7572e6b22220de506486f2aad2b24"
+  },
+  "assets/vox/scrapShackB.vox": {
+   "source": "space_sim/assets/vox/scrapShackB.vox",
+   "license": "own",
+   "bytes": 4818,
+   "sha256": "5a55435834b032f4a053787a13dc96ceb949a1f78079c75ee239bb5510ac6d0b"
+  },
+  "assets/vox/scrapShackC.vox": {
+   "source": "space_sim/assets/vox/scrapShackC.vox",
+   "license": "own",
+   "bytes": 5190,
+   "sha256": "01d65835f8bb96114778340fa30f1e77d430b481a0b74524456dc701819166d5"
+  },
+  "assets/vox/shells/large01.json": {
+   "source": "space_sim/assets/vox/shells/large01.json",
+   "license": "own",
+   "bytes": 119863,
+   "sha256": "f88af2c721375886f633ffec50552732507ea368716e924828fdc934dbe9d158"
+  },
+  "assets/vox/shells/large01.vox": {
+   "source": "space_sim/assets/vox/shells/large01.vox",
+   "license": "own",
+   "bytes": 59398,
+   "sha256": "4b2c76fdc0db46b6ec0eecfd9caeece85f002981f53c2e62919524c950a654cd"
+  },
+  "assets/vox/shells/small01.json": {
+   "source": "space_sim/assets/vox/shells/small01.json",
+   "license": "own",
+   "bytes": 40509,
+   "sha256": "2744da41bb5fbb7a6796acbb0543329b783dca8007566062a8c6501df54533da"
+  },
+  "assets/vox/shells/small01.vox": {
+   "source": "space_sim/assets/vox/shells/small01.vox",
+   "license": "own",
+   "bytes": 21426,
+   "sha256": "b9a7585650b4905286f1691e5b33c3a1e7f58881d50dce6a845c53a86f38de67"
+  },
+  "assets/vox/shells/small02.json": {
+   "source": "space_sim/assets/vox/shells/small02.json",
+   "license": "own",
+   "bytes": 29115,
+   "sha256": "563f41538be74bcee6bb0f66b9dadbcf8eac289649d5a050a80be63175589db7"
+  },
+  "assets/vox/shells/small02.vox": {
+   "source": "space_sim/assets/vox/shells/small02.vox",
+   "license": "own",
+   "bytes": 16010,
+   "sha256": "3186a3c253de3c27ec744d8c6de136659fc3b636f5d9f053cf1006689eb0f75a"
+  },
+  "assets/vox/shells/small03.json": {
+   "source": "space_sim/assets/vox/shells/small03.json",
+   "license": "own",
+   "bytes": 35327,
+   "sha256": "e8e58e58a24e79688cf036d704e259bb4e7721df3f31291b147bc4e91e9364b5"
+  },
+  "assets/vox/shells/small03.vox": {
+   "source": "space_sim/assets/vox/shells/small03.vox",
+   "license": "own",
+   "bytes": 19202,
+   "sha256": "05641ccacba91b3ed003f1b7c6b6c7ce5e99a476800297cc761b353678fc2ca0"
+  },
+  "assets/vox/shells/small04.json": {
+   "source": "space_sim/assets/vox/shells/small04.json",
+   "license": "own",
+   "bytes": 29314,
+   "sha256": "ab63ab81cef6ce547b89f953def64593b71ebad0ed8e365ab0346042e506b9f8"
+  },
+  "assets/vox/shells/small04.vox": {
+   "source": "space_sim/assets/vox/shells/small04.vox",
+   "license": "own",
+   "bytes": 16146,
+   "sha256": "d139d8897f4348d876702e0b9f29c7f4a178b556f8a6caa8429f5e10251cc3d4"
+  },
+  "assets/vox/shells/small05.json": {
+   "source": "space_sim/assets/vox/shells/small05.json",
+   "license": "own",
+   "bytes": 36576,
+   "sha256": "d7a285ac7ce9bf20a2d2525bc4d778597a93ad99cd22e89c181d028d9e762c4f"
+  },
+  "assets/vox/shells/small05.vox": {
+   "source": "space_sim/assets/vox/shells/small05.vox",
+   "license": "own",
+   "bytes": 19781,
+   "sha256": "cdcf098365f01fb3e85fb1952edbe761d88254d36210fb2df859acecaeee31b2"
+  },
+  "assets/vox/shells/tall01.json": {
+   "source": "space_sim/assets/vox/shells/tall01.json",
+   "license": "own",
+   "bytes": 71492,
+   "sha256": "4f4c6a787236dc23024a1899377eb17c96dfc5ac9302ec7566bc386bb2d426b2"
+  },
+  "assets/vox/shells/tall01.vox": {
+   "source": "space_sim/assets/vox/shells/tall01.vox",
+   "license": "own",
+   "bytes": 37094,
+   "sha256": "0dbc6df620a347aab5c5e039fd33310bcf8941a0bd542cc65a55c24dfc9f9151"
+  },
+  "assets/vox/shells/tall02.json": {
+   "source": "space_sim/assets/vox/shells/tall02.json",
+   "license": "own",
+   "bytes": 82289,
+   "sha256": "f950dd21e178d1aa89a6e1fd75958f61f4069e6a47ce62a80d5e9198b04c5d3f"
+  },
+  "assets/vox/shells/tall02.vox": {
+   "source": "space_sim/assets/vox/shells/tall02.vox",
+   "license": "own",
+   "bytes": 41454,
+   "sha256": "635ec3eb959f63af0806d91804bf9ddf2d4df832544f9549b0de01a5f135b1ed"
+  },
+  "assets/vox/shells/tall03.json": {
+   "source": "space_sim/assets/vox/shells/tall03.json",
+   "license": "own",
+   "bytes": 71344,
+   "sha256": "d738abde74927bb05e510a6c4aa140e1c79845d9284102325a06f478b2b2d3f9"
+  },
+  "assets/vox/shells/tall03.vox": {
+   "source": "space_sim/assets/vox/shells/tall03.vox",
+   "license": "own",
+   "bytes": 36802,
+   "sha256": "0f0cffaf4f4ff200efaec5817211ba990f0176276e03638075c1769934e4b292"
+  },
+  "assets/vox/ships/fighterMartian.json": {
+   "source": "space_sim/assets/vox/ships/fighterMartian.json",
+   "license": "own",
+   "bytes": 42191,
+   "sha256": "3d9219bf3713684fc5dc2a05f6b4bc0ce9dd6f5a549a91bf0e3feb0906283c31"
+  },
+  "assets/vox/ships/fighterMartian.vox": {
+   "source": "space_sim/assets/vox/ships/fighterMartian.vox",
+   "license": "own",
+   "bytes": 26175,
+   "sha256": "df5c6f0d029f05d382370b413c8f10742e39c2cf96d8693540cf878615ae725c"
+  },
+  "assets/vox/ships/fighterPirate.json": {
+   "source": "space_sim/assets/vox/ships/fighterPirate.json",
+   "license": "own",
+   "bytes": 29920,
+   "sha256": "a4f44560edc057cd66844a0864696db025352c009a29419e18ff5647617715e3"
+  },
+  "assets/vox/ships/fighterPirate.vox": {
+   "source": "space_sim/assets/vox/ships/fighterPirate.vox",
+   "license": "own",
+   "bytes": 25527,
+   "sha256": "a1976b3920bbf44b7bcac4a4487fb0f5b3424769237b72c8b466c7ba66f33f6a"
+  },
+  "assets/vox/ships/fighterTerran.json": {
+   "source": "space_sim/assets/vox/ships/fighterTerran.json",
+   "license": "own",
+   "bytes": 38138,
+   "sha256": "16e9ddf8e66a0d7ffbf05b1ccea84a2a25cfcb4f4d596e6dabbc94b2e787fd31"
+  },
+  "assets/vox/ships/fighterTerran.vox": {
+   "source": "space_sim/assets/vox/ships/fighterTerran.vox",
+   "license": "own",
+   "bytes": 25655,
+   "sha256": "19d6c5f47e90ead5d9d3179d173698f937c1a5b1ea212516882eca8ee8a4b32a"
+  },
+  "assets/vox/ships/gunshipMartian.json": {
+   "source": "space_sim/assets/vox/ships/gunshipMartian.json",
+   "license": "own",
+   "bytes": 112511,
+   "sha256": "576e0526fff335b013c71802b80202a9fad365ec5df4926569ce7e9f589917a8"
+  },
+  "assets/vox/ships/gunshipMartian.vox": {
+   "source": "space_sim/assets/vox/ships/gunshipMartian.vox",
+   "license": "own",
+   "bytes": 58762,
+   "sha256": "438c01783d2f73e3cacd63f0bd2475e88261aa2647b6b4a448f3455582cbb0f2"
+  },
+  "assets/vox/ships/gunshipPirate.json": {
+   "source": "space_sim/assets/vox/ships/gunshipPirate.json",
+   "license": "own",
+   "bytes": 90209,
+   "sha256": "99b0704dff16a75a466baf7fb70f53d067fea0e0472af6365876900327d77329"
+  },
+  "assets/vox/ships/gunshipPirate.vox": {
+   "source": "space_sim/assets/vox/ships/gunshipPirate.vox",
+   "license": "own",
+   "bytes": 58762,
+   "sha256": "a1b4317e1d6e04364bb7fa47e0c25fcf341106bb96d805888e38a1f9b189445b"
+  },
+  "assets/vox/ships/gunshipTerran.json": {
+   "source": "space_sim/assets/vox/ships/gunshipTerran.json",
+   "license": "own",
+   "bytes": 109977,
+   "sha256": "1a51e3870b6ea946941186d00958c20c13de69709f70c26e655772de8736dc07"
+  },
+  "assets/vox/ships/gunshipTerran.vox": {
+   "source": "space_sim/assets/vox/ships/gunshipTerran.vox",
+   "license": "own",
+   "bytes": 58762,
+   "sha256": "a1b4317e1d6e04364bb7fa47e0c25fcf341106bb96d805888e38a1f9b189445b"
+  },
+  "assets/vox/shuttle.json": {
+   "source": "space_sim/assets/vox/shuttle.json",
+   "license": "own",
+   "bytes": 152653,
+   "sha256": "6c4e9fb908c97147284bd169c5e8e6eeba172f794cf14d7a043a372eefc8d5f9"
+  },
+  "assets/vox/shuttle.vox": {
+   "source": "space_sim/assets/vox/shuttle.vox",
+   "license": "own",
+   "bytes": 98421,
+   "sha256": "887ef439205e18dd2b7d18cb8e24fe903187015ca62142f9f8437672aada06e0"
+  },
+  "assets/vox/tank.vox": {
+   "source": "space_sim/assets/vox/tank.vox",
+   "license": "own",
+   "bytes": 18352,
+   "sha256": "aaf32a7c2164e0756214bc4841a2b5190a0ef4b33a4708f06db18cd0787992b3"
+  },
+  "assets/vox/tanker.vox": {
+   "source": "space_sim/assets/vox/tanker.vox",
+   "license": "own",
+   "bytes": 604286,
+   "sha256": "e4b95d411d7c925442649e19ce9ae8d02cfe688546beab019a3ed7cf4fee2c52"
+  },
+  "assets/vox/wallHome.vox": {
+   "source": "space_sim/assets/vox/wallHome.vox",
+   "license": "own",
+   "bytes": 17569,
+   "sha256": "67a75238340d1695cfb03f9a4e8c1126c19361e46be6fa4de45c7f0b7c213b6c"
+  },
+  "assets/vox/wallPirate.vox": {
+   "source": "space_sim/assets/vox/wallPirate.vox",
+   "license": "own",
+   "bytes": 17793,
+   "sha256": "793f2709159c8ed2397f9eff1d556d323c86eb56ac2b1e5b8e866e9ae3243828"
+  }
+ }
+}

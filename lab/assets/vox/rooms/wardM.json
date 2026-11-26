@@ -1,0 +1,10 @@
+{
+ "name": "wardM",
+ "kind": "room",
+ "role": "ward",
+ "types": ["hospital"],
+ "voxelSize": 0.5,
+ "size": [24,10,32],
+ "sockets": [{"face":"s","at":2,"size":"M","door":"glassdoor"},{"face":"s","at":18,"size":"M","door":"glassdoor"}],
+ "status": "draft"
+}

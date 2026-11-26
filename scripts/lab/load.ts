@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { PieceDriver, PieceManifest } from '../../lab/api/index.ts';
-import type { PieceDef, Registry, SceneGraph } from '../../src/core/graph/types.ts';
+import { assetFile, type PieceDef, type Registry, type SceneGraph } from '../../src/core/graph/types.ts';
 import { validatePiece } from '../../src/core/graph/validate.ts';
 
 export const LAB = resolve(import.meta.dirname, '../../lab');
@@ -27,7 +27,12 @@ export async function loadPieces(root = join(LAB, 'pieces')): Promise<Loaded> {
       if (existsSync(drv)) {
         try { driver = (await import(pathToFileURL(drv).href)).default; } catch (e) { errors.push(`${id}: driver.ts: ${(e as Error).message}`); continue; }
       }
-      const def: PieceDef = { manifest, driver, wgsl };
+      const assets: Record<string, Uint8Array> = {};
+      for (const a of manifest.assets ?? []) {
+        const f = typeof a.path === 'string' ? join(LAB, assetFile(manifest, a.path)) : '';
+        if (f && existsSync(f)) assets[a.path] = readFileSync(f);
+      }
+      const def: PieceDef = { manifest, driver, wgsl, assets };
       const errs = validatePiece(def, id);
       if (manifest.kind !== kind) errs.push(`${id}: lives in ${kind}/ but kind is ${manifest.kind}`);
       if (reg.has(manifest.id)) errs.push(`${id}: duplicate id`);

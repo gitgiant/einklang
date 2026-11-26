@@ -1,0 +1,85 @@
+{
+  "format": 1,
+  "id": "halberd",
+  "name": "Halberd",
+  "author": "gemini",
+  "kind": "ship",
+  "role": "corvette",
+  "size": [88, 36, 176],
+  "voxelSize": 0.25,
+  "factions": ["terran", "martian", "pirate"],
+  "description": "44 m escort corvette with a wraparound bridge canopy, dorsal cannon and point-defense turrets, ventral laser turret, wing sponsons with heavy lasers, gatlings, torpedoes and radar missiles, walkable bridge/crew/engineering deck, stern airlock, and twin heavy engine nacelles.",
+  "ops": [
+    { "op": "mid", "kind": "radarM", "facing": "fwd", "at": [12, 14], "id": "radar" },
+    { "op": "both", "kind": "spotlight", "facing": "fwd", "at": [36, 12, 14], "open": ["fwd"] },
+    { "op": "both", "kind": "railgun", "facing": "fwd", "at": [32, 6, 18], "open": ["fwd"], "id": "chinGun" },
+
+    { "op": "mid", "kind": "canopyWrapM", "facing": "fwd", "at": [24, 28], "open": ["up", "fwd"], "id": "bridgeCanopy" },
+    { "op": "mid", "kind": "cockpit", "facing": "fwd", "at": [12, 30] },
+    { "op": "both", "kind": "console", "facing": "fwd", "at": [34, 12, 38] },
+    { "op": "mid", "kind": "holotable", "facing": "fwd", "at": [12, 46] },
+
+    { "op": "mid", "kind": "cannonM", "facing": "up", "at": [24, 54], "open": ["up"] },
+    { "op": "part", "kind": "medbay", "facing": "fwd", "at": [32, 12, 56] },
+    { "op": "part", "kind": "bunk", "facing": "fwd", "at": [52, 12, 56] },
+
+    { "op": "both", "kind": "lasergunM", "facing": "fwd", "at": [18, 11, 56], "open": ["fwd"], "id": "wingLaser" },
+    { "op": "both", "kind": "gatlingM", "facing": "fwd", "at": [12, 6, 74], "open": ["fwd"], "id": "wingGatling" },
+    { "op": "mid", "kind": "gravgenM", "facing": "fwd", "at": [12, 70] },
+    { "op": "mid", "kind": "laserM", "facing": "down", "at": [4, 72], "open": ["down"] },
+
+    { "op": "both", "kind": "torpedo", "facing": "fwd", "at": [20, 6, 82], "open": ["fwd", "down"] },
+    { "op": "both", "kind": "radarMissile", "facing": "fwd", "at": [8, 8, 86], "open": ["fwd", "down"] },
+    { "op": "both", "kind": "blinker", "facing": "left", "at": [3, 13, 94], "open": ["left"] },
+
+    { "op": "mid", "kind": "shieldgenM", "facing": "fwd", "at": [12, 84] },
+    { "op": "mid", "kind": "coreM", "facing": "fwd", "at": [12, 98], "id": "core" },
+    { "op": "mid", "kind": "pdM", "facing": "up", "at": [24, 112], "open": ["up"] },
+    { "op": "both", "kind": "reactorM", "facing": "fwd", "at": [32, 12, 114] },
+    { "op": "both", "kind": "tankM", "facing": "fwd", "at": [18, 10, 118], "id": "fuelTank" },
+    { "op": "mid", "kind": "batteryM", "facing": "fwd", "at": [12, 126] },
+    { "op": "both", "kind": "shieldgen", "facing": "fwd", "at": [31, 12, 126] },
+
+    { "op": "both", "kind": "thrusterL", "facing": "fwd", "at": [12, 8, 146], "open": ["aft"], "id": "mainEngine" },
+    { "op": "both", "kind": "thruster", "facing": "fwd", "at": [28, 12, 156], "open": ["aft"], "id": "auxEngine" },
+    { "op": "mid", "kind": "airlock", "facing": "aft", "at": [11, 156], "open": ["aft"] },
+    { "op": "part", "kind": "flareLauncher", "facing": "aft", "at": [32, 22, 154], "open": ["aft"] },
+    { "op": "part", "kind": "chaffLauncher", "facing": "aft", "at": [52, 22, 154], "open": ["aft"] },
+
+    { "op": "pipe", "points": [[24, 14, 130], [24, 14, 145]] },
+    { "op": "pipe", "points": [[24, 14, 136], [32, 14, 136], [32, 14, 155]] },
+
+    { "op": "volume", "min": [38, 10, 0], "max": [50, 20, 14], "role": "plate", "planes": [[0, 1, -0.5, 16], [0, -1, -0.5, -14]] },
+    { "op": "volume", "min": [30, 10, 14], "max": [58, 22, 26], "role": "armor", "planes": [[-1, 0, -0.5, -43]] },
+    { "op": "volume", "min": [31, 6, 18], "max": [37, 10, 32], "role": "belly", "hollow": false },
+    { "op": "volume", "min": [30, 8, 26], "max": [58, 24, 158], "role": "armor", "bevel": 2 },
+
+    { "op": "volume", "min": [36, 24, 38], "max": [52, 26, 54], "role": "armor", "hollow": false },
+    { "op": "volume", "min": [36, 24, 66], "max": [52, 26, 112], "role": "armor", "hollow": false },
+    { "op": "volume", "min": [36, 24, 124], "max": [52, 26, 150], "role": "armor", "planes": [[0, 1, 0.5, 100]], "hollow": false },
+
+    { "op": "volume", "min": [36, 6, 36], "max": [52, 8, 72], "role": "belly", "planes": [[0, -1, -0.5, -26]], "hollow": false },
+    { "op": "volume", "min": [36, 6, 84], "max": [52, 8, 148], "role": "belly", "planes": [[0, -1, 0.5, 67]], "hollow": false },
+
+    { "op": "volume", "min": [22, 10, 40], "max": [30, 22, 56], "role": "armor", "planes": [[-1, 0, -0.5, -50]] },
+    { "op": "volume", "min": [18, 10, 56], "max": [30, 22, 146], "role": "armor" },
+    { "op": "volume", "min": [10, 12, 68], "max": [18, 15, 136], "role": "armor", "planes": [[-1, 0, -1, -86], [-0.5, 0, 1, 127]], "hollow": false },
+    { "op": "volume", "min": [4, 12, 68], "max": [10, 15, 136], "role": "plate", "planes": [[-1, 0, -1, -86], [-0.5, 0, 1, 127]], "hollow": false },
+
+    { "op": "volume", "min": [12, 8, 130], "max": [30, 24, 146], "role": "armor", "hollow": false },
+    { "op": "volume", "min": [11, 7, 142], "max": [29, 25, 162], "role": "plate", "hollow": false },
+    { "op": "volume", "min": [28, 10, 146], "max": [38, 22, 158], "role": "armor", "hollow": false },
+
+    { "op": "volume", "min": [18, 25, 136], "max": [22, 35, 164], "role": "plate", "planes": [[0, 1, -1, -111], [0, 0.5, 1, 176]], "hollow": false },
+    { "op": "volume", "min": [18, 2, 144], "max": [21, 7, 162], "role": "plate", "planes": [[0, -1, -0.5, -74]], "hollow": false },
+
+    { "op": "fill", "min": [31, 11, 28], "max": [44, 12, 156], "role": "frame" },
+
+    { "op": "mark", "min": [0, 0, 0], "max": ["half", 36, 5], "role": "dark" },
+    { "op": "mark", "min": [6, 12, 70], "max": [9, 15, 134], "role": "trim" },
+    { "op": "mark", "min": [18, 15, 60], "max": [20, 18, 142], "role": "trim" },
+    { "op": "mark", "min": [18, 31, 142], "max": [22, 35, 162], "role": "trim" },
+    { "op": "greeble", "min": [18, 12, 64], "max": [19, 20, 116], "style": "vent", "axis": "z", "every": 4 },
+    { "op": "greeble", "min": [30, 14, 40], "max": [31, 20, 140], "style": "panel", "axis": "z", "every": 6 }
+  ]
+}

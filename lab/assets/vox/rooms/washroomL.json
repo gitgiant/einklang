@@ -1,0 +1,10 @@
+{
+ "name": "washroomL",
+ "kind": "room",
+ "role": "washroom",
+ "types": ["any"],
+ "voxelSize": 0.5,
+ "size": [48,10,32],
+ "sockets": [{"face":"s","at":2,"size":"S","door":"handdoor"},{"face":"s","at":42,"size":"S","door":"handdoor"}],
+ "status": "draft"
+}

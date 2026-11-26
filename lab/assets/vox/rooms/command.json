@@ -1,0 +1,10 @@
+{
+ "name": "command",
+ "kind": "room",
+ "role": "command",
+ "types": ["any"],
+ "voxelSize": 0.5,
+ "size": [24,10,16],
+ "sockets": [{"face":"s","at":2,"size":"M","door":"door"},{"face":"s","at":18,"size":"M","door":"door"}],
+ "status": "draft"
+}

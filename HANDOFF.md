@@ -3,7 +3,7 @@
 Newest first. Keep short; prune the oldest entries.
 
 ## State
-- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate are done. Open: #23 asset import, #26 sprites/text/style packs, #24 voting, #25 agents.
+- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate, #23 asset import are done. Open: #26 sprites/text/style packs, #24 voting, #25 agents.
 - **Architecture now:** every scene is a graph in `lab/scenes/*.json` (v1 scenes = one synced `core-*` piece each), built from pieces in `lab/pieces/<kind>/<id>/` (`piece.json` + `driver.ts` and/or WGSL; the auto-shader path is `fn shade(uv)`). The Engine runs the show graph: scenes → `core-transition` → `core-post` → canvas. Piece API: `lab/api/index.ts`. The hash covers the graph inputs, and v1 state parity is unit-tested.
 - **Run:**
   - `npm run build && npm run server` prints the join URLs with `?t=<token>` (token in `.einklang-token`).
@@ -12,10 +12,11 @@ Newest first. Keep short; prune the oldest entries.
   - iPhone/iPad: `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>` (`tailscale serve`, server on `BIND=0.0.0.0`).
 - **Checks:**
   - `npm run typecheck`
-  - `npm test` (56)
+  - `npm test` (63)
   - `npm run build && npm run e2e` (23 checks, two headless WebGPU hosts, hashes per tick)
   - `npm run lab -- gate --all` (all scenes, 1080p, 3 fixtures, ~2 min)
 - **Lab CLI:** `npm run lab -- validate | render <scene|piece> [--fixture all] [--cpu] | gate [--all] [--junit f] | new <kind> <vendor-slug> | fixtures`. Artifacts go to `lab/out/` (gitignored). No GPU means it falls back to SwiftShader (~50x slower, budget not enforced).
+- **Assets:** `lab/assets/` (29 MB, space_sim's own .vox, provenance + license in `index.json`; re-copy with `npm run lab -- import-space-sim`). A piece lists files in `piece.json` `assets` (`assets/...` = shared, else its own folder), reads them with `GpuInit.asset(path)` and parses with `parseVox`/`voxWorld` from `lab/api`. The `virtual:lab-assets` Vite plugin inlines only declared files into the engine chunk (base64), so every asset adds to page load: keep them small, or switch to an async preload if this grows. Furniture with third-party props is `license: "unsettled"` and can't be used.
 - **Live hosts load every lab scene, but the server's preset list is still `radial tunnel scope flow`** until #24 ("all scenes live").
 - **Untested:** `hauptling.json` + `hauptling.Dockerfile` (Chrome in the worker image). This PC's WSL has no Docker or Hauptling, so whether Chrome sees the GPU under `--gpus all` is unproven.
 - **Open:**
@@ -29,6 +30,10 @@ Newest first. Keep short; prune the oldest entries.
   - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes.
 
 ## Log
+- **2026-11-26 · asset import (#23 done).**
+  - 568 files copied (no `third_party/`); `.vox` parser handles multi-model files and the nTRN/nGRP/nSHP scene graph (space_sim ships are hull + placed parts).
+  - Lint: declared asset exists, shared license matches `index.json`, 2 MB cap counts shared files.
+  - Exemplar `claude-vox-ship` (instanced cubes, band glow along the hull, onsets shatter it) + scene `claude-vox-fleet`; gate passes at 1080p (~0.9 ms whole show).
 - **2026-11-26 · lab CLI + gate (#22 done).**
   - `scripts/lab`: validate (schema, lint, size), render (headless Chrome via Vite, GPU or SwiftShader; contact sheet + webm via mediabunny + stats), gate (changed items incl. untracked, 1080p, 3 fixtures, JUnit + `lab/out/gate.md`), new (scaffold).
   - Synthetic fixtures in `src/core/fixtures.ts`; piece harness in `src/core/graph/harness.ts`.
@@ -53,4 +58,3 @@ Newest first. Keep short; prune the oldest entries.
     - space_sim own .vox imported
     - CC0 downloads via egress
   - Later added retro/text/sprites/generative tools; AI sprites code-drawn by default, image API opt-in (`imagegen: N`).
-- **2026-11-26 · flow particle budget (#8 done).** `Engine.bench()` → `{t:'bench', n}`; the room's N = min cap, changed at the reseed boundary; dust (closed-form, unhashed) on stronger hosts.

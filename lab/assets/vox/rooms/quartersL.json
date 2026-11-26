@@ -1,0 +1,10 @@
+{
+ "name": "quartersL",
+ "kind": "room",
+ "role": "quarters",
+ "types": ["any"],
+ "voxelSize": 0.5,
+ "size": [48,10,32],
+ "sockets": [{"face":"s","at":2,"size":"S","door":"door"},{"face":"s","at":42,"size":"S","door":"door"}],
+ "status": "draft"
+}

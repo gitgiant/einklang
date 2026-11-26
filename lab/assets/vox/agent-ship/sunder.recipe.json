@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "id": "sunder",
+  "name": "Sunder",
+  "author": "gemini",
+  "kind": "ship",
+  "role": "bomber",
+  "size": [72, 26, 84],
+  "voxelSize": 0.25,
+  "factions": ["terran", "martian", "pirate"],
+  "description": "20 m heavy torpedo and strike bomber with twin belly torpedo bays, nose ion cannons, sponson medium lasers, underwing smart bombs, bomb racks and radar missiles, dorsal point-defense turret, and quad M thrusters.",
+  "ops": [
+    { "op": "mid", "kind": "radar", "facing": "fwd", "at": [9, 8] },
+    { "op": "both", "kind": "spotlight", "facing": "fwd", "at": [31, 8, 10], "open": ["fwd"] },
+    { "op": "both", "kind": "ion", "facing": "fwd", "at": [22, 7, 18], "open": ["fwd"], "id": "ionGun" },
+    { "op": "mid", "kind": "canopyWrapM", "facing": "fwd", "at": [18, 18], "open": ["up", "fwd"] },
+    { "op": "mid", "kind": "shieldgenM", "facing": "fwd", "at": [7, 20] },
+
+    { "op": "both", "kind": "lasergunM", "facing": "fwd", "at": [16, 9, 24], "open": ["fwd"], "id": "sponsonLaser" },
+    { "op": "both", "kind": "torpedo", "facing": "fwd", "at": [28, 2, 30], "open": ["fwd", "down"] },
+    { "op": "mid", "kind": "reactorM", "facing": "fwd", "at": [6, 34] },
+    { "op": "both", "kind": "smartbomb", "facing": "fwd", "at": [18, 3, 40], "open": ["fwd", "down"] },
+    { "op": "both", "kind": "bombrack", "facing": "fwd", "at": [11, 6, 42], "open": ["fwd", "down"] },
+    { "op": "both", "kind": "radarMissile", "facing": "fwd", "at": [5, 6, 46], "open": ["fwd", "down"] },
+    { "op": "both", "kind": "blinker", "facing": "left", "at": [2, 11, 52], "open": ["left"] },
+
+    { "op": "mid", "kind": "tankM", "facing": "fwd", "at": [6, 44] },
+    { "op": "mid", "kind": "pdS", "facing": "up", "at": [18, 48], "open": ["up"] },
+    { "op": "mid", "kind": "coreS", "facing": "fwd", "at": [6, 58] },
+    { "op": "mid", "kind": "batteryM", "facing": "fwd", "at": [12, 58] },
+
+    { "op": "part", "kind": "flareLauncher", "facing": "aft", "at": [26, 16, 64], "open": ["aft"] },
+    { "op": "part", "kind": "chaffLauncher", "facing": "aft", "at": [42, 16, 64], "open": ["aft"] },
+    { "op": "both", "kind": "thruster", "facing": "fwd", "at": [16, 7, 66], "open": ["aft"], "id": "outerEngine" },
+    { "op": "both", "kind": "thruster", "facing": "fwd", "at": [26, 7, 68], "open": ["aft"], "id": "innerEngine" },
+
+    { "op": "pipe", "points": [[29, 10, 50], [29, 10, 67]] },
+    { "op": "pipe", "points": [[29, 10, 60], [20, 10, 60], [20, 10, 65]] },
+
+    { "op": "volume", "min": [33, 6, 0], "max": [39, 15, 10], "role": "plate", "planes": [[0, 1, -0.5, 11], [0, -1, -0.5, -9]] },
+    { "op": "volume", "min": [26, 6, 10], "max": [46, 17, 18], "role": "armor", "planes": [[-1, 0, -0.5, -35]] },
+    { "op": "volume", "min": [26, 6, 18], "max": [46, 18, 68], "role": "armor", "bevel": 2 },
+    { "op": "volume", "min": [21, 6, 18], "max": [26, 12, 26], "role": "belly", "hollow": false },
+
+    { "op": "volume", "min": [32, 18, 28], "max": [40, 20, 48], "role": "armor", "hollow": false },
+    { "op": "volume", "min": [32, 18, 54], "max": [40, 20, 66], "role": "armor", "planes": [[0, 1, 0.5, 50]], "hollow": false },
+    { "op": "volume", "min": [28, 4, 42], "max": [44, 6, 64], "role": "belly", "planes": [[0, -1, 0.5, 26]], "hollow": false },
+
+    { "op": "volume", "min": [16, 7, 24], "max": [26, 16, 66], "role": "armor" },
+    { "op": "volume", "min": [16, 7, 64], "max": [36, 16, 68], "role": "armor", "hollow": false },
+
+    { "op": "volume", "min": [9, 10, 32], "max": [16, 13, 70], "role": "armor", "planes": [[-1, 0, -1, -48], [-0.5, 0, 1, 61]], "hollow": false },
+    { "op": "volume", "min": [3, 10, 32], "max": [9, 13, 70], "role": "plate", "planes": [[-1, 0, -1, -48], [-0.5, 0, 1, 61]], "hollow": false },
+
+    { "op": "volume", "min": [18, 16, 58], "max": [21, 25, 77], "role": "plate", "planes": [[0, 1, -1, -42], [0, 0.5, 1, 86]], "hollow": false },
+    { "op": "volume", "min": [18, 2, 60], "max": [21, 7, 76], "role": "plate", "planes": [[0, -1, -0.5, -33]], "hollow": false },
+
+    { "op": "mark", "min": [0, 0, 0], "max": ["half", 26, 4], "role": "dark" },
+    { "op": "mark", "min": [5, 10, 34], "max": [8, 13, 68], "role": "trim" },
+    { "op": "mark", "min": [16, 12, 28], "max": [18, 15, 64], "role": "trim" },
+    { "op": "mark", "min": [18, 21, 58], "max": [21, 25, 77], "role": "trim" },
+    { "op": "greeble", "min": [16, 9, 30], "max": [17, 14, 62], "style": "vent", "axis": "z", "every": 3 }
+  ]
+}

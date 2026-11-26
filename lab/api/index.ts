@@ -49,6 +49,10 @@ export interface PieceManifest {
   shader?: string;
   /** Auto-shader pieces: bind this node's previous output as `in_prev` (feedback, trails). */
   feedback?: boolean;
+  /**
+   * Files the piece reads with `GpuInit.asset(path)`. `assets/...` is the shared lab/assets/ (license must match
+   * lab/assets/index.json); any other path is inside the piece folder. Total cap 2 MB per piece, folder included.
+   */
   assets?: { path: string; license: string; source?: string }[];
   changelog?: { date: string; by: string; note: string }[];
 }
@@ -133,6 +137,8 @@ export interface GpuInit {
   lib(file: string): string;
   /** Particle budget: the room's N at a tick (what the weakest host can run) and this host's own cap. */
   budget: { n(tick: number): number; cap: number | null };
+  /** Bytes of a file declared in piece.json `assets` (throws for anything undeclared). Parse .vox with `parseVox`. */
+  asset(path: string): Uint8Array;
 }
 
 /** A GPU input: textures for tex/mask/field, `Particles` for particles, `Geo` for geo. */
@@ -175,6 +181,8 @@ export interface PieceDriver {
 export const definePiece = (d: PieceDriver): PieceDriver => d;
 
 // ---------------------------------------------------------------- helpers
+
+export { parseVox, voxSurface, voxWorld, type VoxFile, type VoxModel, type VoxInstance, type VoxWorld } from './vox.ts';
 
 /** OKLab -> linear sRGB (Björn Ottosson). */
 export function oklabToLinear([L, a, b]: [number, number, number]): [number, number, number] {
