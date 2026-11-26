@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { galleryTrans, mainTrans, restoreAuto } from '../src/web/defaults.ts';
-import { ZERO, cycleSched, cycleTicks, holdAt, randomEffect, transTicks, type Cycle } from '../src/web/cycle.ts';
-import { DoubleTap } from '../src/web/doubletap.ts';
+import { galleryBeats, galleryTrans, mainTrans, restoreAuto } from '../src/web/defaults.ts';
+import { ZERO, cycleSched, cycleTicks, holdAt, randomEffect, retime, transTicks, type Cycle } from '../src/web/cycle.ts';
+import { DoubleTap, SINGLE_MS, Taps, tapZone } from '../src/web/doubletap.ts';
 import { micError } from '../src/web/capture.ts';
 import { Room } from '../src/server/room.ts';
 import { TRANSITIONS, type ServerMsg } from '../src/core/protocol.ts';
@@ -92,6 +92,50 @@ test('double-tap: two quick taps in one place', () => {
   tap(6000);
   d.down(6100, 10, 10, 1); d.down(6110, 50, 50, 2); // two fingers
   assert.equal(d.up(6150, 10, 10, 1), false);
+});
+
+test('tap zones: thirds of the screen', () => {
+  assert.deepEqual([0, 99, 100, 150, 200, 201, 299].map((x) => tapZone(x, 300)), [-1, -1, 0, 0, 0, 1, 1]);
+});
+
+test('single taps: reported once the double-tap window has passed, never for a double-tap', () => {
+  const s = new Taps();
+  const tap = (t: number, x = 10) => { s.down(t, x, 10); return s.up(t + 50, x, 10); };
+  tap(0);
+  assert.deepEqual(s.due(50 + SINGLE_MS - 1), [], 'still waiting');
+  assert.deepEqual(s.due(50 + SINGLE_MS), [10]);
+  assert.deepEqual(s.due(9999), [], 'only once');
+  tap(10000);
+  assert.equal(tap(10200), true);
+  assert.deepEqual(s.due(20000), [], 'a double-tap is no single one');
+  tap(30000); tap(30150, 500);
+  assert.deepEqual(s.due(40000), [10, 500], 'quick taps far apart are two singles');
+  s.down(50000, 0, 0); s.up(50800, 0, 0);
+  s.down(51000, 0, 0); s.up(51050, 90, 0);
+  assert.deepEqual(s.due(60000), [], 'a long press and a drag are no taps');
+  tap(70000); s.reset();
+  assert.deepEqual(s.due(80000), [], 'a press on a control drops the waiting tap');
+});
+
+test('gallery length: len= wins, then the remembered choice; stills ignore it', () => {
+  const b = (q: string, r: string | null = null) => galleryBeats(new URLSearchParams(q), r);
+  assert.equal(b(''), 8);
+  assert.equal(b('', '2'), 2);
+  assert.equal(b('len=4', '2'), 4);
+  assert.equal(b('stop=3', '2'), 8);
+  assert.equal(b('len=99'), 16);
+  assert.equal(b('', 'nonsense'), 8);
+});
+
+test('gallery cycle: a new length starts with the next switch', () => {
+  const c: Cycle = { ids: ['a', 'b', 'c'], trans: 'all', beats: 8 }, a = holdAt(1000, 1, 8);
+  for (const tick of [1000, a.at + cycleTicks(8) + 5]) {
+    const next = retime(c, a, tick), old = cycleSched(c, a, next.at), now = cycleSched({ ...c, beats: 1 }, next, next.at);
+    assert.ok(next.at > tick && next.at - tick <= cycleTicks(8));
+    assert.deepEqual([now.id, now.prev, now.at, now.trans.type], [old.id, old.prev, old.at, old.trans.type]);
+    assert.equal(now.trans.ticks, transTicks(1));
+    assert.equal(cycleSched({ ...c, beats: 1 }, next, next.at + cycleTicks(1)).prev, now.id);
+  }
 });
 
 test('mic errors: a blocked mic says where to allow it', () => {

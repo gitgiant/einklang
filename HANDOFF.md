@@ -8,7 +8,7 @@ Newest first. Keep short; prune the oldest entries.
 - **Run:**
   - `npm run build && npm run server` prints the join URLs with `?t=<token>` (token in `.einklang-token`).
   - Dev: `npm run dev` + server, then `http://localhost:5173/?t=<token>`.
-  - Gallery, no server needed: `/gallery.html?scene=core-demo`. Cycles scenes with random transitions by default (`trans=off` stays put); input picker bottom left (demo / mic / tab audio / file, analyzed in the page).
+  - Gallery, no server needed: `/gallery.html?scene=core-demo`. Cycles scenes with random transitions by default (`trans=off` stays put); input picker bottom left (demo / mic / tab audio / file, analyzed in the page). Length selector next to the transition one (`len=`, remembered as `gallery.tlen`; applies from the next switch). Single tap on the right / left third, or → / ←, = next / previous scene (a tap waits out the double-tap window, ~0.5 s).
   - Both pages start with random transitions; the room starts auto-rotating every 8 bars (a device's remembered `auto`/`trans`/`tlen` wins while nobody in the room has chosen). Double-tap / double-click the picture hides the UI until the next one.
   - iPhone/iPad: `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>` (`tailscale serve`, server on `BIND=0.0.0.0`).
 - **Checks:**

@@ -49,6 +49,15 @@ export function step(c: Cycle, n: number, from: string, to: string, at: number):
   return { id: to, prev: from, at, earlier: [], trans: { type, ticks: transTicks(c.beats), seed: h32(n, 0x7a5), tpb: TICKS_PER_BEAT } };
 }
 
+/**
+ * Change the transition length without disturbing the switch running at `tick`: the anchor which, with
+ * the new length, takes over at the next switch (its `at`; keep the old length and anchor until then).
+ */
+export function retime(c: Cycle, a: Anchor, tick: number): Anchor {
+  const n = switchAt(c, a, tick) + 1, k = n - a.n;
+  return { at: a.at + k * cycleTicks(c.beats), n, idx: a.idx + k, prev: a.idx + k - 1 };
+}
+
 export function cycleSched(c: Cycle, a: Anchor, tick: number): SceneSched {
   const n = switchAt(c, a, tick), k = n - a.n, id = (i: number) => c.ids[mod(i, c.ids.length)];
   return step(c, n, id(k === 0 ? a.prev : a.idx + k - 1), id(a.idx + k), a.at + k * cycleTicks(c.beats));

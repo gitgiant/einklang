@@ -32,3 +32,9 @@ export function galleryTrans(qs: URLSearchParams): GalleryTrans {
   if (['', 'off', 'none', '0'].includes(v)) return '';
   return v === 'all' || (TRANSITIONS as readonly string[]).includes(v) ? (v as GalleryTrans) : 'random';
 }
+
+/** The gallery's transition length: `len=` wins, then the remembered choice (not for `at=` / `stop=` stills). */
+export function galleryBeats(qs: URLSearchParams, remembered: string | null): number {
+  const v = qs.get('len') ?? (qs.has('at') || qs.has('stop') ? null : remembered);
+  return Math.max(0.5, Math.min(16, +(v ?? DEFAULT_TRANS_BEATS) || DEFAULT_TRANS_BEATS));
+}
