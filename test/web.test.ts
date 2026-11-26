@@ -5,13 +5,15 @@ import { ZERO, cycleSched, cycleTicks, holdAt, randomEffect, retime, transTicks,
 import { DoubleTap, SINGLE_MS, Taps, tapZone } from '../src/web/doubletap.ts';
 import { micError } from '../src/web/capture.ts';
 import { Room } from '../src/server/room.ts';
-import { TRANSITIONS, type ServerMsg } from '../src/core/protocol.ts';
+import type { ServerMsg } from '../src/core/protocol.ts';
+import '../src/server/transitions.ts';
+import { transIds } from '../src/core/transitions.ts';
 
 const store = (o: Record<string, string>) => (k: string) => o[k] ?? null;
 
 test('app defaults: random, 8 beats; the remembered choice wins', () => {
   assert.deepEqual(mainTrans(store({})), { type: 'random', beats: 8 });
-  assert.deepEqual(mainTrans(store({ trans: 'wipe', tlen: '2' })), { type: 'wipe', beats: 2 });
+  assert.deepEqual(mainTrans(store({ trans: 'wipe', tlen: '2' })), { type: 'core-wipe', beats: 2 });
   assert.deepEqual(mainTrans(store({ trans: 'nonsense', tlen: '0' })), { type: 'random', beats: 0 });
 });
 
@@ -19,7 +21,7 @@ test('auto-rotation: a device restores its choice only into a room nobody has se
   const preset = { bars: 8, trans: { type: 'random' as const, beats: 8 }, preset: true };
   assert.equal(restoreAuto(preset, store({})), null);
   assert.deepEqual(restoreAuto(preset, store({ auto: '0' })), { t: 'auto', bars: 0, trans: { type: 'random', beats: 8 } });
-  assert.deepEqual(restoreAuto(preset, store({ trans: 'blend' })), { t: 'auto', bars: 8, trans: { type: 'blend', beats: 8 } });
+  assert.deepEqual(restoreAuto(preset, store({ trans: 'blend' })), { t: 'auto', bars: 8, trans: { type: 'core-blend', beats: 8 } });
   assert.equal(restoreAuto({ bars: 4, trans: preset.trans }, store({ auto: '0' })), null);
   assert.equal(restoreAuto(null, store({ auto: '16' })), null);
 });
@@ -37,7 +39,7 @@ test('room: starts rotating every 8 bars, also after the tick space restarts', (
   ms += (8 * bar * 1000) / 60;
   room.tickAuto();
   assert.notEqual(room.state.scene.id, first);
-  assert.notEqual(room.state.scene.trans.type, 'cut');
+  assert.notEqual(room.state.scene.trans.type, 'core-cut');
   assert.ok(state());
 });
 
@@ -47,25 +49,26 @@ test('gallery transitions: random unless trans= says otherwise; stills stay off'
   assert.equal(t('scene=radial&grid=1'), 'random'); // the grid draws no transitions anyway
   assert.equal(t('stop=3'), '');
   assert.equal(t('at=3'), '');
-  assert.equal(t('stop=3&trans=iris'), 'iris');
+  assert.equal(t('stop=3&trans=iris'), 'core-iris');
+  assert.equal(t('trans=core-iris'), 'core-iris');
   for (const off of ['off', 'none', '0', '']) assert.equal(t(`trans=${off}`), '');
   assert.equal(t('trans=all'), 'all');
-  assert.equal(t('trans=cut'), 'cut');
+  assert.equal(t('trans=cut'), 'core-cut');
   assert.equal(t('trans=bogus'), 'random');
 });
 
 test('random effect: deterministic, every effect, never twice in a row', () => {
   const seq = Array.from({ length: 2000 }, (_, i) => randomEffect(i));
   assert.deepEqual(seq.slice(0, 50), Array.from({ length: 50 }, (_, i) => randomEffect(i)));
-  assert.equal(new Set(seq).size, TRANSITIONS.length - 1);
-  assert.ok(!seq.includes('cut'));
+  assert.equal(new Set(seq).size, transIds().length - 1);
+  assert.ok(!seq.includes('core-cut'));
   assert.ok(seq.every((t, i) => i === 0 || t !== seq[i - 1]));
 });
 
 test('gallery cycle: holds the given scene, then moves on; from tick 0 it is as before', () => {
   const c: Cycle = { ids: ['a', 'b', 'c'], trans: 'all', beats: 8 }, len = cycleTicks(8);
   const z = cycleSched(c, ZERO, len + 5);
-  assert.deepEqual([z.prev, z.id, z.at, z.trans.type], ['a', 'b', len, TRANSITIONS[2]]);
+  assert.deepEqual([z.prev, z.id, z.at, z.trans.type], ['a', 'b', len, transIds()[2]]);
   assert.equal(cycleSched(c, ZERO, 0).prev, 'c');
   const a = holdAt(1000, 1, 8), h = cycleSched(c, a, 1000);
   assert.equal(h.id, 'b');

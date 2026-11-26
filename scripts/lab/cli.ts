@@ -1,14 +1,18 @@
 // einklang-lab: the agents' sandbox. Run as `npm run lab -- <command>`.
 //
-//   validate                       manifests, scenes, port types, imports, folder sizes (no browser)
-//   render <scene|piece> [opts]    render a scene (or a piece in its harness) against a fixture:
+//   validate [--no-compile]        manifests, scenes, port types, imports, folder sizes, transitions
+//                                  (lab/transitions/: schema, and the assembled shader compiles in headless Chrome)
+//   render <scene|piece|transition> [opts]   render a scene (or a piece in its harness, or a transition
+//                                  between two fixed scenes, contact sheet over its progress) against a fixture:
 //                                  contact sheet, webm and stats in lab/out/<id>/<fixture>/, plus the checks
 //     --fixture quiet|techno|dense|silence|<lab/fixtures/x.feat>|all   (default techno)
 //     --seconds 4  --res 640x360  --cpu (force SwiftShader)  --no-video
-//   gate [--all] [--junit file]    the merge gate: validate, then render every changed scene/piece
+//   gate [--all] [--junit file]    the merge gate: validate, then render every changed scene/piece/transition
 //                                  (or all with --all) 8 s per fixture at 1080p on the GPU and check:
 //                                  errors, NaN, black, blown out, frozen, no audio reaction, ms/frame
+//                                  (a transition: no audio check, budget 2 ms over core-blend)
 //   new <kind> <vendor-slug> [--driver]   scaffold a piece (auto-shader unless --driver)
+//   new transition <vendor-slug>   scaffold lab/transitions/<id>/ (transition.json + mix.wgsl)
 //   fixtures                       list fixtures
 //   import-space-sim [--src dir]   copy space_sim's own .vox assets into lab/assets/vox/ (+ index.json)
 //   sprite gen "<prompt>" --name id [--size 32] [--frames 4] [--palette <style|#hex,..>] [--colors 16]
@@ -44,17 +48,18 @@ import { FIXTURES } from '../../src/core/fixtures.ts';
 import type { Registry, SceneGraph } from '../../src/core/graph/types.ts';
 import type { RunOpts, RunResult } from '../../src/web/lab.ts';
 import { PIECE_KINDS, type PieceKind } from '../../lab/api/index.ts';
+import { newTransition, validateTransitions, curveList, TRANS_BUDGET_MS, TRANS_FROM, TRANS_TO } from './transitions.ts';
 
 const OUT = resolve(LAB, 'out');
 const argv = process.argv.slice(2);
 const flag = (n: string) => argv.includes(`--${n}`);
 const opt = (n: string, d: string) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
-const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--cpu', '--all', '--driver', '--no-video'].includes(argv[i - 1])));
+const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--cpu', '--all', '--driver', '--no-video', '--no-compile'].includes(argv[i - 1])));
 const say = (s: string) => process.stdout.write(s + '\n');
 /** Ticks start here so modulators have history to look back at. */
 const START = 600;
 
-async function validate(): Promise<{ reg: Registry; scenes: SceneGraph[]; errors: string[] }> {
+async function validate(): Promise<{ reg: Registry; scenes: SceneGraph[]; transitions: string[]; errors: string[] }> {
   const { reg, errors } = await loadPieces();
   const styleList = loadStyles(), styles = new Map(styleList.map((s) => [s.id, s]));
   for (const s of styleList) errors.push(...validateStyle(s, reg));
@@ -69,19 +74,23 @@ async function validate(): Promise<{ reg: Registry; scenes: SceneGraph[]; errors
     ids.add(s.id);
   }
   errors.push(...lintPieces());
-  return { reg, scenes, errors };
+  const tr = await validateTransitions({ compile: !flag('no-compile'), note: say });
+  errors.push(...tr.errors);
+  return { reg, scenes, transitions: tr.ids, errors };
 }
 
-/** A scene id, a piece id (rendered in its harness), or a path to a scene file. */
-function target(name: string, reg: Registry, scenes: SceneGraph[]): { id: string; scene: SceneGraph; base?: SceneGraph; piece: boolean } {
+type Target = { id: string; scene: SceneGraph | string; base?: SceneGraph; piece: boolean; transition?: boolean };
+/** A scene id, a piece id (rendered in its harness), or a transition id. */
+function target(name: string, reg: Registry, scenes: SceneGraph[], transitions: string[] = []): Target {
   const s = scenes.find((x) => x.id === name);
   if (s) return { id: s.id, scene: s, piece: false };
+  if (transitions.includes(name)) return { id: name, scene: TRANS_FROM, piece: false, transition: true };
   if (reg.has(name)) {
     const h = harness(name, reg), b = harness(name, reg, true);
     if (typeof h === 'string') throw new Error(h);
     return { id: name, scene: h, base: typeof b === 'string' ? undefined : b, piece: true };
   }
-  throw new Error(`no scene or piece named ${name}`);
+  throw new Error(`no scene, piece or transition named ${name}`);
 }
 
 const save = (dir: string, r: RunResult, video: boolean) => {
@@ -94,7 +103,8 @@ const save = (dir: string, r: RunResult, video: boolean) => {
 interface ItemResult { id: string; failures: string[]; notes: string[]; ms: number; dir: string }
 
 /** Render one scene/piece over fixtures with the checks; artifacts go to lab/out/<id>/. */
-async function check(lab: Lab, t: ReturnType<typeof target>, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean }): Promise<ItemResult> {
+async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean }): Promise<ItemResult> {
+  if (t.transition) return checkTransition(lab, t.id, fixtures, seconds, opts);
   const ticks = Math.round(seconds * 60), dir = join(OUT, t.id), perf = lab.cpu ? 30 : 120;
   // SwiftShader is ~50x slower: fewer video frames there
   const base: Omit<RunOpts, 'scene' | 'fixture'> = { start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0 };
@@ -129,6 +139,30 @@ async function check(lab: Lab, t: ReturnType<typeof target>, fixtures: string[],
   return { id: t.id, failures, notes, ms, dir };
 }
 
+/**
+ * A transition from TRANS_FROM to TRANS_TO over the whole run (the contact sheet walks its progress),
+ * per fixture with the usual checks but no audio test (the scenes react, not the mix); cost = the
+ * show mid-transition minus the same with core-blend.
+ */
+async function checkTransition(lab: Lab, id: string, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean }): Promise<ItemResult> {
+  const ticks = Math.round(seconds * 60), dir = join(OUT, id), perf = lab.cpu ? 30 : 120;
+  const base: Omit<RunOpts, 'fixture'> = { scene: TRANS_FROM, start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0 };
+  const failures: string[] = [], notes: string[] = [];
+  for (const fx of fixtures) {
+    const r = await lab.run({ ...base, fixture: fx, transition: { id, from: TRANS_FROM, to: TRANS_TO, at: START, ticks } });
+    save(join(dir, fx), r, opts.video);
+    const c = judgeRun(fx, r);
+    failures.push(...c.failures.map((f) => `[${fx}] ${f}`)); notes.push(`[${fx}] ${c.notes.join(', ')}`);
+  }
+  // cost: 30 ticks in, then perf frames, all inside a transition that runs past them
+  const cost = async (tid: string) => (await lab.run({ ...base, fixture: fixtures[0], ticks: 30, every: 1000, sheet: 0, fps: 0, perfFrames: perf,
+    transition: { id: tid, from: TRANS_FROM, to: TRANS_TO, at: START, ticks: 30 + 2 * perf } })).msPerFrame;
+  const mine = await cost(id), blend = id === 'core-blend' ? mine : await cost('core-blend'), ms = Math.max(0, mine - blend);
+  notes.push(`cost ${ms.toFixed(2)} ms/frame over core-blend (show ${mine.toFixed(2)} ms, with blend ${blend.toFixed(2)} ms)`);
+  if (opts.budget) { const f = judgeCost(ms, TRANS_BUDGET_MS, 'the transition (over core-blend)'); if (f) failures.push(f); }
+  return { id, failures, notes, ms, dir };
+}
+
 const report = (r: ItemResult) => {
   say(`${r.failures.length ? 'FAIL' : 'ok  '} ${r.id}`);
   for (const n of r.notes) say(`       ${n}`);
@@ -154,9 +188,9 @@ function changed(): string[] | null {
 async function main() {
   const cmd = positional[0];
   if (cmd === 'validate') {
-    const { reg, scenes, errors } = await validate();
+    const { reg, scenes, transitions, errors } = await validate();
     for (const e of errors) say(`✗ ${e}`);
-    say(errors.length ? `${errors.length} problem(s)` : `ok: ${reg.size} pieces, ${scenes.length} scenes`);
+    say(errors.length ? `${errors.length} problem(s)` : `ok: ${reg.size} pieces, ${scenes.length} scenes, ${transitions.length} transitions`);
     process.exit(errors.length ? 1 : 0);
   }
   if (cmd === 'fixtures') {
@@ -230,6 +264,11 @@ async function main() {
     say(`copied ${r.files} files (${(r.bytes / 1048576).toFixed(1)} MB) into lab/assets/, provenance in lab/assets/index.json`);
     return;
   }
+  if (cmd === 'new' && positional[1] === 'transition') {
+    const dir = newTransition(positional[2] ?? '');
+    say(`created ${dir}\ncurves: ${curveList()}\nnext: edit it, then \`npm run lab -- render ${positional[2]}\``);
+    return;
+  }
   if (cmd === 'new') {
     const kind = positional[1] as PieceKind, id = positional[2];
     if (!PIECE_KINDS.includes(kind) || !id || !/^[a-z0-9]+(-[a-z0-9]+)+$/.test(id)) throw new Error(`usage: new <${PIECE_KINDS.join('|')}> <vendor-slug> [--driver]`);
@@ -268,15 +307,19 @@ async function main() {
     }
     const gate = cmd === 'gate';
     const [w, h] = (gate ? '1920x1080' : opt('res', flag('cpu') ? '640x360' : '1280x720')).split('x').map(Number);
-    let items: ReturnType<typeof target>[];
+    let items: Target[];
     if (gate) {
       const ch = flag('all') ? null : changed();
-      const pieceIds = new Set<string>(), sceneIds = new Set<string>();
+      const pieceIds = new Set<string>(), sceneIds = new Set<string>(), transIds = new Set<string>();
       if (ch) {
         for (const f of ch) {
           const m = f.match(/^lab\/pieces\/[^/]+\/([^/]+)\//), s = f.match(/^lab\/scenes\/([^/]+)\.json$/);
           if (m && v.reg.has(m[1])) pieceIds.add(m[1]);
           if (s && v.scenes.some((x) => x.id === s[1])) sceneIds.add(s[1]);
+          // a transition folder; the shared prelude (or its assembly) changes them all
+          const tm = f.match(/^lab\/transitions\/([^/]+)\//);
+          if (tm && v.transitions.includes(tm[1])) transIds.add(tm[1]);
+          if (f.startsWith('lab/pieces/utility/core-transition/') || f === 'src/core/transwgsl.ts') for (const id of v.transitions) transIds.add(id);
           // a style pack changes every scene that uses it; a shared asset every piece that declares it
           const st = f.match(/^lab\/styles\/([^/]+)\.json$/);
           if (st) for (const x of v.scenes) if (x.style === st[1]) sceneIds.add(x.id);
@@ -284,12 +327,12 @@ async function main() {
         }
         // an edited piece changes every scene that uses it
         for (const s of v.scenes) if (s.nodes.some((n) => pieceIds.has(n.piece))) sceneIds.add(s.id);
-      } else for (const s of v.scenes) sceneIds.add(s.id);
-      items = [...[...pieceIds].filter((p) => typeof harness(p, v.reg) !== 'string'), ...sceneIds].map((n) => target(n, v.reg, v.scenes));
-      say(`gate: ${items.length ? items.map((i) => i.id).join(', ') : 'nothing changed under lab/'}${ch ? '' : ' (all scenes)'}`);
+      } else { for (const s of v.scenes) sceneIds.add(s.id); for (const id of v.transitions) transIds.add(id); }
+      items = [...[...pieceIds].filter((p) => typeof harness(p, v.reg) !== 'string'), ...sceneIds, ...transIds].map((n) => target(n, v.reg, v.scenes, v.transitions));
+      say(`gate: ${items.length ? items.map((i) => i.id).join(', ') : 'nothing changed under lab/'}${ch ? '' : ' (all scenes and transitions)'}`);
     } else {
-      if (!positional[1]) throw new Error('usage: render <scene|piece> [--fixture f|all] [--seconds n] [--res WxH] [--cpu] [--no-video]');
-      items = [target(positional[1], v.reg, v.scenes)];
+      if (!positional[1]) throw new Error('usage: render <scene|piece|transition> [--fixture f|all] [--seconds n] [--res WxH] [--cpu] [--no-video]');
+      items = [target(positional[1], v.reg, v.scenes, v.transitions)];
     }
     if (!items.length) { writeJunit([{ name: 'nothing to gate', classname: 'lab' }]); return; }
     const lab = await openLab({ width: w, height: h, cpu: flag('cpu'), log: say });
@@ -314,7 +357,7 @@ async function main() {
     }
     return;
   }
-  say(`usage: npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> | fixtures | feedback | import-space-sim   (see scripts/lab/cli.ts)`);
+  say(`usage: npm run lab -- validate | render <scene|piece|transition> | gate [--all] | new <kind|transition> <vendor-slug> | fixtures | feedback | import-space-sim   (see scripts/lab/cli.ts)`);
   process.exit(cmd ? 1 : 0);
 }
 

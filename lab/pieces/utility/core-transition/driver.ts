@@ -1,5 +1,7 @@
-// Transition mix: one fullscreen draw over the 14 effects in transition.wgsl. In the show graph
-// the engine sets the params from core/transitions.ts (which also hashes them).
+// Transition mix: one fullscreen draw over every registered transition. transition.wgsl is not a
+// file here: the browser registry assembles it from prelude.wgsl and lab/transitions/*/mix.wgsl
+// (src/core/transwgsl.ts). In the show graph the engine sets the params from core/transitions.ts
+// (which also hashes them).
 import { definePiece } from '../../../api/index.ts';
 import { smooth } from '../../../../src/core/features.ts';
 import { NB } from '../../../../src/core/constants.ts';
@@ -22,13 +24,13 @@ export default definePiece({
     const samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
     const ubuf = device.createBuffer({ size: UBYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     return {
-      frame({ enc, in: ins, out: o, params: P, pads, raw, tick }) {
+      frame({ enc, in: ins, out: o, params: P, pads, raw, tick, time }) {
         const out = o.out, a = ins.a as GPUTexture, b = ins.b as GPUTexture, pl = pipe(out.format);
         const buf = new ArrayBuffer(UBYTES), u = new Uint32Array(buf), f = new Float32Array(buf);
         u[0] = P.type as number; u[1] = (P.seed as number) >>> 0; u[2] = P.roll as number;
-        f[4] = P.p as number; f[5] = P.flash as number; f[6] = out.width / out.height;
+        f[4] = P.p as number; f[5] = P.flash as number; f[6] = out.width / out.height; f[7] = time;
         f.set([P.pads ? pads.cx : 0.5, P.pads ? pads.cy : 0.5, out.width, out.height], 8);
-        if (P.type === 12) for (let k = 0; k < NB; k++) f[12 + k] = smooth(raw, tick, k, 8) / 255;
+        for (let k = 0; k < NB; k++) f[12 + k] = smooth(raw, tick, k, 8) / 255;
         device.queue.writeBuffer(ubuf, 0, buf);
         const bg = device.createBindGroup({
           layout: pl.getBindGroupLayout(0),

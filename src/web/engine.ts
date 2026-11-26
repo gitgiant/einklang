@@ -11,7 +11,7 @@ import { hex8 } from '../core/math.ts';
 import { NO_FX, type Fx } from '../core/fx.ts';
 import type { PostParams } from '../core/post.ts';
 import { FLOW_N_DEFAULT, sceneAt, type SceneSched } from '../core/protocol.ts';
-import { transHash, transitionAt, type Transition } from '../core/transitions.ts';
+import { transEntry, transHash, transitionAt, type Transition } from '../core/transitions.ts';
 
 const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
 const mixPost = (a: PostParams, b: PostParams, p: number): PostParams => ({
@@ -137,8 +137,9 @@ export class Engine {
       to.encode(enc, tb, sb.draw, st, F, sub, fx);
       node(this.trans, st, sub, { type: tr.kind, p: tr.p, flash: tr.flash16 / 65536, seed: tr.seed, roll: tr.roll, pads: true }, { a: ta, b: tb }, target);
       b = mixPost(from.post, to.post, tr.p);
-      // melt: trails pushed to near 1 around the midpoint so the old scene smears into the new
-      if (tr.type === 'melt') b = { ...b, decay: Math.max(b.decay, 0.985 * Math.min(1, 6.4 * tr.p * (1 - tr.p))) };
+      // "trails" (melt): post decay pushed up around the midpoint so the old scene smears into the new
+      const trails = transEntry(tr.type)?.trails;
+      if (trails) b = { ...b, decay: Math.max(b.decay, trails * Math.min(1, 6.4 * tr.p * (1 - tr.p))) };
       hash = transHash(hashState(sa.hash), hashState(sb.hash), sub ? transitionAt(sched!, st, F)! : tr);
     }
     node(this.post, tick, 0, { ...b, view: this.view }, { in: target }, this.ctx.getCurrentTexture());

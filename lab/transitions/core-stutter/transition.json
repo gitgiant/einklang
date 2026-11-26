@@ -1,0 +1,11 @@
+{
+  "id": "core-stutter",
+  "name": "stutter",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Hard cuts on 1/8-beat steps; the new scene holds a bigger share of each step.",
+  "curve": {
+    "type": "stutter",
+    "per": 8
+  }
+}

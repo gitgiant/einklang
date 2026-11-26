@@ -4,10 +4,11 @@ import { CC_PARAMS, FPS, INSTRUMENT_DELAY, LIVE_DELAY, K_BAR, K_BPM, K_PHASE, N_
 import { fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
 import {
-  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS,
+  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS,
   type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
 } from '../core/protocol.ts';
-import { TRANS_NAMES } from '../core/transitions.ts';
+import './transitions.ts'; // installs the transition registry (lab/transitions/)
+import { transName, transitions } from '../core/transitions.ts';
 import { initGpu } from './gpu/gpu.ts';
 import { VIEWS } from '../core/post.ts';
 import { Engine } from './engine.ts';
@@ -258,7 +259,7 @@ const quant = () => $<HTMLSelectElement>('quant').value as Quant;
 // transition + length: remembered per device, sent with every switch (picker, < >, [ ], pad L1/R1)
 const transSel = $<HTMLSelectElement>('trans'), lenSel = $<HTMLSelectElement>('tlen');
 transSel.add(new Option('random', 'random'));
-for (const t of TRANSITIONS) transSel.add(new Option(TRANS_NAMES[t], t));
+for (const t of transitions()) transSel.add(new Option(t.name, t.id));
 for (const b of TRANS_BEATS) lenSel.add(new Option(b === 0 ? 'cut' : b === 0.5 ? '½' : String(b), String(b)));
 const remembered = mainTrans(lsGet);
 transSel.value = remembered.type;
@@ -489,7 +490,7 @@ async function start() {
     if (panel.shown) {
       const st = engine.scene.status?.();
       const tr = engine.transition;
-      const pending = tr ? `  →  ${names.get(tr.to)}  (${TRANS_NAMES[tr.type]} ${((tr.p16 / 65536) * 100) | 0}%)`
+      const pending = tr ? `  →  ${names.get(tr.to)}  (${transName(tr.type)} ${((tr.p16 / 65536) * 100) | 0}%)`
         : room.scene.at > f ? `  →  ${names.get(room.scene.id)} in ${((room.scene.at - f) / FPS).toFixed(2)}s` : '';
       $('hud').textContent = [
         `${label}  ·  ${tr ? names.get(tr.from) : engine.scene.def.name}${pending}`,
@@ -508,7 +509,7 @@ function transLine(f: number): string {
   const steps: SceneStep[] = [...room.scene.earlier, room.scene].filter((s) => s.at + s.trans.ticks > f);
   if (!steps.length) return 'none';
   return steps.map((s) => {
-    const t = s.trans, name = TRANS_NAMES[t.type], len = t.ticks ? ` ${t.ticks}t (${(t.ticks / t.tpb).toFixed(2)} beats) seed ${hex(t.seed)}` : '';
+    const t = s.trans, name = transName(t.type), len = t.ticks ? ` ${t.ticks}t (${(t.ticks / t.tpb).toFixed(2)} beats) seed ${hex(t.seed)}` : '';
     const when = s.at > f ? `pending, in ${s.at - f}t` : `running ${f - s.at}/${t.ticks}`;
     return `${s.prev}→${s.id} ${name}${len} at ${s.at}, ${when}`;
   }).join('  |  ');

@@ -1,0 +1,8 @@
+{
+  "id": "core-luma",
+  "name": "luma",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "The new scene comes through the old one's brightest areas first.",
+  "curve": "smoothstep"
+}

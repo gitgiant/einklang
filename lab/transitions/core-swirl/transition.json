@@ -1,0 +1,8 @@
+{
+  "id": "core-swirl",
+  "name": "swirl",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Twist peaking at the midpoint.",
+  "curve": "cubic"
+}

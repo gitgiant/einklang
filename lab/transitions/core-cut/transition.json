@@ -1,0 +1,8 @@
+{
+  "id": "core-cut",
+  "name": "cut",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "The plain hard switch (never drawn as a transition; its mix is the fallback).",
+  "curve": "smoothstep"
+}

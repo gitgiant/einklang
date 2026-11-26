@@ -1,0 +1,11 @@
+{
+  "id": "core-glitch",
+  "name": "glitch",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Seeded horizontal bands swap scenes, with an RGB split.",
+  "curve": "smoothstep",
+  "uses": [
+    "roll"
+  ]
+}

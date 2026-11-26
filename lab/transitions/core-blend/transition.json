@@ -1,0 +1,8 @@
+{
+  "id": "core-blend",
+  "name": "blend",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Crossfade in HDR.",
+  "curve": "smoothstep"
+}

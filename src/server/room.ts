@@ -2,13 +2,14 @@
 // the tick-stamped event stream, and the replay logs late joiners need to catch up.
 import { FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import {
-  CUT, DEFAULT_GRID, FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN, flowNAt, DEFAULT_PRESETS, INPUT_DELAY, TRANSITIONS, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
+  CUT, DEFAULT_GRID, FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN, flowNAt, DEFAULT_PRESETS, INPUT_DELAY, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
   type TickEvent, type TransReq, type TransSched, type TransType,
 } from '../core/protocol.ts';
 import { AUTO_BARS, DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS } from '../core/protocol.ts';
 import { RETIRE_AT, cleanTags, pickWeighted, score, tally, type Tally, type Vote } from '../core/votes.ts';
-import { pickRandom } from '../core/transitions.ts';
+import { CUT_ID, pickRandom, resolveTrans } from '../core/transitions.ts';
+import './transitions.ts'; // installs the registry from lab/transitions/
 import { cleanLyrics } from '../core/lrc.ts';
 import { stateKey } from '../core/events.ts';
 import type { WsConn } from './ws.ts';
@@ -48,6 +49,14 @@ export interface RoomOpts {
   /** Every live scene id, in list order (default: the v1 presets). Scenes retired by votes drop out of `presets`. */
   catalog?: string[];
   votes?: VoteStore;
+}
+
+/** A transition request from a message: a registered id (short core names mapped) or 'random'; null if unusable. */
+function cleanTransReq(r: unknown): TransReq | null {
+  if (!r || typeof r !== 'object') return null;
+  const o = r as { type?: unknown; beats?: unknown }, beats = Number(o.beats);
+  const type = o.type === 'random' ? 'random' : resolveTrans(o.type);
+  return type && Number.isFinite(beats) ? { type, beats: Math.max(0, Math.min(16, beats)) } : null;
 }
 
 export class Room {
@@ -205,7 +214,7 @@ export class Room {
         return;
       case 'auto': {
         const bars = (AUTO_BARS as readonly number[]).includes(m.bars) ? m.bars : 0;
-        this.state.auto = bars ? { bars, trans: m.trans ?? { type: 'blend', beats: 4 } } : null;
+        this.state.auto = bars ? { bars, trans: cleanTransReq(m.trans) ?? { type: 'core-blend', beats: 4 } } : null;
         this.autoFrom = this.tickNow();
         return this.broadcastState();
       }
@@ -434,10 +443,9 @@ export class Room {
   private resolveTrans(req?: { type?: unknown; beats?: unknown }): TransSched {
     const beats = Number(req?.beats), tpb = this.state.grid.tpb;
     const ticks = Number.isFinite(beats) ? Math.round(Math.max(0, Math.min(16, beats)) * tpb) : 0;
-    let type: TransType = req?.type === 'random' ? pickRandom(this.lastTrans, this.rand())
-      : (TRANSITIONS as readonly unknown[]).includes(req?.type) ? (req!.type as TransType) : 'cut';
-    if (ticks === 0) type = 'cut';
-    if (type === 'cut') return { ...CUT, tpb };
+    let type: TransType = req?.type === 'random' ? pickRandom(this.lastTrans, this.rand()) : resolveTrans(req?.type) ?? CUT_ID;
+    if (ticks === 0) type = CUT_ID;
+    if (type === CUT_ID) return { ...CUT, tpb };
     this.lastTrans = type;
     return { type, ticks, seed: Math.floor(this.rand() * 0x100000000) >>> 0, tpb };
   }
