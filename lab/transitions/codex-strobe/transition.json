@@ -1,0 +1,10 @@
+{
+  "id": "codex-strobe",
+  "name": "Beat Strobe",
+  "vendor": "codex",
+  "model": "gpt-6.2-sol",
+  "description": "A and B trade hard cuts in quarter-beat steps with a brief tinted flash on each interrupted step and more time on B as the switch advances.",
+  "curve": { "type": "beat-steps", "per": 4 },
+  "uses": ["roll"],
+  "budget": { "ms": 0.2 }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "codex-bass-punch",
+  "name": "Bass Punch",
+  "vendor": "codex",
+  "model": "gpt-6.2-sol",
+  "description": "Onsets kick A outward in a radial smear while bass sets the force with which B lands and settles into place.",
+  "curve": { "type": "onset", "push": 0.19 },
+  "uses": ["bands"],
+  "budget": { "ms": 0.4 }
+}
