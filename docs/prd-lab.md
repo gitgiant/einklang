@@ -1,6 +1,6 @@
 # PRD: Einklang Lab (agent-generated pieces, a node-graph runtime, and voting)
 
-Status: agreed 2026-11-26 (grill-me interview). **#20, #21 and #22 built 2026-11-26**; #23–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
+Status: agreed 2026-11-26 (grill-me interview). **#20–#24 and #26 built 2026-11-26; #25 contract, backlog and skill built** (its first batch is running via Hauptling). Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
 
 ### Build notes for #26 (decided while building)
 
