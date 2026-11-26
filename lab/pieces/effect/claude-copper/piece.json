@@ -1,0 +1,24 @@
+{
+  "id": "claude-copper", "kind": "effect", "name": "Copper bars",
+  "doc": "Sine-bobbing raster bars with a metallic gradient over the input, one per frequency band (low bands in front are thickest on bass hits), coloured along the palette; optional rippled water reflection below a horizon.",
+  "ports": {
+    "in": { "in": { "type": "tex" }, "palette": { "type": "palette", "optional": true, "doc": "bar colours, low band to high" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "bars": { "type": "int", "default": 16, "min": 2, "max": 16, "doc": "bar count; the 16 bands are shared among them" },
+    "center": { "type": "float", "default": 0.4, "min": 0, "max": 1, "doc": "middle of the bobbing range, screen heights from the top" },
+    "amp": { "type": "float", "default": 0.3, "min": 0, "max": 0.5, "doc": "bob height" },
+    "thickness": { "type": "float", "default": 0.018, "min": 0.004, "max": 0.1, "doc": "half height of a silent bar" },
+    "react": { "type": "float", "default": 1.6, "min": 0, "max": 4, "doc": "how much a bar's band thickens and brightens it" },
+    "speed": { "type": "float", "default": 0.25, "min": 0, "max": 2, "doc": "bob cycles per beat" },
+    "spread": { "type": "float", "default": 0.45, "min": 0, "max": 2, "doc": "bob phase step from bar to bar, radians" },
+    "twist": { "type": "float", "default": 0.03, "min": 0, "max": 0.2, "doc": "wave along each bar" },
+    "front": { "type": "float", "default": 1, "min": 0, "max": 1, "doc": "1 = bars cover the input, 0 = bright input shows through in front" },
+    "glow": { "type": "float", "default": 1.1, "min": 0, "max": 4, "doc": "brightness (HDR)" },
+    "horizon": { "type": "float", "default": 1, "min": 0.4, "max": 1, "doc": "water line: below it the picture is mirrored and rippled (1 = none)" }
+  },
+  "shader": "copper.wgsl", "budget": { "ms": 0.4, "scales": "res" },
+  "tags": ["copper", "raster", "demoscene", "spectrum"],
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" }
+}

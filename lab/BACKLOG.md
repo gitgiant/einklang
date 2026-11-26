@@ -225,12 +225,12 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Demoscene: Mode 7 floor
 - [ ] Demoscene: parallax layers
 - [ ] Demoscene: CGA/EGA/NES/C64 palettes
-- [ ] Demoscene: raster and copper bars
-- [ ] Demoscene: rotozoom
+- [x] Demoscene: raster and copper bars → claude-copper, scene claude-copper-sky
+- [x] Demoscene: rotozoom → claude-rotozoom, scene claude-rotozoom-party
 - [ ] Demoscene: twister
 - [ ] Demoscene: sine scroller
 - [ ] Demoscene: dot balls
-- [ ] Demoscene: fire
+- [x] Demoscene: fire → claude-fire, scene claude-inferno
 - [ ] Y2K / Frutiger Aero (bubbles, glossy blobs, chrome)
 - [ ] Vector phosphor (Vectrex / arcade beam)
 - [ ] PS1 (affine wobble, vertex snap, low-res dither, fog)

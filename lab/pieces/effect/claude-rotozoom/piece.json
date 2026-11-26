@@ -1,0 +1,23 @@
+{
+  "id": "claude-rotozoom", "kind": "effect", "name": "Rotozoom",
+  "doc": "Rotates and zooms a mirrored tiling of its input over a palette checkerboard (which shows where the input is dark). Steps a turn on each beat, swings over the bar, and the bass pumps the zoom.",
+  "ports": {
+    "in": { "in": { "type": "tex" }, "palette": { "type": "palette", "optional": true, "doc": "checker colours" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "tiles": { "type": "float", "default": 2.5, "min": 0.5, "max": 8, "doc": "input tiles per screen height at zoom 1" },
+    "zoom": { "type": "float", "default": 1, "min": 0.25, "max": 4, "doc": "base magnification" },
+    "bass": { "type": "float", "default": 0.7, "min": 0, "max": 2, "doc": "extra magnification at full bass" },
+    "breathe": { "type": "float", "default": 0.35, "min": 0, "max": 0.8, "doc": "slow zoom in and out over 16 beats" },
+    "step": { "type": "int", "default": 1, "min": -4, "max": 4, "doc": "sixteenth turns snapped through on each beat (4 per bar)" },
+    "swing": { "type": "float", "default": 0.35, "min": 0, "max": 2, "doc": "turn that swings back and forth over each bar, radians" },
+    "spin": { "type": "float", "default": 0.15, "min": -2, "max": 2, "doc": "constant turn, radians per second" },
+    "pan": { "type": "float", "default": 0.4, "min": 0, "max": 2, "doc": "speed of the drifting scroll" },
+    "checker": { "type": "float", "default": 0.5, "min": 0, "max": 1.5, "doc": "checkerboard brightness (0 = input only)" },
+    "squares": { "type": "float", "default": 4, "min": 1, "max": 12, "doc": "checker squares per input tile height" }
+  },
+  "shader": "rotozoom.wgsl", "budget": { "ms": 0.2, "scales": "res" },
+  "tags": ["rotozoom", "demoscene", "warp", "tile"],
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" }
+}

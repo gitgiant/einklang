@@ -1,0 +1,21 @@
+{
+  "id": "claude-fire", "kind": "generator", "name": "Demoscene fire",
+  "doc": "Classic cellular fire: a heat grid fed along its bottom edge, each cell the average of the cells below minus a scrolling noisy cooling, coloured through the palette. Bass feeds the fuel and raises the flames; onsets flare and throw fireballs.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true, "doc": "coldest to hottest; stop 0 should be black" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "cells": { "type": "int", "default": 270, "min": 90, "max": 540, "doc": "grid height in cells (width follows the aspect)" },
+    "steps": { "type": "int", "default": 2, "min": 1, "max": 4, "doc": "sim steps per tick: rise speed" },
+    "fuel": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "heat fed along the bottom" },
+    "bass": { "type": "float", "default": 0.7, "min": 0, "max": 2, "doc": "how much bass adds fuel and height" },
+    "flare": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "onset flare and fireballs" },
+    "cooling": { "type": "float", "default": 3.8, "min": 1.5, "max": 8, "doc": "higher = shorter flames" },
+    "wind": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "sideways lean: 0 left, 0.5 upright, 1 right" },
+    "glow": { "type": "float", "default": 1.2, "min": 0, "max": 4, "doc": "brightness (HDR)" }
+  },
+  "budget": { "ms": 0.8, "scales": "res" },
+  "tags": ["fire", "demoscene", "cellular", "compute"],
+  "author": { "vendor": "claude", "model": "claude-sonnet-5-5" }
+}
