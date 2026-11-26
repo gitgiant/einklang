@@ -48,7 +48,7 @@ export const CURVES = {
    * its last share, a share that grows step by step (p is only ever 0 or 1).
    */
   stutter: { per: [8, 1, 32, true] },
-  /** Progress jumps on a 1/per-beat grid: (step + 1) / steps. */
+  /** Progress jumps on a 1/per-beat grid, from 0 to 1 (0 for a single step). */
   'beat-steps': { per: [4, 1, 32, true] },
   /** Smoothstep floor; every onset so far closes `push` of the remaining distance. */
   onset: { push: [0.15, 0, 1, false] },
@@ -95,7 +95,7 @@ export function curveAt(c: CurveSpec, tr: { ticks: number; tpb: number }, at: nu
     }
     case 'beat-steps': {
       const d = dt + sub / 256, step = tr.tpb / cp(c, 'per'), n = Math.max(1, Math.ceil(tr.ticks / step)), i = Math.floor(d / step);
-      return q16((i + 1) / n);
+      return n === 1 ? 0 : q16(i / (n - 1));
     }
     case 'onset': {
       let k = 1;

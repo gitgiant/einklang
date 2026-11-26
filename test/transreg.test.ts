@@ -114,19 +114,26 @@ test('curves: endpoints, shapes and params', () => {
   assert.equal(at({ type: 'ease-out', power: 3 }, 0.5), 0.875);
   assert.ok(at({ type: 'bounce' }, 1 / 2.75) > 0.98, 'bounce touches 1 at its first landing');
   assert.ok(at({ type: 'bounce' }, 0.5) < at({ type: 'bounce' }, 1 / 2.75), 'then bounces back');
-  // beat-steps: flat within a 1/per beat, (i + 1) / n
-  const bs = (dt: number, per = 4) => curveAt({ type: 'beat-steps', per }, tr, 0, dt, silence) / ONE;
-  assert.equal(bs(0), Math.round(ONE / 16) / ONE);
-  assert.equal(bs(6), bs(0));
-  assert.equal(bs(7), Math.round((2 * ONE) / 16) / ONE);
-  assert.equal(bs(111), 1);
-  assert.equal(bs(3, 8), bs(0, 8));
-  assert.notEqual(bs(4, 8), bs(3, 8));
   // onset: a bigger push gets further ahead on the same onsets
   const onsets: FeatureSource = { get: (t, k) => (k === K_ONSET && t % 14 === 0 ? 255 : 0), wave: () => null };
   const o = (push: number) => curveAt({ type: 'onset', push }, tr, 0, 30, onsets);
   assert.ok(o(0) < o(0.15) && o(0.15) < o(0.5));
   assert.equal(o(0), curveAt({ type: 'smoothstep' }, tr, 0, 30, onsets));
+});
+
+test('beat-steps starts at zero and reaches one on the last step when there are multiple steps', () => {
+  const at = (ticks: number, dt: number, per = 4, sub = 0) =>
+    curveAt({ type: 'beat-steps', per }, { ticks, tpb: 28 }, 0, dt, silence, sub);
+  assert.equal(at(112, 0), 0);
+  assert.equal(at(112, 6, 4, 255), 0);
+  assert.equal(at(112, 7), Math.round(ONE / 15));
+  assert.equal(at(112, 105), ONE);
+  assert.equal(at(112, 111), ONE);
+  assert.equal(at(112, 3, 8, 127), 0);
+  assert.equal(at(112, 3, 8, 128), Math.round(ONE / 31));
+  assert.equal(at(8, 7), ONE); // A partial final step still reaches one.
+  assert.equal(at(7, 0), 0);
+  assert.equal(at(7, 6, 4, 255), 0);
 });
 
 test('shader assembly: each mix in its own namespace, a switch over every kind, lines map back', () => {
