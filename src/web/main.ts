@@ -376,7 +376,8 @@ function renderHosts(names: Map<string, string>) {
     el.append(name, sel);
   }
   if (!room.hosts.length) el.textContent = 'no hosts';
-  const sc = (id: string) => { const s = room.scores[id]; return s ? `  ${s > 0 ? '+' : ''}${s}` : ''; };
+  // scores is absent in states from a server older than #24
+  const sc = (id: string) => { const s = room.scores?.[id]; return s ? `  ${s > 0 ? '+' : ''}${s}` : ''; };
   pick.replaceChildren(...room.presets.map((id) => new Option((names.get(id) ?? id) + sc(id), id)));
   autoSel.value = String(room.auto?.bars ?? 0);
 }
