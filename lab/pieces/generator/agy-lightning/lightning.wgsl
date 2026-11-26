@@ -96,11 +96,13 @@ struct SegOut {
   let d = length(pa - ba * h);
 
   if (v.kind > 0.5) {
-    // Volumetric concert laser: razor core + widening atmospheric beam cone
-    let w_core = max(v.width * (0.35 + 0.65 * h), 1.6 / u.res.y);
-    let w_cone = max(v.width * (1.8 + 5.5 * h), 0.015);
+    // Volumetric concert laser: razor core + smoothly windowed atmospheric beam cone (zero quad edge)
+    let pad = max(v.width * 10.0, 0.16);
+    let edge_fade = smoothstep(pad, pad * 0.2, d);
+    let w_core = max(v.width * (0.32 + 0.55 * h), 1.6 / u.res.y);
+    let w_cone = max(v.width * (1.2 + 2.6 * h), 0.012);
     let core = exp(-d * d / (w_core * w_core));
-    let cone = exp(-d / w_cone) * (0.32 + 0.35 * u.haze);
+    let cone = exp(-d / w_cone) * (0.28 + 0.32 * u.haze) * edge_fade;
     let atten = (1.0 - 0.55 * h) * smoothstep(0.0, 0.03, h);
     let hot = mix(v.col, vec3f(1.0, 0.99, 1.0), 0.62);
     return vec4f((hot * core * 0.9 + v.col * cone * 0.5) * v.inten * atten, 1.0);

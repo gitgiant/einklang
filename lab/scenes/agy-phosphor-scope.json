@@ -77,7 +77,7 @@
         },
         "glow": {
           "from": "audio.rms",
-          "range": [1.25, 2.2]
+          "range": [0.85, 1.45]
         }
       }
     },
@@ -85,8 +85,8 @@
       "id": "phos",
       "piece": "agy-phosphor",
       "params": {
-        "persistence": 0.87,
-        "halation": 0.48,
+        "persistence": 0.83,
+        "halation": 0.42,
         "curve": 0.12,
         "grille": 0.22,
         "tint": "#38f0b8"

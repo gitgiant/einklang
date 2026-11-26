@@ -95,7 +95,7 @@
       "id": "trails",
       "piece": "core-trails",
       "params": {
-        "decay": 0.72,
+        "decay": 0.62,
         "rotate": 0.002
       },
       "bind": {

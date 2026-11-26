@@ -91,9 +91,9 @@ struct RidgeOut {
   let y_top1 = y_base + h1 * u.height * persp;
 
   // Pad slightly above the crest so the HDR glow halo doesn't clip;
-  // extend just far enough below baseline to occlude ridges behind without excess overdraw
-  let glow_pad = max(0.028 * persp, 8.0 / u.res.y);
-  let y_bot = max(y_base - 0.24 * persp, -1.04);
+  // extend cleanly below baseline so front ridges never reveal a bottom seam
+  let glow_pad = max(0.026 * persp, 8.0 / u.res.y);
+  let y_bot = select(max(y_base - 0.30 * persp, -1.04), -1.04, depth < 0.08);
 
   // Quad corners: (side: 0=left, 1=right), (top: 1=above crest, 0=bottom)
   var side = 0.0;
@@ -137,25 +137,25 @@ struct RidgeOut {
   let perp = dy_px / sqrt(1.0 + v.slope_px * v.slope_px);
 
   // Depth-attenuated stroke width (crisp in front, finer near horizon)
-  let stroke = mix(2.3, 1.05, v.depth);
+  let stroke = mix(2.0, 0.95, v.depth);
   let d = abs(perp);
 
   // Palette color shifts smoothly with depth + elevation + ridge travel
   let pal_pos = fract(v.depth * 0.65 + v.elev * 0.45 + v.pal_u * 0.35);
   let base_col = pal_at(pal_pos);
-  let hot_col = mix(base_col, vec3f(1.0, 0.96, 0.9), 0.55);
+  let hot_col = mix(base_col, vec3f(1.0, 0.96, 0.9), 0.32);
 
-  // Crisp glowing mountain crest + soft top/bottom aura
-  let core = exp(-(d * d) / max(stroke * stroke * 0.55, 0.2));
-  let halo = exp(-d / (stroke * 3.0)) * 0.42;
-  let boost = (0.7 + 1.35 * v.elev + 0.95 * v.onset) * u.glow * mix(1.15, 0.45, v.depth);
+  // Crisp glowing mountain crest + controlled aura so valleys stay deep and dark
+  let core = exp(-(d * d) / max(stroke * stroke * 0.5, 0.2));
+  let halo = exp(-d / (stroke * 2.1)) * 0.24;
+  let boost = (0.55 + 1.15 * v.elev + 0.85 * v.onset) * u.glow * mix(1.15, 0.45, v.depth);
   let crest_rgb = (hot_col * core + base_col * halo) * boost * v.fade;
 
   // Opaque dark silhouette fill strictly below the crest (genuine hidden-line occlusion)
   let fill_mask = smoothstep(-0.65, 0.65, perp) * v.fade;
   // Subtle depth-tinted slope shading right under the crest so terrain reads as 3D ridges
-  let under_glow = exp(-max(perp, 0.0) / mix(26.0, 8.0, v.depth));
-  let fill_col = base_col * (0.025 + 0.14 * under_glow * (0.4 + v.elev + 0.5 * v.onset)) * mix(1.0, 0.35, v.depth);
+  let under_glow = exp(-max(perp, 0.0) / mix(16.0, 6.0, v.depth));
+  let fill_col = base_col * (0.012 + 0.075 * under_glow * (0.3 + v.elev + 0.4 * v.onset)) * mix(1.0, 0.35, v.depth);
 
   // Premultiplied output: silhouette occludes behind, crest glow adds cleanly above
   let rgb = fill_col * fill_mask + crest_rgb;
