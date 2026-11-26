@@ -33,4 +33,4 @@ None.
 
 ## Not voted on yet
 
-claude-handheld, claude-sprite-party, claude-vox-fleet, core-demo, core-retro, flow, radial, scope, tunnel
+claude-coral, claude-cycle-plasma, claude-handheld, claude-late-show, claude-lava, claude-sdf-flight, claude-sprite-party, claude-vortex, claude-vox-fleet, core-demo, core-retro, flow, radial, scope, tunnel

@@ -2,6 +2,40 @@
  "votes": 0,
  "latest": null,
  "scenes": {
+  "claude-coral": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Coral",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-reaction",
+    "core-follow",
+    "core-lfo",
+    "core-swatch"
+   ]
+  },
+  "claude-cycle-plasma": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Colour wheel interference",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-cycle",
+    "core-blend",
+    "core-follow",
+    "core-kaleido",
+    "core-plasma",
+    "core-swatch"
+   ]
+  },
   "claude-handheld": {
    "up": 0,
    "down": 0,
@@ -18,6 +52,57 @@
     "core-sprite",
     "core-swatch",
     "core-text"
+   ]
+  },
+  "claude-late-show": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Late show",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-crt",
+    "core-bars",
+    "core-blend",
+    "core-follow",
+    "core-plasma",
+    "core-swatch",
+    "core-text"
+   ]
+  },
+  "claude-lava": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Lava",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-metaballs",
+    "core-audio",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-sdf-flight": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "SDF flight",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-raymarch",
+    "core-follow",
+    "core-harmony",
+    "core-lfo"
    ]
   },
   "claude-sprite-party": {
@@ -37,6 +122,21 @@
     "core-swatch",
     "core-text",
     "core-trails"
+   ]
+  },
+  "claude-vortex": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Vortex",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-zoomfeed",
+    "core-lfo",
+    "core-scope"
    ]
   },
   "claude-vox-fleet": {
