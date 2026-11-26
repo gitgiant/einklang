@@ -4,8 +4,8 @@
   "status": "live", "created": "2026-11-26",
   "nodes": [
     { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.5 } },
-    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#05010f #3a0ca3 #f72585 #ffbe0b #06d6a0 #05010f" } },
-    { "id": "hit", "piece": "claude-cycle", "params": { "mode": 0, "every": 0, "stride": 1, "flash": 0.12 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#05010f #3a0ca3 #f72585 #ffbe0b #06d6a0" } },
+    { "id": "hit", "piece": "claude-cycle", "params": { "mode": 0, "every": 0, "stride": 1, "flash": 0.12, "loop": true } },
     { "id": "glide", "piece": "claude-cycle", "params": { "mode": 1, "every": 1, "stride": -2, "loop": true } },
     { "id": "rings", "piece": "core-plasma", "params": { "scale": 9, "speed": 0.35, "gain": 0.75 }, "bind": { "warp": { "from": "bass.out", "range": [0, 0.9] } } },
     { "id": "swell", "piece": "core-plasma", "params": { "scale": 3.5, "speed": 0.6, "warp": 0.5, "gain": 0.6 } },
