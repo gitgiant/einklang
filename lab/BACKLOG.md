@@ -22,13 +22,13 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Voxel shapes / .vox assets → claude-vox-ship, scene claude-vox-fleet
 - [ ] 3D assets (glTF)
 - [ ] Strange attractors
-- [ ] Reaction-diffusion
+- [x] Reaction-diffusion → claude-reaction, scene claude-coral
 - [ ] Physarum
 - [ ] Smoke / fluid
 - [ ] Boids
 - [ ] N-body
 - [ ] SPH liquid
-- [ ] SDF raymarch
+- [x] SDF raymarch → claude-raymarch, scene claude-sdf-flight
 - [ ] Fractals (mandelbox, julia)
 - [ ] L-systems / trees
 - [ ] Cellular automata
@@ -39,7 +39,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] MIDI piano-roll
 - [ ] Lasers / lightning
 - [ ] Shape grammar
-- [ ] Metaballs
+- [x] Metaballs → claude-metaballs, scene claude-lava
 - [ ] String / wave sim
 - [x] Radial spectrum → core-radial
 - [x] Tunnel / warp → core-tunnel

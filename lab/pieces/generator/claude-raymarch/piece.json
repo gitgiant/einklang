@@ -1,0 +1,23 @@
+{
+  "id": "claude-raymarch",
+  "kind": "generator",
+  "name": "SDF flight",
+  "doc": "A raymarched fly-through of an endless lattice of tumbling rounded boxes, along a winding tube carved through it. Each box listens to one spectrum band: it swells, rounds toward a sphere and glows with it; the camera surges on every beat (closed-form in time and beat count, so hosts agree) and the lens widens with the bass. Rendered at reduced resolution and upscaled.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true, "doc": "boxes pick a stop per cell; stop 0 tints the fog, the last stop the rims" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "speed": { "type": "float", "default": 1.6, "min": 0, "max": 8, "doc": "base flight speed, units per second (scales the closed-form distance: keep it fixed, binding it to a signal makes the camera jump)" },
+    "surge": { "type": "float", "default": 1.5, "min": 0, "max": 4, "doc": "extra speed at the start of each beat" },
+    "morph": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "how much band energy swells and rounds the boxes" },
+    "glow": { "type": "float", "default": 1.5, "min": 0, "max": 5, "doc": "band glow and haze" },
+    "fog": { "type": "float", "default": 0.09, "min": 0.01, "max": 0.4, "doc": "fog density" },
+    "tunnel": { "type": "float", "default": 1.2, "min": 0.4, "max": 2.5, "doc": "radius of the free tube around the flight path" },
+    "scale": { "type": "float", "default": 0.6, "min": 0.25, "max": 1, "doc": "render resolution as a share of the output" }
+  },
+  "budget": { "ms": 1.5, "scales": "res" },
+  "tags": ["3d", "raymarch", "sdf", "flight", "spectrum"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-26", "by": "claude/claude-opus-5-5", "note": "first version" }]
+}
