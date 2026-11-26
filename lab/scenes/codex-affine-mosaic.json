@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "id": "codex-affine-mosaic",
+  "name": "Roto Mosaic",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "swatch",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#171238 #352879 #6c5eb5 #70a4b2 #6abfc6 #b8c76f #f0e9a0"
+      }
+    },
+    {
+      "id": "visual",
+      "piece": "codex-affine-mosaic-gen",
+      "bind": {
+        "zoom": {
+          "from": "audio.bass",
+          "range": [
+            0.04,
+            0.98
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "swatch.palette",
+      "to": "visual.palette"
+    }
+  ],
+  "out": "visual.out",
+  "post": {
+    "bloom": 0.08,
+    "threshold": 0.85,
+    "exposure": 1.1
+  }
+}

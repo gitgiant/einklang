@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "id": "codex-night-circuit",
+  "name": "Night Circuit",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "swatch",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#08051d #211246 #681772 #ff55ff #55ffff #ffffff #ffc48c"
+      }
+    },
+    {
+      "id": "visual",
+      "piece": "codex-night-circuit-gen",
+      "bind": {
+        "surge": {
+          "from": "audio.bass",
+          "range": [
+            0.04,
+            0.96
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "swatch.palette",
+      "to": "visual.palette"
+    }
+  ],
+  "out": "visual.out",
+  "post": {
+    "bloom": 0.16,
+    "threshold": 0.65,
+    "exposure": 1.06
+  }
+}

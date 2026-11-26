@@ -1,0 +1,52 @@
+{
+  "id": "codex-copper-twist-gen",
+  "kind": "generator",
+  "name": "Copper twister",
+  "doc": "A shaded four-face ribbon over moving copper bars, with a procedural sine scroller.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "drive": {
+      "type": "float",
+      "default": 0.28,
+      "min": 0,
+      "max": 1,
+      "doc": "Bass widens the ribbon and increases the sine scroller amplitude."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 1.5,
+    "scales": "res"
+  },
+  "tags": [
+    "demoscene",
+    "retro",
+    "copper-bars",
+    "twister",
+    "sine-scroller",
+    "ega"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "changelog": [
+    {
+      "date": "2026-11-26",
+      "by": "gpt-6.2-sol",
+      "note": "Initial version."
+    }
+  ]
+}

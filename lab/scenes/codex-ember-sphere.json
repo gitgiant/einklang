@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "id": "codex-ember-sphere",
+  "name": "Ember Sphere",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "swatch",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#0d071b #310d34 #80182e #dc3c26 #ff8a28 #ffcf55 #fff3b2"
+      }
+    },
+    {
+      "id": "visual",
+      "piece": "codex-ember-sphere-gen",
+      "bind": {
+        "heat": {
+          "from": "audio.mid",
+          "range": [
+            0.04,
+            0.98
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "swatch.palette",
+      "to": "visual.palette"
+    }
+  ],
+  "out": "visual.out",
+  "post": {
+    "bloom": 0.21,
+    "threshold": 0.64,
+    "exposure": 1.13
+  }
+}

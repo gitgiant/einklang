@@ -1,0 +1,52 @@
+{
+  "id": "codex-night-circuit-gen",
+  "kind": "generator",
+  "name": "Mode 7 night road",
+  "doc": "A perspective-mapped road below a slatted sun and parallax skyline.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "surge": {
+      "type": "float",
+      "default": 0.28,
+      "min": 0,
+      "max": 1,
+      "doc": "Bass drives the horizon lift and the intensity of lane markers."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 1.5,
+    "scales": "res"
+  },
+  "tags": [
+    "demoscene",
+    "retro",
+    "mode-7",
+    "parallax",
+    "cga",
+    "road"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "changelog": [
+    {
+      "date": "2026-11-26",
+      "by": "gpt-6.2-sol",
+      "note": "Initial version."
+    }
+  ]
+}

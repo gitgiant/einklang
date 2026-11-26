@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "id": "codex-copper-twist",
+  "name": "Copperline",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "audio",
+      "piece": "core-audio"
+    },
+    {
+      "id": "swatch",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#05051b #0000aa #aa00aa #ff55ff #55ffff #ffff55 #ffffff"
+      }
+    },
+    {
+      "id": "visual",
+      "piece": "codex-copper-twist-gen",
+      "bind": {
+        "drive": {
+          "from": "audio.bass",
+          "range": [
+            0.06,
+            0.97
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "swatch.palette",
+      "to": "visual.palette"
+    }
+  ],
+  "out": "visual.out",
+  "post": {
+    "bloom": 0.16,
+    "threshold": 0.68,
+    "exposure": 1.1
+  }
+}
