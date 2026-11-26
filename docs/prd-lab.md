@@ -1,6 +1,35 @@
 # PRD: Einklang Lab (agent-generated pieces, a node-graph runtime, and voting)
 
-Status: agreed 2026-11-26 (grill-me interview). **#20 and #21 built 2026-11-26**; #22–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
+Status: agreed 2026-11-26 (grill-me interview). **#20, #21 and #22 built 2026-11-26**; #23–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
+
+### Build notes for #22 (decided while building)
+
+- **CLI:** `npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> [--driver] | fixtures` (`scripts/lab/cli.ts`). `feedback` waits for #24.
+- **Fixtures** are synthetic (`src/core/fixtures.ts`: quiet, techno, dense, plus silence) and generated in code, so no binary files and no audio. A recorded `lab/fixtures/<name>.feat` (4-byte frame count, then the `fileSource` layout) can stand beside them; recording one from an audio file is still open.
+- **Render page:** `lab.html` / `src/web/lab.ts`.
+  - It renders every tick (so feedback is right) and reads back every 10th for checks.
+  - Output: a 12-frame contact sheet, a VP9 webm via WebCodecs + `mediabunny` (devDependency), and `stats.json`. Artifacts go to `lab/out/<id>/<fixture>/` (gitignored).
+  - A piece renders in a generated **harness** (`src/core/graph/harness.ts`): image inputs are fed a plasma, palettes a harmony; color pieces paint plasma + bars; signals drive plasma warp and gain. Its cost is measured over a baseline harness without the piece.
+- **Browser:** Chrome headless through Vite (`forwardConsole: false`). It falls back to **SwiftShader** (`--use-webgpu-adapter=swiftshader --enable-unsafe-swiftshader`) when there is no GPU, or with `--cpu`. On CPU it renders 640x360, video at 15 fps, and the ms budget isn't enforced. It is about 50x slower: 2 s × 2 fixtures took ~2.5 min here.
+- **Checks** (`scripts/lab/checks.ts`, unit-tested):
+  - render or shader errors; WGSL errors are reported against the piece's own file and line
+  - NaN/Inf in the HDR target
+  - black (>80% of frames below luma 0.01)
+  - blown out (>50% of frames >90% white)
+  - frozen (mean thumbnail change < 0.002)
+  - no audio reaction (the same ticks on silence look identical for every fixture)
+  - cost over 12 ms per scene or 4 ms per piece
+
+  Black and frozen on `quiet` alone are warnings.
+- **Gate:**
+  - It gates the pieces and scenes changed against the merge base with main, plus uncommitted and untracked files, and every scene using a changed piece. With nothing changed, or with `--all`, it gates all scenes.
+  - Each item renders at 1080p for 8 s per fixture.
+  - It writes JUnit (`--junit`) and `lab/out/gate.md`.
+  - All 6 scenes take ~2 min on this GPU. Scope only warns on quiet.
+- **Lint** (`scripts/lab/lint.ts`): non-core drivers import only `lab/api` and their own folder, and must not use page, network, storage or timer globals. Each piece folder is capped at 2 MB. Core pieces may import `src/core`.
+- **Hauptling:**
+  - `hauptling.json`: `test` = typecheck + `lab validate` + unit tests with JUnit; `gpu` = `lab gate`; `gateGpu: true`.
+  - `hauptling.Dockerfile` adds Chrome stable, Vulkan and fonts. **Not built or tested yet:** this PC's WSL has no Docker or Hauptling. Whether Chrome sees the NVIDIA GPU inside a `--gpus all` container is unproven. Without it the lab falls back to SwiftShader and says the budget wasn't enforced.
 
 ### Build notes for #21 (decided while building)
 

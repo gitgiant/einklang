@@ -18,7 +18,7 @@ export function instantiate(device: GPUDevice, def: PieceDef, budget: Budget): G
   if (!g) return null;
   return g({
     device, formats: TEX_FORMAT, budget,
-    shader: (f) => shader(device, def.wgsl[f] ?? '', `${id}/${f}`),
+    shader: (f) => shader(device, def.wgsl[f] ?? '', `${id}/${f}`, { name: f, skip: 0 }),
     wgsl: (f) => def.wgsl[f] ?? '',
     compile: (code, label) => shader(device, code, label),
     lib: (f) => LIB[f] ?? '',
@@ -89,7 +89,7 @@ export class GraphRunner {
     const m = pn.def.manifest, d = this.device;
     if (m.shader) {
       const L = autoLayout(m), fmt = TEX_FORMAT[Object.values(m.ports.out)[0].type as keyof typeof TEX_FORMAT];
-      const mod = shader(d, L.prelude + pn.def.wgsl[m.shader] + autoFragment, m.id);
+      const mod = shader(d, L.prelude + pn.def.wgsl[m.shader] + autoFragment, m.id, { name: m.shader, skip: L.prelude.split('\n').length - 1 });
       const bgl = d.createBindGroupLayout({
         label: m.id,
         entries: [

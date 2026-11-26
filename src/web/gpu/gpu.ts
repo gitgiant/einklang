@@ -15,10 +15,21 @@ export async function initGpu(): Promise<Gpu> {
   return { device, format: navigator.gpu.getPreferredCanvasFormat(), adapterInfo: [info.vendor, info.architecture, info.description].filter(Boolean).join(' ') };
 }
 
-/** Compile a shader with the shared prelude (h32, hsv2rgb, fullscreen vertex). */
-export function shader(device: GPUDevice, code: string, label: string): GPUShaderModule {
+const PRELUDE_LINES = common.split('\n').length;
+
+/**
+ * Compile a shader with the shared prelude (h32, hsv2rgb, fullscreen vertex). Errors are logged
+ * against `file` when given: `skip` generated lines sit between the prelude and that file's text.
+ */
+export function shader(device: GPUDevice, code: string, label: string, file?: { name: string; skip: number }): GPUShaderModule {
   const m = device.createShaderModule({ code: common + '\n' + code, label });
-  m.getCompilationInfo().then((ci) => { for (const msg of ci.messages) if (msg.type === 'error') console.error(`[${label}] ${msg.lineNum}:${msg.linePos} ${msg.message}`); });
+  m.getCompilationInfo().then((ci) => {
+    for (const msg of ci.messages) {
+      if (msg.type !== 'error') continue;
+      const line = msg.lineNum - PRELUDE_LINES - (file?.skip ?? 0);
+      console.error(file && line > 0 ? `[${label}] ${file.name}:${line}:${msg.linePos} ${msg.message}` : `[${label}] ${msg.lineNum}:${msg.linePos} ${msg.message} (generated code)`);
+    }
+  });
   return m;
 }
 

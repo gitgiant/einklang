@@ -13,11 +13,13 @@
     "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\"",
     "build:live": "node --experimental-strip-types --no-warnings scripts/build-live.ts",
     "e2e": "node --experimental-strip-types --no-warnings scripts/e2e.ts",
-    "mockups": "node --experimental-strip-types --no-warnings scripts/mockups.ts"
+    "mockups": "node --experimental-strip-types --no-warnings scripts/mockups.ts",
+    "lab": "node --experimental-strip-types --no-warnings scripts/lab/cli.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.11",
     "@webgpu/types": "^0.1.74",
+    "mediabunny": "^1.66.4",
     "puppeteer-core": "^25.19.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"

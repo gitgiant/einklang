@@ -1,6 +1,7 @@
 import type { Gpu } from './gpu/gpu.ts';
 import type { GpuInstance, ParamValue } from '../../lab/api/index.ts';
-import { labScenes, type GraphScene } from './graph/scene.ts';
+import { graphScene, labScenes, type GraphScene } from './graph/scene.ts';
+import type { SceneGraph } from '../core/graph/types.ts';
 import { instantiate, type Budget } from './graph/runner.ts';
 import { REGISTRY } from './graph/registry.ts';
 import type { FeatureSource } from '../core/features.ts';
@@ -53,13 +54,23 @@ export class Engine {
   constructor(gpu: Gpu, canvas: HTMLCanvasElement) {
     this.gpu = gpu; this.canvas = canvas;
     this.ctx = canvas.getContext('webgpu')!;
-    this.ctx.configure({ device: gpu.device, format: gpu.format, alphaMode: 'opaque' });
+    this.ctx.configure({ device: gpu.device, format: gpu.format, alphaMode: 'opaque', usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC });
     this.scenes = labScenes(gpu.device, this.budget);
     this.trans = showNode(gpu.device, 'core-transition', this.budget);
     this.post = showNode(gpu.device, 'core-post', this.budget);
   }
 
   get scene(): GraphScene { return this.scenes[this.idx]; }
+  /** The HDR scene target of the last frame (before post), for the lab's checks. */
+  get sceneTexture(): GPUTexture | null { return this.targets?.scene ?? null; }
+  /** The canvas texture of the last frame (after post). */
+  get canvasTexture(): GPUTexture { return this.ctx.getCurrentTexture(); }
+  /** Add (or replace) a scene from a graph that isn't in lab/scenes, e.g. the lab's piece harness. */
+  addScene(g: SceneGraph): GraphScene {
+    const sc = graphScene(this.gpu.device, g, this.budget), i = this.scenes.findIndex((s) => s.def.id === g.id);
+    if (i >= 0) this.scenes[i] = sc; else this.scenes.push(sc);
+    return sc;
+  }
   setScene(idOrIndex: string | number): void {
     const i = typeof idOrIndex === 'number' ? idOrIndex : this.scenes.findIndex((s) => s.def.id === idOrIndex);
     if (i >= 0 && i < this.scenes.length) this.idx = i;
@@ -78,7 +89,7 @@ export class Engine {
   invalidate(tick: number): void { for (const s of this.scenes) s.invalidate(tick); }
 
   private hdr(w: number, h: number, label: string): GPUTexture {
-    return this.gpu.device.createTexture({ size: [w, h], format: HDR, label, usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
+    return this.gpu.device.createTexture({ size: [w, h], format: HDR, label, usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC });
   }
   private sceneTarget(w: number, h: number): GPUTexture {
     if (!this.targets || this.targets.w !== w || this.targets.h !== h) {
