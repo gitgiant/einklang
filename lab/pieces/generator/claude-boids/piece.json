@@ -1,0 +1,33 @@
+{
+  "id": "claude-boids",
+  "kind": "generator",
+  "name": "Boids",
+  "doc": "A GPU flock (separation, alignment, cohesion on a uniform grid) wheeling after a slowly roaming attractor, drawn as short glowing streaks over a dusk gradient from the palette's dark end. Bass tightens the cohesion and packs the flock, loudness speeds it, and each onset scatters the birds outward from a point near the flock and brightens them.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true, "doc": "the darkest stops paint the sky; heading sweeps the middle stops, fast birds reach the top stop" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "count": { "type": "int", "default": 16384, "min": 256, "max": 65536, "doc": "number of boids" },
+    "steps": { "type": "int", "default": 2, "min": 1, "max": 4, "doc": "sim steps per tick" },
+    "speed": { "type": "float", "default": 0.3, "min": 0.05, "max": 1.5, "doc": "cruise speed in screen heights per second" },
+    "radius": { "type": "float", "default": 0.035, "min": 0.01, "max": 0.1, "doc": "neighbour radius in screen heights (also the grid cell)" },
+    "space": { "type": "float", "default": 0.4, "min": 0.1, "max": 1, "doc": "separation radius as a fraction of the neighbour radius" },
+    "separation": { "type": "float", "default": 2.5, "min": 0, "max": 10, "doc": "push apart" },
+    "alignment": { "type": "float", "default": 2, "min": 0, "max": 10, "doc": "match neighbours' velocity" },
+    "cohesion": { "type": "float", "default": 3, "min": 0, "max": 20, "doc": "steer to neighbours' centre" },
+    "tighten": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "how much the bass raises cohesion and shrinks the spacing" },
+    "pull": { "type": "float", "default": 0.25, "min": 0, "max": 2, "doc": "pull toward the roaming attractor" },
+    "scatter": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "onset scatter strength (0 = off)" },
+    "size": { "type": "float", "default": 0.004, "min": 0.001, "max": 0.02, "doc": "bird size in screen heights" },
+    "streak": { "type": "float", "default": 3, "min": 0, "max": 12, "doc": "streak length behind each bird, in sizes per unit of relative speed" },
+    "glow": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "bird brightness" },
+    "flash": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "onset brightening" },
+    "sky": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "dusk gradient behind the flock (0 = black)" },
+    "cycle": { "type": "float", "default": 0.25, "min": 0, "max": 4, "doc": "palette drift, sweeps per 16 beats" }
+  },
+  "budget": { "ms": 0.8, "scales": "n" },
+  "tags": ["boids", "flocking", "murmuration", "particles", "simulation", "compute"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-26", "by": "claude/claude-opus-5-5", "note": "first version" }]
+}

@@ -23,13 +23,13 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] 3D assets (glTF)
 - [ ] Strange attractors
 - [x] Reaction-diffusion → claude-reaction, scene claude-coral
-- [ ] Physarum
+- [x] Physarum → claude-physarum, scene claude-slime
 - [ ] Smoke / fluid
-- [ ] Boids
+- [x] Boids → claude-boids, scene claude-murmuration
 - [ ] N-body
 - [ ] SPH liquid
 - [x] SDF raymarch → claude-raymarch, scene claude-sdf-flight
-- [ ] Fractals (mandelbox, julia)
+- [x] Fractals (mandelbox, julia) → claude-julia, scene claude-julia-dive
 - [ ] L-systems / trees
 - [ ] Cellular automata
 - [ ] Spectrum terrain / ridgeline
