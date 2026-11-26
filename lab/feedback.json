@@ -598,6 +598,138 @@
    "live": 0,
    "status": "live",
    "contexts": []
+  },
+  "agy-film-burn": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "film burn",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "agy-ink": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "ink bleed",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "agy-liquid": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "liquid morph",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "agy-smoke": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "smoke dissolve",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "claude-barn-doors": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "barn doors",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "claude-cube": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "cube",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "claude-page-turn": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "page turn",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "claude-shatter": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "shatter",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "codex-bass-punch": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Bass Punch",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "codex-scanline-roll": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Scanline Roll",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "codex-spectrum-wipe": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Spectrum Bars",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "codex-strobe": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Beat Strobe",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "contexts": []
   }
  },
  "transitionTags": {},

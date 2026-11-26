@@ -45,7 +45,7 @@ None.
 
 ## Transitions not voted on yet
 
-core-blend, core-flash, core-wipe, core-iris, core-dissolve, core-luma, core-zoom, core-glitch, core-stutter, core-swirl, core-melt, core-audio, core-pixelate
+core-blend, core-flash, core-wipe, core-iris, core-dissolve, core-luma, core-zoom, core-glitch, core-stutter, core-swirl, core-melt, core-audio, core-pixelate, agy-film-burn, agy-ink, agy-liquid, agy-smoke, claude-barn-doors, claude-cube, claude-page-turn, claude-shatter, codex-bass-punch, codex-scanline-roll, codex-spectrum-wipe, codex-strobe
 
 ## Retired
 
