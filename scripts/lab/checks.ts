@@ -72,10 +72,11 @@ export function judgeCost(ms: number, budget: number, what: string): string | nu
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** JUnit XML: one testcase per item and check. */
-export function junit(suite: string, cases: { name: string; classname: string; failure?: string; time?: number }[]): string {
+export function junit(suite: string, cases: { name: string; classname: string; failure?: string; time?: number; out?: string }[]): string {
   const fails = cases.filter((c) => c.failure).length;
   return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuites><testsuite name="${esc(suite)}" tests="${cases.length}" failures="${fails}">\n` +
     cases.map((c) => `  <testcase name="${esc(c.name)}" classname="${esc(c.classname)}" time="${(c.time ?? 0).toFixed(3)}">` +
-      (c.failure ? `<failure message="${esc(c.failure.split('\n')[0].slice(0, 300))}">${esc(c.failure)}</failure>` : '') + '</testcase>').join('\n') +
+      (c.failure ? `<failure message="${esc(c.failure.split('\n')[0].slice(0, 300))}">${esc(c.failure)}</failure>` : '') +
+      (c.out ? `<system-out>${esc(c.out)}</system-out>` : '') + '</testcase>').join('\n') +
     '\n</testsuite></testsuites>\n';
 }
