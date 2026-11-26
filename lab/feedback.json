@@ -2,6 +2,43 @@
  "votes": 0,
  "latest": null,
  "scenes": {
+  "claude-handheld": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Handheld",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-bars",
+    "core-blend",
+    "core-pixelate",
+    "core-sprite",
+    "core-swatch",
+    "core-text"
+   ]
+  },
+  "claude-sprite-party": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Sprite party",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-blend",
+    "core-plasma",
+    "core-sprite",
+    "core-sprite-emitter",
+    "core-swatch",
+    "core-text",
+    "core-trails"
+   ]
+  },
   "claude-vox-fleet": {
    "up": 0,
    "down": 0,
