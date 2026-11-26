@@ -1,0 +1,32 @@
+{
+  "id": "agy-liquid",
+  "name": "liquid morph",
+  "vendor": "agy",
+  "model": "gemini-4-neon-medium",
+  "description": "Scene A warps along a seeded curl flow field and streams seamlessly into B.",
+  "curve": "cubic",
+  "params": {
+    "strength": {
+      "default": 0.22,
+      "min": 0.05,
+      "max": 0.5,
+      "doc": "flow displacement strength"
+    },
+    "scale": {
+      "default": 2.6,
+      "min": 1,
+      "max": 6,
+      "doc": "flow eddy spatial frequency"
+    },
+    "sheen": {
+      "default": 0.18,
+      "min": 0,
+      "max": 0.6,
+      "doc": "liquid shear highlight intensity"
+    }
+  },
+  "budget": {
+    "ms": 0.25
+  },
+  "tags": ["organic", "liquid", "flow"]
+}

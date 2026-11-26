@@ -1,0 +1,35 @@
+{
+  "id": "agy-ink",
+  "name": "ink bleed",
+  "vendor": "agy",
+  "model": "gemini-4-neon-medium",
+  "description": "B spreads like ink in water from seeded drops with a noisy feathered pigment edge.",
+  "curve": {
+    "type": "ease-out",
+    "power": 2
+  },
+  "params": {
+    "drops": {
+      "default": 5,
+      "min": 2,
+      "max": 8,
+      "doc": "seeded ink drop count"
+    },
+    "feather": {
+      "default": 0.08,
+      "min": 0.01,
+      "max": 0.25,
+      "doc": "edge feather width"
+    },
+    "bleed": {
+      "default": 0.3,
+      "min": 0.05,
+      "max": 0.6,
+      "doc": "capillary noise amplitude"
+    }
+  },
+  "budget": {
+    "ms": 0.25
+  },
+  "tags": ["organic", "ink", "fluid"]
+}
