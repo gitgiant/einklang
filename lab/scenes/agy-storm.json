@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "id": "agy-storm",
+  "name": "High-voltage storm",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.7
+      }
+    },
+    {
+      "id": "highs",
+      "piece": "core-follow",
+      "params": {
+        "lo": 10,
+        "hi": 15,
+        "window": 5,
+        "gain": 1.9
+      }
+    },
+    {
+      "id": "hue_lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 16,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 3,
+        "chroma": 0.22,
+        "light": 0.72,
+        "contrast": 0.45
+      },
+      "bind": {
+        "hue": {
+          "from": "hue_lfo.out",
+          "range": [0.62, 0.88]
+        }
+      }
+    },
+    {
+      "id": "storm",
+      "piece": "agy-lightning",
+      "params": {
+        "branches": 0.78,
+        "lasers": 10,
+        "sweep": 1.25
+      },
+      "bind": {
+        "bolts": {
+          "from": "bass.out",
+          "range": [0.95, 2.2]
+        },
+        "glow": {
+          "from": "highs.out",
+          "range": [1.1, 2.25]
+        },
+        "haze": {
+          "from": "bass.out",
+          "range": [0.45, 0.95]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.62,
+        "zoom": 0.008,
+        "rotate": 0.001
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "storm.palette"
+    },
+    {
+      "from": "storm.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.72,
+    "threshold": 0.68,
+    "exposure": 1.0
+  }
+}

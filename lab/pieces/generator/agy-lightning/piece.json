@@ -1,0 +1,79 @@
+{
+  "id": "agy-lightning",
+  "kind": "generator",
+  "name": "Lasers and lightning",
+  "doc": "Onset-triggered branching lightning bolts scaled in count and brilliance by onset strength, paired with beat-synced sweeping volumetric laser beams and storm cloud illumination.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "colors the sweeping lasers, storm glow, and lightning corona"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "bolts": {
+      "type": "float",
+      "default": 1.25,
+      "min": 0.2,
+      "max": 3.0,
+      "doc": "lightning bolt count and intensity multiplier on onsets"
+    },
+    "branches": {
+      "type": "float",
+      "default": 0.7,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "forking and secondary branch density"
+    },
+    "lasers": {
+      "type": "int",
+      "default": 8,
+      "min": 0,
+      "max": 16,
+      "doc": "number of sweeping volumetric laser beams"
+    },
+    "sweep": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 3.0,
+      "doc": "laser sweep range and tempo reactivity"
+    },
+    "glow": {
+      "type": "float",
+      "default": 1.45,
+      "min": 0.2,
+      "max": 4.0,
+      "doc": "HDR glow intensity for bolts and lasers"
+    },
+    "haze": {
+      "type": "float",
+      "default": 0.6,
+      "min": 0.0,
+      "max": 1.5,
+      "doc": "volumetric storm mist and laser scatter density"
+    }
+  },
+  "budget": {
+    "ms": 1.4,
+    "scales": "res"
+  },
+  "tags": [
+    "lightning",
+    "lasers",
+    "onset",
+    "storm",
+    "beams"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "id": "agy-attractor-bloom",
+  "name": "Attractor bloom",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-high"
+  },
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 3,
+        "window": 10,
+        "gain": 1.6
+      }
+    },
+    {
+      "id": "mid",
+      "piece": "core-follow",
+      "params": {
+        "lo": 4,
+        "hi": 9,
+        "window": 12,
+        "gain": 1.5
+      }
+    },
+    {
+      "id": "hue_lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 32,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 4,
+        "chroma": 0.21,
+        "light": 0.72,
+        "contrast": 0.5
+      },
+      "bind": {
+        "hue": {
+          "from": "hue_lfo.out",
+          "range": [0.04, 0.24]
+        }
+      }
+    },
+    {
+      "id": "lorenz",
+      "piece": "agy-attractor",
+      "params": {
+        "attractor": 0,
+        "points": 80,
+        "spin": 1.1,
+        "speed": 1.05,
+        "size": 1.05
+      },
+      "bind": {
+        "morph": {
+          "from": "mid.out",
+          "range": [0.7, 1.9]
+        },
+        "gain": {
+          "from": "bass.out",
+          "range": [0.85, 1.6]
+        }
+      }
+    },
+    {
+      "id": "dejong",
+      "piece": "agy-attractor",
+      "params": {
+        "attractor": 2,
+        "points": 32,
+        "spin": 0.65,
+        "speed": 0.85,
+        "size": 0.85
+      },
+      "bind": {
+        "morph": {
+          "from": "bass.out",
+          "range": [0.6, 1.8]
+        },
+        "gain": {
+          "from": "mid.out",
+          "range": [0.45, 0.95]
+        }
+      }
+    },
+    {
+      "id": "mix",
+      "piece": "core-blend",
+      "params": {
+        "mode": 0,
+        "amount": 0.75
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.72,
+        "zoom": 0.004,
+        "rotate": 0.002
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "lorenz.palette"
+    },
+    {
+      "from": "pal.palette",
+      "to": "dejong.palette"
+    },
+    {
+      "from": "lorenz.out",
+      "to": "mix.a"
+    },
+    {
+      "from": "dejong.out",
+      "to": "mix.b"
+    },
+    {
+      "from": "mix.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.8,
+    "threshold": 0.58,
+    "exposure": 1.05
+  }
+}
