@@ -11,6 +11,20 @@ struct Post {
   view: f32,     // per-host view transform (composite only), see VIEWS in post.ts
   texel: vec2f,   // 1 / size of the texture being sampled by this pass
   dir: vec2f,     // blur direction
+  // pad FX (see core/fx.ts), uv space
+  center: vec2f,  // feedback zoom/rotate center
+  kal: f32,       // 6-fold kaleido around kcenter (0/1)
+  invert: f32,
+  strobe: f32,
+  blackout: f32,
+  glitch: f32,
+  nmarks: f32,
+  strobeCol: vec4f,
+  kcenter: vec2f,
+  tick: f32,
+  _pad: f32,
+  marks: array<vec4f, 12>,   // x, y, r (screen heights; 0 = cursor dot), alpha
+  markCol: array<vec4f, 12>,
 };
 @group(0) @binding(0) var<uniform> P: Post;
 @group(0) @binding(1) var samp: sampler;
@@ -19,11 +33,11 @@ struct Post {
 
 @fragment fn fs_feedback(in: VOut) -> @location(0) vec4f {
   let cur = textureSampleLevel(texA, samp, in.uv, 0.0).rgb;
-  var c = (in.uv - 0.5) * vec2f(P.aspect, 1.0);
+  var c = (in.uv - P.center) * vec2f(P.aspect, 1.0);
   let cs = cos(P.rotate);
   let sn = sin(P.rotate);
   c = vec2f(c.x * cs - c.y * sn, c.x * sn + c.y * cs) * (1.0 - P.zoom);
-  let prev = textureSampleLevel(texB, samp, c / vec2f(P.aspect, 1.0) + 0.5, 0.0).rgb;
+  let prev = textureSampleLevel(texB, samp, c / vec2f(P.aspect, 1.0) + P.center, 0.0).rgb;
   return vec4f(max(cur, prev * P.decay), 1.0);
 }
 
@@ -66,14 +80,55 @@ fn view_uv(uv: vec2f) -> vec2f {
   return uv;
 }
 
+fn kaleido(uv: vec2f) -> vec2f {
+  let d = (uv - P.kcenter) * vec2f(P.aspect, 1.0);
+  let seg = 6.28318531 / 6.0;
+  var a = atan2(d.y, d.x);
+  a = abs(a - seg * floor(a / seg) - seg * 0.5);
+  return P.kcenter + length(d) * vec2f(cos(a), sin(a)) / vec2f(P.aspect, 1.0);
+}
+
+fn hash11(x: f32) -> f32 { return fract(sin(x * 127.1 + 311.7) * 43758.5453); }
+
 @fragment fn fs_composite(in: VOut) -> @location(0) vec4f {
-  let uv = view_uv(in.uv);
-  let base = textureSampleLevel(texA, samp, uv, 0.0).rgb;
+  var uv = view_uv(in.uv);
+  if (P.kal > 0.5) { uv = kaleido(uv); }
+
+  // shockwaves bend the picture around their front; cursors and fronts glow in the pad's color
+  var add = vec3f(0.0);
+  let asp = vec2f(P.aspect, 1.0);
+  for (var i = 0; i < i32(P.nmarks); i++) {
+    let m = P.marks[i];
+    let d = (uv - m.xy) * asp;
+    let dist = length(d);
+    if (m.z > 0.0) {
+      let k = exp(-pow((dist - m.z) / 0.035, 2.0)) * m.w;
+      uv -= normalize(d + vec2f(1e-5)) / asp * k * 0.02;
+      add += P.markCol[i].rgb * k * 1.4;
+    } else {
+      add += P.markCol[i].rgb * m.w * (exp(-dist * dist / 0.0006) * 1.5 + exp(-pow((dist - 0.035) / 0.004, 2.0)) * 0.8);
+    }
+  }
+
+  var base: vec3f;
+  if (P.glitch > 0.0) {
+    // torn horizontal bands + RGB split, reshuffled every tick
+    let band = floor(uv.y * 28.0);
+    let h = hash11(band + P.tick * 7.0);
+    let off = select(0.0, (hash11(band * 3.1 + P.tick) - 0.5) * 0.08, h > 0.65) * P.glitch;
+    let s = vec2f(0.006 * P.glitch + off, 0.0);
+    base = vec3f(textureSampleLevel(texA, samp, uv + s, 0.0).r, textureSampleLevel(texA, samp, uv + vec2f(off, 0.0), 0.0).g, textureSampleLevel(texA, samp, uv - s, 0.0).b);
+  } else {
+    base = textureSampleLevel(texA, samp, uv, 0.0).rgb;
+  }
   let glow = textureSampleLevel(texB, samp, uv, 0.0).rgb;
-  var c = (base + glow * P.bloom) * P.exposure;
+  var c = (base + glow * P.bloom + add) * P.exposure;
   c = aces(c);
   // subtle vignette
   let v = in.uv - 0.5;
   c *= 1.0 - dot(v, v) * 0.35;
-  return vec4f(pow(c, vec3f(1.0 / 2.2)), 1.0);
+  c = pow(c, vec3f(1.0 / 2.2));
+  c = mix(c, 1.0 - c, P.invert);
+  c = mix(c, P.strobeCol.rgb, P.strobe * 0.85);
+  return vec4f(c * (1.0 - P.blackout), 1.0);
 }

@@ -1,4 +1,4 @@
-import { NB, STRIDE, K_RMS, K_ONSET, K_P0 } from './constants.ts';
+import { NB, STRIDE, K_RMS, K_ONSET, K_P0, K_PAL } from './constants.ts';
 
 /** Read-only view of per-tick audio features. Unknown ticks read as silence. */
 export interface FeatureSource {
@@ -30,7 +30,7 @@ export function smooth(F: FeatureSource, f: number, k: number, n: number): numbe
   return (s / w) | 0;
 }
 
-/** `hueOff`: MIDI param 0 (mod wheel) rotates every scene's palette; 0 without MIDI. */
+/** `hueOff`: MIDI param 0 (mod wheel) and the pads' palette step rotate every scene's hues; 0 without inputs. */
 export interface Smoothed { S: Int32Array; E: number; bass: number; onsets: number; lastOnsetAge: number; hueOff: number }
 
 /** Common per-tick derived values every scene uses. */
@@ -41,5 +41,5 @@ export function derive(F: FeatureSource, f: number, lookback = 600): Smoothed {
   const bass = ((S[0] + S[1] + S[2]) / 3) | 0;
   let onsets = 0, lastOnsetAge = 255;
   for (let i = 0; i < lookback; i++) if (F.get(f - i, K_ONSET)) { onsets++; if (lastOnsetAge === 255 && i < 255) lastOnsetAge = i; }
-  return { S, E, bass, onsets, lastOnsetAge, hueOff: F.get(f, K_P0) * 6 };
+  return { S, E, bass, onsets, lastOnsetAge, hueOff: F.get(f, K_P0) * 6 + F.get(f, K_PAL) * 256 };
 }

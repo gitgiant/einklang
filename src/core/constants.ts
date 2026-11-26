@@ -17,6 +17,8 @@ export const TICKS_PER_BEAT = 28, RESEED_TICKS = TICKS_PER_BEAT * 4 * 8;
  * beat-in-bar 0..3 while a clock runs, tempo (bpm, 0 = no clock), CC params 0..254 (see CC_PARAMS).
  */
 export const K_NOTE = 18, K_VEL = 19, K_BEAT = 20, K_PHASE = 21, K_BAR = 22, K_BPM = 23, K_P0 = 24, N_PARAMS = 4;
+/** Palette step from the pads' D-pad (0..255, wraps); every scene rotates its hues by it. */
+export const K_PAL = 28;
 /** Which CC number drives each param (any channel): mod wheel, cutoff, resonance, pan. */
 export const CC_PARAMS = [1, 74, 71, 10] as const;
 /** A clock beat is "current" for this many ticks; longer gaps read as no clock. */

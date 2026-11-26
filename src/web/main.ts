@@ -11,6 +11,8 @@ import { Engine } from './engine.ts';
 import { MidiRelay } from './midi.ts';
 import { ACCEPT, Player } from './player.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
+import { PadRelay } from './pads.ts';
+import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global { interface Window { __ek?: { hashes: Map<number, string>; scene: string; view: number; events: number } } }
@@ -356,6 +358,11 @@ async function start() {
         `room clock master: ${nameOf(room.clock)}   at tick: bpm ${FE.get(f, K_BPM)} phase ${FE.get(f, K_PHASE)} beat-in-bar ${FE.get(f, K_BAR)}`,
         `params: ${CC_PARAMS.map((c) => `cc${c}=${events.cc(f, c)}`).join('  ')}`,
       ].filter(Boolean)],
+      ['pads', [
+        `this host: ${[...pads.connected].map(([i, id]) => `#${i} ${id.slice(0, 40)}`).join(', ') || 'none'}`,
+        ...lastFx.pads.map((p) => `slot ${p.slot} (${PAD_COLORS[p.slot % PAD_COLORS.length].map((x) => (x * 9) | 0).join('')})  center ${p.x.toFixed(2)},${p.y.toFixed(2)}  held ${p.held.toString(2)}  idle ${p.age}t`),
+        `fx: trails ${lastFx.trails.toFixed(2)} bloom ${lastFx.bloom.toFixed(2)} rot ${lastFx.rotate.toFixed(2)} zoom ${lastFx.zoom.toFixed(2)}  marks ${lastFx.marks.length}${lastFx.frozenAt !== null ? `  FROZEN @${lastFx.frozenAt}` : ''}`,
+      ]],
       ['page', [
         `${innerWidth}x${innerHeight} @${devicePixelRatio}x  canvas ${$<HTMLCanvasElement>('c').width}x${$<HTMLCanvasElement>('c').height}  view ${VIEWS[engine.view]}`,
         `secure ${isSecureContext}  visibility ${document.visibilityState}  offset ${offsetMs}ms`,
@@ -363,6 +370,12 @@ async function start() {
     ];
   });
   $('dbgBtn').onclick = () => panel.toggle();
+  // D-pad up/down cycles this host's own view (an override, like the hosts panel)
+  const pads = new PadRelay(send, {
+    scene: (step) => send({ t: 'scene', step, quant: quant() }),
+    view: (step) => send({ t: 'view', host: me, view: (((engine.view + step) % VIEWS.length) + VIEWS.length) % VIEWS.length }),
+  });
+  let lastFx: Fx = fxAt(events, 0);
   if (qs.get('debug') === '1') panel.toggle(true);
   addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
@@ -394,8 +407,10 @@ async function start() {
     engine.setScene(sceneAt(room.scene, f));
     const self = room.hosts.find((h) => h.id === me);
     engine.view = self?.view ?? defaultView;
+    pads.poll(quant());
     const FE = withEvents(F, events);
-    const hash = engine.frame(f, FE);
+    const fx = (lastFx = fxAt(events, f));
+    const hash = engine.frame(f, FE, fx);
     lastHash = hash; lastF = f;
     panel.frame(f);
     lastTick = Math.max(lastTick, f);

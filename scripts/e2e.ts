@@ -101,6 +101,31 @@ try {
   const dtext = await a.$eval('#debug pre', (e) => e.textContent ?? '');
   check(/room clock master: midi-box/.test(dtext) && /fps \d/.test(dtext), 'debug panel shows frames, network and clock master');
   if (process.env.SHOT) await a.screenshot({ path: process.env.SHOT });
+  // pads: the same socket plays a gamepad (shockwave + kaleido held, sticks and triggers in),
+  // then freezes; hosts must agree on the scene hash throughout
+  await a.select('#scene', 'tunnel');
+  for (let i = 0; i < 20; i++) {
+    msend({ t: 'ev', type: 'pad', payload: { l: 0, b: 0b1001, a: [Math.round(60 * Math.sin(i / 3)), -40, 30, 0], t: [70, 50] } });
+    await sleep(80);
+  }
+  if (process.env.SHOT3) {
+    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar']) document.getElementById(id)!.classList.add('hide'); });
+    await a.screenshot({ path: process.env.SHOT3 });
+    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar']) document.getElementById(id)!.classList.remove('hide'); });
+  }
+  msend({ t: 'ev', type: 'pad', payload: { l: 1, b: 0b10, a: [-80, 60, 0, 0], t: [0, 0] } }); // second pad strobes
+  await sleep(300);
+  msend({ t: 'ev', type: 'freeze' });
+  await sleep(1200);
+  da = await dbg(a); db = await dbg(b);
+  c = compare(da, db);
+  const frozen = new Set(da.hashes.slice(-30).map(([, h]) => h)).size === 1;
+  check(c.shared > 20 && c.diff === 0 && frozen, `pads + freeze: ${c.shared} shared ticks, ${c.diff} mismatches, frozen ${frozen}`);
+  const ptext = await a.$eval('#debug pre', (e) => e.textContent ?? '');
+  check(/slot 0 .*held 1001/.test(ptext) && /slot 1 /.test(ptext), 'debug panel lists both pad slots');
+  msend({ t: 'ev', type: 'freeze' });
+  msend({ t: 'ev', type: 'pad', payload: { l: 0, b: 0, a: [0, 0, 0, 0], t: [0, 0] } });
+  msend({ t: 'ev', type: 'pad', payload: { l: 1, b: 0, a: [0, 0, 0, 0], t: [0, 0] } });
   m.close();
 
   // playlist: two tracks loaded on A (generated WAVs, or TRACKS=a.mp3,b.flac for real files),

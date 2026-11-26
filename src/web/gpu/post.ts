@@ -2,6 +2,10 @@
 // Trails are GPU pixel state: after a join or stutter they converge within ~1 s (accepted by spec).
 import src from './shaders/post.wgsl?raw';
 import { HDR, shader } from './gpu.ts';
+import { MAX_MARKS, NO_FX, type Fx } from '../../core/fx.ts';
+
+/** One uniform slot per pass; the Post struct in post.wgsl is 496 bytes. */
+const SLOT = 512, POST_FLOATS = 124;
 
 export interface PostParams {
   decay: number; zoom: number; rotate: number;
@@ -43,7 +47,7 @@ export class PostChain {
     });
     this.pipes = { feedback: mk('fs_feedback', HDR), bright: mk('fs_bright', HDR), blur: mk('fs_blur', HDR), composite: mk('fs_composite', outFormat) };
     this.samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
-    this.ubuf = device.createBuffer({ size: 256 * 5, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    this.ubuf = device.createBuffer({ size: SLOT * 5, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   }
 
   /** HDR scene target for this frame, (re)allocated to the canvas size. */
@@ -60,15 +64,21 @@ export class PostChain {
     return this.t.scene;
   }
 
-  run(enc: GPUCommandEncoder, out: GPUTextureView, p: PostParams, view = 0): void {
+  run(enc: GPUCommandEncoder, out: GPUTextureView, p: PostParams, view = 0, fx: Fx = NO_FX, tick = 0): void {
     const t = this.t!, d = this.device;
     const prev = t.trail[this.cur], next = t.trail[this.cur ^ 1];
     this.cur ^= 1;
     const qw = t.bloomA.width, qh = t.bloomA.height;
-    // one 256-byte uniform slot per pass
-    const slots = new ArrayBuffer(256 * 5);
-    const put = (slot: number, texel: [number, number], dir: [number, number]) =>
-      new Float32Array(slots, slot * 256, 12).set([p.decay, p.zoom, p.rotate, p.bloom, p.threshold, p.exposure, t.w / t.h, view, ...texel, ...dir]);
+    // one uniform slot per pass
+    const slots = new ArrayBuffer(SLOT * 5);
+    const marks = fx.marks.slice(0, MAX_MARKS);
+    const put = (slot: number, texel: [number, number], dir: [number, number]) => {
+      const f = new Float32Array(slots, slot * SLOT, POST_FLOATS);
+      f.set([p.decay, p.zoom, p.rotate, p.bloom, p.threshold, p.exposure, t.w / t.h, view, ...texel, ...dir,
+        fx.cx, fx.cy, fx.kaleido, fx.invert, fx.strobe, fx.blackout, fx.glitch, marks.length,
+        ...fx.strobeCol, 1, fx.kx, fx.ky, tick % 4096, 0]);
+      marks.forEach((m, i) => { f.set([m.x, m.y, m.r, m.a], 28 + i * 4); f.set([...m.col, 1], 28 + MAX_MARKS * 4 + i * 4); });
+    };
     put(0, [1 / t.w, 1 / t.h], [0, 0]);
     put(1, [1 / t.w, 1 / t.h], [0, 0]);
     put(2, [1 / qw, 1 / qh], [1, 0]);
@@ -80,14 +90,14 @@ export class PostChain {
       const bg = d.createBindGroup({
         layout: this.bgl,
         entries: [
-          { binding: 0, resource: { buffer: this.ubuf, size: 48 } },
+          { binding: 0, resource: { buffer: this.ubuf, size: POST_FLOATS * 4 } },
           { binding: 1, resource: this.samp },
           { binding: 2, resource: a.createView() },
           { binding: 3, resource: b.createView() },
         ],
       });
       const rp = enc.beginRenderPass({ colorAttachments: [{ view: target, loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }] });
-      rp.setPipeline(pipe); rp.setBindGroup(0, bg, [slot * 256]); rp.draw(3); rp.end();
+      rp.setPipeline(pipe); rp.setBindGroup(0, bg, [slot * SLOT]); rp.draw(3); rp.end();
     };
     pass(this.pipes.feedback, 0, next.createView(), t.scene, prev);
     pass(this.pipes.bright, 1, t.bloomA.createView(), next, next);

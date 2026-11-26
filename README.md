@@ -19,7 +19,7 @@ Not done yet:
 - Without a MIDI clock the beat grid is a fixed 28 ticks per beat, until beat tracking (#14) lands. The flow sim's reseed period stays on that fixed grid.
 - The scope builds its waveform from the bands until the waveform stream (#7) exists.
 - There is no display-rate interpolation yet (#12).
-- Pads (#10) aren't relayed yet. MIDI CCs use a fixed map (no MIDI learn), and MIDI start/stop doesn't start or stop file playback.
+- MIDI CCs use a fixed map (no MIDI learn), and MIDI start/stop doesn't start or stop file playback. Drift mode (pads) and WebHID extras aren't implemented.
 
 ## Run
 
@@ -47,6 +47,12 @@ To verify sync, open the debug panel (`d`) and check that the `hash` matches acr
   - **Clock**: the first host to send one is the master until it goes silent for 2 s. Its tempo and beat phase set the room's beat grid, so beat and bar quantizing follow the clock. MIDI start makes the next beat a downbeat. In the radial scene the core thumps on every beat.
   - **Notes**: each note-on counts as an onset in every scene. In the radial scene, pitch sets the burst's direction and color, and octave sets its speed.
   - **CCs**: CC 1 (mod wheel) rotates every scene's palette. CC 74, 71 and 10 also reach the scenes as params, but no scene uses them yet. The last value of each CC is kept across track changes and sent to late joiners.
+- **Gamepads**: plug any pad into any host (Chrome, standard mapping: DualSense, Xbox, Deck). There is nothing to enable; press a button. Each pad gets a room-wide color, and its own layer: a cursor at its FX center plus the shockwaves it fires. Effects from all pads mix.
+  - ✕/A shockwave (repeats while held), ○/B strobe, □/X invert + glitch, △/Y kaleido around the pad's center. Share/View: blackout while held.
+  - Left stick: FX center. Right stick: rotation (x) and zoom (y) drift of the trails. L2: trails. R2: bloom.
+  - L1/R1: previous/next scene (uses the "on" quantize). D-pad left/right: palette. Up/down: this host's view.
+  - L3: hit. R3: freeze toggle (the scene stops; trails and FX keep moving). Options/Menu: tap tempo (sets the beat grid when no MIDI clock is running).
+  - Pad state goes out only when it changes, at most once per tick, and is stamped like any event. The FX are a pure function of the event log, so every host draws the same thing.
 - **Debug panel**: press `d`, click **debug**, or add `?debug=1`. It shows a frame-time graph with hitches marked in red, fps, p99 and max frame time, recent hitches, and skipped or repeated ticks. It also shows network stats (RTT, clock offset, message and byte rates, live-feature gaps, late events), room state (epoch, scene schedule, grid, hosts) and MIDI status (inputs, local clock, room clock master, CC values).
 
 How it works: each scene's `state(tick, features)` uses integers only. Scenes are stateless with 600 ticks of lookback, so late joiners and dropped frames can't drift. The flow field is the exception: it is a sim, so it reseeds every 8 bars and fast-forwards up to 50 steps per frame. The tick comes from a server clock synced NTP-style (min-RTT sample).

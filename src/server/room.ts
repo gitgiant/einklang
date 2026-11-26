@@ -5,6 +5,7 @@ import {
   DEFAULT_GRID, DEFAULT_PRESETS, INPUT_DELAY, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type RoomState, type ServerMsg, type TickEvent,
 } from '../core/protocol.ts';
+import { stateKey } from '../core/events.ts';
 import type { WsConn } from './ws.ts';
 
 /** Keep features and events for two reseed periods: covers a sim fast-forward from the last reseed. */
@@ -13,6 +14,8 @@ const MAX_EVENT_BYTES = 1024;
 /** The clock master keeps the job until it has been silent this long (or leaves). */
 export const CLOCK_TIMEOUT_MS = 2000;
 const TRANSPORT = new Set(['start', 'stop', 'continue']);
+const MAX_PADS = 8;
+const clampInt = (x: unknown, lo: number, hi: number) => (Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x as number))) : 0);
 const int7 = (x: unknown) => (Number.isInteger(x) && (x as number) >= 0 && (x as number) <= 127 ? (x as number) : -1);
 
 /** Client events are relayed as-is, except MIDI ones, which are reduced to their known fields. */
@@ -35,8 +38,13 @@ export class Room {
   private ring: Buffer[] = [];
   private log: TickEvent[] = [];
   private viewByName = new Map<string, number | null>();
-  /** Latest value of each CC, kept past the log window and carried into new timelines. */
-  private ccLast = new Map<number, TickEvent>();
+  /** Latest event per state key (CCs, pads, palette, freeze): kept past the log window, carried into new timelines. */
+  private latest = new Map<string, TickEvent>();
+  /** Pad slots: `${host}:${local index}` -> slot 0..MAX_PADS-1. */
+  private padSlots = new Map<string, number>();
+  private palette = 0;
+  private frozen = false;
+  private taps: number[] = [];
   private clock: { id: number; last: number; beatTick: number } | null = null;
   trackId = 0;
   state: RoomState = {
@@ -60,13 +68,18 @@ export class Room {
       if (this.leader === c) this.leader = null;
       if (this.clock?.id === c.id) { this.clock = null; this.state.clock = null; }
       if (this.state.playlist?.owner === c.id) this.state.playlist = null;
+      for (const [k, s] of this.padSlots) if (k.startsWith(`${c.id}:`)) {
+        this.padSlots.delete(k);
+        this.emit({ tick: this.tickNow() + INPUT_DELAY, src: c.id, type: 'pad', payload: { s, b: 0, a: [0, 0, 0, 0], t: [0, 0], gone: 1 } });
+        this.latest.delete(`pad:${s}`);
+      }
       if (c.name !== null) this.broadcastState();
     };
     this.send(c, { t: 'welcome', you: c.id });
     this.send(c, { t: 'state', ...this.state });
     if (this.state.mode === 'file' && this.fileFeat) ws.send(this.fileFeat);
     if (this.state.mode === 'live') for (const m of this.ring) ws.send(m);
-    const inLog = new Set(this.log), stale = [...this.ccLast.values()].filter((e) => !inLog.has(e));
+    const inLog = new Set(this.log), stale = [...this.latest.values()].filter((e) => !inLog.has(e));
     this.send(c, { t: 'log', epoch: this.state.epoch, events: [...stale, ...this.log] });
   }
 
@@ -93,12 +106,13 @@ export class Room {
   private newTimeline(): void {
     this.broadcastState();
     const tick = this.tickNow() + INPUT_DELAY;
-    for (const [c, e] of this.ccLast) this.emit({ ...e, tick }, c);
+    for (const e of [...this.latest.values()]) this.emit({ ...e, tick });
   }
 
-  private emit(ev: TickEvent, cc?: number): void {
+  private emit(ev: TickEvent): void {
     this.log.push(ev);
-    if (cc !== undefined) this.ccLast.set(cc, ev);
+    const key = stateKey(ev);
+    if (key !== null) this.latest.set(key, ev);
     const oldest = ev.tick - KEEP_TICKS;
     while (this.log.length && this.log[0].tick < oldest) this.log.shift();
     this.broadcast({ t: 'ev', ev });
@@ -116,11 +130,14 @@ export class Room {
       case 'ev': {
         if (typeof m.type !== 'string' || m.type.length > 32) return;
         if (m.payload !== undefined && JSON.stringify(m.payload).length > MAX_EVENT_BYTES) return;
-        const { ok, payload } = sanitize(m.type, m.payload);
-        if (!ok) return;
-        const ev: TickEvent = { tick: this.tickNow() + INPUT_DELAY, src: c.id, type: m.type, payload };
-        return this.emit(ev, m.type === 'cc' ? (payload as { c: number }).c : undefined);
+        let { ok, payload } = sanitize(m.type, m.payload);
+        if (m.type === 'pad') payload = this.padPayload(c, m.payload);
+        else if (m.type === 'palette') { this.palette = (this.palette + clampInt((m.payload as { step?: number })?.step ?? 1, -8, 8) + 256) % 256; payload = { v: this.palette }; }
+        else if (m.type === 'freeze') { this.frozen = !this.frozen; payload = { on: this.frozen ? 1 : 0 }; }
+        if (!ok || payload === null) return;
+        return this.emit({ tick: this.tickNow() + INPUT_DELAY, src: c.id, type: m.type, payload });
       }
+      case 'tap': return this.onTap();
       case 'clock': return this.onClock(c, m);
       case 'scene': return this.requestScene(m.id, m.step, m.quant);
       case 'view': {
@@ -171,6 +188,36 @@ export class Room {
         this.setMode({ mode: 'idle' });
         return this.newTimeline();
     }
+  }
+
+  /** Pad state from a host, tagged with a room-wide slot (its color). null = no free slot. */
+  private padPayload(c: Client, p: unknown): unknown {
+    const o = (typeof p === 'object' && p ? p : {}) as Record<string, unknown>;
+    const key = `${c.id}:${clampInt(o.l, 0, 15)}`;
+    let s = this.padSlots.get(key);
+    if (s === undefined) {
+      const used = new Set(this.padSlots.values());
+      for (let i = 0; i < MAX_PADS && s === undefined; i++) if (!used.has(i)) s = i;
+      if (s === undefined) return null;
+      this.padSlots.set(key, s);
+    }
+    const a = Array.isArray(o.a) ? o.a : [], t = Array.isArray(o.t) ? o.t : [];
+    return {
+      s, b: clampInt(o.b, 0, 0x1ffff),
+      a: [0, 1, 2, 3].map((i) => clampInt(a[i], -100, 100)), t: [0, 1].map((i) => clampInt(t[i], 0, 100)),
+    };
+  }
+
+  /** Tap tempo: sets the beat grid from the taps, unless a MIDI clock is running. */
+  private onTap(): void {
+    const now = this.now();
+    if (this.taps.length && now - this.taps[this.taps.length - 1] > 2000) this.taps = [];
+    this.taps.push(now); if (this.taps.length > 8) this.taps.shift();
+    if (this.taps.length < 3 || (this.clock && now - this.clock.last < CLOCK_TIMEOUT_MS)) return;
+    const beatMs = (now - this.taps[0]) / (this.taps.length - 1), tpb = (beatMs * FPS) / 1000;
+    if (tpb < 9 || tpb > 180) return;
+    this.state.grid = { origin: Math.round(modeTickF(this.state, now) * 100) / 100, tpb: Math.round(tpb * 1000) / 1000 };
+    this.broadcastState();
   }
 
   /**

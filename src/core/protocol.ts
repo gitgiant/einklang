@@ -53,6 +53,7 @@ export type ClientMsg =
   | { t: 'hello'; name: string }
   | { t: 'ev'; type: string; payload?: unknown }
   | ClockMsg
+  | { t: 'tap' }
   | { t: 'scene'; id?: string; step?: number; quant: Quant }
   | { t: 'view'; host: number; view: number | null }
   | { t: 'play'; name?: string } | { t: 'live' } | { t: 'stop' }
