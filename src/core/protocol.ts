@@ -91,6 +91,8 @@ export type RoomState = Mode & {
   flow: FlowN;
   /** Net vote score (ups - downs) per scene that has votes; `presets` leaves out the retired ones. */
   scores: Record<string, number>;
+  /** Vote scores per transition id; they weight `random`. */
+  transScores: Record<string, number>;
   auto: AutoRot | null;
 };
 
@@ -111,6 +113,8 @@ export type ClientMsg =
   | { t: 'scene'; id?: string; step?: number; weighted?: boolean; quant: Quant; trans?: TransReq }
   /** An owner vote on the scene showing; a live 👎 skips to a weighted pick with `quant` + `trans`. */
   | { t: 'vote'; scene: string; vote: 1 | -1; quant?: Quant; trans?: TransReq }
+  /** An owner vote on a transition that ran (it never skips). */
+  | { t: 'transvote'; transition: string; from: string; to: string; beats: number; vote: 1 | -1; tags?: string[] }
   | { t: 'auto'; bars: number; trans?: TransReq }
   | { t: 'view'; host: number; view: number | null }
   /** `lyrics`: the track's .lrc lines, if it came with one. */
@@ -129,7 +133,8 @@ export type ServerMsg =
   /** To the playlist owner: play track `index`. */
   | { t: 'track'; index: number }
   /** A vote landed (toast on every host). `host`: who voted (null = the gallery). */
-  | { t: 'vote'; scene: string; vote: 1 | -1; score: number; retired: boolean; host: string | null };
+  | { t: 'vote'; scene: string; vote: 1 | -1; score: number; retired: boolean; host: string | null }
+  | { t: 'transvote'; transition: string; vote: 1 | -1; score: number; retired: boolean; host: string | null };
 
 /** The tick every host renders at server time `ms` (before its own display offset). */
 export const modeTick = (m: Mode, ms: number): number => Math.floor(modeTickF(m, ms));
@@ -159,6 +164,19 @@ export function stepAt(s: SceneSched, tick: number): SceneStep | null {
 export function sceneAt(s: SceneSched, tick: number): string {
   const st = stepAt(s, tick);
   return st ? st.id : (s.earlier[0] ?? s).prev;
+}
+
+/** A transition that has run on screen: what a transition vote is about. `at`: its first tick. */
+export interface RanTrans { type: TransType; from: string; to: string; beats: number; at: number }
+
+/**
+ * The transition running at `tick`, or the one the current scene arrived by. null when that switch was a
+ * cut (or none yet): the caller keeps the last one it saw, since the schedule drops finished switches.
+ */
+export function ranTransition(s: SceneSched, tick: number): RanTrans | null {
+  const st = stepAt(s, tick);
+  if (!st || st.trans.type === CUT.type || st.trans.ticks <= 0 || st.prev === st.id) return null;
+  return { type: st.trans.type, from: st.prev, to: st.id, beats: Math.round((st.trans.ticks / st.trans.tpb) * 100) / 100, at: st.at };
 }
 
 /** A schedule showing `id` with nothing pending. */

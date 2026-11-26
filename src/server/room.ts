@@ -7,7 +7,7 @@ import {
   type TickEvent, type TransReq, type TransSched, type TransType,
 } from '../core/protocol.ts';
 import { AUTO_BARS, DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS } from '../core/protocol.ts';
-import { RETIRE_AT, cleanTags, pickWeighted, score, tally, type Tally, type Vote } from '../core/votes.ts';
+import { RETIRE_AT, TRANS_TAGS, cleanTags, count, pickWeighted, score, tally, type Tally, type Vote, type TransVote } from '../core/votes.ts';
 import { CUT_ID, pickRandom, resolveTrans } from '../core/transitions.ts';
 import './transitions.ts'; // installs the registry from lab/transitions/
 import { cleanLyrics } from '../core/lrc.ts';
@@ -83,13 +83,14 @@ export class Room {
     scene: fixedScene(DEFAULT_PRESETS[0]),
     presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null, playlist: null,
     flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
-    scores: {}, auto: { bars: DEFAULT_AUTO_BARS, trans: { type: 'random', beats: DEFAULT_TRANS_BEATS }, preset: true },
+    scores: {}, transScores: {}, auto: { bars: DEFAULT_AUTO_BARS, trans: { type: 'random', beats: DEFAULT_TRANS_BEATS }, preset: true },
   };
   private now: () => number;
   private rand: () => number;
   private catalog: string[];
   private votes: VoteStore;
   private tallies: Map<string, Tally>;
+  private transTallies: Map<string, Tally>;
   /** Tick the auto-rotation was (re)started or last switched at. */
   private autoFrom = 0;
 
@@ -97,15 +98,20 @@ export class Room {
     this.now = now; this.rand = rand;
     this.catalog = opts.catalog?.length ? [...opts.catalog] : [...DEFAULT_PRESETS];
     this.votes = opts.votes ?? memoryVotes();
-    this.tallies = tally(this.votes.load());
+    const stored = this.votes.load();
+    this.tallies = tally(stored);
+    this.transTallies = tally(stored, 'transition');
     this.refreshList();
     this.state.scene = fixedScene(this.state.presets[0]);
     this.autoFrom = this.tickNow();
   }
 
+  private transScores(): Record<string, number> { return Object.fromEntries([...this.transTallies].map(([id, t]) => [id, score(t)])); }
+
   /** Scores and the live list from the tallies (retired scenes leave it; never empty). */
   private refreshList(): void {
     this.state.scores = Object.fromEntries([...this.tallies].map(([id, t]) => [id, score(t)]));
+    this.state.transScores = this.transScores();
     const live = this.catalog.filter((id) => score(this.tallies.get(id)) > RETIRE_AT);
     this.state.presets = live.length ? live : [...this.catalog];
   }
@@ -154,11 +160,11 @@ export class Room {
    */
   private setMode(m: Mode, keepScene = false): void {
     const cur = sceneAt(this.state.scene, this.tickNow());
-    const { epoch, presets, hosts, clock, playlist, scores, auto } = this.state, n = this.flowTarget();
+    const { epoch, presets, hosts, clock, playlist, scores, transScores, auto } = this.state, n = this.flowTarget();
     const scene = keepScene ? this.state.scene : fixedScene(cur);
     // a new timeline starts on a reseed, so the budget applies at once (pause/resume keep tick space and the schedule)
     const flow = keepScene ? this.state.flow : { n, prev: n, at: 0 };
-    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, flow, scores, auto, grid: { ...DEFAULT_GRID } };
+    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, flow, scores, transScores, auto, grid: { ...DEFAULT_GRID } };
     this.ring = []; this.log = [];
     if (!keepScene) this.autoFrom = this.tickNow(); // tick space restarted: count the rotation from here
     if (this.clock) this.clock.beatTick = -Infinity;
@@ -211,6 +217,9 @@ export class Room {
       case 'vote':
         if (m.vote !== 1 && m.vote !== -1) return;
         this.vote(String(m.scene), m.vote, [], c, m.vote < 0 ? { quant: m.quant ?? 'bar', trans: m.trans } : undefined);
+        return;
+      case 'transvote':
+        if (m.vote === 1 || m.vote === -1) this.voteTransition(m, m.vote, m.tags, c);
         return;
       case 'auto': {
         const bars = (AUTO_BARS as readonly number[]).includes(m.bars) ? m.bars : 0;
@@ -395,11 +404,8 @@ export class Room {
     if (!this.catalog.includes(sceneId)) return null;
     const t = this.tickNow();
     const rec: Vote = { scene: sceneId, at: new Date().toISOString(), vote: v, tags: cleanTags(tags) };
-    if (c) { rec.live = true; rec.tick = t; const f = this.featuresAt(t); if (f) rec.features = f; }
-    this.votes.append(rec);
-    const tl = this.tallies.get(sceneId) ?? { up: 0, down: 0, tags: {} };
-    if (v > 0) tl.up++; else tl.down++;
-    for (const g of rec.tags) tl.tags[g] = (tl.tags[g] ?? 0) + 1;
+    this.record(rec, c, t);
+    const tl = count(this.tallies.get(sceneId) ?? { up: 0, down: 0, tags: {} }, rec);
     this.tallies.set(sceneId, tl);
     this.refreshList();
     const s = score(tl), retired = s <= RETIRE_AT;
@@ -408,6 +414,33 @@ export class Room {
     if (v < 0 && showing && (skip || retired)) this.requestScene(undefined, undefined, skip?.quant ?? 'bar', skip?.trans, true);
     else this.broadcastState();
     return { score: s, retired };
+  }
+
+  /**
+   * An owner vote on a transition (live from host `c`, or from the gallery with c = null), with the switch it
+   * was seen in. It re-weights `random` from the next switch the server schedules.
+   */
+  voteTransition(req: { transition?: unknown; from?: unknown; to?: unknown; beats?: unknown }, v: 1 | -1, tags: unknown, c: Client | null): { score: number; retired: boolean } | null {
+    const id = resolveTrans(req.transition);
+    if (!id || id === CUT_ID) return null;
+    const rec: TransVote = { transition: id, at: new Date().toISOString(), vote: v, tags: cleanTags(tags, TRANS_TAGS) };
+    const scene = (x: unknown) => (typeof x === 'string' && /^[a-z0-9-]{1,64}$/.test(x) ? x : undefined);
+    rec.from = scene(req.from); rec.to = scene(req.to);
+    if (typeof req.beats === 'number' && req.beats > 0 && req.beats <= 16) rec.beats = req.beats;
+    this.record(rec, c, this.tickNow());
+    const tl = count(this.transTallies.get(id) ?? { up: 0, down: 0, tags: {} }, rec);
+    this.transTallies.set(id, tl);
+    this.state.transScores = this.transScores();
+    const s = score(tl), retired = s <= RETIRE_AT;
+    this.broadcast({ t: 'transvote', transition: id, vote: v, score: s, retired, host: c ? (c.name ?? `host ${c.id}`) : null });
+    this.broadcastState();
+    return { score: s, retired };
+  }
+
+  /** Persist a vote; a live one gets the tick and its features (musical context). */
+  private record(rec: Vote, c: Client | null, t: number): void {
+    if (c) { rec.live = true; rec.tick = t; const f = this.featuresAt(t); if (f) rec.features = f; }
+    this.votes.append(rec);
   }
 
   /** The raw feature bytes the room has for `tick` (file or live), if any. */
@@ -443,7 +476,7 @@ export class Room {
   private resolveTrans(req?: { type?: unknown; beats?: unknown }): TransSched {
     const beats = Number(req?.beats), tpb = this.state.grid.tpb;
     const ticks = Number.isFinite(beats) ? Math.round(Math.max(0, Math.min(16, beats)) * tpb) : 0;
-    let type: TransType = req?.type === 'random' ? pickRandom(this.lastTrans, this.rand()) : resolveTrans(req?.type) ?? CUT_ID;
+    let type: TransType = req?.type === 'random' ? pickRandom(this.lastTrans, this.rand(), this.state.transScores) : resolveTrans(req?.type) ?? CUT_ID;
     if (ticks === 0) type = CUT_ID;
     if (type === CUT_ID) return { ...CUT, tpb };
     this.lastTrans = type;

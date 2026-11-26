@@ -2,7 +2,8 @@
 // repeat) that moves to the next scene every `cycle` ticks.
 import { TICKS_PER_BEAT } from '../core/constants.ts';
 import type { SceneSched, TransType } from '../core/protocol.ts';
-import { transEffects } from '../core/transitions.ts';
+import { randomPool, transEffects } from '../core/transitions.ts';
+import { pickWeighted } from '../core/votes.ts';
 import { h32 } from '../core/math.ts';
 import type { GalleryTrans } from './defaults.ts';
 
@@ -13,12 +14,37 @@ function round(r: number): TransType[] {
   return transEffects().map((t, i) => ({ t, k: h32(r, i) >>> 0 })).sort((a, b) => a.k - b.k).map((x) => x.t);
 }
 
-/** The `random` effect of switch `n`: shuffled rounds through every effect, never the same twice in a row. */
-export function randomEffect(n: number): TransType {
+/** Switches per block of the vote-weighted sequence. */
+const BLOCK = 16;
+
+/**
+ * The `random` effect of switch `n`, a pure function of `n` and the vote scores, never the same twice in a
+ * row. With no votes: shuffled rounds through every effect. With votes: picks weighted like the server's
+ * (👍 doubles, 👎 halves, retired ones left out).
+ */
+export function randomEffect(n: number, scores: Record<string, number> = {}): TransType {
+  if (transEffects().some((t) => scores[t])) return weightedEffect(n, scores);
   const EFFECTS = transEffects(), len = EFFECTS.length, r = Math.floor(n / len), cur = round(r);
   // only the first two of a round ever swap, so the previous round's last entry is as shuffled
   if (cur[0] === round(r - 1)[len - 1]) [cur[0], cur[1]] = [cur[1], cur[0]];
   return cur[mod(n, len)];
+}
+
+function weightedEffect(n: number, scores: Record<string, number>): TransType {
+  const pool = randomPool(scores);
+  // two or fewer: nothing to weigh without repeating
+  if (pool.length <= 2) return pool[mod(n, pool.length)];
+  /** Block `r` as a chain, each pick excluding the one before. */
+  const chain = (r: number) => {
+    const out: TransType[] = [];
+    for (let i = 0; i < BLOCK; i++) out.push(pickWeighted(pool, scores, h32(h32(r, i), 0x3e1) / 2 ** 32, out[i - 1])!);
+    return out;
+  };
+  const r = Math.floor(n / BLOCK), i = mod(n, BLOCK), cur = chain(r);
+  // only a block's first entry is ever changed (to differ from both neighbours), so a block's last one is its chain's
+  const prev = i === 0 ? chain(r - 1)[BLOCK - 1] : undefined;
+  if (cur[i] !== prev) return cur[i];
+  return pickWeighted(pool.filter((t) => t !== prev && t !== cur[1]), scores, h32(h32(r, BLOCK), 0x3e1) / 2 ** 32)!;
 }
 
 /** Where a run of the cycle started: at tick `at`, switch number `n`, from scene index `prev` to `idx`. */
@@ -31,6 +57,8 @@ export interface Cycle {
   trans: Exclude<GalleryTrans, ''>;
   /** Transition length in beats. */
   beats: number;
+  /** Transition vote scores, for `random`. */
+  scores?: Record<string, number>;
 }
 
 export const transTicks = (beats: number) => Math.round(beats * TICKS_PER_BEAT);
@@ -45,7 +73,7 @@ export const switchAt = (c: Cycle, a: Anchor, tick: number) => a.n + Math.floor(
 
 /** The switch `from` -> `to` starting at tick `at`, as switch number `n`. */
 export function step(c: Cycle, n: number, from: string, to: string, at: number): SceneSched {
-  const E = transEffects(), type = c.trans === 'all' ? E[mod(n, E.length)] : c.trans === 'random' ? randomEffect(n) : c.trans;
+  const E = transEffects(), type = c.trans === 'all' ? E[mod(n, E.length)] : c.trans === 'random' ? randomEffect(n, c.scores) : c.trans;
   return { id: to, prev: from, at, earlier: [], trans: { type, ticks: transTicks(c.beats), seed: h32(n, 0x7a5), tpb: TICKS_PER_BEAT } };
 }
 

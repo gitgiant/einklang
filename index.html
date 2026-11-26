@@ -30,11 +30,20 @@
   .hide { display: none !important; }
   #toast { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 12px); background: #000d; color: #fff; padding: 8px 16px; border-radius: 18px; font: 15px system-ui, sans-serif; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
-  #panel, #bar, #hosts { transition: opacity .4s; }
-  body.idle #panel, body.idle #bar, body.idle #hosts { opacity: 0; pointer-events: none; }
+  #tvote { position: fixed; right: 8px; bottom: 52px; max-width: 340px; background: #000c; padding: 6px 8px; border-radius: 6px; }
+  #tvote:not(:has(.trow:not(.hide))) { display: none; }
+  #tvote .trow, #tvote .ttags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  #tvote .ttags { width: 100%; gap: 3px; }
+  #tvote .trow > button { font-size: 18px; background: none; border: 0; cursor: pointer; padding: 2px 6px; }
+  #tvote .trow > button:disabled { opacity: .3; cursor: default; }
+  #tvote .ttags button { font-size: 11px; color: #999; background: none; border-radius: 10px; padding: 2px 7px; cursor: pointer; }
+  #tvote .ttags button[aria-pressed=true] { color: #000; background: #ddd; }
+  #tvote .tnote { color: #999; }
+  #panel, #bar, #hosts, #tvote { transition: opacity .4s; }
+  body.idle #panel, body.idle #bar, body.idle #hosts, body.idle #tvote { opacity: 0; pointer-events: none; }
   body.idle { cursor: none; }
   /* hidden by double-tap: stays hidden until the next one */
-  body.ui-off :is(#panel, #bar, #hosts, #hud, #debug) { opacity: 0; visibility: hidden; pointer-events: none; }
+  body.ui-off :is(#panel, #bar, #hosts, #hud, #debug, #tvote) { opacity: 0; visibility: hidden; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -72,8 +81,9 @@
   <div id="prog" title="click or drag to seek (← → ±10 s)"><div id="progFill"></div></div>
   <span id="tTime"></span>
 </div>
+<div id="tvote"></div>
 <div id="err"></div>
-<div id="toast" title="votes: + / - keys, or Select+△ / Select+✕ on a pad"></div>
+<div id="toast" title="scene votes: + / - keys, or Select+△ / Select+✕ on a pad; transition votes: . / , keys"></div>
 <audio id="au" preload="auto"></audio>
 <script type="module" src="/src/web/main.ts"></script>
 </body>

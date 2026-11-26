@@ -2,6 +2,132 @@
  "votes": 0,
  "latest": null,
  "scenes": {
+  "agy-attractor-bloom": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Attractor bloom",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-attractor",
+    "core-blend",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-trails"
+   ]
+  },
+  "agy-corrupt": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Corrupt feed",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-glitch",
+    "core-bars",
+    "core-blend",
+    "core-follow",
+    "core-swatch",
+    "core-tunnel"
+   ]
+  },
+  "agy-forge": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Forge",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-blackbody",
+    "core-bars",
+    "core-blend",
+    "core-follow",
+    "core-plasma",
+    "core-trails"
+   ]
+  },
+  "agy-print-run": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Print run",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-halftone",
+    "core-blend",
+    "core-follow",
+    "core-lfo",
+    "core-plasma",
+    "core-radial",
+    "core-swatch"
+   ]
+  },
+  "agy-storm": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "High-voltage storm",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-lightning",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-trails"
+   ]
+  },
+  "agy-unknown-ridges": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Unknown ridges",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-ridgeline",
+    "core-follow",
+    "core-lfo",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-copper-sky": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Copper sky",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-copper",
+    "core-blend",
+    "core-follow",
+    "core-plasma",
+    "core-sprite-emitter",
+    "core-swatch",
+    "core-text"
+   ]
+  },
   "claude-coral": {
    "up": 0,
    "down": 0,
@@ -54,6 +180,39 @@
     "core-text"
    ]
   },
+  "claude-inferno": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Inferno",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-fire",
+    "core-follow",
+    "core-lfo",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-julia-dive": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Julia dive",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-julia",
+    "core-follow",
+    "core-post",
+    "core-swatch"
+   ]
+  },
   "claude-late-show": {
    "up": 0,
    "down": 0,
@@ -89,6 +248,41 @@
     "core-trails"
    ]
   },
+  "claude-murmuration": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Murmuration",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-boids",
+    "core-follow",
+    "core-lfo",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-rotozoom-party": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Rotozoom party",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-rotozoom",
+    "core-blend",
+    "core-lfo",
+    "core-sprite",
+    "core-sprite-emitter",
+    "core-swatch"
+   ]
+  },
   "claude-sdf-flight": {
    "up": 0,
    "down": 0,
@@ -103,6 +297,21 @@
     "core-follow",
     "core-harmony",
     "core-lfo"
+   ]
+  },
+  "claude-slime": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Slime",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-physarum",
+    "core-lfo",
+    "core-swatch"
    ]
   },
   "claude-sprite-party": {
@@ -246,5 +455,151 @@
  "pieces": {},
  "vendors": {},
  "tags": {},
+ "transitions": {
+  "core-blend": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "blend",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-flash": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "flash",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-wipe": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "wipe",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-iris": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "iris",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-dissolve": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "dissolve",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-luma": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "luma",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-zoom": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "zoom",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-glitch": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "glitch",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-stutter": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "stutter",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-swirl": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "swirl",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-melt": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "melt",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-audio": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "audio mask",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  },
+  "core-pixelate": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "pixelate",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "contexts": []
+  }
+ },
+ "transitionTags": {},
  "retired": []
 }

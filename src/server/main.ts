@@ -60,16 +60,20 @@ export async function startServer(o: ServerOpts): Promise<Running> {
 
     if (url === '/scores') {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      return res.end(JSON.stringify({ scores: room.state.scores, live: room.state.presets }));
+      return res.end(JSON.stringify({ scores: room.state.scores, live: room.state.presets, transScores: room.state.transScores }));
     }
     if (url === '/vote' && req.method === 'POST') {
       let body = '';
       req.on('data', (c: Buffer) => { body += c; if (body.length > 4096) req.destroy(); });
       req.on('end', () => {
         let r: ReturnType<Room['vote']> = null;
-        try { const v = JSON.parse(body); if (v.vote === 1 || v.vote === -1) r = room.vote(String(v.scene), v.vote, v.tags, null); } catch { /* bad JSON */ }
+        try {
+          const v = JSON.parse(body);
+          // `transition` instead of `scene`: a vote on a transition
+          if (v.vote === 1 || v.vote === -1) r = v.transition !== undefined ? room.voteTransition(v, v.vote, v.tags, null) : room.vote(String(v.scene), v.vote, v.tags, null);
+        } catch { /* bad JSON */ }
         res.writeHead(r ? 200 : 400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(r ?? { error: 'unknown scene or bad vote' }));
+        res.end(JSON.stringify(r ?? { error: 'unknown scene or transition, or bad vote' }));
       });
       return;
     }

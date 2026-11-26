@@ -6,6 +6,7 @@ import { EventLog, withEvents } from '../core/events.ts';
 import {
   modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS,
   type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
+  ranTransition,
 } from '../core/protocol.ts';
 import './transitions.ts'; // installs the transition registry (lab/transitions/)
 import { transName, transitions } from '../core/transitions.ts';
@@ -22,6 +23,7 @@ import { autoHideUi } from './idle.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
 import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare } from './capture.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
+import { TRANS_KEYS, transRow } from './transvote.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global {
@@ -76,12 +78,12 @@ let room: RoomState = {
   mode: 'idle', epoch: -1, scene: fixedScene(DEFAULT_PRESETS[0]),
   presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null, playlist: null,
   flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
-  scores: {}, auto: null,
+  scores: {}, transScores: {}, auto: null,
 };
 let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
 const events = new EventLog();
-const listeners = { state: [] as (() => void)[], lateEvent: [] as ((tick: number) => void)[], vote: [] as ((m: Extract<ServerMsg, { t: 'vote' }>) => void)[] };
+const listeners = { state: [] as (() => void)[], lateEvent: [] as ((tick: number) => void)[], vote: [] as ((m: Extract<ServerMsg, { t: 'vote' | 'transvote' }>) => void)[] };
 /** This host's capture while it leads live mode; `pending` until the server confirms it. */
 let leaderLive: { an: LiveAnalyzer; pending: boolean } | null = null;
 /** This connection has offered the device's remembered auto-rotation to a fresh room. */
@@ -138,7 +140,7 @@ function connect() {
       if (window.__ek) window.__ek.events++;
       if (m.ev.tick <= lastTick) { net.lateEvents++; listeners.lateEvent.forEach((f) => f(m.ev.tick)); } // arrived late: replay
     } else if (m.t === 'track') playIndex(m.index);
-    else if (m.t === 'vote') listeners.vote.forEach((f) => f(m));
+    else if (m.t === 'vote' || m.t === 'transvote') listeners.vote.forEach((f) => f(m));
   };
 }
 connect();
@@ -360,7 +362,7 @@ function renderHosts(names: Map<string, string>) {
   autoSel.value = String(room.auto?.bars ?? 0);
 }
 
-autoHideUi(() => [$('panel'), $('bar'), $('hosts')]);
+autoHideUi(() => [$('panel'), $('bar'), $('hosts'), $('tvote')]);
 toggleUiOnDoubleTap((el) => el.id === 'c');
 
 // ---- votes (owner only: anyone with the room token) ----
@@ -380,9 +382,18 @@ async function start() {
   benchN = engine.budget.cap = qs.has('cap') ? Math.max(1, +qs.get('cap')! | 0) : await engine.bench();
   send({ t: 'bench', n: benchN });
   const names = new Map(engine.scenes.map((s) => [s.def.id, s.def.name]));
-  const onState = () => { renderHosts(names); pick.value = room.scene.id; };
+  const tvote = transRow((t, v, tags) => send({ t: 'transvote', transition: t.type, from: t.from, to: t.to, beats: t.beats, vote: v, tags }));
+  $('tvote').append(tvote.el);
+  // transScores is absent in states from an older server, which also ignores the votes
+  const showTrans = () => tvote.show(room.transScores ?? {}, room.transScores !== undefined);
+  const onState = () => { renderHosts(names); pick.value = room.scene.id; showTrans(); };
   listeners.state.push(onState); onState();
-  listeners.vote.push((v) => toast(`${v.vote > 0 ? '👍' : '👎'} ${names.get(v.scene) ?? v.scene}  ${v.score > 0 ? '+' : ''}${v.score}${v.retired ? '  · retired' : ''}${v.host ? `  · ${v.host}` : '  · gallery'}`));
+  listeners.vote.push((v) => {
+    const what = v.t === 'vote' ? names.get(v.scene) ?? v.scene : `transition ${transName(v.transition)}`;
+    toast(`${v.vote > 0 ? '👍' : '👎'} ${what}  ${v.score > 0 ? '+' : ''}${v.score}${v.retired ? '  · retired' : ''}${v.host ? `  · ${v.host}` : '  · gallery'}`);
+    // the picked tags went with this host's own vote
+    if (v.t === 'transvote' && v.host === hostName) tvote.saved('saved');
+  });
   /** Vote on the scene showing now (during a transition: the one coming in). A 👎 also skips. */
   const vote = (v: 1 | -1) => send({ t: 'vote', scene: sceneAt(room.scene, lastF), vote: v, quant: quant(), trans: transReq() });
   listeners.lateEvent.push((t) => engine.invalidate(t));
@@ -445,7 +456,7 @@ async function start() {
   addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
     if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
-    else if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
+    else if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar', 'tvote']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
     else if (e.key === 'p') playPause();
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       if (room.mode === 'file') send({ t: 'seek', frame: Math.max(0, Math.min(room.frames, modeTick(room, sNow())) + (e.key === 'ArrowLeft' ? -10 : 10) * FPS) });
@@ -456,6 +467,7 @@ async function start() {
     else if (e.key === ']') switchScene({ weighted: true });
     else if (e.key === '+' || e.key === '=') vote(1);
     else if (e.key === '-' || e.key === '_') vote(-1);
+    else if ((e.key === TRANS_KEYS.up || e.key === TRANS_KEYS.down) && !e.repeat && !e.ctrlKey && !e.metaKey) tvote.vote(e.key === TRANS_KEYS.up ? 1 : -1);
   });
   $('fs').onclick = () => document.documentElement.requestFullscreen?.();
 
@@ -486,6 +498,7 @@ async function start() {
     dbg.trans = engine.transition?.type ?? '';
     if (dbg.trans && !dbg.transSeen.includes(dbg.trans)) dbg.transSeen.push(dbg.trans);
     dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view; dbg.wave = F.wave(f) !== null;
+    tvote.ran(ranTransition(room.scene, f));
     if (hudOn) updateBar(f);
     if (panel.shown) {
       const st = engine.scene.status?.();
@@ -499,6 +512,7 @@ async function start() {
         FE.get(f, K_BPM) ? `midi ${FE.get(f, K_BPM)} bpm  beat ${FE.get(f, K_BAR) + 1}/4` : null,
         ccLine(f),
         `${hostName}  view ${VIEWS[engine.view]}  ·  rtt ${rtt.toFixed(1)}ms  offset ${offsetMs}ms`,
+        `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  [ ] scene  ·  space hit  ·  p play  ·  h UI  ·  d debug`,
       ].filter(Boolean).join('\n');
     }
   };

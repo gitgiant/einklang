@@ -7,6 +7,7 @@
 // host installs them once at startup (src/web/transitions.ts in the browser, src/server/
 // transitions.ts in Node); `kind` is the position in the registry: the 14 core ones in CORE_ORDER,
 // then the rest by id, so it is the same on every host.
+import { RETIRE_AT, pickWeighted } from './votes.ts';
 import { K_ONSET, NB } from './constants.ts';
 import { smooth, type FeatureSource } from './features.ts';
 import { FNV0, fnv } from './math.ts';
@@ -316,8 +317,16 @@ export function transitionAt(s: SceneSched, tick: number, F: FeatureSource, sub 
 export const transHash = (hFrom: number, hTo: number, t: Transition): number =>
   fnv(FNV0, [hFrom | 0, hTo | 0, t.kind, t.ticks, t.seed | 0, t.p16, t.flash16, t.roll]);
 
-/** Server-side `random`: uniform over every effect except cut and `last`. `r` in [0, 1). */
-export function pickRandom(last: TransType | null, r: number): TransType {
-  const pool = transEffects().filter((t) => t !== last);
-  return pool[Math.min(pool.length - 1, Math.floor(r * pool.length))];
+/** What `random` picks from: every effect except cut and those voted to RETIRE_AT or below (never empty). */
+export function randomPool(scores: Record<string, number> = {}): TransType[] {
+  const all = transEffects(), live = all.filter((t) => (scores[t] ?? 0) > RETIRE_AT);
+  return live.length ? live : all;
+}
+
+/**
+ * Server-side `random`: weighted by votes like scene rotation (2^score), over randomPool without `last`.
+ * With no votes it is uniform. `r` in [0, 1).
+ */
+export function pickRandom(last: TransType | null, r: number, scores: Record<string, number> = {}): TransType {
+  return pickWeighted(randomPool(scores), scores, r, last ?? undefined)!;
 }
