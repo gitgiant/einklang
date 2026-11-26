@@ -11,6 +11,7 @@ Before you pick or shape anything, read `lab/FEEDBACK.md` (what the owner likes 
 | `lab/pieces/<kind>/<id>/` | one piece: `piece.json`, `*.wgsl`, optional `driver.ts`, optional small assets |
 | `lab/scenes/<id>.json` | one scene graph |
 | `lab/styles/<id>.json` | style packs (palette + FX chain + post + font) a scene can name with `"style"` |
+| `lab/transitions/<id>/` | one scene transition: `transition.json` + `mix.wgsl` (see Transitions) |
 | `lab/api/` | **the only module a piece may import** (`index.ts`: types, `definePiece`, OKLab helpers, `.vox`/sprite/font parsers; `prims.wgsl`) |
 | `lab/assets/` | shared assets, each listed in `index.json` with its license |
 | `lab/BACKLOG.md` | what to build: pinned briefs and the catalog |
@@ -130,6 +131,77 @@ export default definePiece({
 - Bump `version` whenever you edit a scene.
 - Every non-retired scene goes into the live rotation as soon as it merges. Make it look good on its own for minutes, react visibly to the music, and stay readable on quiet tracks too.
 
+## Transitions (`lab/transitions/<id>/`)
+
+A transition is how the show switches from scene A to scene B. Each one is a self-contained folder, so you never touch a shared list: the registry, the selectors, the server's `random` pick and the shader's switch are built from the folders.
+
+```
+lab/transitions/agy-ripple/
+  transition.json
+  mix.wgsl
+```
+
+```json
+{
+  "id": "agy-ripple", "name": "ripple", "vendor": "agy", "model": "<your exact model id>",
+  "description": "One sentence: what the switch looks like.",
+  "curve": { "type": "ease-out", "power": 3 },
+  "uses": ["flash"],
+  "params": { "rings": { "default": 6, "min": 1, "max": 20, "doc": "ring count" } },
+  "budget": { "ms": 0.3 }
+}
+```
+
+- `id` is `<vendor>-<slug>` and equals the folder name; `vendor` is the id prefix. `name` (max 24 characters) shows in the panel and gallery selectors. `core-*` are the engine's 14; never edit them, and never edit another vendor's transition: make your own.
+- `curve` sets the progress `p` the mix sees. Pick one by name (a string, or `{ "type", ...params }`). Core computes it, IEEE-exact and hashed, so **you never write hashed code**:
+
+  | curve | params | shape |
+  |---|---|---|
+  | `linear` | | p = time |
+  | `smoothstep` | | default: soft in and out |
+  | `smootherstep` | | softer still |
+  | `cubic` | | cubic ease in-out |
+  | `ease-in` | `power` 1..8 (2) | slow start |
+  | `ease-out` | `power` 1..8 (2) | fast start, slow end (`core-flash` = power 3) |
+  | `bounce` | | ease-out with three bounces |
+  | `stutter` | `per` 1..32 (8) | hard 0/1 cuts on a 1/per-beat grid, the new scene's share growing |
+  | `beat-steps` | `per` 1..32 (4) | p jumps on every 1/per beat |
+  | `onset` | `push` 0..1 (0.15) | smoothstep; every onset closes `push` of the remaining way |
+
+- `uses` opts into core-computed inputs (each one enters the sync hash): `flash` (white flash 0..1, peaks at p = 0.25), `roll` (an index that re-rolls every 1/16 beat, for re-seeding glitches), `bands` (only the CPU-side `Transition.bands`: the shader always has `T.bands`). Without them `T.flash` and `T.roll` are 0.
+- `params`: shader constants, `fn p_<name>() -> f32` in your mix (the default is the value; there is no per-switch UI).
+- Optional: `trails` (0..1: pushes the post decay up around the midpoint, like `core-melt`), `tags`, `changelog`.
+- `budget.ms`: your honest cost over `core-blend` at 1080p. The gate fails above **2 ms**.
+
+`mix.wgsl` defines one function; anything else you declare at module scope (helpers, consts) is renamed into your own namespace, so names can't clash with other transitions:
+
+```wgsl
+fn trans(uv: vec2f) -> vec3f   // uv (0,0) = top-left; return linear HDR rgb
+```
+
+The prelude (`lab/pieces/utility/core-transition/prelude.wgsl`) gives you:
+
+| | |
+|---|---|
+| `T.p` | progress 0..1, curve applied (0 = all A, 1 = all B: end there) |
+| `T.seed` | u32 per switch, from the server; vary the look with it |
+| `T.flash`, `T.roll` | see `uses` |
+| `T.aspect`, `T.res`, `T.time` | width/height, pixels, seconds |
+| `T.center` | FX centre (the pads'), uv; 0.5, 0.5 by default |
+| `T.bands` | 16 smoothed bands 0..1 (`bandv(i)`, `band(x)` interpolated, x 0 = bass) |
+| `sa(uv)`, `sb(uv)` | the old and the new scene (HDR rgb, clamped at the edges) |
+| `inside(uv)`, `rnd(a, b)`, `rot(d, angle)`, `h32(a, b)` | 1 inside the unit square; hashed 0..1; rotate; the integer hash |
+
+Rules: no bindings, entry points or `enable` in `mix.wgsl`; deterministic from `T` (no state); look right at any length from ½ beat to 16 beats; at p = 0 show A and at p = 1 show B, or the cut at the end jumps.
+
+```sh
+npm run lab -- new transition <vendor-slug>        # scaffold a working one
+npm run lab -- validate                            # schema, ids, curve params, and the assembled shader compiles
+npm run lab -- render <id> --cpu --seconds 2      # contact sheet over p, radial -> tunnel, in lab/out/<id>/
+```
+
+The gate renders each new or changed transition between the two fixed scenes over the three fixtures (errors, NaN, black, blown out, frozen) and its cost over `core-blend`. Don't touch `src/`, the prelude or the `core-*` transitions: if you need a new curve or uniform, say so in your report.
+
 ## Check your work
 
 ```sh
@@ -145,7 +217,7 @@ npm run typecheck
 
 ## Done means
 
-1. Your pieces and scenes exist with correct ids, authors and docs.
+1. Your pieces, scenes and transitions exist with correct ids, authors and docs.
 2. `validate` and `typecheck` pass, and the gate passes on the GPU.
 3. You looked at the contact sheets and they show what the doc says.
 4. You ticked your item in `lab/BACKLOG.md` (`- [x] ... → <your ids>`).

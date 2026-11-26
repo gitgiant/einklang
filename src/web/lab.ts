@@ -10,6 +10,10 @@ import { STRIDE } from '../core/constants.ts';
 import type { SceneGraph } from '../core/graph/types.ts';
 import { validateScene } from '../core/graph/validate.ts';
 import { Output, WebMOutputFormat, BufferTarget, CanvasSource } from 'mediabunny';
+import { NO_FX } from '../core/fx.ts';
+import { TICKS_PER_BEAT } from '../core/constants.ts';
+import { transEntry } from '../core/transitions.ts';
+import type { SceneSched } from '../core/protocol.ts';
 
 export interface RunOpts {
   scene: SceneGraph | string;
@@ -22,6 +26,11 @@ export interface RunOpts {
   fps: number; videoWidth: number;
   /** Time this many extra frames without readback for the cost per frame. */
   perfFrames: number;
+  /**
+   * Render a transition instead of `scene`: `id` from scene `from` to `to`, starting at tick `at`,
+   * `ticks` long (seed fixed). The contact sheet is labelled with the progress.
+   */
+  transition?: { id: string; from: string; to: string; at: number; ticks: number; seed?: number };
 }
 
 export interface FrameStat { tick: number; luma: number; black: number; white: number; nan: number; thumb: number[] }
@@ -72,8 +81,14 @@ async function main() {
     errors.length = 0;
     const res: RunResult = { ok: false, hashes: [], stats: [], msPerFrame: 0, adapter: gpu.adapterInfo, errors };
     try {
-      let id: string;
-      if (typeof o.scene === 'string') id = o.scene;
+      let id: string, sched: SceneSched | undefined;
+      if (o.transition) {
+        const t = o.transition;
+        if (!transEntry(t.id)) throw new Error(`unknown transition ${t.id}`);
+        for (const s of [t.from, t.to]) if (!engine.scenes.some((x) => x.def.id === s)) throw new Error(`unknown scene ${s}`);
+        sched = { id: t.to, prev: t.from, at: t.at, trans: { type: t.id, ticks: t.ticks, seed: t.seed ?? 0x5eed1234, tpb: TICKS_PER_BEAT }, earlier: [] };
+        id = t.from;
+      } else if (typeof o.scene === 'string') id = o.scene;
       else {
         const errs = validateScene(o.scene, REGISTRY);
         if (errs.length) throw new Error(errs.join('\n'));
@@ -116,7 +131,7 @@ async function main() {
 
       for (let i = 0; i < o.ticks; i++) {
         const tick = o.start + i, check = i % o.every === 0, vid = videoEvery && i % videoEvery === 0;
-        res.hashes.push(engine.frame(tick, F));
+        res.hashes.push(engine.frame(tick, F, NO_FX, sched));
         if (!check && !vid) continue;
         // the canvas texture is only valid within this task: read it back before yielding
         const img = await grab();
@@ -145,7 +160,7 @@ async function main() {
           sctx.drawImage(frame, (sheetN % cols) * tw, Math.floor(sheetN / cols) * th, tw, th);
           sctx.fillStyle = '#000a'; sctx.fillRect((sheetN % cols) * tw, Math.floor(sheetN / cols) * th, 70, 16);
           sctx.fillStyle = '#ddd'; sctx.font = '11px monospace';
-          sctx.fillText(`${(tick / 60).toFixed(2)}s`, (sheetN % cols) * tw + 4, Math.floor(sheetN / cols) * th + 12);
+          sctx.fillText(sched ? `p ${(engine.transition?.p ?? (tick < sched.at ? 0 : 1)).toFixed(2)}` : `${(tick / 60).toFixed(2)}s`, (sheetN % cols) * tw + 4, Math.floor(sheetN / cols) * th + 12);
           sheetN++;
         }
       }
@@ -162,7 +177,7 @@ async function main() {
       // cost per frame: keep going from where the run stopped, no readback
       await d.queue.onSubmittedWorkDone();
       const t0 = performance.now(), end = o.start + o.ticks + o.perfFrames;
-      for (let t = o.start + o.ticks; t < end; t++) engine.frame(t, F);
+      for (let t = o.start + o.ticks; t < end; t++) engine.frame(t, F, NO_FX, sched);
       await d.queue.onSubmittedWorkDone();
       res.msPerFrame = o.perfFrames ? (performance.now() - t0) / o.perfFrames : 0;
       res.ok = true;

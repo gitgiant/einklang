@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { Room } from '../src/server/room.ts';
 import type { WsConn } from '../src/server/ws.ts';
 import { FPS, K_ONSET, STRIDE } from '../src/core/constants.ts';
-import { INPUT_DELAY, TRANSITIONS, sceneAt, type RoomState, type SceneSched, type ServerMsg, type TransType } from '../src/core/protocol.ts';
-import { ONE, pickRandom, progress, transitionAt } from '../src/core/transitions.ts';
+import { INPUT_DELAY, sceneAt, type RoomState, type SceneSched, type ServerMsg, type TransType } from '../src/core/protocol.ts';
+import '../src/server/transitions.ts';
+import { ONE, pickRandom, progress, transIds, transitionAt } from '../src/core/transitions.ts';
 import { demoSource } from '../src/core/demo.ts';
 import { silence, type FeatureSource } from '../src/core/features.ts';
 
@@ -27,7 +28,7 @@ test('a transition starts on the boundary, with its length frozen to ticks and a
   const t = room.tickNow();
   const s = scene({ type: 'iris', beats: 2 }, 'bar');
   const st = state();
-  assert.equal(s.trans.type, 'iris');
+  assert.equal(s.trans.type, 'core-iris');
   assert.equal(s.trans.ticks, Math.round(2 * st.grid.tpb));
   assert.ok(Number.isInteger(s.trans.seed) && s.trans.seed >= 0 && s.trans.seed < 2 ** 32);
   assert.ok(s.at >= t + INPUT_DELAY);
@@ -39,7 +40,7 @@ test('a transition starts on the boundary, with its length frozen to ticks and a
   // 0 beats, cut, unknown and missing are all a plain cut
   for (const tr of [{ type: 'blend', beats: 0 }, { type: 'cut', beats: 4 }, { type: 'nope', beats: 4 }, undefined]) {
     clock.ms += 20_000;
-    assert.deepEqual(scene(tr).trans.type, 'cut', JSON.stringify(tr));
+    assert.deepEqual(scene(tr).trans.type, 'core-cut', JSON.stringify(tr));
   }
 });
 
@@ -57,7 +58,7 @@ test('requests during a transition queue after it; steps count from the latest o
   // what every host shows at each tick
   const sc = state().scene, t0 = room.tickNow();
   assert.equal(sceneAt(sc, t0), 'radial');
-  assert.equal(transitionAt(sc, s1.at, silence)?.type, 'blend');
+  assert.equal(transitionAt(sc, s1.at, silence)?.type, 'core-blend');
   assert.equal(transitionAt(sc, s2.at + 1, silence)?.to, 'scope');
   assert.equal(transitionAt(sc, s3.at + s3.trans.ticks, silence), null);
   assert.equal(sceneAt(sc, s3.at + s3.trans.ticks), 'flow');
@@ -82,12 +83,12 @@ test('random is never cut and never the previous effect', () => {
   for (let i = 0; i < 200; i++) {
     clock.ms += 30_000; // let the previous one finish
     const t = scene({ type: 'random', beats: 1 }).trans.type;
-    assert.notEqual(t, 'cut');
+    assert.notEqual(t, 'core-cut');
     assert.notEqual(t, last);
     seen.add(t); last = t;
   }
-  assert.equal(seen.size, TRANSITIONS.length - 1);
-  for (let k = 0; k < 50; k++) assert.notEqual(pickRandom('iris', k / 50), 'iris');
+  assert.equal(seen.size, transIds().length - 1);
+  for (let k = 0; k < 50; k++) assert.notEqual(pickRandom('core-iris', k / 50), 'core-iris');
 });
 
 test('pause keeps a running transition (frozen); seek resets it', () => {
@@ -100,12 +101,12 @@ test('pause keeps a running transition (frozen); seek resets it', () => {
   clock.ms += ((s.at - room.tickNow() + 20) * 1000) / FPS; // 20 ticks into it
   send({ t: 'pause' });
   assert.deepEqual(state().scene, s);
-  assert.equal(transitionAt(state().scene, room.tickNow(), silence)?.type, 'blend');
+  assert.equal(transitionAt(state().scene, room.tickNow(), silence)?.type, 'core-blend');
   send({ t: 'resume' });
   assert.deepEqual(state().scene, s);
   send({ t: 'seek', frame: 100 });
   assert.equal(state().scene.earlier.length, 0);
-  assert.equal(state().scene.trans.type, 'cut');
+  assert.equal(state().scene.trans.type, 'core-cut');
 });
 
 const sched = (type: TransType, ticks: number, tpb = 28): SceneSched =>
@@ -113,14 +114,14 @@ const sched = (type: TransType, ticks: number, tpb = 28): SceneSched =>
 
 test('curves: exact endpoints, monotonic where expected', () => {
   const F = demoSource();
-  for (const type of TRANSITIONS.filter((t) => t !== 'cut')) {
+  for (const type of transIds().filter((t) => t !== 'core-cut')) {
     const s = sched(type, 112);
     assert.equal(transitionAt(s, 999, F), null);
     assert.equal(transitionAt(s, 1000, F)!.p16, 0, `${type} starts at 0`);
     assert.equal(transitionAt(s, 1112, F), null, `${type} ends on time`);
     assert.equal(sceneAt(s, 1112), 'b');
     assert.equal(transitionAt(s, 1000, F)!.from, 'a');
-    if (type === 'stutter') continue;
+    if (type === 'core-stutter') continue;
     let prev = -1;
     for (let t = 1000; t < 1112; t++) {
       const p = transitionAt(s, t, F)!.p16;
@@ -129,11 +130,11 @@ test('curves: exact endpoints, monotonic where expected', () => {
     }
     assert.ok(prev > ONE * 0.98, `${type} nearly done on its last tick (${prev})`);
   }
-  assert.equal(transitionAt(sched('cut', 0), 1000, F), null);
+  assert.equal(transitionAt(sched('core-cut', 0), 1000, F), null);
 });
 
 test('stutter: cuts back to the old scene only on 1/8-beat steps, and the new share grows', () => {
-  const tpb = 28, step = tpb / 8, s = sched('stutter', 4 * tpb, tpb);
+  const tpb = 28, step = tpb / 8, s = sched('core-stutter', 4 * tpb, tpb);
   const ps = Array.from({ length: 4 * tpb }, (_, i) => transitionAt(s, 1000 + i, silence)!.p16);
   assert.ok(ps.every((p) => p === 0 || p === ONE));
   for (let i = 1; i < ps.length; i++) {
@@ -146,7 +147,7 @@ test('stutter: cuts back to the old scene only on 1/8-beat steps, and the new sh
 });
 
 test('audio mask: onsets push it ahead, never past 1, and it ends on time', () => {
-  const s = sched('audio', 112);
+  const s = sched('core-audio', 112);
   const onsets: FeatureSource = { get: (t, k) => (k === K_ONSET && t % 14 === 0 ? 255 : 0), wave: () => null };
   let ahead = 0;
   for (let t = 1000; t < 1112; t++) {
@@ -161,11 +162,11 @@ test('audio mask: onsets push it ahead, never past 1, and it ends on time', () =
 });
 
 test('glitch re-rolls bands every 1/16 beat; seeded params come through', () => {
-  const s = sched('glitch', 56);
+  const s = sched('core-glitch', 56);
   const rolls = new Set(Array.from({ length: 56 }, (_, i) => transitionAt(s, 1000 + i, silence)!.roll));
   assert.equal(rolls.size, 32);
   assert.equal(transitionAt(s, 1010, silence)!.seed, 123);
-  const f = sched('flash', 112), peak = Array.from({ length: 112 }, (_, i) => transitionAt(f, 1000 + i, silence)!);
+  const f = sched('core-flash', 112), peak = Array.from({ length: 112 }, (_, i) => transitionAt(f, 1000 + i, silence)!);
   const top = peak.reduce((a, b) => (b.flash16 > a.flash16 ? b : a));
   assert.ok(Math.abs(top.p - 0.25) < 0.05, `flash peaks near p = 0.25 (${top.p})`);
 });

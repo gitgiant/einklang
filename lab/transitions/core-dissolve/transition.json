@@ -1,0 +1,8 @@
+{
+  "id": "core-dissolve",
+  "name": "dissolve",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Per-cell noise threshold, seeded grain.",
+  "curve": "smoothstep"
+}

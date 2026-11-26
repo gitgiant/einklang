@@ -1,0 +1,8 @@
+{
+  "id": "core-iris",
+  "name": "iris",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "A circle opening from the centre.",
+  "curve": "smoothstep"
+}

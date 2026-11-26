@@ -206,6 +206,34 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Geo → tex render
 - [ ] Field ops
 
+### Transitions
+How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug>/` (contract: "Transitions" in `lab/AGENTS.md`). Core ones: cut, blend, flash, wipe, iris, dissolve, luma, zoom, glitch, stutter, swirl, melt, audio mask, pixelate.
+- [ ] Page turn (curl from a corner, the back shaded)
+- [ ] Cube rotate (A and B as two faces)
+- [ ] Ripple (rings from the centre carry B in)
+- [ ] Ink bleed (B spreads like ink in water, noisy edge)
+- [ ] Shatter (A breaks into seeded shards that fall away)
+- [ ] Slide / push (B pushes A off in a seeded direction)
+- [ ] Barn doors (A splits and opens)
+- [ ] Venetian blinds (slats rotate from A to B)
+- [ ] Checker flip (cells flip in a seeded order)
+- [ ] Radial clock wipe
+- [ ] Heart / shape iris (SDF shapes: heart, star, diamond)
+- [ ] Film burn (hot spot burns through A, orange edge)
+- [ ] VHS rewind (tracking lines, wobble, colour bleed)
+- [ ] Chromatic split (RGB pull apart and back together on B)
+- [ ] Mosaic tiles (tiles turn over one by one)
+- [ ] Kaleido spin (both folded into a spinning kaleidoscope at the midpoint)
+- [ ] Warp tunnel (A sucked into the centre, B rushes out)
+- [ ] Beat-strobe cuts (`beat-steps` curve: A/B alternate on the beat, B's share growing)
+- [ ] Spectrum bars wipe (B rises as bars of the live spectrum)
+- [ ] Bass punch zoom (zoom kicks on onsets: `onset` curve)
+- [ ] Scanline roll (B rolls in like a CRT losing vertical hold)
+- [ ] Smoke dissolve (domain-warped noise threshold)
+- [ ] Liquid morph (A warps along a flow field into B)
+- [ ] Polar wipe (angle sweep around the centre)
+- [ ] Spiral (a spiral arm sweeps B in)
+
 ### Retro / aesthetic
 - [ ] Vaporwave: slatted sunset sun
 - [ ] Vaporwave: neon grid floor

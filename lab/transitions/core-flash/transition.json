@@ -1,0 +1,14 @@
+{
+  "id": "core-flash",
+  "name": "flash",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Additive blend plus a white flash.",
+  "curve": {
+    "type": "ease-out",
+    "power": 3
+  },
+  "uses": [
+    "flash"
+  ]
+}

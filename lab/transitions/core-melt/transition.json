@@ -1,0 +1,9 @@
+{
+  "id": "core-melt",
+  "name": "melt",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "The old scene drips down in seeded columns (the post trails smear it).",
+  "curve": "smoothstep",
+  "trails": 0.985
+}

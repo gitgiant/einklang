@@ -15,11 +15,11 @@ export type Mode =
   /** `delay`: ticks every host renders behind the leader (instrument mode 2, captured audio 6). */
   | { mode: 'live'; start: number; delay: number };
 
-/** Transition effects, in shader order (`kind` = index). `cut` is the plain hard switch. */
-export const TRANSITIONS = [
-  'cut', 'blend', 'flash', 'wipe', 'iris', 'dissolve', 'luma', 'zoom', 'glitch', 'stutter', 'swirl', 'melt', 'audio', 'pixelate',
-] as const;
-export type TransType = (typeof TRANSITIONS)[number];
+/**
+ * A registered transition id (lab/transitions/<id>/, registry in core/transitions.ts), e.g.
+ * 'core-blend'; 'core-cut' is the plain hard switch. Inputs also take the core short names ('blend').
+ */
+export type TransType = string;
 /** Lengths the panel offers, in beats (0 = cut). */
 export const TRANS_BEATS = [0, 0.5, 1, 2, 4, 8, 16] as const;
 
@@ -28,7 +28,7 @@ export const TRANS_BEATS = [0, 0.5, 1, 2, 4, 8, 16] as const;
  * beat length `tpb` at scheduling time, so the beat-stepped effects don't warp on a tempo change.
  */
 export interface TransSched { type: TransType; ticks: number; seed: number; tpb: number }
-export const CUT: TransSched = { type: 'cut', ticks: 0, seed: 0, tpb: TICKS_PER_BEAT };
+export const CUT: TransSched = { type: 'core-cut', ticks: 0, seed: 0, tpb: TICKS_PER_BEAT };
 
 /** One switch: `prev` before tick `at`, a transition over [at, at + trans.ticks), `id` after. */
 export interface SceneStep { id: string; prev: string; at: number; trans: TransSched }

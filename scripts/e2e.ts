@@ -103,7 +103,7 @@ try {
   const next = () => a.$eval('#next', (e) => (e as HTMLButtonElement).click());
   await a.select('#quant', 'beat');
   await a.select('#tlen', '1');
-  const effects = (await a.$$eval('#trans option', (os) => os.map((o) => (o as HTMLOptionElement).value))).filter((v) => v !== 'random' && v !== 'cut');
+  const effects = (await a.$$eval('#trans option', (os) => os.map((o) => (o as HTMLOptionElement).value))).filter((v) => v !== 'random' && v !== 'core-cut');
   let tShared = 0, tDiff = 0;
   for (const eff of effects) {
     await a.select('#trans', eff);
@@ -117,13 +117,13 @@ try {
   const missed = effects.filter((e) => !da.transSeen.includes(e) || !db.transSeen.includes(e));
   check(tDiff === 0 && missed.length === 0, `transitions: ${effects.length} effects drawn on both (missed: ${missed.join(' ') || 'none'}), ${tShared} shared ticks, ${tDiff} mismatches`);
   if (process.env.SHOT5) {
-    await a.select('#trans', 'iris'); await a.select('#tlen', '4'); await next();
-    await a.waitForFunction(() => window.__ek!.trans === 'iris', { timeout: 5000 });
+    await a.select('#trans', 'core-iris'); await a.select('#tlen', '4'); await next();
+    await a.waitForFunction(() => window.__ek!.trans === 'core-iris', { timeout: 5000 });
     await sleep(900);
     await a.screenshot({ path: process.env.SHOT5 });
     await sleep(1500);
   }
-  await a.select('#trans', 'cut');
+  await a.select('#trans', 'core-cut');
 
   // flow sim: switch, let it fast-forward, compare
   await a.select('#quant', 'now');

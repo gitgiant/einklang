@@ -1,5 +1,6 @@
 // Default settings of both pages, and how URL params and a device's remembered choices override them.
-import { DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS, TRANSITIONS, type AutoRot, type ClientMsg, type TransType } from '../core/protocol.ts';
+import { DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS, type AutoRot, type ClientMsg, type TransType } from '../core/protocol.ts';
+import { resolveTrans } from '../core/transitions.ts';
 
 type Get = (key: string) => string | null;
 
@@ -7,7 +8,7 @@ type Get = (key: string) => string | null;
 export function mainTrans(remembered: Get): { type: TransType | 'random'; beats: number } {
   const type = remembered('trans'), beats = remembered('tlen');
   return {
-    type: type === 'random' || (TRANSITIONS as readonly (string | null)[]).includes(type) ? (type as TransType) : 'random',
+    type: type === 'random' ? 'random' : resolveTrans(type) ?? 'random',
     beats: beats === null || !Number.isFinite(+beats) ? DEFAULT_TRANS_BEATS : +beats,
   };
 }
@@ -30,7 +31,7 @@ export function galleryTrans(qs: URLSearchParams): GalleryTrans {
   const v = qs.get('trans');
   if (v === null) return qs.has('at') || qs.has('stop') ? '' : 'random';
   if (['', 'off', 'none', '0'].includes(v)) return '';
-  return v === 'all' || (TRANSITIONS as readonly string[]).includes(v) ? (v as GalleryTrans) : 'random';
+  return v === 'all' ? 'all' : resolveTrans(v) ?? 'random';
 }
 
 /** The gallery's transition length: `len=` wins, then the remembered choice (not for `at=` / `stop=` stills). */

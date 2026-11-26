@@ -2,6 +2,16 @@
 
 Status: agreed 2026-11-26 (grill-me interview). **#20–#24 and #26 built 2026-11-26; #25 contract, backlog and skill built** (its first batch is running via Hauptling). Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
 
+### Build notes: pluggable transitions (decided while building)
+
+- **Folders, not lists:** a transition is `lab/transitions/<id>/` (`transition.json` + `mix.wgsl`, contract in `lab/AGENTS.md` "Transitions"), so vendors add them in parallel without touching `src/`, `core-*` pieces or a shared switch. The 14 v1 transitions are `core-<name>` folders.
+- **Registry** (`src/core/transitions.ts`): validated folders in a fixed order, the core ones in `CORE_ORDER` (today's kinds 0..13) then the rest by id; `kind` = index, so the hash and the shader switch agree on every host. The browser bundles the folders (`src/web/transitions.ts`, Vite globs), Node reads them from disk (`src/server/transitions.ts`; the server, tests and the lab CLI). Both install into core with the same `buildTransitions`, so an invalid folder is skipped on both. Not a generated, committed file: three branches regenerating it would conflict.
+- **Ids everywhere:** `TransType` is a registered id ('core-blend'). Short core names ('blend') are still accepted in saved settings, gallery `trans=`, and messages (`resolveTrans`); the server stores the id.
+- **Curves** are a fixed set in core, picked by name with numeric params (`linear`, `smoothstep`, `smootherstep`, `cubic`, `ease-in`, `ease-out`, `bounce`, `stutter`, `beat-steps`, `onset`). The core ones keep their exact arithmetic (flash = `ease-out` power 3, stutter per 8, audio = `onset` push 0.15). A unit test folds every core transition's p16/flash/roll/hash over many schedules against values recorded before the change.
+- **Hashed extras are opt-in** (`uses`: flash, roll, bands): computing a flash for every transition would have changed blend's hash. Melt's post-trail push became `"trails": 0.985`.
+- **Shader:** `core-transition/prelude.wgsl` + each `mix.wgsl` (module-scope names suffixed `__<id>`, params as `fn p_<name>()`) + a generated `switch (T.kind)` (`src/core/transwgsl.ts`). The uniform gained `time`; the 16 bands are always uploaded. `core-transition`'s `type` param is an int (registry index), no scene used it.
+- **CLI:** `validate` compiles the assembled shader in headless Chrome (SwiftShader, a blank localhost page; `--no-compile` skips) and maps errors to `mix.wgsl` lines; `new transition <id>`; `render <transition>` and the gate run it from `radial` to `tunnel` over the whole run (sheet labelled with p), no audio check, cost over `core-blend` (budget 2 ms). The gate picks changed folders, and all of them when the prelude or `transwgsl.ts` changes.
+
 ### Build notes for #26 (decided while building)
 
 - **Sprites:** one runtime format, `.spr` (`lab/api/sprite.ts`): indexed colour, equal frames, per-frame durations, tags; a texture_2d_array layer per frame. `sprite import` converts PNG grids, Aseprite JSON, GIF, `.vox` z-slices and code-drawn `*.sprite.json` recipes (`lab/assets/sprites/src/`), with node-only PNG/GIF codecs (`scripts/lab/png.ts`). Four code-drawn sheets ship: dancer, sparkle, heart, note.
@@ -203,7 +213,7 @@ Hauptling workers run in containers with no GPU. The sandbox is a shell CLI, so 
 - `einklang-lab render <scene|piece> [--frames --res --fixture]`: headless Chrome with WebGPU on **SwiftShader** (CPU) at low resolution. It writes a PNG contact sheet, a short webm and error logs to `lab/out/` (gitignored). A bare piece is rendered in an auto-made harness scene.
 - `einklang-lab gate`: the `gpu` command in `hauptling.json` (`gateGpu: true`).
 - `einklang-lab feedback`: builds the vote digest (see Voting).
-- `einklang-lab new <kind> <slug>`: scaffolds a piece from a template.
+- `einklang-lab new <kind> <slug>`: scaffolds a piece from a template; `new transition <slug>` a transition folder.
 - **Fixtures:** `lab/fixtures/*.feat` are recorded feature-frame streams (bands, RMS, onset, beat phase/BPM, waveform) for 3 tracks: quiet/ambient, techno, dense/busy. Containers never need the audio.
 
 ### Gate (merge to main through Hauptling)

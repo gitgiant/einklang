@@ -9,6 +9,8 @@ import { Room, type VoteStore } from './room.ts';
 import { WsConn, MAX_FRAME } from './ws.ts';
 import { DEFAULT_PRESETS } from '../core/protocol.ts';
 import { parseVotes, type Vote } from '../core/votes.ts';
+import { TRANSITION_PROBLEMS } from './transitions.ts';
+import { transitions } from '../core/transitions.ts';
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm',
@@ -127,6 +129,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) {
   const hosts = bindAddresses();
   const scenes = labCatalog(path.join(root, 'lab/scenes')), votesFile = path.join(root, 'data/votes.jsonl');
   startServer({ port, pub, token, hosts, scenes, votesFile }).then(({ room }) => {
+    for (const p of TRANSITION_PROBLEMS) console.warn(`transition skipped: ${p}`);
+    console.log(`${transitions().length} transitions`);
     console.log(`${room.state.presets.length} scenes live (${scenes.length - room.state.presets.length} retired by votes), votes in data/votes.jsonl`);
     console.log('einklang listening. Join URLs:');
     for (const h of hosts) console.log(`  http://${h.includes(':') ? `[${h}]` : h === '0.0.0.0' ? 'localhost' : h}:${port}/?t=${token}`);

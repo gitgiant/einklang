@@ -1,0 +1,8 @@
+{
+  "id": "core-zoom",
+  "name": "zoom",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "The old scene zooms in and fades, the new one grows from small.",
+  "curve": "cubic"
+}

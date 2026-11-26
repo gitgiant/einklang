@@ -23,7 +23,7 @@ If `lab/feedback.json`, `lab/FEEDBACK.md` or scene files (newly `retired`) chang
 
 - `lab/FEEDBACK.md`: top and bottom scenes, liked and disliked pieces, vendor scores, reason tags.
 - `lab/BACKLOG.md`: pinned briefs first, then unticked catalog items.
-- `ls lab/pieces/*/ lab/scenes/` for what exists.
+- `ls lab/pieces/*/ lab/scenes/ lab/transitions/` for what exists.
 
 ## 3. Pick the round
 
@@ -34,6 +34,7 @@ Mix by the digest:
 - **Fix** a piece the digest lists under "avoid or fix" (edit in place, changelog line, keep params compatible). At most one fix per round.
 - **Remix** a top scene (new scene, `parent` set) when one has score >= 2. At most one per round.
 - **New work** otherwise: an unticked catalog item, built as its piece(s) **plus a scene that shows it off**. A piece no scene uses never reaches the owner, so every new piece ships with a scene.
+- **Transitions** (`### Transitions` in the backlog) are their own folder each (`lab/transitions/<vendor>-<slug>/`, contract in `lab/AGENTS.md`): no scene needed, the gate renders them between two fixed scenes. A task can be "two or three transitions".
 - Spread kinds across the round (not three effects), avoid what the reason tags say the owner dislikes, and lean toward what the liked pieces have in common.
 - Give each vendor a different area so branches don't conflict. Only `lab/BACKLOG.md` is shared; ticks on different lines merge fine.
 

@@ -24,8 +24,9 @@
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { FPS } from '../core/constants.ts';
-import { TRANS_BEATS, TRANSITIONS, type SceneSched } from '../core/protocol.ts';
-import { TRANS_NAMES } from '../core/transitions.ts';
+import { TRANS_BEATS, type SceneSched } from '../core/protocol.ts';
+import './transitions.ts'; // installs the transition registry (lab/transitions/)
+import { transIds, transName, transitions } from '../core/transitions.ts';
 import { VOTE_TAGS } from '../core/votes.ts';
 import { autoHideUi } from './idle.ts';
 import { tapZone, toggleUiOnDoubleTap } from './doubletap.ts';
@@ -189,7 +190,7 @@ async function main() {
   tsel.add(new Option('no transitions', ''));
   tsel.add(new Option('auto: random effects', 'random'));
   tsel.add(new Option('auto: all effects', 'all'));
-  for (const t of TRANSITIONS) tsel.add(new Option(`auto: ${TRANS_NAMES[t]}`, t));
+  for (const t of transitions()) tsel.add(new Option(`auto: ${t.name}`, t.id));
   tsel.value = trans;
   const setTrans = (t: GalleryTrans) => {
     if (!trans || !t) applyLen();
@@ -285,7 +286,7 @@ async function main() {
       // a focused selector keeps its arrows; Alt / Cmd + arrow stays the browser's back / forward
       if (!(e.target instanceof HTMLSelectElement) && !e.altKey && !e.ctrlKey && !e.metaKey) stepScene(e.key === 'ArrowLeft' ? -1 : 1);
     }
-    else if (e.key === 't') { const opts: GalleryTrans[] = ['', 'random', 'all', ...TRANSITIONS]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
+    else if (e.key === 't') { const opts: GalleryTrans[] = ['', 'random', 'all', ...transIds()]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
     else if (+e.key >= 1 && +e.key <= ids.length) go(ids[+e.key - 1]);
     else if (e.key === '+' || e.key === '=') votes.send(1);
     else if (e.key === '-' || e.key === '_') votes.send(-1);
@@ -311,9 +312,9 @@ async function main() {
       $('hud').textContent = [
         `${grid ? 'grid' : sc.def.name}  ·  ${input.label(tick)}`,
         `tick ${tick}  hash ${hashes.join(' ')}`,
-        trans && !grid ? `transitions: ${trans === 'all' || trans === 'random' ? trans : TRANS_NAMES[trans]} ${beats} beats  ·  ${(() => {
+        trans && !grid ? `transitions: ${trans === 'all' || trans === 'random' ? trans : transName(trans)} ${beats} beats  ·  ${(() => {
           const tr = cells[0].engine.transition;
-          return tr ? `${TRANS_NAMES[tr.type]} ${tr.from}→${tr.to} ${((tr.p16 / 65536) * 100) | 0}%` : 'between';
+          return tr ? `${transName(tr.type)} ${tr.from}→${tr.to} ${((tr.p16 / 65536) * 100) | 0}%` : 'between';
         })()}` : null,
         !grid && sc.status ? sc.status() : null,
         `${fps.toFixed(0)} fps  ·  WebGPU ${gpu.adapterInfo}`,

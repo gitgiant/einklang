@@ -58,7 +58,7 @@ test('room: live votes update scores and toast everyone; a live thumbs-down skip
   assert.equal(s.scores.radial, 0);
   assert.notEqual(s.scene.id, 'radial');
   assert.equal(s.scene.prev, 'radial');
-  assert.equal(s.scene.trans.type, 'wipe');
+  assert.equal(s.scene.trans.type, 'core-wipe');
   assert.ok(s.scene.at >= t + INPUT_DELAY && Number.isInteger((s.scene.at - s.grid.origin) / s.grid.tpb), 'on a beat, INPUT_DELAY ahead');
   // recorded as live, with the tick (no features in idle mode)
   const last = store.votes.at(-1)!;
@@ -134,13 +134,13 @@ test('room: auto-rotation switches every N bars by weight, and stops when turned
   send({ t: 'auto', bars: 7 });
   assert.equal(state().auto, null, 'only the offered lengths');
   send({ t: 'auto', bars: 4, trans: { type: 'blend', beats: 1 } });
-  assert.deepEqual(state().auto, { bars: 4, trans: { type: 'blend', beats: 1 } });
+  assert.deepEqual(state().auto, { bars: 4, trans: { type: 'core-blend', beats: 1 } });
   const barMs = (state().grid.tpb * 4 * 1000) / 60;
   const switches: number[] = [];
   let last = state().scene.at;
   for (let ms = 0; ms < barMs * 13; ms += 250) {
     clock.ms += 250; room.tickAuto();
-    if (state().scene.at !== last) { last = state().scene.at; switches.push(last); assert.equal(state().scene.trans.type, 'blend'); }
+    if (state().scene.at !== last) { last = state().scene.at; switches.push(last); assert.equal(state().scene.trans.type, 'core-blend'); }
   }
   assert.equal(switches.length, 3, `switches at ${switches}`);
   const bar = state().grid.tpb * 4;

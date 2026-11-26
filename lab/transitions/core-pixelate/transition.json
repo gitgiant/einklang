@@ -1,0 +1,8 @@
+{
+  "id": "core-pixelate",
+  "name": "pixelate",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Both go blocky, swap at the coarsest point, then sharpen.",
+  "curve": "smoothstep"
+}

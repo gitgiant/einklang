@@ -1,0 +1,8 @@
+{
+  "id": "core-wipe",
+  "name": "wipe",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "Soft line sweeping in a seeded direction.",
+  "curve": "smoothstep"
+}

@@ -1,21 +1,21 @@
 // The gallery's local stand-in for the server's scene schedule: a pure function of the tick (so stills
 // repeat) that moves to the next scene every `cycle` ticks.
 import { TICKS_PER_BEAT } from '../core/constants.ts';
-import { TRANSITIONS, type SceneSched, type TransType } from '../core/protocol.ts';
+import type { SceneSched, TransType } from '../core/protocol.ts';
+import { transEffects } from '../core/transitions.ts';
 import { h32 } from '../core/math.ts';
 import type { GalleryTrans } from './defaults.ts';
 
-const EFFECTS = TRANSITIONS.filter((t) => t !== 'cut');
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
 /** Effects shuffled for one round of switches. */
 function round(r: number): TransType[] {
-  return EFFECTS.map((t, i) => ({ t, k: h32(r, i) >>> 0 })).sort((a, b) => a.k - b.k).map((x) => x.t);
+  return transEffects().map((t, i) => ({ t, k: h32(r, i) >>> 0 })).sort((a, b) => a.k - b.k).map((x) => x.t);
 }
 
 /** The `random` effect of switch `n`: shuffled rounds through every effect, never the same twice in a row. */
 export function randomEffect(n: number): TransType {
-  const len = EFFECTS.length, r = Math.floor(n / len), cur = round(r);
+  const EFFECTS = transEffects(), len = EFFECTS.length, r = Math.floor(n / len), cur = round(r);
   // only the first two of a round ever swap, so the previous round's last entry is as shuffled
   if (cur[0] === round(r - 1)[len - 1]) [cur[0], cur[1]] = [cur[1], cur[0]];
   return cur[mod(n, len)];
@@ -45,7 +45,7 @@ export const switchAt = (c: Cycle, a: Anchor, tick: number) => a.n + Math.floor(
 
 /** The switch `from` -> `to` starting at tick `at`, as switch number `n`. */
 export function step(c: Cycle, n: number, from: string, to: string, at: number): SceneSched {
-  const type = c.trans === 'all' ? EFFECTS[mod(n, EFFECTS.length)] : c.trans === 'random' ? randomEffect(n) : c.trans;
+  const E = transEffects(), type = c.trans === 'all' ? E[mod(n, E.length)] : c.trans === 'random' ? randomEffect(n) : c.trans;
   return { id: to, prev: from, at, earlier: [], trans: { type, ticks: transTicks(c.beats), seed: h32(n, 0x7a5), tpb: TICKS_PER_BEAT } };
 }
 

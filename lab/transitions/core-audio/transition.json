@@ -1,0 +1,14 @@
+{
+  "id": "core-audio",
+  "name": "audio mask",
+  "vendor": "core",
+  "model": "claude-opus-5-5",
+  "description": "The new scene shows where the spectrum (mirrored) and bass are.",
+  "curve": {
+    "type": "onset",
+    "push": 0.15
+  },
+  "uses": [
+    "bands"
+  ]
+}
