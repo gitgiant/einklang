@@ -93,3 +93,24 @@ test('silence evaluates without NaN', () => {
   const f = evalCpu(compile(demo(), reg), 10, silence);
   for (const P of f.params.values()) for (const v of Object.values(P)) if (typeof v === 'number') assert.ok(Number.isFinite(v));
 });
+
+test('v1 scenes as graphs: the synced node state is exactly the v1 state (hash parity)', async () => {
+  const { radial } = await import('../src/core/scenes/radial.ts');
+  const { tunnel } = await import('../src/core/scenes/tunnel.ts');
+  const { scope } = await import('../src/core/scenes/scope.ts');
+  const { flow } = await import('../src/core/scenes/flow.ts');
+  const { fnv, FNV0 } = await import('../src/core/math.ts');
+  for (const def of [radial, tunnel, scope, flow]) {
+    const g = scenes.find((s) => s.id === def.id)!;
+    assert.ok(g, def.id);
+    const plan = compile(g, reg);
+    for (const t of [0, 59, 600, 2276, 5000]) {
+      const st = evalCpu(plan, t, demoSource()).outs.get(def.id)!.state!;
+      assert.equal(fnv(FNV0, st), hashState(def.state(t, demoSource())), `${def.id} @${t}`);
+    }
+  }
+});
+
+test('every scene file sets only known post keys', () => {
+  for (const s of scenes) for (const k of Object.keys(s.post ?? {})) assert.ok(['decay', 'zoom', 'rotate', 'bloom', 'threshold', 'exposure'].includes(k), `${s.id}: ${k}`);
+});

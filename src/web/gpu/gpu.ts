@@ -1,9 +1,8 @@
 import common from './shaders/common.wgsl?raw';
-import { W, H } from '../../core/constants.ts';
+
 
 export interface Gpu { device: GPUDevice; format: GPUTextureFormat; adapterInfo: string }
 
-export const HDR: GPUTextureFormat = 'rgba16float';
 
 export async function initGpu(): Promise<Gpu> {
   if (!navigator.gpu) throw new Error('WebGPU is not available here. Open this page in desktop Chrome or Edge (113+).');
@@ -23,8 +22,3 @@ export function shader(device: GPUDevice, code: string, label: string): GPUShade
   return m;
 }
 
-/** Letterbox mapping from the virtual W x H canvas into a target of size (tw, th). */
-export function letterbox(tw: number, th: number): { scale: number; ox: number; oy: number } {
-  const scale = Math.min(tw / W, th / H);
-  return { scale, ox: (tw - W * scale) / 2, oy: (th - H * scale) / 2 };
-}

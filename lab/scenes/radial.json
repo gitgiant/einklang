@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "id": "radial",
+  "name": "Radial spectrum",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-21",
+  "nodes": [
+    {
+      "id": "radial",
+      "piece": "core-radial"
+    }
+  ],
+  "edges": [],
+  "out": "radial.out",
+  "post": {
+    "decay": 0.55,
+    "bloom": 0.55,
+    "threshold": 0.75
+  }
+}

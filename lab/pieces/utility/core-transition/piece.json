@@ -1,0 +1,86 @@
+{
+  "id": "core-transition",
+  "kind": "utility",
+  "name": "Transition mix",
+  "doc": "Mixes a into b with one of the 14 transition effects at progress p. The show graph drives it from the room's schedule; inside a scene, bind p to a signal.",
+  "ports": {
+    "in": {
+      "a": {
+        "type": "tex"
+      },
+      "b": {
+        "type": "tex"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "type": {
+      "type": "enum",
+      "default": 1,
+      "options": [
+        "cut",
+        "blend",
+        "flash",
+        "wipe",
+        "iris",
+        "dissolve",
+        "luma",
+        "zoom",
+        "glitch",
+        "stutter",
+        "swirl",
+        "melt",
+        "audio",
+        "pixelate"
+      ]
+    },
+    "p": {
+      "type": "float",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "doc": "progress, curve already applied"
+    },
+    "flash": {
+      "type": "float",
+      "default": 0,
+      "min": 0,
+      "max": 1
+    },
+    "seed": {
+      "type": "int",
+      "default": 0,
+      "min": 0,
+      "max": 4294967295
+    },
+    "roll": {
+      "type": "int",
+      "default": 0,
+      "min": 0,
+      "max": 1000000,
+      "doc": "glitch band re-roll index"
+    },
+    "pads": {
+      "type": "bool",
+      "default": true,
+      "doc": "center iris/zoom/swirl on the pads' FX center"
+    }
+  },
+  "budget": {
+    "ms": 0.1,
+    "scales": "res"
+  },
+  "tags": [
+    "transition",
+    "core"
+  ],
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  }
+}

@@ -10,7 +10,7 @@ import {
 } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
 import { initGpu } from './gpu/gpu.ts';
-import { VIEWS } from './gpu/post.ts';
+import { VIEWS } from '../core/post.ts';
 import { Engine } from './engine.ts';
 import { MidiRelay } from './midi.ts';
 import { ACCEPT, Player } from './player.ts';

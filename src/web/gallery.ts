@@ -45,7 +45,7 @@ async function main() {
     const cell = document.createElement('div'); cell.className = 'cell';
     const cv = document.createElement('canvas'), tag = document.createElement('div'); tag.className = 'tag';
     cell.append(cv, tag); stage.append(cell);
-    return { cell, tag, engine: new Engine(gpu, cv, { lab: true }) };
+    return { cell, tag, engine: new Engine(gpu, cv) };
   });
   const ids = cells[0].engine.scenes.map((s) => s.def.id);
   /** The local stand-in for the server's schedule: a pure function of the tick, so stills repeat. */

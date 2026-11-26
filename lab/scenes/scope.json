@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "scope",
+  "name": "Oscilloscope / Lissajous",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-21",
+  "nodes": [
+    {
+      "id": "scope",
+      "piece": "core-scope"
+    }
+  ],
+  "edges": [],
+  "out": "scope.out",
+  "post": {
+    "decay": 0.9,
+    "bloom": 1.1,
+    "threshold": 0.35,
+    "exposure": 1.2
+  }
+}

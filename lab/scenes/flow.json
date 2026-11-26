@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "flow",
+  "name": "Curl-noise flow field",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-21",
+  "nodes": [
+    {
+      "id": "flow",
+      "piece": "core-flow"
+    }
+  ],
+  "edges": [],
+  "out": "flow.out",
+  "post": {
+    "decay": 0.93,
+    "bloom": 0.7,
+    "threshold": 0.6,
+    "exposure": 1.1
+  }
+}

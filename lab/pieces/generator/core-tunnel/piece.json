@@ -1,0 +1,26 @@
+{
+  "id": "core-tunnel",
+  "kind": "generator",
+  "name": "Tunnel",
+  "doc": "v1 warp tunnel: closed-form integer state, raymarched-looking rings in one fragment pass.",
+  "ports": {
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "synced": true,
+  "tags": [
+    "v1",
+    "core"
+  ],
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "budget": {
+    "ms": 0.4,
+    "scales": "res"
+  }
+}

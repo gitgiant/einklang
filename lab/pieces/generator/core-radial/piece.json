@@ -1,0 +1,26 @@
+{
+  "id": "core-radial",
+  "kind": "generator",
+  "name": "Radial spectrum",
+  "doc": "v1 radial spectrum: rings, bursts and a scrolling strip from integer state (display list).",
+  "ports": {
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "synced": true,
+  "tags": [
+    "v1",
+    "core"
+  ],
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "budget": {
+    "ms": 0.3,
+    "scales": "res"
+  }
+}

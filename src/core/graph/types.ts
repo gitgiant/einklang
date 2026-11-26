@@ -1,5 +1,6 @@
 // Scene graph format (lab/scenes/<id>.json) and the loaded piece registry.
 import type { ParamValue, PieceDriver, PieceManifest } from '../../../lab/api/index.ts';
+import type { PostParams } from '../post.ts';
 
 /** "node.port" */
 export type PortRef = string;
@@ -28,6 +29,8 @@ export interface SceneGraph {
   edges: { from: PortRef; to: PortRef }[];
   /** The scene's image output, a tex port. */
   out: PortRef;
+  /** Settings for the show's post node (trails, bloom, exposure); unset keys use POST_DEFAULT. */
+  post?: Partial<PostParams>;
 }
 
 /** A loaded piece: manifest, optional driver, WGSL sources by file name. */

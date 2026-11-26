@@ -1,6 +1,25 @@
 # PRD: Einklang Lab (agent-generated pieces, a node-graph runtime, and voting)
 
-Status: agreed 2026-11-26 (grill-me interview). **#20 built 2026-11-26**; #21–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
+Status: agreed 2026-11-26 (grill-me interview). **#20 and #21 built 2026-11-26**; #22–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
+
+### Build notes for #21 (decided while building)
+
+- **The graph is the pipeline.**
+  - `src/web/scenes.ts`, `gpu/post.ts` and `gpu/transition.ts` are gone.
+  - The v1 scenes are `lab/scenes/{radial,tunnel,scope,flow}.json`. Each is one node of a synced `core-*` driver piece (`src/core/graph/v1.ts` wraps the v1 `SceneDef`). They keep their ids: the `core` vendor may use bare ids.
+  - The Engine runs the show graph: scene A/B → `core-transition` (only while one runs) → `core-post` → canvas. Both are ordinary pieces (`lab/pieces/utility/core-transition`, `lab/pieces/effect/core-post`), so a scene can use them too.
+- **Per-scene post settings** moved into the scene file (`"post": {decay, bloom, …}`). Pad FX reach every GPU piece as `ctx.pads` and are applied in `core-post`.
+- **API additions:**
+  - `CpuCtx.raw` (raw feature frames, for sims that replay)
+  - `GpuCtx.pads`
+  - `GpuInit.budget` (room N / host cap), `GpuInit.compile`, `GpuInit.lib`
+  - `GpuInstance.bench | invalidate | status`
+  - `lab/api/prims.ts` (`PrimDrawer` display lists, `letterbox`) with `lab/api/prims.wgsl`
+- **Hash parity:**
+  - The v1 node's hashed `state` is exactly the old v1 state; a unit test compares it with the pinned hashes.
+  - The room hash now covers the graph inputs, so its *values* differ from before. e2e: 0 mismatches on every check, all 13 transitions included.
+  - Rendered stills match a render of the previous commit, apart from trail-timing noise (scope is pixel-identical).
+- **Scene list:** every lab scene now loads on live hosts as well, the room's presets first. The server's preset list is still `radial tunnel scope flow` until #24.
 
 ### Build notes for #20 (decided while building)
 

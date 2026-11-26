@@ -77,6 +77,24 @@ export interface Audio {
   pal: number;
 }
 
+/** Raw per-tick feature frames (the room's FeatureSource). */
+export interface RawFeatures {
+  get(tick: number, key: number): number;
+  wave(tick: number): Int8Array | null;
+}
+
+/** The pads' live FX at this tick: the same on every host, not part of the hash. uv coordinates. */
+export interface PadFx {
+  /** 0..1 knobs (L2 trails, R2 bloom), -1..1 drift (R stick). */
+  trails: number; bloom: number; rotate: number; zoom: number;
+  /** FX center (where the pads point). */
+  cx: number; cy: number;
+  invert: number; glitch: number; strobe: number; strobeCol: readonly [number, number, number];
+  kaleido: number; kx: number; ky: number; blackout: number;
+  /** Shockwave rings (r > 0) and pad cursors (r = 0); r in screen heights. */
+  marks: { x: number; y: number; r: number; a: number; col: readonly [number, number, number] }[];
+}
+
 export interface CpuCtx {
   /** Integer tick (60 Hz) and the display sub-tick 0..255. */
   tick: number; sub: number;
@@ -90,6 +108,8 @@ export interface CpuCtx {
   past(ago: number): Audio;
   /** Decimated L/R waveform at this tick (512 interleaved pairs, -1..1), or null if not streamed. */
   wave(): Float32Array | null;
+  /** Raw feature bytes (0..255) at any tick, for sims that step or replay: see src/core/constants.ts. */
+  raw: RawFeatures;
   /** Seeded hash noise: same on every host. Returns 0..1. */
   rand(a: number, b?: number): number;
 }
@@ -107,6 +127,12 @@ export interface GpuInit {
   wgsl(file: string): string;
   /** Fullscreen-triangle vertex entry `vs_full` exists in every module (uv 0,0 = top-left). */
   formats: typeof TEX_FORMAT;
+  /** Compile WGSL source (the shared prelude is prepended). */
+  compile(code: string, label: string): GPUShaderModule;
+  /** Raw WGSL of a shared library file in lab/api (e.g. 'prims.wgsl'). */
+  lib(file: string): string;
+  /** Particle budget: the room's N at a tick (what the weakest host can run) and this host's own cap. */
+  budget: { n(tick: number): number; cap: number | null };
 }
 
 /** A GPU input: textures for tex/mask/field, `Particles` for particles, `Geo` for geo. */
@@ -123,12 +149,20 @@ export interface GpuCtx extends CpuCtx {
   out: Record<string, GPUTexture>;
   /** CPU outputs of this node's own cpu(), if it has one. */
   cpu: CpuOut;
+  /** Pad FX at this tick (cursor positions, shockwaves, held buttons): react to them if you like. */
+  pads: PadFx;
 }
 
 export interface GpuInstance {
   /** Encode this frame. Return non-image outputs (particles, geo). */
   frame(ctx: GpuCtx): Record<string, unknown> | void;
   dispose?(): void;
+  /** Sims: how many particles this GPU can run in its budget (the room takes the weakest host's). */
+  bench?(): Promise<number>;
+  /** Sims: inputs for ticks >= tick changed after the fact (a late event): rewind and replay. */
+  invalidate?(tick: number): void;
+  /** One line for the HUD. */
+  status?(): string;
 }
 
 export interface PieceDriver {

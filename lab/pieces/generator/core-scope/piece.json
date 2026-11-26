@@ -1,0 +1,26 @@
+{
+  "id": "core-scope",
+  "kind": "generator",
+  "name": "Oscilloscope",
+  "doc": "v1 oscilloscope / Lissajous from the streamed L/R waveform (display list).",
+  "ports": {
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "synced": true,
+  "tags": [
+    "v1",
+    "core"
+  ],
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "budget": {
+    "ms": 0.3,
+    "scales": "res"
+  }
+}

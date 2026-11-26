@@ -1,6 +1,7 @@
 // Validation of piece manifests and scene graphs, plus the evaluation order. Pure, no GPU.
 import { CPU_PORTS, PIECE_KINDS, PORT_TYPES, isTexPort, type ParamSpec, type PieceManifest, type PortSpec } from '../../../lab/api/index.ts';
 import { splitRef, type PieceDef, type Registry, type SceneGraph } from './types.ts';
+import { POST_KEYS } from '../post.ts';
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)+$/;
 const NAME = /^[a-z_][a-z0-9_]*$/;
@@ -69,7 +70,12 @@ export function validatePiece(def: PieceDef, folder?: string): string[] {
 export function validateScene(g: SceneGraph, reg: Registry): string[] {
   const errs: string[] = [], err = (s: string) => errs.push(`${g.id ?? '?'}: ${s}`);
   if (g.format !== 1) err('format must be 1');
-  if (typeof g.id !== 'string' || !ID.test(g.id)) err('id must be <vendor>-<slug>');
+  // the v1 scenes keep their original ids (radial, tunnel, scope, flow)
+  if (typeof g.id !== 'string' || !(ID.test(g.id) || (g.author?.vendor === 'core' && /^[a-z0-9]+$/.test(g.id)))) err('id must be <vendor>-<slug>');
+  for (const [k, v] of Object.entries(g.post ?? {})) {
+    if (!(POST_KEYS as string[]).includes(k)) err(`post: unknown key ${k}`);
+    else if (typeof v !== 'number' || !Number.isFinite(v)) err(`post.${k} must be a number`);
+  }
   if (!g.name) err('name required');
   if (!Number.isInteger(g.version) || g.version < 1) err('version must be an integer >= 1');
   if (!g.author?.vendor) err('author.vendor required');

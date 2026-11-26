@@ -1,0 +1,82 @@
+{
+  "id": "core-post",
+  "kind": "effect",
+  "name": "Post chain",
+  "doc": "Feedback trails, bloom, ACES tonemap, per-host view and the pads' FX (shockwaves, strobe, invert, glitch, kaleido, blackout). Output is display-ready (tonemapped).",
+  "ports": {
+    "in": {
+      "in": {
+        "type": "tex"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "decay": {
+      "type": "float",
+      "default": 0,
+      "min": 0,
+      "max": 0.999
+    },
+    "zoom": {
+      "type": "float",
+      "default": 0,
+      "min": -0.2,
+      "max": 0.2
+    },
+    "rotate": {
+      "type": "float",
+      "default": 0,
+      "min": -0.2,
+      "max": 0.2
+    },
+    "bloom": {
+      "type": "float",
+      "default": 0.6,
+      "min": 0,
+      "max": 4
+    },
+    "threshold": {
+      "type": "float",
+      "default": 0.7,
+      "min": 0,
+      "max": 4
+    },
+    "exposure": {
+      "type": "float",
+      "default": 1,
+      "min": 0,
+      "max": 4
+    },
+    "view": {
+      "type": "enum",
+      "default": 0,
+      "options": [
+        "normal",
+        "mirror",
+        "flip",
+        "rotate 180",
+        "zoom",
+        "kaleido"
+      ]
+    }
+  },
+  "budget": {
+    "ms": 0.5,
+    "scales": "res"
+  },
+  "tags": [
+    "post",
+    "bloom",
+    "trails",
+    "core"
+  ],
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "id": "tunnel",
+  "name": "Tunnel / warp",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-21",
+  "nodes": [
+    {
+      "id": "tunnel",
+      "piece": "core-tunnel"
+    }
+  ],
+  "edges": [],
+  "out": "tunnel.out",
+  "post": {
+    "decay": 0.7,
+    "zoom": 0.02,
+    "rotate": 0.003,
+    "bloom": 0.7,
+    "threshold": 0.7
+  }
+}

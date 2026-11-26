@@ -66,12 +66,8 @@ export interface CpuFrame {
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 
-/**
- * Evaluate the CPU half of the graph at tick (+ sub/256 for drawing). The hash covers what the
- * hosts must agree on: scene id + version, tick, the feature frame, every resolved param, and
- * the state of synced pieces. Piece internals on the GPU are not hashed (free-form pieces).
- */
-export function evalCpu(plan: Plan, tick: number, F: FeatureSource, sub = 0): CpuFrame {
+/** The per-tick part of a piece context: time, audio (+ history), waveform, raw features, seeded noise. */
+export function baseCtx(tick: number, F: FeatureSource, sub = 0, seed = 0): Omit<CpuCtx, 'params' | 'in'> {
   const audio = audioAt(F, tick), cache = new Map<number, Audio>([[0, audio]]);
   const past = (ago: number) => {
     const a = Math.max(0, Math.min(LOOKBACK, Math.floor(ago)));
@@ -84,10 +80,19 @@ export function evalCpu(plan: Plan, tick: number, F: FeatureSource, sub = 0): Cp
     if (wv === undefined) { const w = F.wave(tick); wv = w ? Float32Array.from(w, (x) => x / 127) : null; }
     return wv;
   };
-  const base: Omit<CpuCtx, 'params' | 'in'> = {
-    tick, sub, time: (tick + sub / 256) / FPS, audio, past, wave,
-    rand: (a, b = 0) => h32(h32(a | 0, b | 0), plan.idHash) / 4294967296,
+  return {
+    tick, sub, time: (tick + sub / 256) / FPS, audio, past, wave, raw: F,
+    rand: (a, b = 0) => h32(h32(a | 0, b | 0), seed) / 4294967296,
   };
+}
+
+/**
+ * Evaluate the CPU half of the graph at tick (+ sub/256 for drawing). The hash covers what the
+ * hosts must agree on: scene id + version, tick, the feature frame, every resolved param, and
+ * the state of synced pieces. Piece internals on the GPU are not hashed (free-form pieces).
+ */
+export function evalCpu(plan: Plan, tick: number, F: FeatureSource, sub = 0): CpuFrame {
+  const base = baseCtx(tick, F, sub, plan.idHash);
   const outs = new Map<string, CpuOut>(), params = new Map<string, Record<string, ParamValue>>();
   const h: number[] = [plan.idHash, plan.graph.version, tick];
   for (let k = 0; k < HASH_KEYS; k++) h.push(F.get(tick, k));

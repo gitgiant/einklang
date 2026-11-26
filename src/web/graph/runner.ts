@@ -1,11 +1,29 @@
 // GPU half of a scene graph: runs each node in plan order into pooled textures, then copies the
 // output port into the scene's HDR target.
-import type { GpuInstance, Palette, ParamValue, PortType } from '../../../lab/api/index.ts';
+import type { GpuInit, GpuInstance, PadFx, Palette, ParamValue, PortType } from '../../../lab/api/index.ts';
+import type { PieceDef } from '../../core/graph/types.ts';
+import { NO_FX } from '../../core/fx.ts';
 import { CPU_PORTS, TEX_FORMAT, isTexPort } from '../../../lab/api/index.ts';
 import type { Plan, PlanNode, CpuFrame } from '../../core/graph/eval.ts';
 import { splitRef } from '../../core/graph/types.ts';
 import { shader } from '../gpu/gpu.ts';
 import { autoFragment, autoLayout, defaultPalette, writeAuto, type AutoLayout } from './auto.ts';
+import { LIB } from './registry.ts';
+
+export type Budget = GpuInit['budget'];
+
+/** Start a driver piece's GPU side (null when it has none). */
+export function instantiate(device: GPUDevice, def: PieceDef, budget: Budget): GpuInstance | null {
+  const g = def.driver?.gpu, id = def.manifest.id;
+  if (!g) return null;
+  return g({
+    device, formats: TEX_FORMAT, budget,
+    shader: (f) => shader(device, def.wgsl[f] ?? '', `${id}/${f}`),
+    wgsl: (f) => def.wgsl[f] ?? '',
+    compile: (code, label) => shader(device, code, label),
+    lib: (f) => LIB[f] ?? '',
+  });
+}
 
 const usageOf = (f: GPUTextureFormat) =>
   GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_SRC | GPUTextureUsage.COPY_DST
@@ -55,8 +73,9 @@ export class GraphRunner {
   private device: GPUDevice;
   private plan: Plan;
 
-  constructor(device: GPUDevice, plan: Plan) {
-    this.device = device; this.plan = plan;
+  private budget: Budget;
+  constructor(device: GPUDevice, plan: Plan, budget: Budget) {
+    this.device = device; this.plan = plan; this.budget = budget;
     this.pool = new TexPool(device);
     this.samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
     this.black = device.createTexture({ size: [1, 1], format: 'rgba16float', usage: GPUTextureUsage.TEXTURE_BINDING, label: 'black' });
@@ -87,18 +106,12 @@ export class GraphRunner {
       const ubuf = d.createBuffer({ label: m.id, size: L.floats * 4, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
       return { kind: 'auto', L, pipe, bgl, ubuf, data: new Float32Array(L.floats), fb: null, cur: 0 };
     }
-    const g = pn.def.driver?.gpu;
-    if (!g) return { kind: 'cpu' };
-    const inst = g({
-      device: d, formats: TEX_FORMAT,
-      shader: (f) => shader(d, pn.def.wgsl[f] ?? '', `${m.id}/${f}`),
-      wgsl: (f) => pn.def.wgsl[f] ?? '',
-    });
-    return { kind: 'driver', inst };
+    const inst = instantiate(d, pn.def, this.budget);
+    return inst ? { kind: 'driver', inst } : { kind: 'cpu' };
   }
 
   /** Encode the graph for one frame into `target` (an HDR scene texture with COPY_DST). */
-  encode(enc: GPUCommandEncoder, target: GPUTexture, frame: CpuFrame): void {
+  encode(enc: GPUCommandEncoder, target: GPUTexture, frame: CpuFrame, pads: PadFx = NO_FX): void {
     const w = target.width, h = target.height;
     if (this.pool.resize(w, h)) for (const r of this.runs) if (r.kind === 'auto' && r.fb) { r.fb.forEach((t) => t.destroy()); r.fb = null; }
     /** Values produced this frame by "node.port": textures, particles, geo. */
@@ -131,7 +144,7 @@ export class GraphRunner {
 
       if (r.kind === 'auto') this.runAuto(enc, r, ins, outTex, params, frame, w, h);
       else if (r.kind === 'driver' && r.inst) {
-        const res = r.inst.frame({ ...frame.base, params, in: ins, device: this.device, enc, width: w, height: h, out: outTex, cpu: frame.outs.get(id) ?? {} });
+        const res = r.inst.frame({ ...frame.base, params, in: ins, device: this.device, enc, width: w, height: h, out: outTex, cpu: frame.outs.get(id) ?? {}, pads });
         for (const [p, v] of Object.entries(res ?? {})) if (!isTexPort(m.ports.out[p]?.type)) gpuVals.set(`${id}.${p}`, v);
       }
 
@@ -164,6 +177,13 @@ export class GraphRunner {
     const rp = enc.beginRenderPass({ colorAttachments: [{ view: target.createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }] });
     rp.setPipeline(r.pipe); rp.setBindGroup(0, bg); rp.draw(3); rp.end();
   }
+
+  private get instances(): GpuInstance[] { return this.runs.flatMap((r) => (r.kind === 'driver' && r.inst ? [r.inst] : [])); }
+  /** The first sim's benchmark (particles this GPU can run), or null without a sim. */
+  async bench(): Promise<number | null> { const i = this.instances.find((x) => x.bench); return i ? i.bench!() : null; }
+  get hasBench(): boolean { return this.instances.some((x) => x.bench); }
+  invalidate(tick: number): void { for (const i of this.instances) i.invalidate?.(tick); }
+  status(): string { return this.instances.map((i) => i.status?.()).filter(Boolean).join('  ·  '); }
 
   destroy(): void {
     this.pool.destroy(); this.black.destroy();

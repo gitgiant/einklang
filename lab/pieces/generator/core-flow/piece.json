@@ -1,0 +1,26 @@
+{
+  "id": "core-flow",
+  "kind": "generator",
+  "name": "Curl-noise flow",
+  "doc": "v1 fixed-point particle flow field: integer GPU sim stepped per tick, N from the room budget, closed-form dust on stronger hosts.",
+  "ports": {
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "synced": true,
+  "tags": [
+    "v1",
+    "core"
+  ],
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "budget": {
+    "ms": 4,
+    "scales": "n"
+  }
+}
