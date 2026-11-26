@@ -10,6 +10,8 @@ export default defineConfig({
     proxy: {
       '/ws': { target: 'ws://localhost:8080', ws: true },
       '/track': 'http://localhost:8080',
+      '/vote': 'http://localhost:8080',
+      '/scores': 'http://localhost:8080',
     },
   },
   build: {

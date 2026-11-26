@@ -39,8 +39,10 @@ To verify sync, open the debug panel (`d`) and check that the `hash` matches acr
 - **Live mode**: the leader captures from a mic or line-in and streams features. Everyone renders 100 ms behind to absorb network jitter. Browsers only allow audio capture on localhost or https, so run the leader on the server machine at `http://localhost:8080`, or use `tailscale serve 8080` to get https.
 - **offset ms**: a per-host trim for display latency (TV vs. panel). It's saved per device.
 - **Scene, quantize, hit, hosts**:
-  - `[` and `]`, or the arrows, step through the presets; the picker jumps straight to one. Switches land on the next beat, bar, or immediately (the "on" selector).
+  - The live list is every lab scene not retired by votes. `[` (or `<`) steps back in list order; `]` (or `>`) picks another scene at random, weighted by votes. The picker jumps straight to one. Switches land on the next beat, bar, or immediately (the "on" selector).
+  - **auto**: the server switches every 4, 8 or 16 bars to a vote-weighted pick, with the transition chosen when it was turned on.
   - Space sends a manual hit. `h` hides all the UI.
+  - **Votes** (owner only: anyone with the token): `+` / `-` vote on the scene showing; a toast appears on every host. `-` also skips to a weighted pick at the next boundary. Score = ups - downs; a 👍 doubles a scene's rotation weight and a 👎 halves it, and at -2 the scene leaves the live list. Votes go to `data/votes.jsonl`. The gallery has 👍/👎 and reason tags too (it needs the server for that).
   - **hosts** lists connected hosts and lets you override each one's view. `?name=` names a host.
 - **MIDI**: press **midi** on any Chrome host that has a MIDI device (the choice is remembered). Enable it on only one host per device, or every note arrives twice.
   - **Clock**: the first host to send one is the master until it goes silent for 2 s. Its tempo and beat phase set the room's beat grid, so beat and bar quantizing follow the clock. MIDI start makes the next beat a downbeat. In the radial scene the core thumps on every beat.
@@ -49,7 +51,7 @@ To verify sync, open the debug panel (`d`) and check that the `hash` matches acr
 - **Gamepads**: plug any pad into any host (Chrome, standard mapping: DualSense, Xbox, Deck). There is nothing to enable; press a button. Each pad gets a room-wide color, and its own layer: a cursor at its FX center plus the shockwaves it fires. Effects from all pads mix.
   - ✕/A shockwave (repeats while held), ○/B strobe, □/X invert + glitch, △/Y kaleido around the pad's center. Share/View: blackout while held.
   - Left stick: FX center. Right stick: rotation (x) and zoom (y) drift of the trails. L2: trails. R2: bloom.
-  - L1/R1: previous/next scene (uses the "on" quantize). D-pad left/right: palette. Up/down: this host's view.
+  - L1/R1: previous scene / weighted next (uses the "on" quantize). Select+△ / Select+✕: vote up / down (△ and ✕ don't fire their FX while Select is held; Select's blackout still does). D-pad left/right: palette. Up/down: this host's view.
   - L3: hit. R3: freeze toggle (the scene stops; trails and FX keep moving). Options/Menu: tap tempo (sets the beat grid when no MIDI clock is running).
   - Pad state goes out only when it changes, at most once per tick, and is stamped like any event. The FX are a pure function of the event log, so every host draws the same thing.
 - **Debug panel**: press `d`, click **debug**, or add `?debug=1`. It shows a frame-time graph with hitches marked in red, fps, p99 and max frame time, recent hitches, and skipped or repeated ticks. It also shows network stats (RTT, clock offset, message and byte rates, live-feature gaps, late events), room state (epoch, scene schedule, grid, hosts) and MIDI status (inputs, local clock, room clock master, CC values).

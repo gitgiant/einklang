@@ -1,0 +1,113 @@
+{
+ "votes": 0,
+ "latest": null,
+ "scenes": {
+  "claude-vox-fleet": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Voxel fleet",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-vox-ship",
+    "core-harmony",
+    "core-lfo"
+   ]
+  },
+  "core-demo": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Lab demo",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-bars",
+    "core-blend",
+    "core-follow",
+    "core-harmony",
+    "core-kaleido",
+    "core-lfo",
+    "core-plasma",
+    "core-trails"
+   ]
+  },
+  "core-retro": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Lab retro plasma",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-follow",
+    "core-harmony",
+    "core-pixelate",
+    "core-plasma"
+   ]
+  },
+  "flow": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Curl-noise flow field",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-flow"
+   ]
+  },
+  "radial": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Radial spectrum",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-radial"
+   ]
+  },
+  "scope": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Oscilloscope / Lissajous",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-scope"
+   ]
+  },
+  "tunnel": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Tunnel / warp",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "core-tunnel"
+   ]
+  }
+ },
+ "pieces": {},
+ "vendors": {},
+ "tags": {},
+ "retired": []
+}

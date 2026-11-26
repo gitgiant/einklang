@@ -11,6 +11,9 @@
 //                                    time s instead of the cycle (for stills: add stop=<s>)
 //   len=<beats>                      transition length (default 4)
 //   interp=0                         whole ticks only (no display-rate interpolation)
+//   t=<token>                        room token, for voting through the server (remembered like the app's)
+// Voting: 👍/👎 plus reason tags for the scene shown (keys + / -), posted to the server's /vote. A static
+// build without the server shows the panel disabled.
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { demoSource, sectionAt } from '../core/demo.ts';
@@ -18,6 +21,7 @@ import { FPS, TICKS_PER_BEAT } from '../core/constants.ts';
 import { TRANSITIONS, type SceneSched, type TransType } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
 import { h32 } from '../core/math.ts';
+import { VOTE_TAGS } from '../core/votes.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
 
@@ -37,6 +41,56 @@ const beats = Math.max(0.5, Math.min(16, +(qs.get('len') ?? 4) || 4));
 const CYCLE = 2 * 4 * TICKS_PER_BEAT;
 const ROTATE = TRANSITIONS.filter((t) => t !== 'cut');
 const mod = (a: number, n: number) => ((a % n) + n) % n;
+
+const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+const token = qs.get('t') ?? lsGet('token') ?? '';
+if (qs.get('t')) try { localStorage.setItem('token', qs.get('t')!); } catch { /* private mode */ }
+const withToken = (p: string) => (token ? `${p}?t=${encodeURIComponent(token)}` : p);
+
+/** The vote panel: 👍/👎 and reason tags for the scene shown, posted to the server. */
+function votePanel(sceneOf: () => string | null) {
+  const el = document.createElement('div'); el.id = 'vote';
+  const label = document.createElement('span'), up = document.createElement('button'), down = document.createElement('button');
+  const tags = document.createElement('div'); tags.className = 'tags';
+  const note = document.createElement('span'); note.className = 'note';
+  up.textContent = '👍'; up.title = 'vote up (+)'; down.textContent = '👎'; down.title = 'vote down (-)';
+  const picked = new Set<string>();
+  for (const t of VOTE_TAGS) {
+    const b = document.createElement('button'); b.textContent = t; b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => { picked.has(t) ? picked.delete(t) : picked.add(t); b.setAttribute('aria-pressed', String(picked.has(t))); };
+    tags.append(b);
+  }
+  el.append(label, up, down, note, tags);
+  document.body.append(el);
+  let scores: Record<string, number> = {}, live: string[] = [], online = false;
+  const show = () => {
+    const id = sceneOf();
+    el.classList.toggle('hide', id === null);
+    if (id === null) return;
+    const s = scores[id] ?? 0;
+    label.textContent = online ? `${s > 0 ? '+' : ''}${s}${live.includes(id) ? '' : ' · retired'}` : 'votes need the server';
+    up.disabled = down.disabled = !online;
+  };
+  fetch(withToken('/scores')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+    .then((j: { scores: Record<string, number>; live: string[] }) => { scores = j.scores; live = j.live; online = true; show(); })
+    .catch(() => { online = false; show(); });
+  const send = async (vote: 1 | -1) => {
+    const id = sceneOf();
+    if (!id || !online) return;
+    try {
+      const r = await fetch(withToken('/vote'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ scene: id, vote, tags: [...picked] }) });
+      const j = await r.json() as { score?: number; retired?: boolean; error?: string };
+      if (!r.ok || j.score === undefined) throw new Error(j.error ?? String(r.status));
+      scores[id] = j.score;
+      if (j.retired) live = live.filter((x) => x !== id); else if (!live.includes(id)) live.push(id);
+      note.textContent = `${vote > 0 ? '👍' : '👎'} saved${picked.size ? ` (${[...picked].join(', ')})` : ''}`;
+      picked.clear(); for (const b of tags.querySelectorAll('button')) b.setAttribute('aria-pressed', 'false');
+    } catch (e) { note.textContent = `vote failed: ${(e as Error).message}`; }
+    show();
+  };
+  up.onclick = () => send(1); down.onclick = () => send(-1);
+  return { show, send };
+}
 
 async function main() {
   const gpu = await initGpu();
@@ -71,6 +125,7 @@ async function main() {
     layout();
   };
   tsel.onchange = () => setTrans(tsel.value);
+  const votes = votePanel(() => (grid ? null : cells[0].engine.scene.def.id));
 
   const layout = () => {
     stage.classList.toggle('grid', grid);
@@ -82,6 +137,7 @@ async function main() {
     });
     for (const b of bar.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.id === (grid ? 'grid' : trans && oneShotAt === null ? '' : current)));
     $('hud').classList.toggle('hide', !hud); bar.classList.toggle('hide', !hud);
+    votes.show();
   };
   const go = (id: string) => {
     if (id === 'grid') { grid = !grid; if (grid) trans = ''; tsel.value = trans; } else { grid = false; current = id; }
@@ -104,6 +160,8 @@ async function main() {
     else if (e.key === 'g') go('grid');
     else if (e.key === 't') { const opts = ['', 'all', ...TRANSITIONS]; setTrans(opts[mod(opts.indexOf(trans) + (e.shiftKey ? -1 : 1), opts.length)]); }
     else if (+e.key >= 1 && +e.key <= ids.length) go(ids[+e.key - 1]);
+    else if (e.key === '+' || e.key === '=') votes.send(1);
+    else if (e.key === '-' || e.key === '_') votes.send(-1);
   });
   layout();
 

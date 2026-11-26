@@ -20,6 +20,13 @@
   #bar select { font: inherit; color: var(--dim); background: #000; border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; }
   #hud { position: fixed; left: 10px; bottom: 10px; padding: 6px 8px; background: #000a; white-space: pre; pointer-events: none; border-radius: 4px; }
   #err { position: fixed; inset: 0; display: none; place-items: center; text-align: center; color: #f88; padding: 2em; }
+  #vote { position: fixed; right: 10px; bottom: 10px; max-width: 340px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 8px; background: #000b; border: 1px solid var(--line); border-radius: 6px; }
+  #vote > button { font-size: 18px; background: none; border: 0; cursor: pointer; padding: 2px 6px; }
+  #vote > button:disabled { opacity: .3; cursor: default; }
+  #vote .note { color: var(--dim); }
+  #vote .tags { display: flex; flex-wrap: wrap; gap: 3px; width: 100%; }
+  #vote .tags button { font: inherit; font-size: 11px; color: var(--dim); background: none; border: 1px solid var(--line); border-radius: 10px; padding: 2px 7px; cursor: pointer; }
+  #vote .tags button[aria-pressed=true] { color: #000; background: var(--fg); }
   .hide { display: none !important; }
 </style>
 </head>

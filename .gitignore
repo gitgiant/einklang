@@ -4,3 +4,4 @@ dist-live/
 .einklang-token
 docs/mockups/trans-*.png
 lab/out/
+data/

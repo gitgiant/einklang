@@ -60,6 +60,14 @@ export const FLOW_N_MIN = 1 << 12, FLOW_N_MAX = 1 << 20, FLOW_N_DEFAULT = 1 << 1
 export interface FlowN { n: number; prev: number; at: number }
 export const flowNAt = (s: FlowN, tick: number): number => (tick >= s.at ? s.n : s.prev);
 
+/** A transition request as the panel sends it. */
+export interface TransReq { type: TransType | 'random'; beats: number }
+
+/** Auto-rotation lengths the panel offers, in bars (0 = off). */
+export const AUTO_BARS = [0, 4, 8, 16] as const;
+/** Auto-rotation: the server picks a scene by vote weight every `bars` bars, with this transition. */
+export interface AutoRot { bars: number; trans: TransReq }
+
 /** Server-authoritative room state, broadcast on every change. */
 export type RoomState = Mode & {
   /** Increments on every mode change; ticks and events only compare within one epoch. */
@@ -74,6 +82,9 @@ export type RoomState = Mode & {
   /** Track list of the host that loaded a folder / several files (it uploads each in turn). */
   playlist: Playlist | null;
   flow: FlowN;
+  /** Net vote score (ups - downs) per scene that has votes; `presets` leaves out the retired ones. */
+  scores: Record<string, number>;
+  auto: AutoRot | null;
 };
 
 /** An input event, stamped by the server with the tick on which every host applies it. */
@@ -89,7 +100,11 @@ export type ClientMsg =
   | { t: 'tap' }
   /** Benchmark result: particles this host can run. */
   | { t: 'bench'; n: number }
-  | { t: 'scene'; id?: string; step?: number; quant: Quant; trans?: { type: TransType | 'random'; beats: number } }
+  /** `id`, or `step` through the list in order, or `weighted`: a random other scene by vote weight. */
+  | { t: 'scene'; id?: string; step?: number; weighted?: boolean; quant: Quant; trans?: TransReq }
+  /** An owner vote on the scene showing; a live 👎 skips to a weighted pick with `quant` + `trans`. */
+  | { t: 'vote'; scene: string; vote: 1 | -1; quant?: Quant; trans?: TransReq }
+  | { t: 'auto'; bars: number; trans?: TransReq }
   | { t: 'view'; host: number; view: number | null }
   | { t: 'play'; name?: string } | { t: 'live'; delay?: number } | { t: 'stop' }
   | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
@@ -104,7 +119,9 @@ export type ServerMsg =
   | { t: 'ev'; ev: TickEvent }
   | { t: 'log'; epoch: number; events: TickEvent[] }
   /** To the playlist owner: play track `index`. */
-  | { t: 'track'; index: number };
+  | { t: 'track'; index: number }
+  /** A vote landed (toast on every host). `host`: who voted (null = the gallery). */
+  | { t: 'vote'; scene: string; vote: 1 | -1; score: number; retired: boolean; host: string | null };
 
 /** The tick every host renders at server time `ms` (before its own display offset). */
 export const modeTick = (m: Mode, ms: number): number => Math.floor(modeTickF(m, ms));

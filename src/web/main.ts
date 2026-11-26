@@ -5,7 +5,7 @@ import { decimateWave, fileSource, mapSource, silence, type FeatureSource } from
 import { EventLog, withEvents } from '../core/events.ts';
 import { Analyzer, N } from '../core/analysis.ts';
 import {
-  modeTick, modeTickF, fixedScene, flowNAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS,
+  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANSITIONS, TRANS_BEATS, AUTO_BARS,
   type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
 } from '../core/protocol.ts';
 import { TRANS_NAMES } from '../core/transitions.ts';
@@ -71,11 +71,12 @@ let room: RoomState = {
   mode: 'idle', epoch: -1, scene: fixedScene(DEFAULT_PRESETS[0]),
   presets: DEFAULT_PRESETS, grid: DEFAULT_GRID, hosts: [], clock: null, playlist: null,
   flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
+  scores: {}, auto: null,
 };
 let fileFeat: Uint8Array | null = null, frames = 0, lastTick = -Infinity;
 const live = new Map<number, Uint8Array>();
 const events = new EventLog();
-const listeners = { state: [] as (() => void)[], lateEvent: [] as ((tick: number) => void)[] };
+const listeners = { state: [] as (() => void)[], lateEvent: [] as ((tick: number) => void)[], vote: [] as ((m: Extract<ServerMsg, { t: 'vote' }>) => void)[] };
 interface LeaderLive {
   an: Analyzer; analyser: AnalyserNode; td: Float32Array<ArrayBuffer>; last: number; ac: AudioContext; stream: MediaStream; pending: boolean;
   /** Per-channel taps for the waveform stream. */
@@ -129,6 +130,7 @@ function connect() {
       if (window.__ek) window.__ek.events++;
       if (m.ev.tick <= lastTick) { net.lateEvents++; listeners.lateEvent.forEach((f) => f(m.ev.tick)); } // arrived late: replay
     } else if (m.t === 'track') playIndex(m.index);
+    else if (m.t === 'vote') listeners.vote.forEach((f) => f(m));
   };
 }
 connect();
@@ -288,12 +290,17 @@ transSel.value = lsGet('trans') ?? 'blend'; if (!transSel.value) transSel.value 
 lenSel.value = lsGet('tlen') ?? '4'; if (!lenSel.value) lenSel.value = '4';
 transSel.onchange = () => lsSet('trans', transSel.value);
 lenSel.onchange = () => lsSet('tlen', lenSel.value);
-const switchScene = (to: { id?: string; step?: number }) =>
-  send({ t: 'scene', ...to, quant: quant(), trans: { type: transSel.value as TransType | 'random', beats: +lenSel.value } });
+const transReq = () => ({ type: transSel.value as TransType | 'random', beats: +lenSel.value });
+/** `next` picks a random other scene weighted by votes (👍 doubles, 👎 halves); `prev` steps back in list order. */
+const switchScene = (to: { id?: string; step?: number; weighted?: boolean }) => send({ t: 'scene', ...to, quant: quant(), trans: transReq() });
 const pick = $<HTMLSelectElement>('scene');
 pick.onchange = () => switchScene({ id: pick.value });
 $('prev').onclick = () => switchScene({ step: -1 });
-$('next').onclick = () => switchScene({ step: 1 });
+$('next').onclick = () => switchScene({ weighted: true });
+// auto-rotation (server-side, by vote weight), with this host's transition settings
+const autoSel = $<HTMLSelectElement>('auto');
+for (const b of AUTO_BARS) autoSel.add(new Option(b ? `every ${b} bars` : 'off', String(b)));
+autoSel.onchange = () => send({ t: 'auto', bars: +autoSel.value, trans: transReq() });
 $('hit').onclick = () => send({ t: 'ev', type: 'hit' });
 
 // ---- transport bar (any host drives it; the server keeps everyone on the same position) ----
@@ -369,7 +376,17 @@ function renderHosts(names: Map<string, string>) {
     el.append(name, sel);
   }
   if (!room.hosts.length) el.textContent = 'no hosts';
-  pick.replaceChildren(...room.presets.map((id) => new Option(names.get(id) ?? id, id)));
+  const sc = (id: string) => { const s = room.scores[id]; return s ? `  ${s > 0 ? '+' : ''}${s}` : ''; };
+  pick.replaceChildren(...room.presets.map((id) => new Option((names.get(id) ?? id) + sc(id), id)));
+  autoSel.value = String(room.auto?.bars ?? 0);
+}
+
+// ---- votes (owner only: anyone with the room token) ----
+let toastTimer = 0;
+function toast(text: string) {
+  const el = $('toast');
+  el.textContent = text; el.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el.classList.remove('on'), 2200);
 }
 
 // ---- render ----
@@ -383,6 +400,9 @@ async function start() {
   const names = new Map(engine.scenes.map((s) => [s.def.id, s.def.name]));
   const onState = () => { renderHosts(names); pick.value = room.scene.id; };
   listeners.state.push(onState); onState();
+  listeners.vote.push((v) => toast(`${v.vote > 0 ? '👍' : '👎'} ${names.get(v.scene) ?? v.scene}  ${v.score > 0 ? '+' : ''}${v.score}${v.retired ? '  · retired' : ''}${v.host ? `  · ${v.host}` : '  · gallery'}`));
+  /** Vote on the scene showing now (during a transition: the one coming in). A 👎 also skips. */
+  const vote = (v: 1 | -1) => send({ t: 'vote', scene: sceneAt(room.scene, lastF), vote: v, quant: quant(), trans: transReq() });
   listeners.lateEvent.push((t) => engine.invalidate(t));
 
   let hudOn = true, lastHash = '', lastF = 0;
@@ -434,7 +454,8 @@ async function start() {
   $('dbgBtn').onclick = () => panel.toggle();
   // D-pad up/down cycles this host's own view (an override, like the hosts panel)
   const pads = new PadRelay(send, {
-    scene: (step) => switchScene({ step }),
+    scene: (step) => switchScene(step > 0 ? { weighted: true } : { step }),
+    vote,
     view: (step) => send({ t: 'view', host: me, view: (((engine.view + step) % VIEWS.length) + VIEWS.length) % VIEWS.length }),
   });
   let lastFx: Fx = fxAt(events, 0);
@@ -449,7 +470,9 @@ async function start() {
     else if (e.key === 'd') panel.toggle();
     else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
     else if (e.key === '[') switchScene({ step: -1 });
-    else if (e.key === ']') switchScene({ step: 1 });
+    else if (e.key === ']') switchScene({ weighted: true });
+    else if (e.key === '+' || e.key === '=') vote(1);
+    else if (e.key === '-' || e.key === '_') vote(-1);
   });
   $('fs').onclick = () => document.documentElement.requestFullscreen?.();
 

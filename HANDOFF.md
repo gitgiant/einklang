@@ -3,7 +3,7 @@
 Newest first. Keep short; prune the oldest entries.
 
 ## State
-- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate, #23 asset import are done. Open: #26 sprites/text/style packs, #24 voting, #25 agents.
+- **Status 2026-11-26:** v1 complete, **WebGPU only** (no WebGL2 fallback: user decision, don't offer it). **Lab** (`docs/prd-lab.md`, tickets #20–#26): #20 graph runtime, #21 graph is the pipeline, #22 lab CLI + gate, #23 asset import, #24 voting are done. Open: #26 sprites/text/style packs, #25 agents.
 - **Architecture now:** every scene is a graph in `lab/scenes/*.json` (v1 scenes = one synced `core-*` piece each), built from pieces in `lab/pieces/<kind>/<id>/` (`piece.json` + `driver.ts` and/or WGSL; the auto-shader path is `fn shade(uv)`). The Engine runs the show graph: scenes → `core-transition` → `core-post` → canvas. Piece API: `lab/api/index.ts`. The hash covers the graph inputs, and v1 state parity is unit-tested.
 - **Run:**
   - `npm run build && npm run server` prints the join URLs with `?t=<token>` (token in `.einklang-token`).
@@ -12,15 +12,16 @@ Newest first. Keep short; prune the oldest entries.
   - iPhone/iPad: `https://desktop-l8u8ccm.tailff0f31.ts.net/?t=<token>` (`tailscale serve`, server on `BIND=0.0.0.0`).
 - **Checks:**
   - `npm run typecheck`
-  - `npm test` (63)
-  - `npm run build && npm run e2e` (23 checks, two headless WebGPU hosts, hashes per tick)
+  - `npm test` (73)
+  - `npm run build && npm run e2e` (28 checks, two headless WebGPU hosts, hashes per tick; votes + gallery vote included)
   - `npm run lab -- gate --all` (all scenes, 1080p, 3 fixtures, ~2 min)
 - **Lab CLI:** `npm run lab -- validate | render <scene|piece> [--fixture all] [--cpu] | gate [--all] [--junit f] | new <kind> <vendor-slug> | fixtures`. Artifacts go to `lab/out/` (gitignored). No GPU means it falls back to SwiftShader (~50x slower, budget not enforced).
 - **Assets:** `lab/assets/` (29 MB, space_sim's own .vox, provenance + license in `index.json`; re-copy with `npm run lab -- import-space-sim`). A piece lists files in `piece.json` `assets` (`assets/...` = shared, else its own folder), reads them with `GpuInit.asset(path)` and parses with `parseVox`/`voxWorld` from `lab/api`. The `virtual:lab-assets` Vite plugin inlines only declared files into the engine chunk (base64), so every asset adds to page load: keep them small, or switch to an async preload if this grows. Furniture with third-party props is `license: "unsettled"` and can't be used.
-- **Live hosts load every lab scene, but the server's preset list is still `radial tunnel scope flow`** until #24 ("all scenes live").
+- **Votes:** `+`/`-` (live, toast everywhere, `-` skips), Select+△/✕ on pads, gallery 👍/👎 + tags. Server appends `data/votes.jsonl` (gitignored), list = every non-retired lab scene, net <= -2 drops out. `]`/`>`/R1 and the panel's **auto** pick by weight 2^score. `npm run lab -- feedback` writes `lab/feedback.json` + `lab/FEEDBACK.md` and retires scene files (commit them).
 - **Untested:** `hauptling.json` + `hauptling.Dockerfile` (Chrome in the worker image). This PC's WSL has no Docker or Hauptling, so whether Chrome sees the GPU under `--gpus all` is unproven.
 - **Open:**
-  - lab: `feedback` command (#24); recording a `.feat` fixture from real audio
+  - lab: recording a `.feat` fixture from real audio; vote param correlation in the digest
+  - pad vote chord not covered by tests (no real pad here)
   - v2: #13 extension leader, #14 beat tracking, #15 anticipation
   - v3: drift mode, WebHID
   - flow looks finer/foggier at big N (question for the user)
@@ -30,6 +31,9 @@ Newest first. Keep short; prune the oldest entries.
   - Python heredocs through the Bash tool can turn `'\n'` into real newlines in TS source; use the Edit tool for escapes.
 
 ## Log
+- **2026-11-26 · voting (#24 done).**
+  - User chose weighted next + server auto-rotation (no rotation existed before). `step` stays ordered; `weighted` is new.
+  - `src/core/votes.ts` (format, tally, weight, retire), Room `vote()` / `tickAuto()`, `POST /vote` + `GET /scores`, toast, gallery panel, `scripts/lab/feedback.ts`.
 - **2026-11-26 · asset import (#23 done).**
   - 568 files copied (no `third_party/`); `.vox` parser handles multi-model files and the nTRN/nGRP/nSHP scene graph (space_sim ships are hull + placed parts).
   - Lint: declared asset exists, shared license matches `index.json`, 2 MB cap counts shared files.
@@ -43,7 +47,6 @@ Newest first. Keep short; prune the oldest entries.
   - Old `scenes.ts`/`post.ts`/`transition.ts` deleted; their WGSL lives in piece folders.
   - Scene files carry `post`; pads reach pieces as `ctx.pads`. Sims get `budget` / `bench` / `invalidate` via the piece API; `lab/api/prims.ts` draws display lists.
   - Room hash values changed; e2e 0 mismatches; stills match the previous commit except for trail-timing noise.
-- **2026-11-26 · graph runtime (#20 done).** `src/core/graph` (validate, order, `compile`/`evalCpu` + hash), `src/web/graph` (Vite registry, auto-shader prelude, `GraphRunner` with texture pool + feedback ping-pong). 10 starter pieces, scenes `core-demo` + `core-retro`.
 - **2026-11-26 · lab PRD (#20–#26).**
   - Grilled one question at a time:
     - free-form pieces

@@ -4,8 +4,10 @@ import { FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/const
 import {
   CUT, DEFAULT_GRID, FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN, flowNAt, DEFAULT_PRESETS, INPUT_DELAY, TRANSITIONS, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
-  type TickEvent, type TransSched, type TransType,
+  type TickEvent, type TransReq, type TransSched, type TransType,
 } from '../core/protocol.ts';
+import { AUTO_BARS } from '../core/protocol.ts';
+import { RETIRE_AT, cleanTags, pickWeighted, score, tally, type Tally, type Vote } from '../core/votes.ts';
 import { pickRandom } from '../core/transitions.ts';
 import { stateKey } from '../core/events.ts';
 import type { WsConn } from './ws.ts';
@@ -34,6 +36,19 @@ function sanitize(type: string, p: unknown): { ok: boolean; payload?: unknown } 
 
 interface Client { id: number; ws: WsConn; name: string | null; cap: number | null }
 
+/** Where votes persist (data/votes.jsonl on the server; memory in tests). */
+export interface VoteStore { load(): Vote[]; append(v: Vote): void }
+export const memoryVotes = (init: Vote[] = []): VoteStore & { votes: Vote[] } => {
+  const votes = [...init];
+  return { votes, load: () => [...votes], append: (v) => { votes.push(v); } };
+};
+
+export interface RoomOpts {
+  /** Every live scene id, in list order (default: the v1 presets). Scenes retired by votes drop out of `presets`. */
+  catalog?: string[];
+  votes?: VoteStore;
+}
+
 export class Room {
   private clients = new Map<number, Client>();
   private nextId = 1;
@@ -58,11 +73,31 @@ export class Room {
     scene: fixedScene(DEFAULT_PRESETS[0]),
     presets: [...DEFAULT_PRESETS], grid: { ...DEFAULT_GRID }, hosts: [], clock: null, playlist: null,
     flow: { n: FLOW_N_DEFAULT, prev: FLOW_N_DEFAULT, at: 0 },
+    scores: {}, auto: null,
   };
   private now: () => number;
   private rand: () => number;
+  private catalog: string[];
+  private votes: VoteStore;
+  private tallies: Map<string, Tally>;
+  /** Tick the auto-rotation was (re)started or last switched at. */
+  private autoFrom = 0;
 
-  constructor(now: () => number = () => performance.now(), rand: () => number = Math.random) { this.now = now; this.rand = rand; }
+  constructor(now: () => number = () => performance.now(), rand: () => number = Math.random, opts: RoomOpts = {}) {
+    this.now = now; this.rand = rand;
+    this.catalog = opts.catalog?.length ? [...opts.catalog] : [...DEFAULT_PRESETS];
+    this.votes = opts.votes ?? memoryVotes();
+    this.tallies = tally(this.votes.load());
+    this.refreshList();
+    this.state.scene = fixedScene(this.state.presets[0]);
+  }
+
+  /** Scores and the live list from the tallies (retired scenes leave it; never empty). */
+  private refreshList(): void {
+    this.state.scores = Object.fromEntries([...this.tallies].map(([id, t]) => [id, score(t)]));
+    const live = this.catalog.filter((id) => score(this.tallies.get(id)) > RETIRE_AT);
+    this.state.presets = live.length ? live : [...this.catalog];
+  }
 
   /** The tick hosts are rendering right now. */
   tickNow(): number { return modeTick(this.state, this.now()); }
@@ -108,11 +143,11 @@ export class Room {
    */
   private setMode(m: Mode, keepScene = false): void {
     const cur = sceneAt(this.state.scene, this.tickNow());
-    const { epoch, presets, hosts, clock, playlist } = this.state, n = this.flowTarget();
+    const { epoch, presets, hosts, clock, playlist, scores, auto } = this.state, n = this.flowTarget();
     const scene = keepScene ? this.state.scene : fixedScene(cur);
     // a new timeline starts on a reseed, so the budget applies at once (pause/resume keep tick space and the schedule)
     const flow = keepScene ? this.state.flow : { n, prev: n, at: 0 };
-    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, flow, grid: { ...DEFAULT_GRID } };
+    this.state = { ...m, epoch: epoch + 1, presets, hosts, clock, playlist, scene, flow, scores, auto, grid: { ...DEFAULT_GRID } };
     this.ring = []; this.log = [];
     if (this.clock) this.clock.beatTick = -Infinity;
   }
@@ -160,7 +195,17 @@ export class Room {
         return this.broadcastState();
       }
       case 'clock': return this.onClock(c, m);
-      case 'scene': return this.requestScene(m.id, m.step, m.quant, m.trans);
+      case 'scene': return this.requestScene(m.id, m.step, m.quant, m.trans, m.weighted === true);
+      case 'vote':
+        if (m.vote !== 1 && m.vote !== -1) return;
+        this.vote(String(m.scene), m.vote, [], c, m.vote < 0 ? { quant: m.quant ?? 'bar', trans: m.trans } : undefined);
+        return;
+      case 'auto': {
+        const bars = (AUTO_BARS as readonly number[]).includes(m.bars) ? m.bars : 0;
+        this.state.auto = bars ? { bars, trans: m.trans ?? { type: 'blend', beats: 4 } } : null;
+        this.autoFrom = this.tickNow();
+        return this.broadcastState();
+      }
       case 'view': {
         const host = this.clients.get(m.host);
         if (!host?.name) return;
@@ -304,11 +349,12 @@ export class Room {
    * a switch is pending or running, the new one queues for the first boundary after it ends; a
    * pending cut is replaced instead (stepping before it lands, as before transitions).
    */
-  requestScene(id: string | undefined, step: number | undefined, quant: Quant, req?: { type?: unknown; beats?: unknown }): void {
+  requestScene(id: string | undefined, step: number | undefined, quant: Quant, req?: { type?: unknown; beats?: unknown }, weighted = false): void {
     const { presets, scene, grid } = this.state, t = this.tickNow();
     // each step counts from the most recently scheduled scene
-    const i = presets.indexOf(scene.id), next = id ?? presets[(((i + ((step ?? 1) | 0)) % presets.length) + presets.length) % presets.length];
-    if (!presets.includes(next)) return;
+    const i = presets.indexOf(scene.id);
+    const next = id ?? (weighted ? pickWeighted(presets, this.state.scores, this.rand(), scene.id) : presets[(((i + ((step ?? 1) | 0)) % presets.length) + presets.length) % presets.length]);
+    if (next === undefined || !presets.includes(next)) return;
     // a paused track never reaches a later tick: cut on the frozen one
     if (this.state.mode === 'file' && this.state.paused !== null) {
       this.state.scene = { id: next, prev: sceneAt(scene, t), at: t, trans: CUT, earlier: [] };
@@ -326,6 +372,58 @@ export class Room {
     const trans = this.resolveTrans(req);
     this.state.scene = { id: next, prev, at: nextBoundary(earliest, grid, quant), trans, earlier: chain };
     this.broadcastState();
+  }
+
+  /**
+   * An owner vote (live from host `c`, or from the gallery with c = null). Live votes record the tick and its
+   * features. Scores and the live list update at once. A thumbs-down with `skip` on the scene showing, or one
+   * that retires the scene showing, moves on to a weighted pick.
+   */
+  vote(sceneId: string, v: 1 | -1, tags: unknown, c: Client | null, skip?: { quant: Quant; trans?: TransReq }): { score: number; retired: boolean } | null {
+    if (!this.catalog.includes(sceneId)) return null;
+    const t = this.tickNow();
+    const rec: Vote = { scene: sceneId, at: new Date().toISOString(), vote: v, tags: cleanTags(tags) };
+    if (c) { rec.live = true; rec.tick = t; const f = this.featuresAt(t); if (f) rec.features = f; }
+    this.votes.append(rec);
+    const tl = this.tallies.get(sceneId) ?? { up: 0, down: 0, tags: {} };
+    if (v > 0) tl.up++; else tl.down++;
+    for (const g of rec.tags) tl.tags[g] = (tl.tags[g] ?? 0) + 1;
+    this.tallies.set(sceneId, tl);
+    this.refreshList();
+    const s = score(tl), retired = s <= RETIRE_AT;
+    this.broadcast({ t: 'vote', scene: sceneId, vote: v, score: s, retired, host: c ? (c.name ?? `host ${c.id}`) : null });
+    const showing = sceneAt(this.state.scene, t) === sceneId || this.state.scene.id === sceneId;
+    if (v < 0 && showing && (skip || retired)) this.requestScene(undefined, undefined, skip?.quant ?? 'bar', skip?.trans, true);
+    else this.broadcastState();
+    return { score: s, retired };
+  }
+
+  /** The raw feature bytes the room has for `tick` (file or live), if any. */
+  private featuresAt(tick: number): number[] | null {
+    if (this.state.mode === 'file' && this.fileFeat) {
+      const frames = this.fileFeat.readUInt32LE(1);
+      if (tick < 0 || tick >= frames) return null;
+      return [...this.fileFeat.subarray(5 + tick * STRIDE, 5 + (tick + 1) * STRIDE)];
+    }
+    if (this.state.mode === 'live') {
+      for (let i = this.ring.length - 1; i >= 0; i--) if (this.ring[i].readUInt32LE(1) <= tick) return [...this.ring[i].subarray(5, 5 + STRIDE)];
+    }
+    return null;
+  }
+
+  /**
+   * Auto-rotation: call a few times a second. Once the current scene has shown for `bars` bars and nothing is
+   * pending, ask for a weighted pick on the next bar.
+   */
+  tickAuto(): void {
+    const a = this.state.auto, s = this.state;
+    if (!a || (s.mode === 'file' && s.paused !== null) || s.presets.length < 2) return;
+    const t = this.tickNow(), sc = s.scene, end = sc.at + sc.trans.ticks;
+    if (end > t) return; // a switch is pending or running
+    const from = Math.max(this.autoFrom, end), bar = s.grid.tpb * 4;
+    if (t + bar < from + a.bars * bar) return;
+    this.autoFrom = t;
+    this.requestScene(undefined, undefined, 'bar', a.trans, true);
   }
 
   /** `{type, beats}` from a request -> a concrete effect, its length frozen to ticks, and a seed. */

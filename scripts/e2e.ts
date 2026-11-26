@@ -62,6 +62,32 @@ try {
   c = compare(da, db);
   check(c.shared > 20 && c.diff === 0, `after hit: ${c.shared} shared ticks, ${c.diff} hash mismatches`);
 
+  // owner votes: `-` on B toasts on both hosts and skips tunnel at the next bar; `+` on A just toasts
+  await b.keyboard.press('-');
+  const toast = (p: Page) => p.$eval('#toast', (e) => (e.classList.contains('on') ? e.textContent ?? '' : ''));
+  await sleep(300);
+  const [ta, tb] = [await toast(a), await toast(b)];
+  check(ta.includes('👎') && ta.includes('-1') && tb === ta, `vote toast on both hosts ("${ta}")`);
+  await sleep(2200);
+  da = await dbg(a); db = await dbg(b);
+  check(da.scene !== 'tunnel' && da.scene === db.scene, `👎 skipped tunnel on both (${da.scene}, ${db.scene})`);
+  await a.keyboard.press('+');
+  await sleep(300);
+  check((await toast(b)).includes('👍'), `👍 toast reached the other host ("${await toast(b)}")`);
+  c = compare(da, db);
+  check(c.shared > 20 && c.diff === 0, `after votes: ${c.shared} shared ticks, ${c.diff} hash mismatches`);
+  // gallery: a reason tag + 👍 posts to /vote; the live hosts toast it
+  const gal = await browsers[0].newPage();
+  await gal.goto(`http://127.0.0.1:${port}/gallery.html?scene=radial&t=${TOKEN}`);
+  await gal.waitForSelector('#vote > button:not([disabled])', { timeout: 20000 });
+  await gal.$$eval('#vote .tags button', (bs) => (bs.find((x) => x.textContent === 'great colors') as HTMLButtonElement).click());
+  await gal.$$eval('#vote > button', (bs) => (bs[0] as HTMLButtonElement).click());
+  await gal.waitForFunction(() => document.querySelector('#vote .note')?.textContent?.includes('saved'), { timeout: 5000 }).catch(() => {});
+  const note = await gal.$eval('#vote .note', (e) => e.textContent ?? '');
+  await sleep(200);
+  check(note.includes('great colors') && (await toast(a)).includes('gallery'), `gallery vote saved ("${note}") and toasted live ("${await toast(a)}")`);
+  await gal.close();
+
   // controller overrides B's view from A's host list
   await a.click('#hostsBtn');
   const sel = await a.$$('#hosts select');

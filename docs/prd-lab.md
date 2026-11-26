@@ -2,9 +2,17 @@
 
 Status: agreed 2026-11-26 (grill-me interview). **#20, #21 and #22 built 2026-11-26**; #23–#26 open. Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
 
+### Build notes for #24 (decided while building)
+
+- **Rotation:** live scenes had no automatic rotation, so (owner's call) `next` (`]`, `>`, R1) and the 👎 skip pick a random other scene weighted 2^score (clamped 1/8..16); `prev` stays in list order. A panel **auto** selector (off, 4, 8, 16 bars) has the server pick by weight on bar boundaries. The protocol keeps `step` ordered and adds `weighted`.
+- **Owner:** anyone holding the room token votes; keys on any host, the chord on any pad. Select+△/✕ masks △/✕ FX while Select is held (Select's own blackout still shows).
+- **Gallery** posts to `POST /vote` (`GET /scores` for the panel); a static build without the server shows the panel disabled.
+- **Tags:** a fixed list in `src/core/votes.ts`; they are counted, they don't change the score. Param correlation is left for later.
+- **Retire:** the server drops a scene from the live list the moment it reaches -2 (and brings it back if it climbs). `feedback` writes `status: retired` into the scene file; it never un-retires.
+
 ### Build notes for #22 (decided while building)
 
-- **CLI:** `npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> [--driver] | fixtures` (`scripts/lab/cli.ts`). `feedback` waits for #24.
+- **CLI:** `npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> [--driver] | fixtures | feedback | import-space-sim` (`scripts/lab/cli.ts`).
 - **Fixtures** are synthetic (`src/core/fixtures.ts`: quiet, techno, dense, plus silence) and generated in code, so no binary files and no audio. A recorded `lab/fixtures/<name>.feat` (4-byte frame count, then the `fileSource` layout) can stand beside them; recording one from an audio file is still open.
 - **Render page:** `lab.html` / `src/web/lab.ts`.
   - It renders every tick (so feedback is right) and reads back every 10th for checks.
@@ -48,7 +56,7 @@ Status: agreed 2026-11-26 (grill-me interview). **#20, #21 and #22 built 2026-11
   - The v1 node's hashed `state` is exactly the old v1 state; a unit test compares it with the pinned hashes.
   - The room hash now covers the graph inputs, so its *values* differ from before. e2e: 0 mismatches on every check, all 13 transitions included.
   - Rendered stills match a render of the previous commit, apart from trail-timing noise (scope is pixel-identical).
-- **Scene list:** every lab scene now loads on live hosts as well, the room's presets first. The server's preset list is still `radial tunnel scope flow` until #24.
+- **Scene list:** every lab scene now loads on live hosts as well, the room's presets first. Since #24 the server's list is every non-retired lab scene (v1 first), minus those voted to net <= -2.
 
 ### Build notes for #20 (decided while building)
 

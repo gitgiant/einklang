@@ -11,13 +11,17 @@
 //   new <kind> <vendor-slug> [--driver]   scaffold a piece (auto-shader unless --driver)
 //   fixtures                       list fixtures
 //   import-space-sim [--src dir]   copy space_sim's own .vox assets into lab/assets/vox/ (+ index.json)
+//   feedback [--votes file]        vote digest: lab/feedback.json + lab/FEEDBACK.md from data/votes.jsonl, and
+//                                  scenes at net <= -2 get status retired (commit the result)
 // Spec: docs/prd-lab.md.
-import { mkdirSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { loadPieces, loadScenes, LAB } from './load.ts';
 import { lintPieces } from './lint.ts';
 import { importSpaceSim, DEFAULT_SRC } from './import.ts';
+import { digest, feedbackMd } from './feedback.ts';
+import { parseVotes } from '../../src/core/votes.ts';
 import { openLab, type Lab } from './browser.ts';
 import { judgeCost, judgeReactive, judgeRun, junit, reactivity, LIMITS } from './checks.ts';
 import { validateScene } from '../../src/core/graph/validate.ts';
@@ -142,6 +146,21 @@ async function main() {
     if (existsSync(dir)) say(`files: ${readdirSync(dir).filter((f) => f.endsWith('.feat')).join(', ') || '-'}`);
     return;
   }
+  if (cmd === 'feedback') {
+    const file = resolve(opt('votes', join(LAB, '../data/votes.jsonl')));
+    const votes = existsSync(file) ? parseVotes(readFileSync(file, 'utf8')) : [];
+    const { reg } = await loadPieces();
+    const d = digest(votes, loadScenes(), reg);
+    writeFileSync(join(LAB, 'feedback.json'), JSON.stringify(d, null, 1) + '\n');
+    writeFileSync(join(LAB, 'FEEDBACK.md'), feedbackMd(d));
+    const dir = join(LAB, 'scenes');
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+      const p = join(dir, f), g = JSON.parse(readFileSync(p, 'utf8'));
+      if (d.retired.includes(g.id)) { g.status = 'retired'; writeFileSync(p, JSON.stringify(g, null, 2) + '\n'); }
+    }
+    say(`${votes.length} vote(s)${existsSync(file) ? '' : ` (no ${file})`} -> lab/feedback.json, lab/FEEDBACK.md${d.retired.length ? `; retired ${d.retired.join(', ')}` : ''}`);
+    return;
+  }
   if (cmd === 'import-space-sim') {
     const r = importSpaceSim(opt('src', DEFAULT_SRC));
     say(`copied ${r.files} files (${(r.bytes / 1048576).toFixed(1)} MB) into lab/assets/, provenance in lab/assets/index.json`);
@@ -227,7 +246,7 @@ async function main() {
     }
     return;
   }
-  say(`usage: npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> | fixtures | import-space-sim   (see scripts/lab/cli.ts)`);
+  say(`usage: npm run lab -- validate | render <scene|piece> | gate [--all] | new <kind> <vendor-slug> | fixtures | feedback | import-space-sim   (see scripts/lab/cli.ts)`);
   process.exit(cmd ? 1 : 0);
 }
 

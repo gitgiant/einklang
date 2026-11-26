@@ -27,6 +27,8 @@
   #progFill { position: absolute; inset: 0 auto 0 0; width: 0; background: #7fe3ff; border-radius: 5px; }
   #tTime { min-width: 8em; text-align: right; font-variant-numeric: tabular-nums; }
   .hide { display: none !important; }
+  #toast { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 12px); background: #000d; color: #fff; padding: 8px 16px; border-radius: 18px; font: 15px system-ui, sans-serif; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
+  #toast.on { opacity: 1; transform: translate(-50%, 0); }
 </style>
 </head>
 <body>
@@ -45,6 +47,7 @@
   <label>on <select id="quant"><option value="beat">beat</option><option value="bar" selected>bar</option><option value="now">now</option></select></label>
   <label title="transition for every scene switch (random: the server picks, never the same twice)">transition <select id="trans"></select></label>
   <label title="transition length in beats, following the room's tempo">length <select id="tlen"></select></label>
+  <label title="the server switches to a scene picked by vote weight (👍 doubles, 👎 halves), with this transition">auto <select id="auto"></select></label>
   <button id="hit" title="manual hit (space)">hit</button>
   <button id="midi" title="relay this host's MIDI inputs (clock, notes, CCs)">midi</button>
   <button id="hostsBtn">hosts</button>
@@ -64,6 +67,7 @@
   <span id="tTime"></span>
 </div>
 <div id="err"></div>
+<div id="toast" title="votes: + / - keys, or Select+△ / Select+✕ on a pad"></div>
 <audio id="au" preload="auto"></audio>
 <script type="module" src="/src/web/main.ts"></script>
 </body>

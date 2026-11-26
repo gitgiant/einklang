@@ -11,6 +11,8 @@ export interface PadActions {
   /** L1/R1: step the scene, with the panel's quantize and transition settings. */
   scene(step: number): void;
   view(step: number): void;
+  /** Select+△ / Select+✕: the owner's vote on the scene showing. */
+  vote(v: 1 | -1): void;
 }
 
 interface Sent { b: number; a: number[]; t: number[]; at: number }
@@ -48,6 +50,12 @@ export class PadRelay {
       const prev = this.prevButtons.get(gp.index) ?? 0, down = b & ~prev;
       this.prevButtons.set(gp.index, b);
       const hit = (bit: number) => (down >> bit) & 1;
+      // vote chord: while Select is held, △ / ✕ vote instead of firing kaleido / shockwaves
+      if ((b >> BTN.SHARE) & 1) {
+        if (hit(BTN.TRIANGLE)) this.actions.vote(1);
+        if (hit(BTN.CROSS)) this.actions.vote(-1);
+        b &= ~((1 << BTN.TRIANGLE) | (1 << BTN.CROSS));
+      }
       if (hit(BTN.L1)) this.actions.scene(-1);
       if (hit(BTN.R1)) this.actions.scene(1);
       if (hit(BTN.LEFT)) this.send({ t: 'ev', type: 'palette', payload: { step: -1 } });
