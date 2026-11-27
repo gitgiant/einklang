@@ -17,16 +17,16 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Visual input (webcam, screen, video)
 - [x] Particle sim → core-flow (flow-field particles)
 - [ ] Physics: rigid bodies
-- [ ] Physics: cloth
+- [x] Physics: cloth → claude-cloth, scene claude-banner
 - [ ] Physics: soft body
 - [x] Voxel shapes / .vox assets → claude-vox-ship, scene claude-vox-fleet
 - [ ] 3D assets (glTF)
 - [x] Strange attractors → agy-attractor, scene agy-attractor-bloom
 - [x] Reaction-diffusion → claude-reaction, scene claude-coral
 - [x] Physarum → claude-physarum, scene claude-slime
-- [ ] Smoke / fluid
+- [x] Smoke / fluid → claude-fluid, scene claude-smoke-signals
 - [x] Boids → claude-boids, scene claude-murmuration
-- [ ] N-body
+- [x] N-body → claude-nbody, scene claude-galaxy
 - [ ] SPH liquid
 - [x] SDF raymarch → claude-raymarch, scene claude-sdf-flight
 - [x] Fractals (mandelbox, julia) → claude-julia, scene claude-julia-dive

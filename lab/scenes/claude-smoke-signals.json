@@ -1,0 +1,16 @@
+{
+  "format": 1, "id": "claude-smoke-signals", "name": "Smoke signals", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live", "created": "2026-11-26",
+  "nodes": [
+    { "id": "drift", "piece": "core-lfo", "params": { "beats": 32, "shape": 0 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 10, "gain": 1.6 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "hue": 0.54, "scheme": 2, "chroma": 0.15, "light": 0.66, "contrast": 0.75, "pads": true } },
+    { "id": "smoke", "piece": "claude-fluid",
+      "params": { "cells": 288, "iters": 24, "speed": 1, "sources": 3, "idle": 0.3, "react": 1.3, "rate": 1, "force": 1, "buoyancy": 1.1, "fade": 2.8, "puff": 1.2, "light": 0.85, "glow": 1.25, "exposure": 1, "bg": 1, "cycle": 0.2 },
+      "bind": { "sway": { "from": "drift.out", "range": [0.3, 1.1] }, "vorticity": { "from": "high.out", "range": [0.8, 2.2] } } }
+  ],
+  "edges": [ { "from": "pal.palette", "to": "smoke.palette" } ],
+  "out": "smoke.out",
+  "post": { "bloom": 0.45, "threshold": 0.8 }
+}
