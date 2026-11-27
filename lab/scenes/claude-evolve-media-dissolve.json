@@ -1,0 +1,48 @@
+{
+  "format": 1, "id": "claude-evolve-media-dissolve", "name": "Evolve media: dissolve", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "feedback", "fluid"],
+  "doc": "Your picture (image, video or camera) dissolving through sim-like treatments that change every phrase: melting like dye in water, growing reaction worms out of its contours, smeared through a slit-scan or rained down as glyphs; the live picture keeps seeping back and snaps in on the beat, under a kaleidoscope, pixel sorting, beat slices or a glitch, with palettes that drift between ink, lagoon and rust.",
+  "nodes": [
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 1, "chroma": 0.15, "light": 0.72, "contrast": 0.6 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.45, 0.8] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.15, "pulse": 0.2, "drift": 0.35, "contrast": 1.1, "saturation": 1.1, "edge_width": 2.5 } },
+    { "id": "warp", "piece": "claude-media-melt", "params": { "flow": 1, "scale": 3, "along": 0.8, "edge": 1, "react": 0.25, "resurface": 0.3, "beat": 0.5, "tint": 0.3 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.25, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "warp.in" },
+    { "from": "media.luma", "to": "warp.luma" },
+    { "from": "media.edges", "to": "warp.edges" },
+    { "from": "pal.palette", "to": "warp.palette" },
+    { "from": "warp.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.45, "threshold": 0.72 },
+  "evolve": {
+    "every": "phrase", "transition": "core-dissolve", "beats": 4,
+    "slots": [
+      { "node": "warp", "pool": [
+        { "piece": "claude-media-melt", "params": { "react": 0.85, "flow": 0.5, "edge": 1.6, "tint": 0.5 },
+          "ranges": { "scale": [2, 6], "along": [0.5, 1], "resurface": [0.2, 0.4] } },
+        { "piece": "claude-media-melt", "params": { "react": 0, "tint": 0.2 },
+          "ranges": { "flow": [1.4, 2.4], "scale": [1.5, 4], "along": [-1, 1], "resurface": [0.25, 0.45] } },
+        { "piece": "agy-slitscan", "params": { "live_mix": 0.4 },
+          "ranges": { "axis": [0, 2], "slit": [0.08, 0.2], "edge_warp": [0.3, 0.7], "decay": [0.9, 0.96] } },
+        { "piece": "agy-media-rain", "params": { "color_mix": 0.7 },
+          "ranges": { "columns": [60, 110], "speed": [0.8, 1.6], "trail": [0.6, 0.85] } }
+      ] },
+      { "node": "fx", "pool": [
+        { "piece": "core-kaleido", "params": { "zoom": 1.1 }, "ranges": { "segments": [3, 7], "spin": [-0.04, 0.04] } },
+        { "piece": "agy-pixelsort", "params": { "mix": 0.6 } },
+        { "piece": "claude-slices" },
+        { "piece": "agy-glitch", "params": { "amount": 0.3 } }
+      ] },
+      { "node": "pal", "pool": [
+        { "piece": "core-swatch", "params": { "colors": "#050816 #1b2a6b #3f8efc #a5f8d3 #fdfffc" } },
+        { "piece": "core-swatch", "params": { "colors": "#140b05 #5c2a12 #c4572b #e8a85c #f6eedf" } }
+      ] }
+    ]
+  }
+}
