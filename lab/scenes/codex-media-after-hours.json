@@ -1,0 +1,43 @@
+{
+  "format": 1,
+  "id": "codex-media-after-hours",
+  "name": "After Hours",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "retro",
+    "reflection"
+  ],
+  "nodes": [
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "beat_zoom": 0.4,
+        "pulse": 0.35,
+        "drift": 0.5
+      }
+    },
+    {
+      "id": "look",
+      "piece": "codex-tideline"
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "look.picture"
+    }
+  ],
+  "out": "look.out",
+  "post": {
+    "bloom": 0.45,
+    "threshold": 0.64
+  }
+}

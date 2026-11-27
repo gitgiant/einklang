@@ -1,0 +1,48 @@
+{
+  "id": "codex-tracking",
+  "kind": "effect",
+  "name": "Tape monitor",
+  "doc": "Bends the picture over a CRT in a rack monitor, with onset-driven tracking slips, chroma separation and a live spectrum meter.",
+  "ports": {
+    "in": {
+      "picture": {
+        "type": "tex"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "tracking": {
+      "type": "float",
+      "default": 0.5,
+      "min": 0,
+      "max": 1,
+      "doc": "How far tracking slips can pull the picture sideways."
+    },
+    "phosphor": {
+      "type": "float",
+      "default": 0,
+      "min": 0,
+      "max": 1,
+      "doc": "Blend the color tube toward green phosphor."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 0.5,
+    "scales": "res"
+  },
+  "tags": [
+    "media",
+    "retro",
+    "glitch"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "codex-tideline",
+  "kind": "effect",
+  "name": "Tidal billboard",
+  "doc": "Projects the picture onto a waterfront billboard and its reflection, with the bass agitating the water and the spectrum lighting the facade.",
+  "ports": {
+    "in": {
+      "picture": {
+        "type": "tex"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {},
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 0.5,
+    "scales": "res"
+  },
+  "tags": [
+    "media",
+    "retro",
+    "reflection"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}
