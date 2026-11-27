@@ -1,0 +1,39 @@
+{
+  "id": "codex-contour-current",
+  "kind": "effect",
+  "name": "Contour current",
+  "doc": "Maps picture brightness onto luminous contour ribbons, with image edges etching the folds and bass driving waves through them.",
+  "ports": {
+    "in": {
+      "height": {
+        "type": "mask"
+      },
+      "gradient": {
+        "type": "field"
+      },
+      "picture": {
+        "type": "tex"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {},
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 0.65,
+    "scales": "res"
+  },
+  "tags": [
+    "media",
+    "contours",
+    "lines"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "id": "codex-media-tape-deck",
+  "name": "Tape Deck",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "retro",
+    "glitch"
+  ],
+  "nodes": [
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "beat_zoom": 0.25,
+        "pulse": 0.24,
+        "drift": 0.3
+      }
+    },
+    {
+      "id": "look",
+      "piece": "codex-tracking"
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "look.picture"
+    }
+  ],
+  "out": "look.out",
+  "post": {
+    "bloom": 0.24,
+    "threshold": 0.7
+  },
+  "sections": {
+    "on": "bar",
+    "transition": "codex-scanline-roll",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "phosphor",
+        "when": {
+          "section": "drop"
+        },
+        "params": {
+          "look": {
+            "tracking": 0.92,
+            "phosphor": 0.85
+          }
+        },
+        "post": {
+          "bloom": 0.42
+        }
+      }
+    ]
+  }
+}
