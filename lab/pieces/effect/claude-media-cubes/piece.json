@@ -1,6 +1,6 @@
 {
   "id": "claude-media-cubes", "kind": "effect", "name": "Media cube grid",
-  "doc": "The picture as a field of cubes seen from a slowly swinging, orbiting camera: each cube is one cell of the image, its top that cell's colour and its height the cell's brightness; the bass raises the whole field, every beat a wave of cubes jumps out from the centre and the cube edges glow in the palette.",
+  "doc": "The picture as a field of cubes seen from a slowly swinging, orbiting camera (or a flyover, top-down, crane or spiral path): each cube is one cell of the image, its top that cell's colour and its height the cell's brightness; the bass raises the whole field, every beat a wave of cubes jumps out from the centre and the cube edges glow in the palette.",
   "ports": {
     "in": {
       "height": { "type": "mask", "doc": "cube heights 0..1, e.g. core-media.luma" },
@@ -20,9 +20,13 @@
     "spin": { "type": "float", "default": 0.05, "min": -0.5, "max": 0.5, "doc": "steady orbit, turns per minute x 10" },
     "zoom": { "type": "float", "default": 1.0, "min": 0.5, "max": 2.5 },
     "colour": { "type": "enum", "default": 0, "options": ["picture", "palette", "picture + palette"] },
-    "edges": { "type": "float", "default": 0.8, "min": 0, "max": 3, "doc": "palette glow on the cube edges (with the beat)" }
+    "edges": { "type": "float", "default": 0.8, "min": 0, "max": 3, "doc": "palette glow on the cube edges (with the beat)" },
+    "path": { "type": "enum", "default": 0, "options": ["orbit", "flyover", "top-down", "crane", "spiral"], "doc": "camera path (orbit = the swinging orbit above)" },
+    "kick": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "kick level (bind an envelope): shoves the cubes up and dollies the camera in" },
+    "punch": { "type": "float", "default": 3, "min": 0, "max": 10, "doc": "how far a full kick shoves the cubes up, in cube widths" }
   },
   "shader": "cubes.wgsl", "budget": { "ms": 1.8, "scales": "res" },
   "tags": ["3d", "voxel", "cubes", "grid", "media"],
-  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-27", "by": "claude/claude-opus-5-5", "note": "camera paths (flyover, top-down, crane, spiral; orbit stays the default) and a kick input that shoves the cubes up" }]
 }

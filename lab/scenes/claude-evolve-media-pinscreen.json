@@ -1,0 +1,46 @@
+{
+  "format": 1, "id": "claude-evolve-media-pinscreen", "name": "Evolve media: pin-screen", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "3d", "pins"],
+  "doc": "Your picture (image, video or camera) pressed into a pin-screen toy: thousands of pins, each head that spot's colour, pushed up by its brightness and shoved higher on every kick. Every phrase the field and the camera change: pins seen from a flyover, a crane, straight down or a spiral, a point cloud, a cube field or ridgelines; in between the picture goes through a glitch, ASCII, dots or a halftone screen.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.6 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 9, "hi": 15, "window": 8, "gain": 2 } },
+    { "id": "kick", "piece": "core-envelope", "params": { "source": 0, "attack": 0.01, "decay": 0.3, "curve": 3 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#05070d #1d2a4a #3f7cac #f6ae2d #fff4e0" } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.12, "drift": 0.3, "contrast": 1.2, "saturation": 1.25 } },
+    { "id": "field", "piece": "claude-media-pins",
+      "params": { "cells": 52, "shape": 0, "size": 0.4, "height": 3.8, "bass": 0.7, "punch": 2.8, "wave": 1.6, "path": 1, "zoom": 1.0, "colour": 0 },
+      "bind": { "kick": { "from": "kick.out" }, "glow": { "from": "high.out", "range": [0.6, 1.8] } } },
+    { "id": "fx", "piece": "agy-glitch", "params": { "amount": 0.3, "displace": 0.3, "smear": 0.25, "rgb": 0.45, "burst": 0.85, "blocks": 24 } }
+  ],
+  "edges": [
+    { "from": "media.luma", "to": "field.height" },
+    { "from": "media.out", "to": "field.in" },
+    { "from": "pal.palette", "to": "field.palette" },
+    { "from": "field.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.55, "threshold": 0.7 },
+  "evolve": {
+    "every": 2, "transition": "core-pixelate", "beats": 4,
+    "slots": [
+      { "node": "field", "pool": [
+        { "piece": "claude-media-pins", "params": { "shape": 0, "colour": 0, "bass": 0.7, "wave": 1.6, "punch": 2.8 },
+          "ranges": { "path": [0, 4], "cells": [40, 64], "height": [3, 5], "size": [0.32, 0.45] } },
+        { "piece": "claude-media-pins", "params": { "shape": 1, "colour": 2, "bass": 0.8, "wave": 2, "punch": 3, "size": 0.42 },
+          "ranges": { "path": [0, 4], "cells": [52, 72], "height": [3.5, 6] } },
+        { "piece": "claude-media-cubes", "params": { "colour": 0, "edges": 1.0, "gap": 0.14, "wave": 2.5, "bass": 0.7, "punch": 3 },
+          "ranges": { "path": [0, 4], "cells": [30, 50], "height": [3.5, 5.5] },
+          "bind": { "edges": { "from": "high.out", "range": [0.5, 1.8] } } },
+        { "piece": "claude-media-ridgelines", "params": { "colour": 0, "fill": 0.9, "face": 0.25, "punch": 0.2 },
+          "ranges": { "path": [0, 4], "lines": [40, 72], "height": [0.25, 0.4] } }
+      ] },
+      { "node": "fx", "pool": [
+        { "piece": "agy-ascii", "params": { "mode": 0, "color": 0, "cell": 11, "contrast": 1.3, "scanlines": 0.15, "mix": 0.9 } },
+        { "piece": "claude-dots", "params": { "under": 0.3, "glow": 1.4, "burst": 0.5 }, "ranges": { "cell": [9, 15], "wander": [0.15, 0.4] } },
+        { "piece": "agy-halftone", "params": { "mode": 0, "contrast": 1.2, "mix": 0.85 }, "ranges": { "cell": [8, 14] } }
+      ] }
+    ]
+  }
+}
