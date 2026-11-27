@@ -24,7 +24,7 @@
     "slots": [
       { "node": "road", "jitter": 0, "pool": [
         { "piece": "codex-wire-mountains", "params": { "lift": 0.47, "glow": 1.35 }, "ranges": { "speed": [0.88, 1.12] } },
-        { "piece": "agy-ridgeline", "params": { "rows": 42, "speed": 0.85, "height": 1.0, "perspective": 0.88, "glow": 1.7, "thickness": 1.45, "fill": 0.38 } }
+        { "piece": "agy-ridgeline", "params": { "rows": 34, "speed": 0.85, "height": 0.92, "perspective": 0.82, "glow": 0.95, "thickness": 1.22, "fill": 0.68 } }
       ] },
       { "node": "colors", "jitter": 0, "pool": [
         { "piece": "core-harmony", "params": { "hue": 0.70, "scheme": 3, "chroma": 0.18, "light": 0.59, "contrast": 0.78, "pads": false } },
