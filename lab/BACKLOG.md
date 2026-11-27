@@ -14,6 +14,8 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 
 ### Generators
 - [x] Osc scope / Lissajous → core-scope
+- [x] Harmonograph / spirograph → codex-harmonograph, scene codex-pendulum-ink
+- [x] 3D Lissajous / stereo ribbons → codex-ribbons, scene codex-stereo-ribbon
 - [x] Visual input (image, video, camera; screen capture not yet) → core-media (+ claude-displace, claude-lumakey, claude-slices, claude-dots, claude-ridges), scenes core-media-stage, core-media-ridges, core-media-dots, core-media-kaleido
 - [x] Particle sim → core-flow (flow-field particles)
 - [ ] Physics: rigid bodies

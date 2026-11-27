@@ -1,0 +1,14 @@
+{
+  "id": "codex-ribbons",
+  "kind": "generator",
+  "name": "Stereo ribbons",
+  "doc": "A camera orbits a folded 3D Lissajous ribbon pulled by the left and right waveform, with low and high bands driving the shape when stereo is unavailable.",
+  "ports": { "out": { "out": { "type": "tex" } } },
+  "params": {
+    "width": { "type": "float", "default": 1, "min": 0.6, "max": 1.3, "doc": "Width of the woven ribbon" },
+    "orbit": { "type": "float", "default": 0.16, "min": 0.04, "max": 0.4, "doc": "Camera orbit in radians per second" }
+  },
+  "budget": { "ms": 1, "scales": "res" },
+  "tags": ["stereo", "lissajous", "ribbon", "3d"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}
