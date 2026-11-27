@@ -1,0 +1,31 @@
+{
+  "id": "agy-media-rain",
+  "kind": "effect",
+  "name": "Media matrix rain",
+  "doc": "Renders the input image or video as cascading Matrix-style Katakana and hex glyph columns driven by luma and edge contours, accelerating on beats with RGB glitch bursts on onsets.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "luma": { "type": "mask", "doc": "media brightness mask (e.g. core-media.luma) controlling glyph density and luminance" },
+      "edges": { "type": "field", "doc": "media edge gradient (e.g. core-media.edges) highlighting contours in bright code" },
+      "palette": { "type": "palette", "optional": true, "doc": "phosphor color ramp blended with the source media colors" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "columns": { "type": "int", "default": 76, "min": 32, "max": 140, "doc": "glyph columns across the screen" },
+    "speed": { "type": "float", "default": 1.15, "min": 0.2, "max": 3.5, "doc": "rain fall speed multiplier synced to tempo" },
+    "trail": { "type": "float", "default": 0.74, "min": 0.25, "max": 1.0, "doc": "length of falling glyph tails" },
+    "color_mix": { "type": "float", "default": 0.55, "min": 0.0, "max": 1.0, "doc": "0 = pure palette phosphor, 1 = source media colors" },
+    "edge_boost": { "type": "float", "default": 0.95, "min": 0.0, "max": 2.5, "doc": "bright glyph lock-on along media edges" },
+    "glitch": { "type": "float", "default": 0.5, "min": 0.0, "max": 1.2, "doc": "onset glyph scramble and horizontal RGB tear" },
+    "glow": { "type": "float", "default": 1.25, "min": 0.4, "max": 2.5, "doc": "overall glyph emission and head flare" },
+    "scanlines": { "type": "float", "default": 0.16, "min": 0.0, "max": 0.5, "doc": "subtle CRT scanline shading" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.4, "scales": "res" },
+  "tags": ["matrix", "ascii", "rain", "glyphs", "glitch", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}

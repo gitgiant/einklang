@@ -1,0 +1,32 @@
+{
+  "id": "agy-slitscan",
+  "kind": "effect",
+  "name": "Slit-scan datamosh",
+  "doc": "Temporal slit-scan ribbon over the input media using feedback history, warped by its edge field with beat-synced slit jumps, RGB channel tears, and macroblock corruption on onsets.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "edges": { "type": "field", "doc": "luma gradient field (e.g. core-media.edges) for edge-aligned scanline warp" },
+      "luma": { "type": "mask", "doc": "perceptual brightness mask (e.g. core-media.luma) for live subject punch-through" },
+      "palette": { "type": "palette", "optional": true, "doc": "accent tint for glitch tears and slit-line highlight" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "axis": { "type": "enum", "default": 0, "options": ["horizontal", "vertical", "radial"], "doc": "direction of the rolling slit-scan ribbon" },
+    "drift": { "type": "float", "default": 0.48, "min": 0.05, "max": 1.0, "doc": "how fast the slit-scan history scrolls across the frame" },
+    "slit": { "type": "float", "default": 0.14, "min": 0.02, "max": 0.45, "doc": "width of the live capture slit" },
+    "live_mix": { "type": "float", "default": 0.34, "min": 0.0, "max": 0.85, "doc": "how strongly the live subject punches through the slit-scan history" },
+    "edge_warp": { "type": "float", "default": 0.45, "min": 0.0, "max": 1.5, "doc": "displacement of history along the media edge field" },
+    "rgb": { "type": "float", "default": 0.55, "min": 0.0, "max": 1.2, "doc": "RGB chromatic split on onsets and edges" },
+    "tear": { "type": "float", "default": 0.55, "min": 0.0, "max": 1.2, "doc": "macroblock and scanline tear intensity on beats and onsets" },
+    "decay": { "type": "float", "default": 0.94, "min": 0.7, "max": 0.995, "doc": "persistence of the slit-scan ribbon trail" }
+  },
+  "shader": "main.wgsl",
+  "feedback": true,
+  "budget": { "ms": 0.35, "scales": "res" },
+  "tags": ["slitscan", "glitch", "datamosh", "feedback", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}

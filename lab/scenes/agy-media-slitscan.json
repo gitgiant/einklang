@@ -1,0 +1,84 @@
+{
+  "format": 1,
+  "id": "agy-media-slitscan",
+  "name": "Media: Slit-Scan Mosh",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "glitch", "slitscan", "datamosh", "pixelsort"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.9 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#090b1a #00f5d4 #ff006e #fee440 #9b5de5", "cycle": 0.35 } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.42, "pulse": 0.35, "drift": 0.5, "contrast": 1.15, "saturation": 1.15, "edge_width": 2.5 }
+    },
+    {
+      "id": "slit",
+      "piece": "agy-slitscan",
+      "params": { "axis": 0, "drift": 0.48, "slit": 0.14, "live_mix": 0.36, "edge_warp": 0.5, "rgb": 0.55, "tear": 0.55, "decay": 0.94 },
+      "bind": {
+        "drift": { "from": "bass.out", "range": [0.22, 0.88] },
+        "rgb": { "from": "hi.out", "range": [0.25, 1.05] }
+      }
+    },
+    {
+      "id": "sort",
+      "piece": "agy-pixelsort",
+      "params": { "direction": 1, "threshold": 0.38, "ceiling": 0.96, "energy": 0.6, "length": 44, "onset_boost": 0.9, "mix": 0.72 }
+    },
+    {
+      "id": "glitch",
+      "piece": "agy-glitch",
+      "params": { "amount": 0.42, "displace": 0.45, "smear": 0.42, "rgb": 0.5, "burst": 0.85, "blocks": 20 },
+      "bind": {
+        "displace": { "from": "bass.out", "range": [0.18, 0.78] },
+        "rgb": { "from": "hi.out", "range": [0.22, 0.9] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "slit.in" },
+    { "from": "media.edges", "to": "slit.edges" },
+    { "from": "media.luma", "to": "slit.luma" },
+    { "from": "pal.palette", "to": "slit.palette" },
+    { "from": "slit.out", "to": "sort.in" },
+    { "from": "sort.out", "to": "glitch.in" }
+  ],
+  "out": "glitch.out",
+  "post": { "bloom": 0.45, "threshold": 0.74 },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-glitch",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "drop",
+        "when": { "section": "drop" },
+        "transition": "core-flash",
+        "beats": 1,
+        "params": {
+          "slit": { "axis": 1, "slit": 0.18, "live_mix": 0.3, "edge_warp": 0.75, "tear": 0.85, "decay": 0.95 },
+          "sort": { "direction": 0, "threshold": 0.24, "length": 92, "onset_boost": 1.0, "mix": 0.88 },
+          "glitch": { "amount": 0.64, "smear": 0.58, "burst": 0.95, "blocks": 26 }
+        },
+        "post": { "bloom": 0.56, "threshold": 0.68 }
+      },
+      {
+        "id": "breakdown",
+        "when": { "section": "breakdown" },
+        "transition": "core-blend",
+        "beats": 4,
+        "params": {
+          "slit": { "axis": 2, "slit": 0.12, "live_mix": 0.52, "edge_warp": 0.32, "tear": 0.24, "decay": 0.92 },
+          "sort": { "threshold": 0.55, "length": 28, "mix": 0.35 },
+          "glitch": { "amount": 0.2, "smear": 0.3, "burst": 0.55 }
+        },
+        "post": { "bloom": 0.38, "threshold": 0.78 }
+      }
+    ]
+  }
+}

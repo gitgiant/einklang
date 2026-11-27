@@ -1,0 +1,31 @@
+{
+  "id": "agy-data-mask",
+  "kind": "effect",
+  "name": "Spectral data mask",
+  "doc": "Uses a live audio data generator (spectrogram or piano-roll) as an animated mask over the input media, revealing the picture through spectral peaks while turning quiet areas into edge-lit blueprints with onset RGB and block corruption.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "data": { "type": "tex", "doc": "audio visualization mask (e.g. agy-spectrogram.out or agy-pianoroll.out)" },
+      "edges": { "type": "field", "doc": "media edge gradient (e.g. core-media.edges) for wireframe blueprint in unmasked regions" },
+      "palette": { "type": "palette", "optional": true, "doc": "tint for blueprint edges and spectral rim glow" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "threshold": { "type": "float", "default": 0.22, "min": 0.02, "max": 0.85, "doc": "data brightness threshold that opens the mask window" },
+    "soft": { "type": "float", "default": 0.18, "min": 0.02, "max": 0.5, "doc": "feather width of the spectral mask" },
+    "ghost": { "type": "float", "default": 0.26, "min": 0.0, "max": 0.8, "doc": "base visibility of the picture in quiet unmasked regions" },
+    "data_glow": { "type": "float", "default": 0.65, "min": 0.0, "max": 2.0, "doc": "spectral/piano-roll rim glow blended around the mask" },
+    "edge_glow": { "type": "float", "default": 0.95, "min": 0.0, "max": 2.5, "doc": "neon contour wireframe strength in unmasked areas" },
+    "rgb_split": { "type": "float", "default": 0.55, "min": 0.0, "max": 1.5, "doc": "chromatic RGB channel split on spectral peaks and onsets" },
+    "block_glitch": { "type": "float", "default": 0.5, "min": 0.0, "max": 1.2, "doc": "macroblock displacement across the mask on onsets" },
+    "invert": { "type": "bool", "default": false, "doc": "invert the data mask" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.35, "scales": "res" },
+  "tags": ["mask", "spectrogram", "pianoroll", "glitch", "composite", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}
