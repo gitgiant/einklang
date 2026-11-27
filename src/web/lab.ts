@@ -15,7 +15,7 @@ import { TICKS_PER_BEAT } from '../core/constants.ts';
 import { transEntry } from '../core/transitions.ts';
 import type { SceneSched } from '../core/protocol.ts';
 import { FrameProfiler } from './gpu/profile.ts';
-import { MEDIA, canvasItem } from './media.ts';
+import { MEDIA, MediaHost, shareItem, canvasItem } from './media.ts';
 import { forceAll, type ForcePlan } from '../core/graph/sections.ts';
 
 export interface RunOpts {
@@ -313,6 +313,39 @@ async function main() {
     }
     return res;
   }
+  // TEMP bench (reverted after one GPU run)
+  async function shareBench(): Promise<string[]> {
+    const d = gpu.device, out: string[] = [];
+    for (const [sw, sh, lw, lh] of [[1920, 1080, 1920, 1080], [2560, 1440, 1920, 1080], [3840, 2160, 1920, 1080], [3840, 2160, 3840, 2160]]) {
+      const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+      const g = c.getContext('2d')!;
+      let n = 0;
+      const timer = setInterval(() => { g.fillStyle = `hsl(${(n += 7) % 360} 60% 40%)`; g.fillRect(0, 0, sw, sh); g.fillStyle = '#fff'; g.fillRect((n * 5) % sw, 100, 300, 300); }, 16);
+      const track = c.captureStream(60).getVideoTracks()[0], it = shareItem(track, () => [lw, lh]);
+      // keep the capture at the source size: this measures the canvas downscale, the fallback path
+      await track.applyConstraints({}).catch(() => {});
+      const host = new MediaHost(), release = host.share(it), cpu: number[] = [], total: number[] = [], idle: number[] = [];
+      let size = '';
+      for (let i = 0; i < 150; i++) {
+        const gen = it.gen, t = performance.now();
+        while (it.gen === gen && performance.now() - t < 500) await new Promise((ok) => setTimeout(ok, 2));
+        await d.queue.onSubmittedWorkDone();
+        let t0 = performance.now();
+        d.queue.submit([]); await d.queue.onSubmittedWorkDone();
+        idle.push(performance.now() - t0);
+        t0 = performance.now();
+        const f = host.frame(d, 0);
+        const c1 = performance.now() - t0;
+        d.queue.submit([]); await d.queue.onSubmittedWorkDone();
+        if (i >= 30 && f) { cpu.push(c1); total.push(performance.now() - t0); size = `${f.width}x${f.height}`; }
+      }
+      const q = (a: number[], p: number) => (a.sort((x, y) => x - y)[Math.floor(p * (a.length - 1))] ?? NaN).toFixed(2);
+      out.push(`share ${sw}x${sh} (video ${it.video!.videoWidth}x${it.video!.videoHeight}) -> ${size}: cpu p50 ${q(cpu, 0.5)} p95 ${q(cpu, 0.95)}, to GPU done p50 ${q(total, 0.5)} p95 ${q(total, 0.95)}, empty submit p50 ${q(idle, 0.5)} ms (n=${total.length})`);
+      release(); clearInterval(timer);
+    }
+    return out;
+  }
+  Object.assign(window, { __shareBench: shareBench });
   window.__lab = { run, profile, ready: true, adapter: gpu.adapterInfo };
 }
 
