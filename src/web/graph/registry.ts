@@ -4,6 +4,7 @@ import { assetFile, type PieceDef, type Registry, type SceneGraph } from '../../
 import assetFiles from 'virtual:lab-assets';
 import { validatePiece } from '../../core/graph/validate.ts';
 import { applyStyle, type StylePack } from '../../core/graph/style.ts';
+import { scoresFromDigest, withEvolve } from '../../core/graph/evolve.ts';
 import { transitionShader, transitionShaders } from '../transitions.ts';
 
 const manifests = import.meta.glob<PieceManifest>('../../../lab/pieces/*/*/piece.json', { eager: true, import: 'default' });
@@ -51,7 +52,9 @@ export const REGISTRY: Registry = build();
 export const LIB: Record<string, string> = Object.fromEntries(Object.entries(libFiles).map(([p, src]) => [p.slice(p.lastIndexOf('/') + 1), src]));
 /** Style packs by id. */
 export const STYLES = new Map(Object.values(styleFiles).map((s) => [s.id, s]));
+/** The vote scores evolving scenes weight their pools by: the committed digest, the same on every host of a build. */
+export const EVOLVE_SCORES = scoresFromDigest(Object.values(import.meta.glob<unknown>('../../../lab/feedback.json', { eager: true, import: 'default' }))[0]);
 /** Lab scenes not retired, in file order, style packs expanded (a scene with a broken style is logged and skipped). */
 export const LAB_SCENES: SceneGraph[] = Object.values(sceneFiles).filter((s) => s.status !== 'retired').flatMap((g) => {
-  try { return [applyStyle(g, STYLES, REGISTRY)]; } catch (e) { console.error(`lab scene skipped: ${(e as Error).message}`); return []; }
+  try { return [withEvolve(applyStyle(g, STYLES, REGISTRY), REGISTRY, EVOLVE_SCORES)]; } catch (e) { console.error(`lab scene skipped: ${(e as Error).message}`); return []; }
 });

@@ -23,7 +23,9 @@ interface VoteBase {
   tick?: number;
   features?: number[];
 }
-export interface SceneVote extends VoteBase { scene: string; transition?: undefined }
+/** An evolving scene's state on screen when the vote was cast: the step, its key, and each slot's piece and params. */
+export interface EvolveVote { step: number; key: string; slots: Record<string, { piece: string; params: Record<string, number | boolean | string> }> }
+export interface SceneVote extends VoteBase { scene: string; transition?: undefined; evolve?: EvolveVote }
 /** A vote on a transition (registered id), with the switch it was seen in: scene ids and length. */
 export interface TransVote extends VoteBase { transition: string; scene?: undefined; from?: string; to?: string; beats?: number }
 /** One line of data/votes.jsonl: `scene` or `transition` says which kind. */
@@ -85,3 +87,23 @@ export function parseVotes(text: string): Vote[] {
 /** Clean up untrusted tags: known ones only, no duplicates. */
 export const cleanTags = (tags: unknown, known: readonly string[] = VOTE_TAGS): string[] =>
   Array.isArray(tags) ? [...new Set(tags.filter((t): t is string => known.includes(t as string)))] : [];
+
+const SLUG = /^[a-z0-9-]{1,64}$/, NODE = /^[a-z_][a-z0-9_]{0,63}$/;
+/** Clean up an untrusted evolve state (from a host or the gallery): known shape, bounded sizes, else undefined. */
+export function cleanEvolve(x: unknown): EvolveVote | undefined {
+  const o = x as Partial<EvolveVote> | null;
+  if (!o || typeof o !== 'object' || !Number.isInteger(o.step) || o.step! < 0 || typeof o.key !== 'string' || o.key.length > 300) return undefined;
+  if (!o.slots || typeof o.slots !== 'object') return undefined;
+  const slots: EvolveVote['slots'] = {}, entries = Object.entries(o.slots);
+  if (!entries.length || entries.length > 3) return undefined;
+  for (const [node, v] of entries) {
+    if (!NODE.test(node) || !v || typeof v.piece !== 'string' || !SLUG.test(v.piece)) return undefined;
+    const params: Record<string, number | boolean | string> = {};
+    for (const [k, p] of Object.entries(v.params ?? {}).slice(0, 32)) {
+      if (!NODE.test(k)) continue;
+      if ((typeof p === 'number' && Number.isFinite(p)) || typeof p === 'boolean' || (typeof p === 'string' && p.length <= 200)) params[k] = p;
+    }
+    slots[node] = { piece: v.piece, params };
+  }
+  return { step: o.step!, key: o.key, slots };
+}

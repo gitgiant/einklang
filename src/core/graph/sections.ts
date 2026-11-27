@@ -12,6 +12,7 @@ import type { SceneSched, TransSched } from '../protocol.ts';
 import { BAR_TICKS, SONG_SECTIONS, boundary, sectionAt } from '../songform.ts';
 import { CUT_ID, transEffects, transEntry, transitionAt, type Transition } from '../transitions.ts';
 import { POST_KEYS } from '../post.ts';
+import { labSteps } from './evolve.ts';
 import { splitRef, type GraphNode, type PortRef, type SceneGraph, type SectionVariant, type SectionWhen, type Sections } from './types.ts';
 
 /** The id of the base graph among the sections. */
@@ -62,8 +63,8 @@ export function sectionGraphs(g: SceneGraph): SceneGraph[] {
   return [stripSections(g), ...g.sections.variants.map((v) => applySection(g, v))];
 }
 
-/** Section ids in plan order: base first. */
-export const sectionIds = (g: SceneGraph): string[] => [BASE, ...(g.sections?.variants ?? []).map((v) => v.id)];
+/** Section ids in plan order: base first. An evolving scene: the steps the lab forces, s0 (its base) .. s3. */
+export const sectionIds = (g: SceneGraph): string[] => (g.evolve ? labSteps() : [BASE, ...(g.sections?.variants ?? []).map((v) => v.id)]);
 
 /** A base-graph signal at an integer tick. */
 export type Sampler = (ref: PortRef, tick: number) => number;
@@ -190,7 +191,7 @@ export const sampledSignals = (s: Sections): PortRef[] => s.variants.flatMap((v)
 
 /** For the lab: force every section in turn over `ticks` from `start` (base first). */
 export function forceAll(g: SceneGraph, start: number, ticks: number): ForcePlan {
-  const n = (g.sections?.variants.length ?? 0) + 1, seg = Math.floor(ticks / n);
+  const n = sectionIds(g).length, seg = Math.floor(ticks / n);
   return Array.from({ length: n }, (_, i) => ({ at: start + i * seg, idx: i - 1 }));
 }
 

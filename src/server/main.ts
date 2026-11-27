@@ -70,7 +70,7 @@ export async function startServer(o: ServerOpts): Promise<Running> {
         try {
           const v = JSON.parse(body);
           // `transition` instead of `scene`: a vote on a transition
-          if (v.vote === 1 || v.vote === -1) r = v.transition !== undefined ? room.voteTransition(v, v.vote, v.tags, null) : room.vote(String(v.scene), v.vote, v.tags, null);
+          if (v.vote === 1 || v.vote === -1) r = v.transition !== undefined ? room.voteTransition(v, v.vote, v.tags, null) : room.vote(String(v.scene), v.vote, v.tags, null, undefined, v.evolve);
         } catch { /* bad JSON */ }
         res.writeHead(r ? 200 : 400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(r ?? { error: 'unknown scene or transition, or bad vote' }));

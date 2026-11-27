@@ -3,6 +3,7 @@ import { CPU_PORTS, PIECE_KINDS, PORT_TYPES, isTexPort, type ParamSpec, type Pie
 import { splitRef, type PieceDef, type Registry, type SceneGraph } from './types.ts';
 import { POST_KEYS } from '../post.ts';
 import { sampledSignals, sectionGraphs, validateSections } from './sections.ts';
+import { validateEvolve } from './evolve.ts';
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)+$/;
 const NAME = /^[a-z_][a-z0-9_]*$/;
@@ -152,6 +153,7 @@ export function validateScene(g: SceneGraph, reg: Registry): string[] {
       });
     }
   }
+  if (g.evolve !== undefined && !errs.length) errs.push(...validateEvolve(g, reg, { validateScene, order }));
   return errs;
 }
 

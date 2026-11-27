@@ -218,7 +218,9 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 ### Scene structure
 - [x] Sections (acts): variants keyed to song structure, a signal or an input → core-acts-surge, core-acts-switchboard (format: `lab/AGENTS.md` "Sections")
 - [ ] Scenes with sections by vendors: remix a liked scene into acts (calm verse branch, heavy drop branch)
-- [ ] Evolving scenes: swap pieces every N bars, steered by votes (needs a core brief)
+- [x] Evolving scenes: swap pieces every N bars, steered by votes → core `evolve` block, core-evolve-garden, core-evolve-circuit
+- [ ] Evolving remixes by vendors: give a liked scene an `evolve` slot (its generator or an effect) with a hand-picked pool and ranges (format: `lab/AGENTS.md` "Evolving scenes")
+- [ ] Freeze liked mutations: after a feedback run, `lab evolve freeze` the top states of "Evolving scenes" in FEEDBACK.md into scenes
 
 ### Transitions
 How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug>/` (contract: "Transitions" in `lab/AGENTS.md`). Core ones: cut, blend, flash, wipe, iris, dissolve, luma, zoom, glitch, stutter, swirl, melt, audio mask, pixelate.

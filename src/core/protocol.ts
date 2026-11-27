@@ -112,7 +112,7 @@ export type ClientMsg =
   /** `id`, or `step` through the list in order, or `weighted`: a random other scene by vote weight. */
   | { t: 'scene'; id?: string; step?: number; weighted?: boolean; quant: Quant; trans?: TransReq }
   /** An owner vote on the scene showing; a live 👎 skips to a weighted pick with `quant` + `trans`. */
-  | { t: 'vote'; scene: string; vote: 1 | -1; quant?: Quant; trans?: TransReq }
+  | { t: 'vote'; scene: string; vote: 1 | -1; quant?: Quant; trans?: TransReq; /** An evolving scene's state on this host (votes.ts EvolveVote). */ evolve?: unknown }
   /** An owner vote on a transition that ran (it never skips). */
   | { t: 'transvote'; transition: string; from: string; to: string; beats: number; vote: 1 | -1; tags?: string[] }
   | { t: 'auto'; bars: number; trans?: TransReq }

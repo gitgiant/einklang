@@ -7,7 +7,7 @@ import {
   type TickEvent, type TransReq, type TransSched, type TransType,
 } from '../core/protocol.ts';
 import { AUTO_BARS, DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS } from '../core/protocol.ts';
-import { RETIRE_AT, TRANS_TAGS, cleanTags, count, pickWeighted, score, tally, type Tally, type Vote, type TransVote } from '../core/votes.ts';
+import { RETIRE_AT, TRANS_TAGS, cleanEvolve, cleanTags, count, pickWeighted, score, tally, type SceneVote, type Tally, type Vote, type TransVote } from '../core/votes.ts';
 import { CUT_ID, pickRandom, resolveTrans } from '../core/transitions.ts';
 import './transitions.ts'; // installs the registry from lab/transitions/
 import { cleanLyrics } from '../core/lrc.ts';
@@ -225,7 +225,7 @@ export class Room {
       case 'scene': return this.requestScene(m.id, m.step, m.quant, m.trans, m.weighted === true);
       case 'vote':
         if (m.vote !== 1 && m.vote !== -1) return;
-        this.vote(String(m.scene), m.vote, [], c, m.vote < 0 ? { quant: m.quant ?? 'bar', trans: m.trans } : undefined);
+        this.vote(String(m.scene), m.vote, [], c, m.vote < 0 ? { quant: m.quant ?? 'bar', trans: m.trans } : undefined, m.evolve);
         return;
       case 'transvote':
         if (m.vote === 1 || m.vote === -1) this.voteTransition(m, m.vote, m.tags, c);
@@ -409,10 +409,11 @@ export class Room {
    * features. Scores and the live list update at once. A thumbs-down with `skip` on the scene showing, or one
    * that retires the scene showing, moves on to a weighted pick.
    */
-  vote(sceneId: string, v: 1 | -1, tags: unknown, c: Client | null, skip?: { quant: Quant; trans?: TransReq }): { score: number; retired: boolean } | null {
+  vote(sceneId: string, v: 1 | -1, tags: unknown, c: Client | null, skip?: { quant: Quant; trans?: TransReq }, evolve?: unknown): { score: number; retired: boolean } | null {
     if (!this.catalog.includes(sceneId)) return null;
     const t = this.tickNow();
-    const rec: Vote = { scene: sceneId, at: new Date().toISOString(), vote: v, tags: cleanTags(tags) };
+    const rec: SceneVote = { scene: sceneId, at: new Date().toISOString(), vote: v, tags: cleanTags(tags) }, ev = cleanEvolve(evolve);
+    if (ev) rec.evolve = ev;
     this.record(rec, c, t);
     const tl = count(this.tallies.get(sceneId) ?? { up: 0, down: 0, tags: {} }, rec);
     this.tallies.set(sceneId, tl);

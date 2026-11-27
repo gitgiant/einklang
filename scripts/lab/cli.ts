@@ -32,13 +32,19 @@
 //                                  -> lab/assets/sprites/<name>.spr (+ index.json)
 //   font bake <file.ttf|builtin:pixel5x8> --name id --license L [--source S] [--size 48] [--license-file f]
 //                                  -> lab/assets/fonts/<id>.efont (msdf from a TrueType font, bitmap for the pixel font)
+//   evolve show <scene> [--steps 12]   an evolving scene's states step by step (pieces + params, scores in effect)
+//   evolve freeze <scene> <state> [--id id] [--name n]   write a state as a scene of its own with parent = <scene>:
+//                                  <state> is a key from FEEDBACK.md "Evolving scenes" (its voted params) or a step (s12 / 12)
 //   feedback [--votes file]        vote digest: lab/feedback.json + lab/FEEDBACK.md from data/votes.jsonl, and
 //                                  scenes at net <= -2 get status retired (commit the result)
 // Spec: docs/prd-lab.md.
 import { mkdirSync, writeFileSync, existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { loadPieces, loadScenes, loadStyles, LAB } from './load.ts';
+import { loadPieces, loadScenes, loadScores, loadStyles, LAB } from './load.ts';
+import { freezeScene, stateAt, stateInfo, withEvolve, type EvolveInfo } from '../../src/core/graph/evolve.ts';
+import { strHash } from '../../src/core/graph/eval.ts';
+import { hex8 } from '../../src/core/math.ts';
 import { applyStyle, validateStyle } from '../../src/core/graph/style.ts';
 import { lintPieces } from './lint.ts';
 import { importSpaceSim, DEFAULT_SRC, vendorAsset } from './import.ts';
@@ -48,7 +54,7 @@ import { encodePng } from './png.ts';
 import { bakeMsdf, bakePixelFont, parseTtf } from './fonts.ts';
 import { encodeFont, encodeSheet, sheetRgba, type Sheet } from '../../lab/api/index.ts';
 import { basename } from 'node:path';
-import { digest, feedbackMd } from './feedback.ts';
+import { digest, feedbackMd, type Digest } from './feedback.ts';
 import { parseVotes } from '../../src/core/votes.ts';
 import '../../src/server/transitions.ts'; // installs the transition registry
 import { transitions } from '../../src/core/transitions.ts';
@@ -77,9 +83,9 @@ async function validate(): Promise<{ reg: Registry; scenes: SceneGraph[]; transi
   const { reg, errors } = await loadPieces();
   const styleList = loadStyles(), styles = new Map(styleList.map((s) => [s.id, s]));
   for (const s of styleList) errors.push(...validateStyle(s, reg));
-  const scenes: SceneGraph[] = [];
+  const scenes: SceneGraph[] = [], scores = loadScores();
   for (const g of loadScenes()) {
-    try { scenes.push(applyStyle(g, styles, reg)); } catch (e) { errors.push((e as Error).message); }
+    try { scenes.push(withEvolve(applyStyle(g, styles, reg), reg, scores)); } catch (e) { errors.push((e as Error).message); }
   }
   const ids = new Set<string>();
   for (const s of scenes) {
@@ -192,7 +198,7 @@ async function checkTransition(lab: Lab, id: string, fixtures: string[], seconds
 
 /** The switch profile in a browser of its own (cold: no shader cache); markdown lines, also in lab/out/profile.md. */
 async function runProfile(w: number, h: number, transitions: string[], all: SceneGraph[], o: { cpu: boolean; quick: boolean; gpuOnly?: boolean }): Promise<string[]> {
-  const scenes = all.map((s) => s.id), acts = all.filter((s) => s.sections).map((s) => ({ scene: s.id, sections: sectionIds(s) }));
+  const scenes = all.map((s) => s.id), acts = all.filter((s) => s.sections || s.evolve).map((s) => ({ scene: s.id, sections: sectionIds(s) }));
   const lab = await openLab({ width: w, height: h, cpu: o.cpu, cold: true, log: say });
   try {
     if (lab.cpu && o.gpuOnly) return ['## Switch profile', '', 'skipped: no GPU here', ''];
@@ -301,6 +307,42 @@ async function main() {
     say(`${votes.length} vote(s)${existsSync(file) ? '' : ` (no ${file})`} -> lab/feedback.json, lab/FEEDBACK.md${d.retired.length ? `; retired ${d.retired.join(', ')}` : ''}`);
     return;
   }
+  if (cmd === 'evolve') {
+    const { reg } = await loadPieces(), id = positional[2];
+    const raw = loadScenes().find((g) => g.id === id), styled = loadScenes(undefined, reg).find((g) => g.id === id);
+    if (!raw || !styled?.evolve) throw new Error(`${id ?? '(none)'}: not an evolving scene (${loadScenes().filter((g) => g.evolve).map((g) => g.id).join(', ')})`);
+    const ev = styled.evolved!, idHash = strHash(id);
+    if (positional[1] === 'show') {
+      for (let k = 0; k < +opt('steps', '12'); k++) {
+        const info = stateInfo(ev, stateAt(ev, idHash, k), idHash, reg);
+        say(`s${k}  ${info.key}`);
+        for (const [n, x] of Object.entries(info.slots)) say(`      ${n}: ${JSON.stringify(x.params)}`);
+      }
+      say(`pools: ${ev.slots.map((x) => `${x.node} [${x.cands.map((c) => `${c.piece} w${c.weight}`).join(', ')}]`).join('; ')}`);
+      return;
+    }
+    if (positional[1] === 'freeze') {
+      const state = positional[3];
+      if (!state) throw new Error('usage: evolve freeze <scene> <state key | s<step>>');
+      let slots: EvolveInfo['slots'];
+      const step = /^s?(\d+)$/.exec(state);
+      if (step) slots = stateInfo(ev, stateAt(ev, idHash, +step[1]), idHash, reg).slots;
+      else {
+        const d = JSON.parse(readFileSync(join(LAB, 'feedback.json'), 'utf8')) as Partial<Digest>, st = d.evolve?.[id]?.states?.[state];
+        if (!st) throw new Error(`${id}: no votes on state ${state} in lab/feedback.json (run feedback first, or give a step: s12)`);
+        slots = st.slots;
+      }
+      const child = freezeScene(raw, reg, { slots }, { id: opt('id', `${id}-f${hex8(strHash(JSON.stringify(slots))).slice(0, 5)}`), name: opt('name', '') || undefined, created: new Date().toISOString().slice(0, 10) });
+      const errs = validateScene(withEvolve(child, reg), reg);
+      if (errs.length) throw new Error(errs.join('\n'));
+      const out = join(LAB, 'scenes', `${child.id}.json`);
+      if (existsSync(out)) throw new Error(`${out} exists (pick another --id)`);
+      writeFileSync(out, JSON.stringify(child, null, 2) + '\n');
+      say(`${out}: ${Object.entries(slots).map(([n, x]) => `${n}=${x.piece}`).join(', ')} (parent ${id})`);
+      return;
+    }
+    throw new Error('usage: evolve show|freeze <scene> ...');
+  }
   if (cmd === 'import-space-sim') {
     const r = importSpaceSim(opt('src', DEFAULT_SRC));
     say(`copied ${r.files} files (${(r.bytes / 1048576).toFixed(1)} MB) into lab/assets/, provenance in lab/assets/index.json`);
@@ -374,8 +416,8 @@ async function main() {
           if (st) for (const x of v.scenes) if (x.style === st[1]) sceneIds.add(x.id);
           if (f.startsWith('lab/assets/')) for (const [id, d] of v.reg) if (d.manifest.assets?.some((a) => `lab/${a.path}` === f)) pieceIds.add(id);
         }
-        // an edited piece changes every scene that uses it
-        for (const s of v.scenes) if (s.nodes.some((n) => pieceIds.has(n.piece))) sceneIds.add(s.id);
+        // an edited piece changes every scene that uses it (an evolving scene's candidates too)
+        for (const s of v.scenes) if (s.nodes.some((n) => pieceIds.has(n.piece)) || s.evolved?.slots.some((x) => x.cands.some((c) => pieceIds.has(c.piece)))) sceneIds.add(s.id);
       } else { for (const s of v.scenes) sceneIds.add(s.id); for (const id of v.transitions) transIds.add(id); }
       items = [...[...pieceIds].filter((p) => typeof harness(p, v.reg) !== 'string'), ...sceneIds, ...transIds].map((n) => target(n, v.reg, v.scenes, v.transitions));
       say(`gate: ${items.length ? items.map((i) => i.id).join(', ') : 'nothing changed under lab/'}${ch ? '' : ' (all scenes and transitions)'}`);

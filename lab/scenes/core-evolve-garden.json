@@ -1,0 +1,32 @@
+{
+  "format": 1, "id": "core-evolve-garden", "name": "Evolve: garden", "version": 1,
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "pal", "piece": "core-harmony", "params": { "hue": 0.38, "scheme": 1, "chroma": 0.17, "light": 0.74, "contrast": 0.5 } },
+    { "id": "gen", "piece": "claude-metaballs", "params": { "count": 11, "size": 0.085, "speed": 0.7 },
+      "bind": { "glow": { "from": "audio.rms", "range": [0.8, 1.8] } } },
+    { "id": "fx", "piece": "core-kaleido", "params": { "segments": 6, "spin": 0.04, "zoom": 1.1 } },
+    { "id": "trail", "piece": "core-trails", "params": { "decay": 0.78, "zoom": -0.003, "rotate": 0.001 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "gen.palette" },
+    { "from": "gen.out", "to": "fx.in" },
+    { "from": "fx.out", "to": "trail.in" }
+  ],
+  "out": "trail.out",
+  "post": { "bloom": 0.45, "threshold": 0.75 },
+  "evolve": {
+    "every": "phrase", "transition": "core-blend", "beats": 4,
+    "slots": [
+      { "node": "gen", "pool": [
+        "claude-reaction", "claude-physarum", "claude-lsystem", "agy-voronoi",
+        { "piece": "claude-metaballs", "ranges": { "count": [8, 16], "size": [0.05, 0.14], "speed": [0.3, 1.6] } }
+      ] },
+      { "node": "fx", "pool": [
+        { "piece": "core-kaleido", "ranges": { "segments": [3, 12], "spin": [-0.3, 0.3] } },
+        "claude-zoomfeed", "claude-rotozoom", "agy-halftone", "claude-copper"
+      ] }
+    ]
+  }
+}

@@ -7,6 +7,7 @@ import type { PieceDriver, PieceManifest } from '../../lab/api/index.ts';
 import { assetFile, type PieceDef, type Registry, type SceneGraph } from '../../src/core/graph/types.ts';
 import { validatePiece } from '../../src/core/graph/validate.ts';
 import { applyStyle, type StylePack } from '../../src/core/graph/style.ts';
+import { scoresFromDigest, withEvolve, type EvolveScores } from '../../src/core/graph/evolve.ts';
 
 export const LAB = resolve(import.meta.dirname, '../../lab');
 
@@ -49,7 +50,13 @@ export function loadScenes(root = join(LAB, 'scenes'), reg?: Registry): SceneGra
   const raw: SceneGraph[] = readdirSync(root).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(readFileSync(join(root, f), 'utf8')));
   if (!reg) return raw;
   const styles = new Map(loadStyles().map((s) => [s.id, s]));
-  return raw.map((g) => applyStyle(g, styles, reg));
+  const scores = loadScores();
+  return raw.map((g) => withEvolve(applyStyle(g, styles, reg), reg, scores));
+}
+
+/** The scores evolving scenes weight their pools by (lab/feedback.json, as the browser bundles it). */
+export function loadScores(file = join(LAB, 'feedback.json')): EvolveScores {
+  return scoresFromDigest(existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {});
 }
 
 export function loadStyles(root = join(LAB, 'styles')): StylePack[] {

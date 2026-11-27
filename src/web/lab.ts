@@ -244,7 +244,9 @@ async function main() {
         if (i % sheetEvery === 0 && sheetN < o.sheet) {
           sctx.drawImage(frame, (sheetN % cols) * tw, Math.floor(sheetN / cols) * th, tw, th);
           const label = (sched ? `p ${(engine.transition?.p ?? (tick < sched.at ? 0 : 1)).toFixed(2)}` : `${(tick / 60).toFixed(2)}s`)
-            + (sec ? ` ${sec.from ? `${sec.from}→` : ''}${sec.id}` : '');
+            + (sec ? ` ${sec.from ? `${sec.from}→` : ''}${sec.id}` : '')
+            // an evolving scene: the pieces its slots show
+            + (engine.scene.evolve() ? ` ${Object.values(engine.scene.evolve()!.slots).map((x) => x.piece.replace(/^[a-z]+-/, '')).join('+')}` : '');
           sctx.font = '11px monospace';
           sctx.fillStyle = '#000a'; sctx.fillRect((sheetN % cols) * tw, Math.floor(sheetN / cols) * th, Math.max(70, sctx.measureText(label).width + 8), 16);
           sctx.fillStyle = '#ddd';

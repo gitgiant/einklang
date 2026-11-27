@@ -2,6 +2,14 @@
 
 Status: agreed 2026-11-26 (grill-me interview). **#20–#24 and #26 built 2026-11-26; #25 contract, backlog and skill built** (its first batch is running via Hauptling). Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
 
+### Build notes: evolving scenes (decided while building)
+
+- **Format:** a scene's `evolve` (`lab/AGENTS.md` "Evolving scenes"): slots (node ids) with pools (explicit entries and/or a kind/tags/vendor filter, base node = candidate 0, capped at 6, at most 3 slots), a cadence (`bar` / `phrase` / N bars / `section` with `most`), a transition. Code: `src/core/graph/evolve.ts`; a scene has sections or evolve, not both.
+- **Selection is pure:** state(k) = a walk from a fresh weighted draw every 64 steps (step 0 = the base): slots take turns, each swap a weighted pick (never the candidate it has) seeded by h32(scene id, k). Params: ranges drawn, other floats jittered (default 8% of the span), seeded by the step that brought the candidate in; rounded to 3 decimals. `section` cadence: k = the last phrase whose song section differs from the one before, within the last `most` phrases, else the multiple of `most` (bounded scan, no state).
+- **Votes:** weight 2^(piece score + slot score), score <= -2 = out; scores from the committed `lab/feedback.json` (bundled by Vite, read from disk in Node), so a build's hosts agree; a hash of the pools and weights joins the scene hash with [step, previous, boundary, picks now and before, blend] (+ the outgoing step's plan hash while blending). Scene votes carry `evolve: { step, key, slots }` (cleaned by the server, `cleanEvolve`); the digest scores states and slot pieces (`Digest.evolve`), credits the pieces on screen, and `lab evolve freeze` writes a state as a child scene.
+- **GPU: sockets, not plans.** The runner keeps one plan; a slot is a socket holding every candidate's instance, all built at load (pipelines warm; auto pipelines async). The picked candidate runs; while a swap blends, the old one runs too and a core-transition instance of the socket's mixes them into the slot's output, so downstream nodes (trails, feedback) are shared and keep running. Each step's CPU plan is compiled when it first shows (~0.06 ms, a few cached). Blends last at most half a step.
+- **Lab:** render / gate force s0..s3 in turn (judged per step; sheet labels the step and pieces); the profile's "Section changes" runs s0 → s1..s3 (s2, s3 swap two slots at once).
+
 ### Build notes: dynamic scenes (decided while building)
 
 - **Two layers.** (1) Utility pieces that pick or mix branches inside one graph (`core-switch`, `core-crossfade`) driven by modulators (`core-section`, `core-step`, `core-random-walk`, plus the cheap PRD ones: `core-envelope`, `core-slew`, `core-math`, `core-midi`). (2) Scene `sections`: variants of the base graph keyed to song structure, a signal, a MIDI note / CC or the room's cue, switched on a bar / phrase / N-bar boundary with a registered transition (id or `random`). Format: `lab/AGENTS.md` "Sections".
@@ -12,7 +20,7 @@ Status: agreed 2026-11-26 (grill-me interview). **#20–#24 and #26 built 2026-1
 - **Determinism:** the variant shown is a pure function of tick + features + inputs; the scene hash appends [section, previous, boundary, blend kind / ticks / seed / p / flash / roll] and the outgoing plan's hash while blending. Scenes without sections hash exactly as before (unit-tested against `evalCpu`).
 - **No stalls:** all variants' nodes are built at load in one runner (identical nodes shared, so unchanged feedback/sims continue through a change); auto-shader pipelines are cached per piece and compiled with `createRenderPipelineAsync`; the scene's own `core-transition` instance warms every transition. Measured with the profile's "Section changes" table.
 - **Cue input:** event `cue` `{ v }` / `{ step }` (state, latest wins), feature key `K_CUE` = 29; keys 0-9 (main page), pad Select + D-pad left/right. Not in `HASH_KEYS`: it acts only through sections and pieces, whose results are hashed.
-- **Open (option 3, next):** evolving scenes that swap pieces every N bars, vote-steered. Sections already give the plumbing (a variant list switched on a grid with transitions, all precompiled); a generated variant list or a `when: { every }` would slot in.
+- **Option 3, evolving scenes:** built, see the notes above.
 
 ### Build notes: pluggable transitions (decided while building)
 
