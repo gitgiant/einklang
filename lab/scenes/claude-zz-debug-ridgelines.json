@@ -1,0 +1,119 @@
+{
+ "format": 1,
+ "id": "claude-zz-debug-ridgelines",
+ "name": "debug claude-media-ridgelines",
+ "version": 1,
+ "author": {
+  "vendor": "claude",
+  "model": "claude-opus-5-5"
+ },
+ "status": "live",
+ "created": "2026-11-27",
+ "nodes": [
+  {
+   "id": "kick",
+   "piece": "core-envelope",
+   "params": {
+    "source": 0,
+    "decay": 0.3,
+    "curve": 3
+   }
+  },
+  {
+   "id": "pal",
+   "piece": "core-swatch",
+   "params": {
+    "colors": "#05070d #1d2a4a #3f7cac #f6ae2d #fff4e0"
+   }
+  },
+  {
+   "id": "media",
+   "piece": "core-media",
+   "params": {
+    "beat_zoom": 0,
+    "pulse": 0.12,
+    "drift": 0.3
+   }
+  },
+  {
+   "id": "g",
+   "piece": "claude-media-ridgelines",
+   "params": {
+    "path": 0
+   },
+   "bind": {
+    "kick": {
+     "from": "kick.out"
+    }
+   }
+  }
+ ],
+ "edges": [
+  {
+   "from": "media.luma",
+   "to": "g.height"
+  },
+  {
+   "from": "media.out",
+   "to": "g.in"
+  },
+  {
+   "from": "pal.palette",
+   "to": "g.palette"
+  }
+ ],
+ "out": "g.out",
+ "post": {
+  "bloom": 0.55,
+  "threshold": 0.7
+ },
+ "sections": {
+  "on": "bar",
+  "variants": [
+   {
+    "id": "p1",
+    "when": {
+     "cue": 9
+    },
+    "params": {
+     "g": {
+      "path": 1
+     }
+    }
+   },
+   {
+    "id": "p2",
+    "when": {
+     "cue": 9
+    },
+    "params": {
+     "g": {
+      "path": 2
+     }
+    }
+   },
+   {
+    "id": "p3",
+    "when": {
+     "cue": 9
+    },
+    "params": {
+     "g": {
+      "path": 3
+     }
+    }
+   },
+   {
+    "id": "p4",
+    "when": {
+     "cue": 9
+    },
+    "params": {
+     "g": {
+      "path": 4
+     }
+    }
+   }
+  ]
+ }
+}
