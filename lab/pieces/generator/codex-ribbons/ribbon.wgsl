@@ -38,9 +38,9 @@ fn center(i: u32, age: f32) -> vec3f {
   let pair = stereo[u32(age * R.points) + i] * exp(-0.11 * age);
   let scale = 0.84 + 0.65 * R.rms;
   return vec3f(
-    scale * 1.03 * sin(2.0 * t + spin) + 1.52 * pair.x,
-    scale * 0.83 * sin(3.0 * t - spin * 0.52 + 0.7) + 1.42 * pair.y,
-    scale * 0.76 * cos(t + spin * 0.78) + 0.97 * (pair.x - pair.y) - age * 0.13
+    scale * 1.03 * sin(2.0 * t + spin) + 1.29 * pair.x,
+    scale * 0.83 * sin(3.0 * t - spin * 0.52 + 0.7) + 1.22 * pair.y,
+    scale * 0.76 * cos(t + spin * 0.78) + 0.80 * (pair.x - pair.y) - age * 0.13
   );
 }
 
@@ -59,8 +59,7 @@ struct Fold {
   let p = center(i, age);
   let tangent = normalize(center(min(i + 1u, u32(R.points) - 1u), age) - center(max(i, 1u) - 1u, age) + vec3f(0.00001));
   let twist = u * TAU * 2.0 + R.seconds * 0.54 - 0.18 * age;
-  let warp = vec3f(cos(twist), sin(twist), 0.7);
-  let across = normalize(cross(tangent, warp) + vec3f(0.00001));
+  let across = normalize(vec3f(cos(twist), sin(twist), 0.48 + 0.35 * cos(twist + 0.3)));
   let normal = cross(tangent, across);
   let taper = 0.17 + 0.83 * smoothstep(0.0, 0.08, u) * (1.0 - smoothstep(0.90, 1.0, u));
   let breadth = R.width * (0.11 + 0.45 * R.rms + 0.085 * R.high) * taper;
@@ -71,9 +70,10 @@ struct Fold {
   let right = vec3f(cos(yaw), 0.0, -sin(yaw));
   let up = vec3f(-sin(yaw) * sin(pitch), cos(pitch), -cos(yaw) * sin(pitch));
   let forward = cross(right, up);
-  let depth = 4.15 - dot(world, forward);
+  // Pull back as the waveform opens so loud passages keep the whole fold readable.
+  let depth = 4.55 + 1.8 * R.rms - dot(world, forward);
   let fit = min(R.size.x, R.size.y) / R.size;
-  let clip = vec2f(dot(world, right), dot(world, up)) * fit * 2.1;
+  let clip = vec2f(dot(world, right), dot(world, up)) * fit * 2.05;
   let face = abs(dot(normal, normalize(vec3f(-0.36, 0.56, 0.75))));
   return Fold(vec4f(clip, (depth - 0.5) * 0.92, depth), vec2f(u, side), face, age);
 }

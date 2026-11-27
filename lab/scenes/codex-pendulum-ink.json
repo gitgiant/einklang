@@ -7,7 +7,7 @@
   "status": "live",
   "created": "2026-11-27",
   "nodes": [
-    { "id": "pen", "piece": "codex-harmonograph", "params": { "spread": 1.02, "ink": 1.15 } }
+    { "id": "pen", "piece": "codex-harmonograph", "params": { "spread": 0.95, "ink": 1.15 } }
   ],
   "edges": [],
   "out": "pen.out",
