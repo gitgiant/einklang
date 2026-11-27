@@ -41,6 +41,8 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Shape grammar
 - [x] Metaballs → claude-metaballs, scene claude-lava
 - [ ] String / wave sim
+- [x] Chladni plates → codex-chladni, scene codex-sand-plate
+- [x] Cymatics / standing waves → codex-cymatics, scene codex-ripple-tank
 - [x] Radial spectrum → core-radial
 - [x] Tunnel / warp → core-tunnel
 - [x] Plasma → core-plasma

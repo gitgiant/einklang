@@ -1,0 +1,14 @@
+{
+  "id": "codex-cymatics",
+  "kind": "generator",
+  "name": "Cymatics",
+  "doc": "Beats drop new emitters into a shallow tank, where circular wave trains interfere and the spectrum sets their wavelength.",
+  "ports": { "out": { "out": { "type": "tex" } } },
+  "params": {
+    "swell": { "type": "float", "default": 1, "min": 0.2, "max": 1.5, "doc": "Slope and brightness of the beat-driven waves." },
+    "spacing": { "type": "float", "default": 1, "min": 0.7, "max": 1.4, "doc": "Wavelength multiplier." }
+  },
+  "budget": { "ms": 2.5, "scales": "res" },
+  "tags": ["waves", "spectrum", "physics"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}
