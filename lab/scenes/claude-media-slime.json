@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "claude-media-slime",
+  "name": "Media: slime feeding on light",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media"],
+  "nodes": [
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 1, "chroma": 0.2, "light": 0.8 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 10, "window": 12, "gain": 1.4 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.05, "pulse": 0.1, "drift": 0.35, "contrast": 1.3 } },
+    { "id": "slime", "piece": "claude-luma-slime", "params": { "agents": 300, "food": 1.2, "linger": 0.6, "bg": 0.14 },
+      "bind": { "bg": { "from": "mid.out", "range": [0.1, 0.22] } } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.3, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "slime.in" },
+    { "from": "media.luma", "to": "slime.luma" },
+    { "from": "pal.palette", "to": "slime.palette" },
+    { "from": "slime.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.55, "threshold": 0.65 }
+}

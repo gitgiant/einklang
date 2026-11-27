@@ -1,0 +1,36 @@
+{
+  "id": "claude-paint-smoke",
+  "kind": "effect",
+  "name": "Paint smoke",
+  "doc": "A stable-fluid sim whose dye is the picture: its colours are carried off by the flow and curl into smoke, while the image keeps pulling the paint back home, so it re-forms when the music lets go. The paint circles along the picture's own luma contours (reversing every 4 bars) and bright paint rises; bass and onsets drive orbiting stirrers, each onset puffs a palette-tinted ring of paint, and loud passages loosen the pull home.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture to paint with (core-media.out)" },
+      "luma": { "type": "mask", "optional": true, "doc": "brightness map whose contours steer the flow (core-media.luma); without it, the luma of in" },
+      "palette": { "type": "palette", "optional": true, "doc": "the onset puffs and the glow of freshly stirred paint" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "cells": { "type": "int", "default": 240, "min": 96, "max": 540, "doc": "sim grid height in cells (width follows the aspect)" },
+    "iters": { "type": "int", "default": 20, "min": 6, "max": 60, "doc": "Jacobi pressure iterations per step" },
+    "speed": { "type": "float", "default": 1, "min": 0.25, "max": 2, "doc": "sim time per tick" },
+    "restore": { "type": "float", "default": 0.7, "min": 0, "max": 4, "doc": "how fast the paint relaxes back to the picture (per second); loud music loosens it" },
+    "smear": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "how fast moved paint takes over from the crisp picture" },
+    "paint": { "type": "float", "default": 0.1, "min": 0, "max": 1, "doc": "share of the fluid's paint shown everywhere, moved or not" },
+    "swirl": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "flow along the picture's contours (driven by loudness)" },
+    "stir": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "force of the orbiting stirrers (driven by bass and onsets)" },
+    "stirrers": { "type": "int", "default": 3, "min": 0, "max": 4, "doc": "number of orbiting stirrers" },
+    "buoyancy": { "type": "float", "default": 0.5, "min": 0, "max": 4, "doc": "bright paint rises, dark paint sinks" },
+    "vorticity": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "vorticity confinement: keeps the small curls" },
+    "idle": { "type": "float", "default": 0.25, "min": 0, "max": 1, "doc": "force level on silence" },
+    "react": { "type": "float", "default": 1.2, "min": 0, "max": 3, "doc": "how much the audio adds" },
+    "puff": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "onset puffs: force and paint" },
+    "light": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "relief lighting on the smeared paint" },
+    "glow": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "palette glow of freshly stirred paint" },
+    "cycle": { "type": "float", "default": 0.25, "min": 0, "max": 4, "doc": "palette drift per 4 bars" }
+  },
+  "budget": { "ms": 0.9, "scales": "none" },
+  "tags": ["media", "fluid", "smoke", "simulation", "paint", "organic"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

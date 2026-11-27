@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "id": "claude-media-smoke",
+  "name": "Media: paint smoke",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media"],
+  "nodes": [
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.2, "light": 0.78 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.08, "pulse": 0.15, "drift": 0.4, "saturation": 1.15 } },
+    { "id": "smoke", "piece": "claude-paint-smoke", "params": { "cells": 240, "restore": 0.7, "stir": 1, "swirl": 1, "puff": 1.1 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.35, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "smoke.in" },
+    { "from": "media.luma", "to": "smoke.luma" },
+    { "from": "pal.palette", "to": "smoke.palette" },
+    { "from": "smoke.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.45, "threshold": 0.75 },
+  "sections": {
+    "on": "bar",
+    "transition": "core-blend",
+    "beats": 2,
+    "variants": [
+      {
+        "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+        "params": {
+          "smoke": { "stir": 2.2, "stirrers": 4, "puff": 2, "restore": 0.35, "vorticity": 2, "smear": 1.6, "glow": 1.6 },
+          "fx": { "decay": 0.55, "zoom": 0.004 }
+        },
+        "post": { "bloom": 0.75, "threshold": 0.6 }
+      },
+      {
+        "id": "build", "when": { "section": "build" }, "transition": "core-zoom", "beats": 2,
+        "params": { "smoke": { "swirl": 2, "stir": 1.4, "buoyancy": 1, "restore": 0.5 } },
+        "post": { "bloom": 0.55 }
+      },
+      {
+        "id": "breakdown", "when": { "section": "breakdown" }, "transition": "core-melt", "beats": 4,
+        "params": {
+          "smoke": { "restore": 1.8, "stir": 0.5, "stirrers": 2, "swirl": 0.7, "buoyancy": 1.4, "paint": 0.25 },
+          "media": { "drift": 0.8, "saturation": 0.9 }
+        },
+        "post": { "bloom": 0.35 }
+      }
+    ]
+  }
+}

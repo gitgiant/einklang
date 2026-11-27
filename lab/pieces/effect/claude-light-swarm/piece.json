@@ -1,0 +1,37 @@
+{
+  "id": "claude-light-swarm",
+  "kind": "effect",
+  "name": "Light swarm",
+  "doc": "A swarm of light motes that redraws the picture: each mote climbs the picture's brightness gradient and gathers on its bright places, rides a slow curl-noise current, takes on the colour under it and respawns on the light when it fades, so the image appears as a living, streaking pointillist cloud. Bass makes them climb harder and pack onto the light, mids stir the current, loudness speeds them, and each onset throws them outward from a seeded point and flashes the dense places in the palette.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture: the motes' colours and a dim backdrop (core-media.out)" },
+      "luma": { "type": "mask", "optional": true, "doc": "the brightness the motes climb toward (core-media.luma); without it, the luma of in" },
+      "palette": { "type": "palette", "optional": true, "doc": "the onset flash and glow of the densest places" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "count": { "type": "int", "default": 160, "min": 4, "max": 1000, "doc": "motes in thousands" },
+    "size": { "type": "float", "default": 0.0025, "min": 0.0005, "max": 0.02, "doc": "mote radius (share of the screen height)" },
+    "streak": { "type": "float", "default": 6, "min": 0, "max": 30, "doc": "stretch along the velocity" },
+    "speed": { "type": "float", "default": 1, "min": 0.1, "max": 3 },
+    "climb": { "type": "float", "default": 1, "min": 0, "max": 6, "doc": "pull up the brightness gradient (bass adds)" },
+    "flow": { "type": "float", "default": 1, "min": 0, "max": 6, "doc": "curl-noise current (mids add)" },
+    "scale": { "type": "float", "default": 3, "min": 0.5, "max": 12, "doc": "current wave number (higher = smaller eddies)" },
+    "life": { "type": "float", "default": 3, "min": 0.3, "max": 12, "doc": "mean mote life in seconds" },
+    "tries": { "type": "int", "default": 3, "min": 1, "max": 8, "doc": "respawn picks the brightest of this many random spots" },
+    "tint": { "type": "float", "default": 0.15, "min": 0, "max": 1, "doc": "how fast a mote takes on the colour under it (per step)" },
+    "react": { "type": "float", "default": 1, "min": 0, "max": 3 },
+    "burst": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "onset throw" },
+    "flash": { "type": "float", "default": 0.6, "min": 0, "max": 3 },
+    "bg": { "type": "float", "default": 0.1, "min": 0, "max": 1, "doc": "brightness of the picture under the motes" },
+    "saturation": { "type": "float", "default": 0.5, "min": 0, "max": 1 },
+    "glow": { "type": "float", "default": 1, "min": 0, "max": 4 },
+    "exposure": { "type": "float", "default": 1, "min": 0.1, "max": 4 },
+    "cycle": { "type": "float", "default": 0.25, "min": 0, "max": 4, "doc": "palette drift per 4 bars" }
+  },
+  "budget": { "ms": 1.0, "scales": "n" },
+  "tags": ["media", "particles", "swarm", "simulation", "pointillist"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

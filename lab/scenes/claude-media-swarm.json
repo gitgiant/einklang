@@ -1,0 +1,42 @@
+{
+  "format": 1,
+  "id": "claude-media-swarm",
+  "name": "Media: light swarm",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media"],
+  "nodes": [
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 4, "chroma": 0.2, "light": 0.8 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.1, "pulse": 0.2, "drift": 0.4, "contrast": 1.2 } },
+    { "id": "sim", "piece": "claude-light-swarm", "params": { "count": 160, "streak": 6, "climb": 1, "flow": 1 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.6, "zoom": 0.002, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.6, "threshold": 0.6 },
+  "evolve": {
+    "every": "phrase", "transition": "random", "beats": 4,
+    "slots": [
+      { "node": "sim", "jitter": 0.1, "pool": [
+        { "piece": "claude-light-swarm", "params": { "count": 60, "size": 0.005, "streak": 14, "life": 5, "flow": 2.2, "climb": 0.6, "burst": 1.6 },
+          "ranges": { "flow": [1.5, 3], "scale": [1.5, 4] } },
+        { "piece": "claude-light-swarm", "params": { "count": 320, "size": 0.0015, "streak": 2, "life": 1.6, "climb": 2.5, "tries": 5, "bg": 0.05 },
+          "ranges": { "climb": [1.8, 3.5] } },
+        { "piece": "claude-luma-slime", "params": { "agents": 250, "food": 1.4 }, "ranges": { "angle": [20, 45], "linger": [0.4, 0.8] } },
+        { "piece": "claude-paint-smoke", "params": { "restore": 0.6, "puff": 1.4 }, "ranges": { "stir": [0.8, 1.8], "swirl": [0.6, 1.6] } }
+      ] },
+      { "node": "fx", "pool": [
+        { "piece": "core-trails", "params": { "decay": 0.82, "zoom": 0.008, "rotate": 0.003 } },
+        { "piece": "claude-zoomfeed", "params": { "decay": 0.8, "zoom": 0.01 } },
+        { "piece": "core-kaleido", "params": { "segments": 6, "spin": 0.04 }, "ranges": { "segments": [4, 8] } }
+      ] }
+    ]
+  }
+}

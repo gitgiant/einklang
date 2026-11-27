@@ -1,0 +1,40 @@
+{
+  "id": "claude-luma-slime",
+  "kind": "effect",
+  "name": "Luma slime",
+  "doc": "Slime-mould agents whose food is the picture's brightness: they smell trail plus light, linger and respawn on bright places, and weave a web of veins that redraws the image, each vein in the picture's own colour over a dim copy of it. Mids widen the sensor angle, bass stretches its reach, loudness speeds the agents and thickens the deposit; each onset blooms a burst of agents across the light near a seeded spot and flashes the veins.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture: vein colours and the dim backdrop (core-media.out)" },
+      "luma": { "type": "mask", "optional": true, "doc": "the food map (core-media.luma); without it, the luma of in" },
+      "palette": { "type": "palette", "optional": true, "doc": "colours the veins over grey or black parts of the picture; the top stop flares the densest veins" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "agents": { "type": "int", "default": 300, "min": 10, "max": 1000, "doc": "agent count in thousands" },
+    "cells": { "type": "int", "default": 540, "min": 135, "max": 1080, "doc": "trail map height in cells (width follows the aspect)" },
+    "steps": { "type": "int", "default": 2, "min": 1, "max": 6, "doc": "sim steps per tick" },
+    "angle": { "type": "float", "default": 28, "min": 5, "max": 90, "doc": "sensor angle in degrees (mids widen it)" },
+    "reach": { "type": "float", "default": 9, "min": 2, "max": 40, "doc": "sensor distance in cells at 540 (bass stretches it)" },
+    "turn": { "type": "float", "default": 30, "min": 5, "max": 90, "doc": "turn per step in degrees" },
+    "speed": { "type": "float", "default": 1.2, "min": 0.2, "max": 4, "doc": "cells per step at 540 (loudness speeds it)" },
+    "deposit": { "type": "float", "default": 1, "min": 0.1, "max": 4 },
+    "decay": { "type": "float", "default": 0.9, "min": 0.5, "max": 0.99, "doc": "trail kept per step" },
+    "diffuse": { "type": "float", "default": 0.6, "min": 0, "max": 1 },
+    "food": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "how strongly the light attracts, against the trail" },
+    "linger": { "type": "float", "default": 0.6, "min": 0, "max": 0.95, "doc": "slow-down on bright places (they gather there)" },
+    "respawn": { "type": "float", "default": 0.2, "min": 0, "max": 2, "doc": "percent of agents per step that respawn on a bright spot" },
+    "react": { "type": "float", "default": 1, "min": 0, "max": 3 },
+    "burst": { "type": "float", "default": 0.05, "min": 0, "max": 0.3, "doc": "share of agents an onset respawns" },
+    "flash": { "type": "float", "default": 1, "min": 0, "max": 3 },
+    "bg": { "type": "float", "default": 0.14, "min": 0, "max": 1, "doc": "brightness of the picture under the veins" },
+    "saturation": { "type": "float", "default": 0.8, "min": 0, "max": 1, "doc": "1 = veins in the picture's hue, 0 = in the palette" },
+    "glow": { "type": "float", "default": 1, "min": 0, "max": 4 },
+    "exposure": { "type": "float", "default": 1, "min": 0.1, "max": 4 },
+    "cycle": { "type": "float", "default": 0.25, "min": 0, "max": 4, "doc": "palette drift per 4 bars" }
+  },
+  "budget": { "ms": 0.8, "scales": "n" },
+  "tags": ["media", "physarum", "slime", "simulation", "organic", "veins"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}
