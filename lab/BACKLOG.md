@@ -253,7 +253,7 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 - [ ] Spiral (a spiral arm sweeps B in)
 
 ### Retro / aesthetic
-- [x] Vaporwave: slatted sunset sun → codex-chrome-aura, agy-pixel-outrun, agy-dolphin-beach, scenes agy-outrun-dusk, agy-aesthetic-beach
+- [x] Vaporwave: slatted sunset sun → codex-chrome-aura, agy-pixel-outrun, agy-dolphin-beach, scenes agy-outrun-dusk, agy-aesthetic-beach; claude-pixel-valley, scene claude-pixel-parallax
 - [x] Vaporwave: neon grid floor → codex-grid-floor, codex-outrun, codex-chrome-aura
 - [x] Vaporwave: marble bust → codex-sunset-atrium, agy-pixel-bust, scene agy-pixelwave-evolve
 - [x] Vaporwave: palm silhouettes → codex-sunset-atrium, agy-pixel-outrun, agy-dolphin-beach, scenes agy-outrun-dusk, agy-aesthetic-beach
@@ -269,14 +269,17 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 - [ ] VHS: REC/PLAY OSD with timestamp
 - [ ] VHS: pause jitter, rewind scrub, dropouts
 - [ ] Demoscene: Mode 7 floor
-- [ ] Demoscene: parallax layers
-- [ ] Demoscene: CGA/EGA/NES/C64 palettes
+- [x] Demoscene: parallax layers → claude-pixel-valley, scene claude-pixel-parallax
+- [x] Demoscene: CGA/EGA/NES/C64 palettes → claude-pixel-art (PICO-8, NES, C64, CGA, Game Boy, vapor + Bayer dither), style claude-pico8
 - [x] Demoscene: raster and copper bars → claude-copper, scene claude-copper-sky
 - [x] Demoscene: rotozoom → claude-rotozoom, scene claude-rotozoom-party
 - [ ] Demoscene: twister
 - [ ] Demoscene: sine scroller
 - [ ] Demoscene: dot balls
 - [x] Demoscene: fire → claude-fire, scene claude-inferno
+- [x] Pixel art: true low-res grid, palette snap, ordered dither, screen shake → claude-pixel-art, style claude-pico8
+- [x] Pixel art: night city (flickering windows, rain, note sprites) → claude-pixel-city, scene claude-pixel-downpour
+- [x] Pixel art: chiptune stage (LED EQ wall, disco floor, sprite dancers) → claude-chip-stage, scene claude-chiptune-gig
 - [ ] Y2K / Frutiger Aero (bubbles, glossy blobs, chrome)
 - [ ] Vector phosphor (Vectrex / arcade beam)
 - [ ] PS1 (affine wobble, vertex snap, low-res dither, fog)

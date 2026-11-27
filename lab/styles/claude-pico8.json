@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "claude-pico8",
+  "name": "PICO-8 pixels",
+  "doc": "True pixel art: a 320x180 grid with hard nearest pixels, the 16-colour PICO-8 palette through a 4x4 Bayer dither, the pixel font, no bloom.",
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "palette": ["#1d2b53", "#7e2553", "#ff004d", "#ffa300", "#ffec27", "#00e436", "#29adff", "#ff77a8"],
+  "fx": [{ "piece": "claude-pixel-art", "params": { "pixels": 180, "palette": 0, "dither": 0.6, "matrix": 1 } }],
+  "post": { "bloom": 0, "threshold": 1 },
+  "font": "pixel5x8"
+}

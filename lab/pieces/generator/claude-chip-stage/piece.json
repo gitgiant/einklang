@@ -1,0 +1,20 @@
+{
+  "id": "claude-chip-stage", "kind": "generator", "name": "Chiptune stage",
+  "doc": "A chiptune gig on a low-res grid: a wall of LED equalizer blocks (16 bands, green to red), a truss of lamps chasing the beat, sweeping spotlights and speaker stacks whose woofers pump on the bass, a disco floor whose tiles light on the beat, and a line of code-drawn pixel dancers stepping a frame per beat and jumping on the bass. `kick` (bind to an onset envelope) flashes the lamps and the floor.",
+  "ports": { "out": { "out": { "type": "tex" } } },
+  "params": {
+    "pixels": { "type": "float", "default": 180, "min": 48, "max": 540, "doc": "grid height in pixels; match the pixel-art effect" },
+    "dancers": { "type": "int", "default": 5, "min": 0, "max": 7, "doc": "how many dancers (the middle one is the lead, larger)" },
+    "per_beat": { "type": "float", "default": 1, "min": 0.25, "max": 4, "doc": "dance frames per beat" },
+    "eq": { "type": "float", "default": 1.2, "min": 0, "max": 3, "doc": "equalizer gain" },
+    "lights": { "type": "float", "default": 0.7, "min": 0, "max": 1, "doc": "spotlight strength" },
+    "kick": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "flash on kicks; bind to an onset envelope" },
+    "hue": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "shifts the light colours around the wheel" },
+    "glow": { "type": "float", "default": 1, "min": 0.2, "max": 3, "doc": "brightness (HDR)" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.6, "scales": "res" },
+  "tags": ["pixel", "retro", "chiptune", "spectrum", "sprite", "stage"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-27", "by": "claude/claude-opus-5-5", "note": "first version" }]
+}
