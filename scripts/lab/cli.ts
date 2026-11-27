@@ -146,8 +146,6 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
       const quiet = await lab.run({ ...base, scene: t.scene, fixture: 'silence', fps: 0, sheet: 0 });
       if (!quiet.ok) failures.push(`[silence] render failed: ${quiet.error}`);
       react.push({ fixture: fx, reactivity: reactivity(r.stats, quiet.stats) });
-      const qs = sectionStats(quiet);
-      for (const [sec, stats] of sectionStats(r)) notes.push(`[${fx}] ${sec} react ${reactivity(stats, qs.get(sec) ?? []).toFixed(4)}`);
     }
   }
   if (react.length) {
@@ -164,7 +162,6 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
     const f = judgeCost(ms, t.piece ? LIMITS.pieceMs : LIMITS.sceneMs, t.piece ? 'the piece' : 'the scene');
     if (f) failures.push(f);
   }
-  failures.push(`DEBUG ${t.id} ms ${ms.toFixed(2)} :: ${notes.join(' | ')}`);
   return { id: t.id, failures, notes, ms, dir };
 }
 
