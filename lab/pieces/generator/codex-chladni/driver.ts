@@ -2,14 +2,14 @@ import { definePiece, type GpuCtx } from '../../../api/index.ts';
 
 const GRAINS = 12500;
 const HOLD = 64;
-const MODES = [[3, 1], [4, 2], [5, 1], [5, 3], [6, 2], [7, 3], [7, 5], [8, 4]] as const;
+const MODE_COUNT = 8;
 
 function modeAt(past: GpuCtx['past'], age: number) {
   // Keep note-ons through short gaps. Sample the spectrum at the start of each
   // hold interval so a transient cannot change the pattern every frame.
   for (let i = 0; i < 120; i++) {
     const note = past(age + i).note;
-    if (note >= 0) return (note + Math.floor(note / 12)) % MODES.length;
+    if (note >= 0) return (note + Math.floor(note / 12)) % MODE_COUNT;
   }
 
   const bands = new Float32Array(16);
@@ -21,15 +21,26 @@ function modeAt(past: GpuCtx['past'], age: number) {
   for (let i = 1; i < bands.length; i++) {
     if (bands[i] > bands[peak]) peak = i;
   }
-  return bands[peak] > 0.14 ? (peak * 3 + 1) % MODES.length : 0;
+  return bands[peak] > 0.14 ? (peak * 3 + 1) % MODE_COUNT : 0;
 }
 
 export default definePiece({
   gpu({ device, shader }) {
     const module = shader('plate.wgsl');
     const uniform = device.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    const anchors = device.createBuffer({ size: GRAINS * MODE_COUNT * 8, usage: GPUBufferUsage.STORAGE });
+    const projection = device.createComputePipeline({
+      layout: 'auto', compute: { module, entryPoint: 'cs_anchors' },
+    });
+    const projectionGroup = device.createBindGroup({
+      layout: projection.getBindGroupLayout(0),
+      entries: [{ binding: 2, resource: { buffer: anchors } }],
+    });
     const layout = device.createBindGroupLayout({
-      entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } }],
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+        { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
+      ],
     });
     const pipelineLayout = device.createPipelineLayout({ bindGroupLayouts: [layout] });
     const plate = device.createRenderPipeline({
@@ -44,8 +55,12 @@ export default definePiece({
       primitive: { topology: 'triangle-strip' },
       fragment: { module, entryPoint: 'fs_grain', targets: [{ format: 'rgba16float', blend: { color: add, alpha: add } }] },
     });
-    const group = device.createBindGroup({ layout, entries: [{ binding: 0, resource: { buffer: uniform } }] });
+    const group = device.createBindGroup({
+      layout,
+      entries: [{ binding: 0, resource: { buffer: uniform } }, { binding: 1, resource: { buffer: anchors } }],
+    });
     const data = new Float32Array(16);
+    let ready = false;
 
     return {
       frame({ enc, out, width, height, tick, time, audio, past, params }) {
@@ -63,11 +78,19 @@ export default definePiece({
         const energy = Math.min(1, audio.rms * 2.8) * drive;
         const scale = Math.min(width, height) * 0.420;
         data.set([scale / width, scale / height, time, params.grain as number]);
-        data.set([...MODES[current], ...MODES[previous]], 4);
+        data.set([current, previous, 0, 0], 4);
         data.set([current === previous ? 1 : age / HOLD, hit * drive, energy, scale], 8);
         data.set([audio.bands[0], audio.bands[1], audio.bands[2], 0], 12);
         device.queue.writeBuffer(uniform, 0, data);
 
+        if (!ready) {
+          const compute = enc.beginComputePass({ label: 'Project grains onto nodal lines' });
+          compute.setPipeline(projection);
+          compute.setBindGroup(0, projectionGroup);
+          compute.dispatchWorkgroups(Math.ceil(GRAINS / 128), MODE_COUNT);
+          compute.end();
+          ready = true;
+        }
         const pass = enc.beginRenderPass({
           colorAttachments: [{ view: out.out.createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }],
           label: 'Chladni plate and grains',
@@ -79,7 +102,7 @@ export default definePiece({
         pass.draw(4, GRAINS);
         pass.end();
       },
-      dispose() { uniform.destroy(); },
+      dispose() { uniform.destroy(); anchors.destroy(); },
     };
   },
 });

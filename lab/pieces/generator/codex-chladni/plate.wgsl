@@ -1,10 +1,18 @@
 struct PlateUniforms {
   view: vec4f,   // UV scale, seconds, grain size
-  modes: vec4f,  // current n,m and previous n,m
+  modes: vec4f,  // current and previous mode indices
   drive: vec4f,  // mode-change age, beat impulse, level, plate radius in pixels
   bass: vec4f,
 };
 @group(0) @binding(0) var<uniform> U: PlateUniforms;
+@group(0) @binding(1) var<storage, read> anchors: array<vec2f>;
+@group(0) @binding(2) var<storage, read_write> projected: array<vec2f>;
+
+const GRAINS = 12500u;
+const MODES = array(
+  vec2f(3., 1.), vec2f(4., 2.), vec2f(5., 1.), vec2f(5., 3.),
+  vec2f(6., 2.), vec2f(7., 3.), vec2f(7., 5.), vec2f(8., 4.)
+);
 
 fn noise(a: u32, b: u32) -> f32 {
   return f32(h32(a, b) & 65535u) / 65536.;
@@ -77,6 +85,13 @@ fn settle(origin: vec2f, mode: vec2f) -> vec2f {
   return p;
 }
 
+@compute @workgroup_size(128)
+fn cs_anchors(@builtin(global_invocation_id) id: vec3u) {
+  if (id.x >= GRAINS) { return; }
+  let origin = (vec2f(noise(id.x, 1u), noise(id.x, 2u)) * 2. - 1.) * 0.9;
+  projected[id.y * GRAINS + id.x] = settle(origin, MODES[id.y]);
+}
+
 struct Grain {
   @builtin(position) pos: vec4f,
   @location(0) xy: vec2f,
@@ -84,15 +99,14 @@ struct Grain {
 };
 
 @vertex fn vs_grain(@builtin(vertex_index) vertex: u32, @builtin(instance_index) id: u32) -> Grain {
-  let origin = (vec2f(noise(id, 1u), noise(id, 2u)) * 2. - 1.) * 0.9;
   let angle = noise(id, 3u) * 6.2831853;
   let axis = vec2f(cos(angle), sin(angle));
   let jitter = noise(id, 4u);
-  let next = settle(origin, U.modes.xy);
+  let next = anchors[u32(U.modes.x) * GRAINS + id];
   let age = U.drive.x;
   var center = next;
   if (age < 0.64) {
-    let old = settle(origin, U.modes.zw);
+    let old = anchors[u32(U.modes.y) * GRAINS + id];
     let mixing = smoothstep(0.03, 0.64, age);
     let scatter = 1.8 * age * exp(-7. * age) * (0.25 + jitter);
     center = mix(old, next, mixing) + scatter * axis;
