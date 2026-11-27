@@ -1,0 +1,21 @@
+{
+  "id": "codex-photo-sail",
+  "kind": "generator",
+  "name": "Photo Sail",
+  "doc": "The picture hangs from a rail on a spring mesh. Bright sections stretch farther, strong edges stiffen the fabric, and percussion snaps the folds into the light.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture printed on the sail" },
+      "height": { "type": "mask", "doc": "brightness changes how far the cloth billows" },
+      "flow": { "type": "field", "doc": "strong edges stiffen the weave" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "drive": { "type": "float", "default": 1.2, "min": 0.6, "max": 1.6, "doc": "strength of the kick and bass forces" },
+    "tint": { "type": "color", "default": "#8adad3", "doc": "light on the weave and rail" }
+  },
+  "budget": { "ms": 1, "scales": "res" },
+  "tags": ["media", "sim", "cloth", "springs"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}

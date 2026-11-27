@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "codex-evolve-sim-dust-orbit",
+  "name": "Dust Orbit",
+  "doc": "Bright spots in the picture draw violet streams of dust coloured by the source. Phrases can recast the picture as a blue sail or a bed of rose-metal spines before the dust returns.",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "cloth", "ferrofluid", "gravity"],
+  "nodes": [
+    {"id": "media", "piece": "core-media", "params": {"cycle": 0, "drift": 0.1, "beat_zoom": 0.14, "pulse": 0.16, "edge_width": 4, "contrast": 1.1, "saturation": 1.28}},
+    {"id": "sim", "piece": "codex-photo-forces", "params": {"mode": 1, "tint": "#b991ff", "drive": 1.54}}
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.height" },
+    { "from": "media.edges", "to": "sim.flow" }
+  ],
+  "out": "sim.out",
+  "post": { "bloom": 0.43, "threshold": 0.66, "exposure": 0.99 },
+  "evolve": {
+    "every": "phrase", "transition": "core-blend", "beats": 2,
+    "slots": [
+      { "node": "sim", "jitter": 0, "pool": [
+        {"piece": "codex-photo-forces", "params": {"mode": 0, "tint": "#f38bc5", "drive": 1.43}},
+        {"piece": "codex-photo-sail", "params": {"tint": "#8ca7f9", "drive": 1.31}}
+      ] }
+    ]
+  }
+}
