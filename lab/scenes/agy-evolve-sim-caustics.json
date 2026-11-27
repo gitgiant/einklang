@@ -1,0 +1,197 @@
+{
+  "format": 1,
+  "id": "agy-evolve-sim-caustics",
+  "name": "Evolve sim: Caustic Tank",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "waves", "caustics", "optics", "chladni", "prism"],
+  "doc": "Your image, video or camera becomes a shallow-water ripple tank whose brightness sets depth and whose edges reflect expanding waves; onsets drop pebbles that refract the picture with bright caustics, highs widen spectral dispersion, and every phrase the picture momentarily re-forms as the simulation swaps across caustic ripples, Chladni sand, chromatic prism lenses and standing-wave interferometry.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.75 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.9 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#061826 #0e4d64 #18c2d8 #6cf7d6 #ffd166 #f8fffc", "cycle": 0.24 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.28, "pulse": 0.32, "drift": 0.35, "contrast": 1.18, "saturation": 1.18, "edge_width": 2.4 }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-ripple-optics",
+      "params": {
+        "mode": 0,
+        "cells": 180,
+        "speed": 0.95,
+        "damp": 0.02,
+        "pebble": 1.3,
+        "swell": 1.05,
+        "edge_wall": 0.68,
+        "refract": 1.25,
+        "caustic": 1.45,
+        "dispersion": 1.15,
+        "reform": 0.72,
+        "pal_mix": 0.42,
+        "glow": 1.18,
+        "react": 1.45
+      },
+      "bind": {
+        "refract": { "from": "bass.out", "range": [0.85, 1.95] },
+        "dispersion": { "from": "hi.out", "range": [0.55, 2.05] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "core-trails",
+      "params": { "decay": 0.48, "zoom": 0.008, "rotate": 0.002 },
+      "bind": {
+        "zoom": { "from": "bass.out", "range": [0.002, 0.028] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.26, "threshold": 0.82 },
+  "evolve": {
+    "every": "phrase",
+    "transition": "agy-liquid",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "codex-neon-phosphor",
+            "params": { "cool": "#0e4d92", "warm": "#ff4d94", "drive": 0.62, "origin": 0.5 },
+            "ranges": { "drive": [0.45, 0.85], "origin": [0.38, 0.62] }
+          },
+          {
+            "piece": "claude-zoomfeed",
+            "params": { "decay": 0.78, "zoom": 0.008, "bass": 0.032, "pulse": 0.025, "rotate": 0.004, "swing": 0.018, "hue": 0.025 },
+            "ranges": { "decay": [0.68, 0.84], "hue": [-0.04, 0.04] }
+          },
+          {
+            "piece": "core-kaleido",
+            "params": { "segments": 6, "spin": 0.03, "zoom": 1.08 },
+            "ranges": { "segments": [4, 8], "spin": [-0.06, 0.06] },
+            "bind": {
+              "zoom": { "from": "bass.out", "range": [1.0, 1.32] }
+            }
+          }
+        ]
+      },
+      {
+        "node": "sim",
+        "pool": [
+          {
+            "piece": "agy-cymatic-sand",
+            "params": {
+              "mode": 0,
+              "count": 96,
+              "chladni": 1.25,
+              "edge_pull": 1.35,
+              "luma_warp": 0.38,
+              "vibrate": 1.25,
+              "jolt": 1.4,
+              "reform": 0.72,
+              "size": 2.15,
+              "streak": 1.5,
+              "under": 0.28,
+              "pal_mix": 0.4,
+              "glow": 1.25,
+              "react": 1.45
+            },
+            "ranges": { "chladni": [0.95, 1.6], "edge_pull": [1.0, 1.7], "luma_warp": [0.22, 0.55] },
+            "bind": {
+              "vibrate": { "from": "bass.out", "range": [0.75, 1.95] },
+              "jolt": { "from": "hi.out", "range": [0.8, 2.0] }
+            }
+          },
+          {
+            "piece": "agy-ripple-optics",
+            "params": {
+              "mode": 1,
+              "cells": 168,
+              "speed": 0.9,
+              "damp": 0.024,
+              "pebble": 1.15,
+              "swell": 0.95,
+              "edge_wall": 0.65,
+              "refract": 1.2,
+              "caustic": 1.35,
+              "dispersion": 1.45,
+              "facets": 6.5,
+              "reform": 0.74,
+              "pal_mix": 0.44,
+              "glow": 1.16,
+              "react": 1.45
+            },
+            "ranges": { "facets": [4.5, 9.5], "refract": [0.95, 1.65] },
+            "bind": {
+              "dispersion": { "from": "hi.out", "range": [0.85, 2.35] },
+              "caustic": { "from": "bass.out", "range": [0.95, 1.95] }
+            }
+          },
+          {
+            "piece": "agy-ripple-optics",
+            "params": {
+              "mode": 2,
+              "cells": 180,
+              "speed": 1.0,
+              "damp": 0.018,
+              "pebble": 1.2,
+              "swell": 1.25,
+              "edge_wall": 0.6,
+              "refract": 1.25,
+              "caustic": 1.4,
+              "dispersion": 1.25,
+              "reform": 0.72,
+              "pal_mix": 0.48,
+              "glow": 1.18,
+              "react": 1.45
+            },
+            "ranges": { "swell": [0.9, 1.65], "pal_mix": [0.32, 0.65] },
+            "bind": {
+              "refract": { "from": "bass.out", "range": [0.9, 1.85] },
+              "dispersion": { "from": "hi.out", "range": [0.7, 2.1] }
+            }
+          },
+          {
+            "piece": "agy-cymatic-sand",
+            "params": {
+              "mode": 1,
+              "count": 96,
+              "chladni": 1.3,
+              "edge_pull": 1.25,
+              "luma_warp": 0.35,
+              "vibrate": 1.2,
+              "jolt": 1.35,
+              "reform": 0.74,
+              "size": 2.1,
+              "streak": 1.6,
+              "under": 0.26,
+              "pal_mix": 0.42,
+              "glow": 1.26,
+              "react": 1.45
+            },
+            "ranges": { "chladni": [1.0, 1.65], "edge_pull": [0.9, 1.6] },
+            "bind": {
+              "vibrate": { "from": "bass.out", "range": [0.75, 1.9] }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
