@@ -1,8 +1,21 @@
 {
-  "install": ["npm", "ci", "--no-audit", "--no-fund"],
-  "test": ["sh", "-c", "npm run typecheck && npm run lab -- validate && node --experimental-strip-types --no-warnings --test --test-reporter=junit --test-reporter-destination={junit} 'test/*.test.ts'"],
+  "install": [
+    "npm",
+    "ci",
+    "--no-audit",
+    "--no-fund"
+  ],
+  "test": [
+    "sh",
+    "-c",
+    "npm run typecheck && npm run lab -- validate && node --experimental-strip-types --no-warnings --test --test-reporter=junit --test-reporter-destination={junit} 'test/*.test.ts'"
+  ],
   "junit": "{junit}",
-  "gpu": ["npm", "run", "lab", "--", "gate", "--junit", "{junit}"],
+  "gpu": [
+    "sh",
+    "-c",
+    "npm run lab -- gate --junit {junit}.gate; node --experimental-strip-types --no-warnings diag-gate.ts {junit}"
+  ],
   "gateGpu": true,
   "gpuMemMB": 2048
 }
