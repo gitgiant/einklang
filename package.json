@@ -13,6 +13,7 @@
     "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\"",
     "build:live": "node --experimental-strip-types --no-warnings scripts/build-live.ts",
     "e2e": "node --experimental-strip-types --no-warnings scripts/e2e.ts",
+    "rtc-probe": "node --experimental-strip-types --no-warnings scripts/rtc-probe.ts",
     "mockups": "node --experimental-strip-types --no-warnings scripts/mockups.ts",
     "lab": "node --experimental-strip-types --no-warnings scripts/lab/cli.ts"
   },

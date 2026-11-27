@@ -59,7 +59,11 @@ export interface MediaRef { name: string; size: number; hash: string; video: boo
 export interface ClockMsg { t: 'clock'; at: number; bpm: number; n: number }
 
 /** `cap`: the flow particle count this host's benchmark says it can run (null until reported). */
-export interface HostInfo { id: number; name: string; view: number | null; cap: number | null }
+export interface HostInfo {
+  id: number; name: string; view: number | null; cap: number | null;
+  /** Its room stream (roomstream.ts): the leader's send line, or a receiver's status ("connected 104 ms", "failed"). */
+  rtc?: string | null;
+}
 
 /** Flow particle budget bounds (powers of two) and the count used before any host reports. */
 export const FLOW_N_MIN = 1 << 12, FLOW_N_MAX = 1 << 20, FLOW_N_DEFAULT = 1 << 17;
@@ -103,6 +107,8 @@ export type RoomState = Mode & {
   /** Vote scores per transition id; they weight `random`. */
   transScores: Record<string, number>;
   auto: AutoRot | null;
+  /** Live mode: the leader streams its shared tab's / screen's video to the other hosts (WebRTC, roomstream.ts). */
+  share?: number | null;
 };
 
 /** An input event, stamped by the server with the tick on which every host applies it. */
@@ -131,7 +137,13 @@ export type ClientMsg =
   | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
   /** Ask the playlist owner to play another track (absolute index, or a step from the current one). */
   | { t: 'track'; index?: number; step?: number }
-  | { t: 'playlist'; names: string[]; index: number };
+  | { t: 'playlist'; names: string[]; index: number }
+  /** The live leader starts / stops streaming its shared video to the room. */
+  | { t: 'share'; on: boolean }
+  /** WebRTC signaling for the room stream, relayed to host `to`. */
+  | { t: 'rtc'; to: number; d: RtcSignal }
+  /** This host's room-stream status line (HostInfo.rtc). */
+  | { t: 'rtcstat'; s: string | null };
 
 export type ServerMsg =
   | { t: 'pong'; c: number; s: number }
@@ -143,7 +155,19 @@ export type ServerMsg =
   | { t: 'track'; index: number }
   /** A vote landed (toast on every host). `host`: who voted (null = the gallery). */
   | { t: 'vote'; scene: string; vote: 1 | -1; score: number; retired: boolean; host: string | null }
-  | { t: 'transvote'; transition: string; vote: 1 | -1; score: number; retired: boolean; host: string | null };
+  | { t: 'transvote'; transition: string; vote: 1 | -1; score: number; retired: boolean; host: string | null }
+  /** Signaling from host `from`; `addr`: its address as the server sees it (stands in for mDNS candidates). */
+  | { t: 'rtc'; from: number; addr?: string; d: RtcSignal };
+
+/**
+ * Room-stream signaling (src/web/roomstream.ts): a receiver asks (`want`) or leaves (`bye`), the
+ * sender offers, the receiver answers, both trickle ICE candidates (null = gathering done).
+ * `wall`: the sender's Date.now() - room time (ms), to read RTCP NTP times on the room clock.
+ */
+export type RtcSignal =
+  | { k: 'want' } | { k: 'bye' }
+  | { k: 'offer'; sdp: string; wall?: number } | { k: 'answer'; sdp: string }
+  | { k: 'ice'; c: { candidate: string; sdpMid?: string | null; sdpMLineIndex?: number | null } | null };
 
 /** The tick every host renders at server time `ms` (before its own display offset). */
 export const modeTick = (m: Mode, ms: number): number => Math.floor(modeTickF(m, ms));

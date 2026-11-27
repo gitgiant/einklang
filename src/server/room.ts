@@ -36,7 +36,10 @@ function sanitize(type: string, p: unknown): { ok: boolean; payload?: unknown } 
   return { ok: true, payload: p };
 }
 
-interface Client { id: number; ws: WsConn; name: string | null; cap: number | null }
+interface Client { id: number; ws: WsConn; name: string | null; cap: number | null; addr: string | null; rtc: string | null }
+
+/** Largest relayed signaling message (an SDP offer is a few KB). */
+const MAX_RTC_BYTES = 32 * 1024;
 
 /** Where votes persist (data/votes.jsonl on the server; memory in tests). */
 export interface VoteStore { load(): Vote[]; append(v: Vote): void }
@@ -134,13 +137,15 @@ export class Room {
   /** The tick hosts are rendering right now. */
   tickNow(): number { return modeTick(this.state, this.now()); }
 
-  join(ws: WsConn): void {
-    const c: Client = { id: this.nextId++, ws, name: null, cap: null };
+  /** `addr`: the client's IP as the server sees it (relayed with its signaling). */
+  join(ws: WsConn, addr: string | null = null): void {
+    const c: Client = { id: this.nextId++, ws, name: null, cap: null, addr, rtc: null };
     this.clients.set(c.id, c);
     ws.onmessage = (d) => this.onMessage(c, d);
     ws.onclose = () => {
       this.clients.delete(c.id);
       if (this.leader === c) this.leader = null;
+      if (this.state.share === c.id) this.state.share = null;
       if (this.clock?.id === c.id) { this.clock = null; this.state.clock = null; }
       if (this.state.playlist?.owner === c.id) this.state.playlist = null;
       for (const [k, s] of this.padSlots) if (k.startsWith(`${c.id}:`)) {
@@ -165,7 +170,7 @@ export class Room {
   private broadcastState(): void {
     this.state.hosts = [...this.clients.values()]
       .filter((c) => c.name !== null)
-      .map((c): HostInfo => ({ id: c.id, name: c.name!, view: this.viewByName.get(c.name!) ?? null, cap: c.cap }));
+      .map((c): HostInfo => ({ id: c.id, name: c.name!, view: this.viewByName.get(c.name!) ?? null, cap: c.cap, rtc: c.rtc }));
     this.broadcast({ t: 'state', ...this.state });
   }
 
@@ -286,6 +291,22 @@ export class Room {
         this.leader = c;
         this.setMode({ mode: 'live', start: this.now() + 300, delay: m.delay === undefined ? LIVE_DELAY : Math.max(1, clampInt(m.delay, 1, 30)) });
         return this.newTimeline();
+      case 'share':
+        if (this.state.mode !== 'live' || c !== this.leader) return;
+        if ((this.state.share ?? null) === (m.on ? c.id : null)) return;
+        this.state.share = m.on ? c.id : null;
+        return this.broadcastState();
+      case 'rtc': {
+        const to = this.clients.get(m.to);
+        if (!to || to === c || !m.d || typeof m.d !== 'object' || JSON.stringify(m.d).length > MAX_RTC_BYTES) return;
+        return this.send(to, { t: 'rtc', from: c.id, ...(c.addr ? { addr: c.addr } : {}), d: m.d });
+      }
+      case 'rtcstat': {
+        const s = typeof m.s === 'string' && m.s ? m.s.slice(0, 120) : null;
+        if (s === c.rtc) return;
+        c.rtc = s;
+        return c.name !== null ? this.broadcastState() : undefined;
+      }
       case 'stop':
         this.leader = null; this.fileFeat = null;
         this.setMode({ mode: 'idle' });
