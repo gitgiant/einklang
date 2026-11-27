@@ -8,7 +8,7 @@ struct Sim {
   birth: u32, survive: u32, hash: u32, _p0: u32,
   mu: f32, sigma: f32, dt: f32, decay: f32,
   zoom: f32, swirl: f32, density: f32, lenia: f32,
-  target: f32, feedback: f32, _f0: f32, _f1: f32, // Lenia population control: wanted mean value, gain
+  want: f32, feedback: f32, _f0: f32, _f1: f32, // Lenia population control: wanted mean value, gain
   seeds: array<vec4f, 8>, // x, y (cells), radius (cells), strength 0..1
 };
 @group(0) @binding(0) var<uniform> sim: Sim;
@@ -76,7 +76,7 @@ fn bilinear(q: vec2f) -> vec4f {
   dst[g.y * sim.size.x + g.x] = v;
 }
 
-// Sum of all values (Lenia's population) before this frame's steps: the steps steer toward `target` with it.
+// Sum of all values (Lenia's population) before this frame's steps: the steps steer toward `want` with it.
 @compute @workgroup_size(16, 16) fn cs_mass(@builtin(global_invocation_id) g: vec3u, @builtin(local_invocation_index) li: u32) {
   if (g.x < sim.size.x && g.y < sim.size.y) { atomicAdd(&wg_mass, u32(src[g.y * sim.size.x + g.x].x * 256.0)); }
   workgroupBarrier();
@@ -117,7 +117,7 @@ fn bilinear(q: vec2f) -> vec4f {
   // Lenia here is hysteretic (once a labyrinth forms it outlives the growth width that made it): narrow the
   // growth band when the population is over the target, widen it when under, so loudness sets the territory
   let cover = f32(atomicLoad(&mass[0])) / 256.0 / f32(sim.size.x * sim.size.y);
-  let sigma = sim.sigma * clamp(1.0 + sim.feedback * (sim.target - cover), 0.4, 1.15);
+  let sigma = sim.sigma * clamp(1.0 + sim.feedback * (sim.want - cover), 0.4, 1.15);
   let e = (u - sim.mu) / sigma;
   let grow = 2.0 * exp(-0.5 * e * e) - 1.0;
   let a = clamp(v.x + sim.dt * grow, 0.0, 1.0);

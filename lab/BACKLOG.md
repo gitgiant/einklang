@@ -30,8 +30,8 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] SPH liquid
 - [x] SDF raymarch → claude-raymarch, scene claude-sdf-flight
 - [x] Fractals (mandelbox, julia) → claude-julia, scene claude-julia-dive
-- [ ] L-systems / trees
-- [ ] Cellular automata
+- [x] L-systems / trees → claude-lsystem, scene claude-grove
+- [x] Cellular automata (Life + Lenia) → claude-life, scene claude-lenia
 - [x] Spectrum terrain / ridgeline → agy-ridgeline, scene agy-unknown-ridges
 - [ ] Voronoi
 - [ ] Noise fields
