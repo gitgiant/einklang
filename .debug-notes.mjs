@@ -1,4 +1,6 @@
-// Throwaway (reverted): turn the gate's junit notes into failures so the worker sees the numbers.
+// Throwaway (reverted): run the gate, then turn its junit notes into failures so the worker sees the numbers.
+import { spawnSync } from 'node:child_process';
+spawnSync('npm', ['run', 'lab', '--', 'gate', '--junit', process.argv[2]], { stdio: 'inherit', shell: true });
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 const f = process.argv[2];
 let x = readFileSync(f, 'utf8');

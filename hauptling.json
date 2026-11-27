@@ -12,9 +12,9 @@
   ],
   "junit": "{junit}",
   "gpu": [
-    "sh",
-    "-c",
-    "npm run lab -- gate --junit {junit}; node .debug-notes.mjs {junit}; exit 1"
+    "node",
+    ".debug-notes.mjs",
+    "{junit}"
   ],
   "gateGpu": true,
   "gpuMemMB": 2048
