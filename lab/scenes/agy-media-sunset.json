@@ -1,0 +1,70 @@
+{
+  "format": 1,
+  "id": "agy-media-sunset",
+  "name": "Media: Pixel Sunset",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "pixel", "vaporwave", "sunset", "dither", "retro"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.55 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#140726 #5c167e #ff2e93 #ff9e5e #ffe066 #00f0ff", "cycle": 0.25 } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.35, "pulse": 0.3, "drift": 0.45, "contrast": 1.2, "saturation": 1.25, "edge_width": 2.5 }
+    },
+    {
+      "id": "sunset",
+      "piece": "agy-pixel-sunset",
+      "params": { "cells": 200, "horizon": 0.56, "sky_mix": 0.68, "sun_size": 0.23, "dither": 0.85, "speed": 1.0, "glow": 1.25 },
+      "bind": {
+        "glow": { "from": "bass.out", "range": [0.95, 1.85] }
+      }
+    },
+    {
+      "id": "crt",
+      "piece": "claude-crt",
+      "params": { "scanlines": 0.28, "curve": 0.14, "vignette": 0.28, "chroma": 0.32, "tracking": 0.35, "jitter": 0.2 }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sunset.in" },
+    { "from": "media.luma", "to": "sunset.luma" },
+    { "from": "media.edges", "to": "sunset.edges" },
+    { "from": "pal.palette", "to": "sunset.palette" },
+    { "from": "sunset.out", "to": "crt.in" }
+  ],
+  "out": "crt.out",
+  "post": { "bloom": 0.42, "threshold": 0.72 },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-pixelate",
+    "beats": 2,
+    "variants": [
+      {
+        "id": "drop",
+        "when": { "section": "drop" },
+        "transition": "core-flash",
+        "beats": 1,
+        "params": {
+          "sunset": { "cells": 168, "sky_mix": 0.78, "sun_size": 0.28, "speed": 1.65, "glow": 1.6 },
+          "crt": { "chroma": 0.55, "tracking": 0.62, "jitter": 0.38 }
+        },
+        "post": { "bloom": 0.54, "threshold": 0.66 }
+      },
+      {
+        "id": "breakdown",
+        "when": { "section": "breakdown" },
+        "transition": "core-blend",
+        "beats": 4,
+        "params": {
+          "sunset": { "cells": 240, "sky_mix": 0.62, "sun_size": 0.2, "speed": 0.55, "glow": 1.05 },
+          "crt": { "scanlines": 0.22, "chroma": 0.2, "tracking": 0.15, "jitter": 0.1 }
+        },
+        "post": { "bloom": 0.36, "threshold": 0.78 }
+      }
+    ]
+  }
+}

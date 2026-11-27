@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "id": "agy-media-crt-room",
+  "name": "Media: CRT Room",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "pixel", "crt", "vaporwave", "room", "retro"],
+  "nodes": [
+    { "id": "env", "piece": "core-envelope", "params": { "source": 0, "attack": 0.005, "decay": 0.25, "sustain": 0, "curve": 2.4 } },
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.55 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#140726 #4b1d7a #ff47a3 #ff9e5e #00f0ff #7affd4", "cycle": 0.22 } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.32, "pulse": 0.3, "drift": 0.38, "contrast": 1.15, "saturation": 1.2, "edge_width": 2.0 }
+    },
+    {
+      "id": "room",
+      "piece": "agy-crt-room",
+      "params": { "cells": 200, "zoom": 1.02, "spill": 1.25, "scanlines": 0.55, "glitch": 0.48, "dither": 0.8 },
+      "bind": {
+        "spill": { "from": "bass.out", "range": [0.9, 1.85] },
+        "glitch": { "from": "env.out", "range": [0.25, 0.95] }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": { "decay": 0.3, "zoom": 0.0, "rotate": 0.0 }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "room.in" },
+    { "from": "media.luma", "to": "room.luma" },
+    { "from": "media.edges", "to": "room.edges" },
+    { "from": "pal.palette", "to": "room.palette" },
+    { "from": "room.out", "to": "trails.in" }
+  ],
+  "out": "trails.out",
+  "post": { "bloom": 0.44, "threshold": 0.7 },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-glitch",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "drop",
+        "when": { "section": "drop" },
+        "transition": "core-glitch",
+        "beats": 1,
+        "params": {
+          "room": { "cells": 172, "zoom": 1.22, "spill": 1.65, "scanlines": 0.65, "glitch": 0.78 },
+          "trails": { "decay": 0.4 }
+        },
+        "post": { "bloom": 0.54, "threshold": 0.64 }
+      },
+      {
+        "id": "breakdown",
+        "when": { "section": "breakdown" },
+        "transition": "core-blend",
+        "beats": 4,
+        "params": {
+          "room": { "cells": 230, "zoom": 0.92, "spill": 1.05, "scanlines": 0.42, "glitch": 0.22 },
+          "trails": { "decay": 0.22 }
+        },
+        "post": { "bloom": 0.36, "threshold": 0.76 }
+      }
+    ]
+  }
+}
