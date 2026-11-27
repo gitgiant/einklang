@@ -1,0 +1,46 @@
+{
+  "id": "codex-leadlight",
+  "kind": "effect",
+  "name": "Leaded glass",
+  "doc": "The picture colours irregular glass panes with brass-lit seams; bass turns and enlarges the mosaic while onsets brighten the glass.",
+  "ports": {
+    "in": {
+      "picture": {
+        "type": "tex",
+        "doc": "The picked media in linear HDR."
+      },
+      "light": {
+        "type": "mask",
+        "doc": "Perceptual luma of the picture."
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "cells": {
+      "type": "float",
+      "default": 10,
+      "min": 5,
+      "max": 24,
+      "doc": "Approximate number of cells per screen height at rest."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 2.0,
+    "scales": "res"
+  },
+  "tags": [
+    "media",
+    "mosaic",
+    "geometry"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

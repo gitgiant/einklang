@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "id": "codex-media-faultline",
+  "name": "Faultline",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "shatter",
+    "geometry"
+  ],
+  "nodes": [
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "brightness": 1.1,
+        "saturation": 1.02,
+        "drift": 0.38,
+        "beat_zoom": 0.45,
+        "pulse": 0.23
+      }
+    },
+    {
+      "id": "look",
+      "piece": "codex-fracture-plate",
+      "params": {
+        "tiles": 14,
+        "breakup": 0.34
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "look.picture"
+    }
+  ],
+  "out": "look.out",
+  "post": {
+    "bloom": 0.19,
+    "threshold": 0.78
+  },
+  "sections": {
+    "on": "bar",
+    "transition": "core-blend",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "shattered",
+        "when": {
+          "section": "drop"
+        },
+        "params": {
+          "look": {
+            "tiles": 11,
+            "breakup": 0.94
+          }
+        },
+        "post": {
+          "bloom": 0.29
+        }
+      }
+    ]
+  }
+}
