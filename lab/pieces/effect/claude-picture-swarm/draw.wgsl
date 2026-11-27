@@ -54,7 +54,7 @@ struct BOut { @builtin(position) pos: vec4f, @location(0) q: vec2f, @location(1)
   let l = dot(c, vec3f(0.2126, 0.7152, 0.0722));
   c = max(mix(vec3f(l), c, dr.sat), vec3f(0.0));
   // keep the hue in the dark parts, a bird is never black
-  c = c / max(max(c.r, max(c.g, c.b)), 0.1) * (0.3 + 0.7 * sqrt(clamp(l * 1.6, 0.0, 1.0)));
+  c = c / max(max(c.r, max(c.g, c.b)), 0.1) * (0.18 + 0.82 * sqrt(clamp(l * 1.6, 0.0, 1.0)));
   o.col = c * (1.0 + sp / max(dr.cruise, 1e-3) * 0.3);
   return o;
 }
