@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "codex-evolve-sim-silver-bath",
+  "name": "Silver Bath",
+  "doc": "Silver nodal lines crawl over the picked picture as its brightness changes the speed of the waves. Phrases switch to a copper bath with concentric ripples or a wash of photo-colored violet filaments.",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "waves"],
+  "nodes": [
+    { "id": "media", "piece": "core-media", "params": { "cycle": 0, "drift": 0.1, "beat_zoom": 0.13, "pulse": 0.2, "saturation": 0.68, "edge_width": 3 } },
+    { "id": "sim", "piece": "codex-image-membrane", "params": { "plate": 1, "drive": 1.25, "bend": 0.92, "ground": 0.88 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.height" },
+    { "from": "media.edges", "to": "sim.flow" }
+  ],
+  "out": "sim.out",
+  "post": { "bloom": 0.18, "threshold": 0.76, "exposure": 0.96 },
+  "evolve": {
+    "every": "phrase", "transition": "core-blend", "beats": 3,
+    "slots": [
+      { "node": "sim", "jitter": 0, "pool": [
+        { "piece": "codex-image-membrane", "params": { "plate": 2, "drive": 1.25, "bend": 1.12, "ground": 0.87 } },
+        { "piece": "codex-pixel-flock", "params": { "ink": 2, "scatter": 1.32, "return": 0.67, "ground": 0.73, "size": 0.88 } }
+      ] }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "codex-evolve-sim-contact-flock",
+  "name": "Contact Flock",
+  "doc": "Amber streaks build up the picked picture, scatter in a front on each kick, then flock home. Other sections recast the image as ice beads or a blue wave tank.",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "particles"],
+  "nodes": [
+    { "id": "media", "piece": "core-media", "params": { "cycle": 0, "drift": 0.12, "beat_zoom": 0.1, "pulse": 0.16, "saturation": 1.02 } },
+    { "id": "sim", "piece": "codex-pixel-flock", "params": { "ink": 0, "scatter": 1.38, "return": 0.78, "ground": 0.67, "size": 1.15 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.height" },
+    { "from": "media.edges", "to": "sim.flow" }
+  ],
+  "out": "sim.out",
+  "post": { "bloom": 0.24, "threshold": 0.72, "exposure": 0.98 },
+  "evolve": {
+    "every": "section", "most": 2, "transition": "core-blend", "beats": 2,
+    "slots": [
+      { "node": "sim", "jitter": 0, "pool": [
+        { "piece": "codex-pixel-flock", "params": { "ink": 1, "scatter": 1.23, "return": 1.04, "ground": 0.65, "size": 1.28 } },
+        { "piece": "codex-image-membrane", "params": { "plate": 0, "drive": 1.1, "bend": 0.88, "ground": 0.78 } }
+      ] }
+    ]
+  }
+}

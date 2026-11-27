@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "codex-evolve-sim-tidal-negative",
+  "name": "Tidal Negative",
+  "doc": "Kicks push a bright picture through blue-green glass. Along the next phrase the glass gives way to a violet flock that follows the picture's outlines and stretches into threads.",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "waves", "particles"],
+  "nodes": [
+    { "id": "media", "piece": "core-media", "params": { "cycle": 0, "drift": 0.16, "beat_zoom": 0.14, "pulse": 0.2, "contrast": 1.14, "saturation": 1.17, "edge_width": 4 } },
+    { "id": "sim", "piece": "codex-image-membrane", "params": { "plate": 0, "drive": 1.42, "bend": 1.32, "ground": 1 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.height" },
+    { "from": "media.edges", "to": "sim.flow" }
+  ],
+  "out": "sim.out",
+  "post": { "bloom": 0.38, "threshold": 0.65, "exposure": 1.06 },
+  "evolve": {
+    "every": "section", "most": 1, "transition": "core-blend", "beats": 2,
+    "slots": [
+      { "node": "sim", "jitter": 0, "pool": [
+        { "piece": "codex-pixel-flock", "params": { "ink": 2, "scatter": 1.68, "return": 0.57, "ground": 0.88, "size": 1.12 } }
+      ] }
+    ]
+  }
+}

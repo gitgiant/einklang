@@ -1,0 +1,23 @@
+{
+  "id": "codex-image-membrane",
+  "kind": "generator",
+  "name": "Image Membrane",
+  "doc": "The picture forms a wave tank whose luma sets ripple speed and whose edges damp the wake. Kicks strike the tank and the changing surface bends the picture into caustics and nodal lines.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture refracted by the wave surface" },
+      "height": { "type": "mask", "doc": "brighter pixels propagate the wave faster" },
+      "flow": { "type": "field", "doc": "hard picture edges damp the wave" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "drive": { "type": "float", "default": 1, "min": 0.55, "max": 1.45, "doc": "strength of percussion strikes" },
+    "bend": { "type": "float", "default": 0.85, "min": 0.45, "max": 1.35, "doc": "how far the waves refract the image" },
+    "ground": { "type": "float", "default": 0.9, "min": 0.45, "max": 1, "doc": "photo strength under the ripples" },
+    "plate": { "type": "enum", "default": 0, "options": ["sea glass", "silver nodes", "copper bath"] }
+  },
+  "budget": { "ms": 1.2, "scales": "res" },
+  "tags": ["media", "waves", "cymatics", "sim"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}
