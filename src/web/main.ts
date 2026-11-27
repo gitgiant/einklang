@@ -22,7 +22,8 @@ import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
-import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare } from './capture.ts';
+import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
+import { mediaPicker } from './mediapicker.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
 import { TRANS_KEYS, transRow } from './transvote.ts';
 
@@ -203,9 +204,12 @@ setInterval(() => {
 // ---- leader: live (capture needs a secure context: localhost or https) ----
 const delay = (t: number) => `${t}-tick delay, ${((t * 1000) / FPS).toFixed(0)} ms`;
 
-/** Analyze `stream` on this host and stream features to the room as the live leader. */
-/** `delay`: ticks every host renders behind (INSTRUMENT_DELAY for line-in, LIVE_DELAY for captured audio). */
-function startLive(stream: MediaStream, label: string, delay: number) {
+/**
+ * Analyze `stream` (a capture, or a playing video's sound) on this host and stream features to the
+ * room as the live leader. `delay`: ticks every host renders behind (INSTRUMENT_DELAY for line-in,
+ * LIVE_DELAY for captured audio).
+ */
+function startLive(stream: LiveSource, label: string, delay: number) {
   stopLeaderLive();
   const an: LiveAnalyzer = new LiveAnalyzer(stream, () => { if (leaderLive?.an === an) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); } });
   leaderLive = { an, pending: true };
@@ -238,6 +242,12 @@ setInterval(() => {
 }, 8);
 
 $('stop').onclick = () => { send({ t: 'stop' }); stopLeaderLive(); };
+
+// ---- pictures for this host (image / video / camera; never uploaded). A video's sound leads live. ----
+$('media').replaceWith(mediaPicker({
+  sound: (v, name) => startLive(v, `live: video sound "${name}" (${delay(LIVE_DELAY)})`, LIVE_DELAY),
+  note: (t) => { if (t) msg(t); },
+}));
 
 // ---- audio follow (file mode) ----
 const au = $<HTMLAudioElement>('au');

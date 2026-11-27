@@ -1,0 +1,23 @@
+{
+  "id": "claude-lumakey", "kind": "effect", "name": "Luma key",
+  "doc": "Layers two pictures by a mask (core-media's luma): where the key is bright the foreground shows, elsewhere the background; the threshold breathes with the bass, and the cut line glows in the palette.",
+  "ports": {
+    "in": {
+      "fg": { "type": "tex", "doc": "shows where the key is above the threshold" },
+      "bg": { "type": "tex", "doc": "shows elsewhere" },
+      "key": { "type": "mask", "doc": "e.g. core-media.luma" },
+      "palette": { "type": "palette", "optional": true, "doc": "rim colour" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "threshold": { "type": "float", "default": 0.45, "min": 0, "max": 1 },
+    "soft": { "type": "float", "default": 0.08, "min": 0.005, "max": 0.5, "doc": "width of the blend" },
+    "invert": { "type": "bool", "default": false, "doc": "foreground where the key is dark" },
+    "bass": { "type": "float", "default": 0.3, "min": 0, "max": 1, "doc": "the bass lowers the threshold (more foreground)" },
+    "rim": { "type": "float", "default": 1.2, "min": 0, "max": 4, "doc": "glow on the cut line" }
+  },
+  "shader": "lumakey.wgsl", "budget": { "ms": 0.1, "scales": "res" },
+  "tags": ["key", "composite", "media"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

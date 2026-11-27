@@ -9,6 +9,7 @@ import { splitRef } from '../../core/graph/types.ts';
 import { shader } from '../gpu/gpu.ts';
 import { autoFragment, autoLayout, defaultPalette, writeAuto, type AutoLayout } from './auto.ts';
 import { LIB } from './registry.ts';
+import { MEDIA } from '../media.ts';
 
 export type Budget = GpuInit['budget'];
 
@@ -22,6 +23,7 @@ export function instantiate(device: GPUDevice, def: PieceDef, budget: Budget): G
     wgsl: (f) => def.wgsl[f] ?? '',
     compile: (code, label) => shader(device, code, label),
     lib: (f) => LIB[f] ?? '',
+    media: MEDIA.input(device),
     asset: (p) => {
       const b = def.assets?.[p];
       if (!b) throw new Error(`${id}: asset ${p} is not declared in piece.json (or missing)`);

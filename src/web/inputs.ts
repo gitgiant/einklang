@@ -4,7 +4,7 @@ import { demoSource, sectionAt } from '../core/demo.ts';
 import { FPS } from '../core/constants.ts';
 import { fileSource, mapSource, type FeatureSource } from '../core/features.ts';
 import { parseLrc } from '../core/lrc.ts';
-import { LiveAnalyzer } from './capture.ts';
+import { LiveAnalyzer, type LiveSource } from './capture.ts';
 import type { Player } from './player.ts';
 
 export interface Input {
@@ -29,7 +29,8 @@ export function demoInput(startTick: number): Input {
 /** Ticks the picture runs behind the analysis, so a drawn tick (and the next, for interpolation) exists. */
 const LIVE_LAG = 2;
 
-export function liveInput(stream: MediaStream, name: string, ended: () => void): Input {
+/** A capture stream, or a playing video's sound (it keeps playing; stop() silences it). */
+export function liveInput(stream: LiveSource, name: string, ended: () => void): Input {
   const an = new LiveAnalyzer(stream, ended), frames = new Map<number, Uint8Array>(), t0 = performance.now();
   const timer = setInterval(() => {
     const cur = Math.floor(((performance.now() - t0) * FPS) / 1000);

@@ -1,0 +1,157 @@
+{
+  "format": 1,
+  "id": "core-media-kaleido",
+  "name": "Media: kaleido key",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 10,
+        "gain": 1.4
+      }
+    },
+    {
+      "id": "lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 32,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 4
+      }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "beat_zoom": 0.3,
+        "pulse": 0.25,
+        "drift": 0.6,
+        "edge_width": 3
+      }
+    },
+    {
+      "id": "bg",
+      "piece": "core-plasma",
+      "params": {
+        "gain": 0.5
+      }
+    },
+    {
+      "id": "warp",
+      "piece": "claude-displace",
+      "params": {
+        "amount": 0.03,
+        "swirl": 0.6,
+        "outline": 0.6
+      },
+      "bind": {
+        "amount": {
+          "from": "bass.out",
+          "range": [
+            0.01,
+            0.06
+          ]
+        }
+      }
+    },
+    {
+      "id": "key",
+      "piece": "claude-lumakey",
+      "params": {
+        "threshold": 0.45,
+        "soft": 0.08,
+        "rim": 1.2
+      }
+    },
+    {
+      "id": "kal",
+      "piece": "core-kaleido",
+      "params": {
+        "segments": 6,
+        "spin": 0.03,
+        "zoom": 1
+      },
+      "bind": {
+        "zoom": {
+          "from": "lfo.out",
+          "range": [
+            0.8,
+            1.4
+          ]
+        }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.7,
+        "zoom": 0.006,
+        "rotate": 0.003
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "bg.palette"
+    },
+    {
+      "from": "pal.palette",
+      "to": "warp.palette"
+    },
+    {
+      "from": "pal.palette",
+      "to": "key.palette"
+    },
+    {
+      "from": "media.out",
+      "to": "warp.in"
+    },
+    {
+      "from": "media.edges",
+      "to": "warp.by"
+    },
+    {
+      "from": "warp.out",
+      "to": "key.fg"
+    },
+    {
+      "from": "bg.out",
+      "to": "key.bg"
+    },
+    {
+      "from": "media.luma",
+      "to": "key.key"
+    },
+    {
+      "from": "key.out",
+      "to": "kal.in"
+    },
+    {
+      "from": "kal.out",
+      "to": "fx.in"
+    }
+  ],
+  "out": "fx.out",
+  "post": {
+    "bloom": 0.45,
+    "threshold": 0.75
+  }
+}

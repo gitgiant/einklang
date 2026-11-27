@@ -1,0 +1,23 @@
+{
+  "id": "claude-displace", "kind": "effect", "name": "Field displace",
+  "doc": "Pushes the picture along a field (core-media's edges: the image warps itself along its own contours), harder on the beat and the bass, with a chromatic split and optional neon outlines where the field is strong.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex" },
+      "by": { "type": "field", "doc": "displacement vectors, e.g. core-media.edges" },
+      "palette": { "type": "palette", "optional": true, "doc": "outline colours" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "amount": { "type": "float", "default": 0.03, "min": 0, "max": 0.2, "doc": "screen heights per unit of field" },
+    "swirl": { "type": "float", "default": 0.5, "min": -1, "max": 1, "doc": "turn the field: 0 pushes across edges, ±1 flows along them" },
+    "beat": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "extra push on each beat" },
+    "bass": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "extra push with the bass" },
+    "chroma": { "type": "float", "default": 0.4, "min": 0, "max": 1, "doc": "RGB split along the push" },
+    "outline": { "type": "float", "default": 0.4, "min": 0, "max": 3, "doc": "palette glow on strong edges" }
+  },
+  "shader": "displace.wgsl", "budget": { "ms": 0.15, "scales": "res" },
+  "tags": ["warp", "displace", "media"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

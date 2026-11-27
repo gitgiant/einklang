@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "id": "core-media-dots",
+  "name": "Media: colour dots",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 10,
+        "gain": 1.4
+      }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "beat_zoom": 0.2,
+        "pulse": 0.2,
+        "drift": 0.4,
+        "saturation": 1.3
+      }
+    },
+    {
+      "id": "dots",
+      "piece": "claude-dots",
+      "params": {
+        "cell": 20,
+        "wander": 0.4,
+        "burst": 0.6
+      },
+      "bind": {
+        "size": {
+          "from": "bass.out",
+          "range": [
+            0.8,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.8,
+        "zoom": 0.008,
+        "rotate": 0.002
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "dots.in"
+    },
+    {
+      "from": "dots.out",
+      "to": "fx.in"
+    }
+  ],
+  "out": "fx.out",
+  "post": {
+    "bloom": 0.5,
+    "threshold": 0.7
+  }
+}
