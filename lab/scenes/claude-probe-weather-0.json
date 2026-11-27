@@ -1,0 +1,58 @@
+{
+ "format": 1,
+ "id": "claude-probe-weather-0",
+ "name": "claude-probe-weather-0",
+ "version": 1,
+ "author": {
+  "vendor": "claude",
+  "model": "claude-opus-5-5"
+ },
+ "status": "draft",
+ "created": "2026-11-27",
+ "nodes": [
+  {
+   "id": "audio",
+   "piece": "core-audio"
+  },
+  {
+   "id": "pal",
+   "piece": "agy-blackbody",
+   "params": {
+    "max_k": 5000,
+    "heat": 4000,
+    "min_k": 1350,
+    "bright": 1
+   }
+  },
+  {
+   "id": "gen",
+   "piece": "claude-boids",
+   "params": {
+    "count": 16384,
+    "sky": 1.1
+   }
+  },
+  {
+   "id": "trail",
+   "piece": "core-trails",
+   "params": {
+    "decay": 0.6
+   }
+  }
+ ],
+ "edges": [
+  {
+   "from": "pal.palette",
+   "to": "gen.palette"
+  },
+  {
+   "from": "gen.out",
+   "to": "trail.in"
+  }
+ ],
+ "out": "trail.out",
+ "post": {
+  "bloom": 0.5,
+  "threshold": 0.75
+ }
+}
