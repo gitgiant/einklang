@@ -236,16 +236,16 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 
 ### Retro / aesthetic
 - [ ] Vaporwave: slatted sunset sun
-- [ ] Vaporwave: neon grid floor
+- [x] Vaporwave: neon grid floor → codex-grid-floor, codex-outrun
 - [ ] Vaporwave: marble bust
 - [ ] Vaporwave: palm silhouettes
 - [x] Vaporwave: pink/cyan palettes → style core-vaporwave
 - [ ] Vaporwave: Win95 windows
 - [ ] Vaporwave: kanji overlays
 - [ ] Synthwave: chrome text
-- [ ] Synthwave: wireframe mountains
+- [x] Synthwave: wireframe mountains → codex-wire-mountains, codex-night-drive
 - [ ] Synthwave: scrolling road
-- [ ] Synthwave: starfield
+- [x] Synthwave: starfield → codex-starfield, codex-hyperspace
 - [ ] VHS: tracking lines, head-switch noise
 - [ ] VHS: tape wrinkle, chroma delay
 - [ ] VHS: REC/PLAY OSD with timestamp

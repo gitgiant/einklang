@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "id": "codex-hyperspace",
+  "name": "Hyperspace",
+  "version": 2,
+  "author": {"vendor": "codex", "model": "gpt-6.2-sol"},
+  "status": "live",
+  "created": "2026-11-26",
+  "nodes": [
+    {"id": "colors", "piece": "core-swatch", "params": {"colors": "#141632 #2755af #76e3ff #edf9ff #ffb874", "pads": false}},
+    {"id": "energy", "piece": "core-audio"},
+    {"id": "stars", "piece": "codex-starfield", "params": {"speed": 0.75, "glow": 1.36}, "bind": {"warp": {"from": "energy.rms", "range": [0.12, 1.0]}}},
+    {"id": "trails", "piece": "core-trails", "params": {"decay": 0.69, "zoom": -0.004, "rotate": 0}}
+  ],
+  "edges": [
+    {"from": "colors.palette", "to": "stars.palette"},
+    {"from": "stars.out", "to": "trails.in"}
+  ],
+  "out": "trails.out",
+  "post": {"bloom": 0.47, "threshold": 0.7, "exposure": 1.02}
+}
