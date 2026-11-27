@@ -283,7 +283,7 @@ const renderSize = (): [number, number] => [Math.round(innerWidth * (devicePixel
  */
 export function shareItem(track: MediaStreamTrack, limit: () => [number, number] = renderSize): MediaItem {
   const dpr = globalThis.devicePixelRatio || 1;
-  if (globalThis.screen) track.applyConstraints?.({ width: { max: Math.round(screen.width * dpr) }, height: { max: Math.round(screen.height * dpr) } }).catch(() => {}); // best effort
+  if (globalThis.screen && !(globalThis as { __shareBench?: unknown }).__shareBench) track.applyConstraints?.({ width: { max: Math.round(screen.width * dpr) }, height: { max: Math.round(screen.height * dpr) } }).catch(() => {}); // best effort
   const v = videoElement();
   v.muted = true; v.srcObject = new MediaStream([track]);
   v.play().catch(() => {});

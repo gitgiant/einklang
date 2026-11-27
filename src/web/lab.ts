@@ -15,7 +15,7 @@ import { TICKS_PER_BEAT } from '../core/constants.ts';
 import { transEntry } from '../core/transitions.ts';
 import type { SceneSched } from '../core/protocol.ts';
 import { FrameProfiler } from './gpu/profile.ts';
-import { MEDIA, canvasItem } from './media.ts';
+import { MEDIA, MediaHost, shareItem, canvasItem } from './media.ts';
 import { forceAll, type ForcePlan } from '../core/graph/sections.ts';
 
 export interface RunOpts {
@@ -313,6 +313,31 @@ async function main() {
     }
     return res;
   }
+  // TEMP pixel check (reverted after one GPU run)
+  async function shareBench(): Promise<string[]> {
+  const d = gpu.device;
+  const make = d.createTexture.bind(d); d.createTexture = (x) => make({ ...x, usage: x.usage | 1 });
+  const out = [];
+  for (const [lw, lh] of [[320, 180], [640, 360]]) {
+    const c = document.createElement('canvas'); c.width = 640; c.height = 360; const g = c.getContext('2d');
+    const draw = () => { g.fillStyle = 'rgb(200,100,40)'; g.fillRect(0, 0, 640, 360); g.fillStyle = 'rgb(0,0,255)'; g.fillRect(0, 0, 320, 180); };
+    const timer = setInterval(draw, 30); draw();
+    const it = shareItem(c.captureStream(30).getVideoTracks()[0], () => [lw, lh]), host = new MediaHost(); const rel = host.share(it);
+    for (let i = 0; i < 100 && !(it.ready() && it.gen > 2); i++) await new Promise((r) => setTimeout(r, 50));
+    d.pushErrorScope('validation');
+    const f = host.frame(d, 0);
+    const buf = d.createBuffer({ size: 512, usage: 9 }), e = d.createCommandEncoder();
+    e.copyTextureToBuffer({ texture: f.texture, origin: [10, 10] }, { buffer: buf }, [1, 1]);
+    e.copyTextureToBuffer({ texture: f.texture, origin: [f.width - 10, f.height - 10] }, { buffer: buf, offset: 256 }, [1, 1]);
+    d.queue.submit([e.finish()]);
+    const err = await d.popErrorScope(); await buf.mapAsync(1); const px = new Uint8Array(buf.getMappedRange());
+    out.push([f.width, f.height, 'topleft', [...px.slice(0, 4)], 'bottomright', [...px.slice(256, 260)], err?.message ?? 'no error']);
+    rel(); clearInterval(timer);
+  }
+  d.createTexture = make;
+  return [JSON.stringify(out)];
+  }
+  Object.assign(window, { __shareBench: shareBench });
   window.__lab = { run, profile, ready: true, adapter: gpu.adapterInfo };
 }
 
