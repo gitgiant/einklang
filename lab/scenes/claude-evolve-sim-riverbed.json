@@ -1,0 +1,36 @@
+{
+  "format": 1, "id": "claude-evolve-sim-riverbed", "name": "Evolve sim: riverbed", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "erosion", "water"],
+  "doc": "Your picture (image, video or camera) as a landscape: its brightness is the ground, rain and onset floods fall on it and the bass tips it so the water runs and carves channels through it, carrying its colours downstream and laying bare palette strata in the cuts. Each phrase the simulation changes (a flash flood, a deep canyon river, the water soaking wet paper, frost growing from its edges) and the picture re-forms before the next one wears it down.",
+  "nodes": [
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0b2a33 #14555e #3f8f8a #c98b4a #e8c07d #f6ead0" } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.06, "pulse": 0.2, "drift": 0.25, "contrast": 1.15, "saturation": 1.1, "edge_width": 2.5 } },
+    { "id": "sim", "piece": "claude-media-erode", "params": { "relief": 3, "rain": 1, "tilt": 1.2, "flood": 1.2, "carve": 1.2, "react": 1.3 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.25, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.4, "threshold": 0.75 },
+  "evolve": {
+    "every": "phrase", "transition": "core-melt", "beats": 4,
+    "slots": [
+      { "node": "sim", "pool": [
+        { "piece": "claude-media-erode", "params": { "flood": 2.2, "rain": 1.4, "tilt": 0.8, "carve": 1.5, "water": 1.2 },
+          "ranges": { "relief": [2.5, 4.5], "evap": [0.2, 0.45], "tint": [0.3, 0.6] } },
+        { "piece": "claude-media-erode", "params": { "tilt": 2.2, "rain": 0.7, "carve": 2, "relief": 5, "steps": 6, "flood": 0.8 },
+          "ranges": { "evap": [0.15, 0.35], "gloss": [0.8, 1.3], "resurface": [0.15, 0.3] } },
+        { "piece": "claude-media-erode", "params": { "look": 1, "carve": 0, "relief": 2, "flood": 1.6, "ink": 0.9, "rain": 0.8 },
+          "ranges": { "tilt": [0.8, 1.6], "tint": [0.25, 0.5] } },
+        { "piece": "claude-media-frost", "params": { "seed": 1.3, "branch": 0.6, "show": 0.5 },
+          "ranges": { "along": [0.6, 1], "wiggle": [0.3, 0.7], "grow": [0.9, 1.4] } }
+      ] }
+    ]
+  }
+}

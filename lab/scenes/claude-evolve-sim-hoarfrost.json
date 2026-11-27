@@ -1,0 +1,36 @@
+{
+  "format": 1, "id": "claude-evolve-sim-hoarfrost", "name": "Evolve sim: hoarfrost", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "frost", "crystal", "dla"],
+  "doc": "Frost grows over your picture (image, video or camera): every onset seeds crystals on its edges, the bass drives diffusion-limited branches along its contours and each crystal takes the picture's colour as it freezes, so the ice redraws it over a cold, dim copy, new growth flaring and glinting with the highs. Each phrase the frost thaws and the simulation changes (feathery dendrites, long straight needles, meltwater running down the picture and cutting it, ink bleeding on wet paper), and the picture re-forms.",
+  "nodes": [
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0a1030 #1d3f7a #4f8fd0 #9fd4f0 #e6f6ff #c9b6ff" } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.1, "pulse": 0.2, "drift": 0.3, "contrast": 1.15, "saturation": 1.1, "edge_width": 2 } },
+    { "id": "sim", "piece": "claude-media-frost", "params": { "branch": 0.6, "along": 0.8, "seed": 1.2, "react": 1.3 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.3, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.55, "threshold": 0.7 },
+  "evolve": {
+    "every": "phrase", "transition": "core-dissolve", "beats": 4,
+    "slots": [
+      { "node": "sim", "pool": [
+        { "piece": "claude-media-frost", "params": { "branch": 0.9, "wiggle": 0.7, "grow": 1.3, "sparkle": 1 },
+          "ranges": { "along": [0.5, 1], "seed": [0.8, 1.6], "tint": [0.25, 0.5] } },
+        { "piece": "claude-media-frost", "params": { "branch": 0.15, "wiggle": 0.25, "grow": 1.6, "seed": 2, "edge": 0.1, "show": 0.35 },
+          "ranges": { "melt": [0.1, 0.35], "mist": [0.4, 1.2] } },
+        { "piece": "claude-media-erode", "params": { "rain": 1.3, "relief": 2.5, "tilt": 1.5, "carve": 1.2, "water": 1.3 },
+          "ranges": { "flood": [0.8, 1.6], "tint": [0.3, 0.6] } },
+        { "piece": "claude-media-erode", "params": { "look": 1, "carve": 0, "relief": 2, "flood": 1.8, "ink": 0.8, "rain": 0.7 },
+          "ranges": { "tilt": [0.7, 1.4], "tint": [0.3, 0.55] } }
+      ] }
+    ]
+  }
+}
