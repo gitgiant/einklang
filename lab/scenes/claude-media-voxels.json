@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "id": "claude-media-voxels",
+  "name": "Media: cube field",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "3d", "voxel"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.6 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 9, "window": 12, "gain": 1.8 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.19, "light": 0.72, "contrast": 0.5 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.3, 0.8] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.1, "drift": 0.35, "contrast": 1.2, "saturation": 1.2 } },
+    { "id": "grid", "piece": "claude-media-cubes",
+      "params": { "cells": 44, "height": 4.5, "bass": 0.7, "wave": 3, "gap": 0.1, "tilt": 0.8, "swing": 0.55, "spin": 0.06, "zoom": 1.05, "colour": 0, "edges": 0.9 },
+      "bind": { "edges": { "from": "mid.out", "range": [0.5, 1.8] } } }
+  ],
+  "edges": [
+    { "from": "media.luma", "to": "grid.height" },
+    { "from": "media.out", "to": "grid.in" },
+    { "from": "pal.palette", "to": "grid.palette" }
+  ],
+  "out": "grid.out",
+  "post": { "bloom": 0.6, "threshold": 0.65 }
+}
