@@ -1,0 +1,49 @@
+{
+  "id": "codex-fracture-plate",
+  "kind": "effect",
+  "name": "Fracture plate",
+  "doc": "Triangular facets refract the picture while bass opens the gaps and drum hits kick the shards outward.",
+  "ports": {
+    "in": {
+      "picture": {
+        "type": "tex",
+        "doc": "The picked media in linear HDR."
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "tiles": {
+      "type": "float",
+      "default": 13,
+      "min": 6,
+      "max": 26,
+      "doc": "Triangle edge count per screen height at rest."
+    },
+    "breakup": {
+      "type": "float",
+      "default": 0.38,
+      "min": 0,
+      "max": 1,
+      "doc": "Strength of the gaps and displacement on bass hits."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 0.8,
+    "scales": "res"
+  },
+  "tags": [
+    "media",
+    "shatter",
+    "geometry"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

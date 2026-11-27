@@ -1,0 +1,53 @@
+{
+  "id": "codex-nodal-print",
+  "kind": "effect",
+  "name": "Nodal line print",
+  "doc": "The picture sets the ink density and colour of a line-screen print; bass turns its standing-wave pattern while the highs bring out the nodal lines.",
+  "ports": {
+    "in": {
+      "picture": {
+        "type": "tex",
+        "doc": "The picked media in linear HDR."
+      },
+      "light": {
+        "type": "mask",
+        "doc": "Perceptual luma of the picture."
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "nodal": {
+      "type": "float",
+      "default": 0.11,
+      "min": 0.06,
+      "max": 0.24,
+      "doc": "Width of the dark lines at standing-wave nodes."
+    },
+    "lines": {
+      "type": "float",
+      "default": 105,
+      "min": 40,
+      "max": 180,
+      "doc": "Approximate screen ruling in lines per screen height."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 0.8,
+    "scales": "res"
+  },
+  "tags": [
+    "media",
+    "print",
+    "cymatics"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

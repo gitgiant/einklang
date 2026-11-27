@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "id": "codex-media-leadlight",
+  "name": "Leadlight",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "mosaic",
+    "geometry"
+  ],
+  "nodes": [
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "brightness": 1.1,
+        "saturation": 1.05,
+        "drift": 0.42,
+        "beat_zoom": 0.53,
+        "pulse": 0.32
+      }
+    },
+    {
+      "id": "look",
+      "piece": "codex-leadlight",
+      "params": {
+        "cells": 10
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "look.picture"
+    },
+    {
+      "from": "media.luma",
+      "to": "look.light"
+    }
+  ],
+  "out": "look.out",
+  "post": {
+    "bloom": 0.23,
+    "threshold": 0.73
+  }
+}

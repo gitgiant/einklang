@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "id": "codex-media-nodal-press",
+  "name": "Nodal Press",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "print",
+    "cymatics"
+  ],
+  "nodes": [
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "brightness": 1.15,
+        "contrast": 1.08,
+        "drift": 0.45,
+        "beat_zoom": 0.34,
+        "pulse": 0.25
+      }
+    },
+    {
+      "id": "look",
+      "piece": "codex-nodal-print",
+      "params": {
+        "nodal": 0.11,
+        "lines": 105
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "look.picture"
+    },
+    {
+      "from": "media.luma",
+      "to": "look.light"
+    }
+  ],
+  "out": "look.out",
+  "post": {
+    "bloom": 0.07,
+    "threshold": 0.92
+  }
+}
