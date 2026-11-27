@@ -38,7 +38,8 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Voronoi
 - [ ] Noise fields
 - [x] Text / lyrics → core-text
-- [ ] MIDI piano-roll
+- [x] MIDI piano-roll → agy-pianoroll, scene agy-falling-notes
+- [x] Circle-of-fifths wheel → agy-fifths, scene agy-harmony-wheel
 - [x] Lasers / lightning → agy-lightning, scene agy-storm
 - [ ] Shape grammar
 - [x] Metaballs → claude-metaballs, scene claude-lava

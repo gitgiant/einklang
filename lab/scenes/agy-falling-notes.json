@@ -1,0 +1,88 @@
+{
+  "format": 1,
+  "id": "agy-falling-notes",
+  "name": "Falling notes",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.65
+      }
+    },
+    {
+      "id": "highs",
+      "piece": "core-follow",
+      "params": {
+        "lo": 9,
+        "hi": 15,
+        "window": 6,
+        "gain": 1.85
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#3a1c9a #00c2ff #00f5a0 #ffe45e #ff5e7e #c43bff",
+        "cycle": 0.05
+      }
+    },
+    {
+      "id": "roll",
+      "piece": "agy-pianoroll",
+      "params": {
+        "speed": 1.75,
+        "threshold": 0.2,
+        "perspective": 0.3,
+        "keyboard_h": 0.2,
+        "grid": 0.45
+      },
+      "bind": {
+        "gain": {
+          "from": "bass.out",
+          "range": [1.1, 2.2]
+        },
+        "glow": {
+          "from": "highs.out",
+          "range": [1.15, 2.25]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.28,
+        "zoom": 0.0015,
+        "rotate": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "roll.palette"
+    },
+    {
+      "from": "roll.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.58,
+    "threshold": 0.72,
+    "exposure": 1.08
+  }
+}

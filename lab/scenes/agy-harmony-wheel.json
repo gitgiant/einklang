@@ -1,0 +1,101 @@
+{
+  "format": 1,
+  "id": "agy-harmony-wheel",
+  "name": "Harmony wheel",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.65
+      }
+    },
+    {
+      "id": "highs",
+      "piece": "core-follow",
+      "params": {
+        "lo": 9,
+        "hi": 15,
+        "window": 6,
+        "gain": 1.85
+      }
+    },
+    {
+      "id": "wheel",
+      "piece": "agy-fifths",
+      "params": {
+        "gain": 1.5,
+        "rot_speed": 0.14,
+        "web": 0.95,
+        "labels": true,
+        "key_hue": 1.0
+      },
+      "bind": {
+        "pulse": {
+          "from": "bass.out",
+          "range": [0.65, 1.85]
+        },
+        "glow": {
+          "from": "highs.out",
+          "range": [1.15, 2.25]
+        }
+      }
+    },
+    {
+      "id": "tunnel",
+      "piece": "core-tunnel"
+    },
+    {
+      "id": "mix",
+      "piece": "core-blend",
+      "params": {
+        "mode": 1
+      },
+      "bind": {
+        "amount": {
+          "from": "bass.out",
+          "range": [0.1, 0.34]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.36,
+        "zoom": 0.0025,
+        "rotate": 0.0015
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "wheel.out",
+      "to": "mix.a"
+    },
+    {
+      "from": "tunnel.out",
+      "to": "mix.b"
+    },
+    {
+      "from": "mix.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.6,
+    "threshold": 0.72,
+    "exposure": 1.05
+  }
+}
