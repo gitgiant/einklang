@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "id": "codex-late-checkout",
+  "name": "Late Checkout",
+  "doc": "Midnight violet, orchid, sun-warmed peach and electric aqua with a soft bloom.",
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "palette": [
+    "#1e1441",
+    "#982e93",
+    "#ff76bd",
+    "#ffb77b",
+    "#5deadd",
+    "#e4faff"
+  ],
+  "cycle": 0,
+  "post": {
+    "bloom": 0.31,
+    "threshold": 0.88
+  }
+}

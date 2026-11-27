@@ -1,0 +1,34 @@
+{
+  "id": "codex-marble-arcade",
+  "kind": "generator",
+  "name": "Sunset Atrium",
+  "doc": "A levitating marble bust above a checkerboard arcade lined with palms. Bass lights the pavement and onsets ripple through the sky.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {},
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 1.2,
+    "scales": "res"
+  },
+  "tags": [
+    "vaporwave",
+    "marble",
+    "palms"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "id": "codex-chrome-aura",
+  "name": "Chrome Aura",
+  "doc": "A hand-cut chrome AURA wordmark floats over a slatted sun and an infinite grid. Bass pushes the sun forward and onsets fire the chrome glints.",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "style": "codex-late-checkout",
+  "nodes": [
+    {
+      "id": "image",
+      "piece": "codex-chrome-wordmark"
+    }
+  ],
+  "edges": [],
+  "out": "image.out"
+}
