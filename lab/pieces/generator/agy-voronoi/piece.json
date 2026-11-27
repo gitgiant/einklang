@@ -1,0 +1,74 @@
+{
+  "id": "agy-voronoi",
+  "kind": "generator",
+  "name": "Voronoi shatter",
+  "doc": "Stained-glass and cracked-ice Voronoi cells whose seeds drift with the music, split and shatter into sub-facets on beats, and blaze with treble-driven glowing edges.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "colors the stained-glass facets and electric crack edges"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "cells": {
+      "type": "float",
+      "default": 6.5,
+      "min": 3.0,
+      "max": 14.0,
+      "doc": "base Voronoi cell density across the frame"
+    },
+    "shatter": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0,
+      "doc": "beat-triggered cell splitting, fracture, and shard displacement strength"
+    },
+    "drift": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.1,
+      "max": 2.5,
+      "doc": "seed orbital drift speed and audio-driven motion"
+    },
+    "edge_glow": {
+      "type": "float",
+      "default": 1.35,
+      "min": 0.2,
+      "max": 3.0,
+      "doc": "treble-reactive luminous intensity of primary and fracture edges"
+    },
+    "ice": {
+      "type": "float",
+      "default": 0.55,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "blend between warm stained-glass facets (0) and crystalline cracked ice (1)"
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 0.7,
+    "scales": "res"
+  },
+  "tags": [
+    "voronoi",
+    "shatter",
+    "stained-glass",
+    "ice",
+    "cells",
+    "reactive"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  }
+}

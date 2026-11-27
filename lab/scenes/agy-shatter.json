@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "id": "agy-shatter",
+  "name": "Crystal shatter",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "mid",
+      "piece": "core-follow",
+      "params": {
+        "lo": 4,
+        "hi": 9,
+        "window": 10,
+        "gain": 1.6
+      }
+    },
+    {
+      "id": "highs",
+      "piece": "core-follow",
+      "params": {
+        "lo": 10,
+        "hi": 15,
+        "window": 5,
+        "gain": 2.0
+      }
+    },
+    {
+      "id": "hue_lfo",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 24,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 3,
+        "chroma": 0.21,
+        "light": 0.72,
+        "contrast": 0.48
+      },
+      "bind": {
+        "hue": {
+          "from": "hue_lfo.out",
+          "range": [0.54, 0.84]
+        }
+      }
+    },
+    {
+      "id": "voronoi",
+      "piece": "agy-voronoi",
+      "params": {
+        "cells": 6.5,
+        "ice": 0.55
+      },
+      "bind": {
+        "shatter": {
+          "from": "bass.out",
+          "range": [0.45, 1.85]
+        },
+        "drift": {
+          "from": "mid.out",
+          "range": [0.55, 1.9]
+        },
+        "edge_glow": {
+          "from": "highs.out",
+          "range": [0.65, 2.35]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.52,
+        "zoom": 0.005,
+        "rotate": 0.001
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "voronoi.palette"
+    },
+    {
+      "from": "voronoi.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.68,
+    "threshold": 0.72,
+    "exposure": 1.0
+  }
+}
