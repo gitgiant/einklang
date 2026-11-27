@@ -1,0 +1,174 @@
+{
+  "format": 1,
+  "id": "agy-evolve-sim-automata",
+  "name": "Evolve sim: Cellular Pixel",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "cellular-automata", "life", "lenia", "pixel", "dither"],
+  "doc": "Your image, video or camera seeds living cellular automata (Life rules and embossed continuous Lenia) whose cells inherit the video's colours and shift rules with the music, evolving every 2 bars across Life, Lenia, Turing media-melt and matrix rain through retro Bayer-dither, PICO-8 pixel-art, ASCII and pixel-sort finishes with shifting dither palettes.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#100820 #3b1d5e #ff2a6d #ff9e00 #05d9e8 #f7f4d4", "cycle": 0.28 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.3, "pulse": 0.3, "drift": 0.4, "contrast": 1.2, "saturation": 1.18, "edge_width": 2.4 }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-media-life",
+      "params": {
+        "mode": 0,
+        "cells": 176,
+        "rate": 6,
+        "edge_seed": 1.4,
+        "luma_seed": 0.7,
+        "media_pull": 1.1,
+        "decay": 0.86,
+        "colour": 1,
+        "pal_mix": 0.38,
+        "dither": 0.3,
+        "gap": 0.14,
+        "under": 0.22,
+        "glow": 1.25,
+        "flash": 1.2,
+        "react": 1.3
+      },
+      "bind": {
+        "edge_seed": { "from": "hi.out", "range": [0.85, 2.3] },
+        "glow": { "from": "bass.out", "range": [1.0, 1.75] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "agy-bayer-dither",
+      "params": { "cells": 168, "levels": 5, "dither": 0.88, "pal_mix": 0.42, "chroma": 0.55, "mix": 0.86 },
+      "bind": {
+        "chroma": { "from": "hi.out", "range": [0.22, 1.15] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" },
+    { "from": "pal.palette", "to": "fx.palette" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.36, "threshold": 0.74 },
+  "evolve": {
+    "every": 2,
+    "transition": "core-pixelate",
+    "beats": 1,
+    "slots": [
+      {
+        "node": "sim",
+        "pool": [
+          {
+            "piece": "agy-media-life",
+            "params": {
+              "mode": 1,
+              "cells": 160,
+              "radius": 6,
+              "dt": 0.13,
+              "edge_seed": 1.15,
+              "luma_seed": 0.85,
+              "media_pull": 1.25,
+              "decay": 0.9,
+              "colour": 1,
+              "pal_mix": 0.42,
+              "dither": 0.25,
+              "relief": 5.5,
+              "under": 0.2,
+              "flash": 1.15,
+              "react": 1.35
+            },
+            "ranges": { "dt": [0.09, 0.17], "relief": [3.5, 7.5], "pal_mix": [0.28, 0.56] },
+            "bind": {
+              "glow": { "from": "bass.out", "range": [1.0, 1.7] }
+            }
+          },
+          {
+            "piece": "claude-media-melt",
+            "params": { "beat": 0.65, "bass": 0.95, "tint": 0.4 },
+            "ranges": { "flow": [0.9, 1.9], "scale": [2.2, 5.5], "along": [-0.8, 0.9], "edge": [1.1, 2.2], "react": [0.35, 0.85], "resurface": [0.24, 0.44] }
+          },
+          {
+            "piece": "agy-media-rain",
+            "params": { "color_mix": 0.58, "edge_boost": 1.15, "scanlines": 0.16 },
+            "ranges": { "columns": [64, 108], "speed": [0.9, 1.8], "trail": [0.65, 0.86] },
+            "bind": {
+              "glow": { "from": "bass.out", "range": [0.95, 1.8] },
+              "glitch": { "from": "hi.out", "range": [0.24, 0.95] }
+            }
+          },
+          {
+            "piece": "agy-media-life",
+            "params": {
+              "mode": 2,
+              "bars": 2,
+              "cells": 144,
+              "rate": 8,
+              "colour": 0,
+              "pal_mix": 0.28,
+              "dither": 0.45,
+              "gap": 0.18,
+              "under": 0.18,
+              "flash": 1.35,
+              "react": 1.4
+            },
+            "ranges": { "rate": [5, 10], "decay": [0.8, 0.92] },
+            "bind": {
+              "glow": { "from": "bass.out", "range": [1.05, 1.8] }
+            }
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "claude-pixel-art",
+            "params": { "palette": 6, "matrix": 1, "gain": 1.15, "grid": 0.2 },
+            "ranges": { "pixels": [128, 210], "dither": [0.6, 0.92] },
+            "bind": {
+              "shake": { "from": "bass.out", "range": [0.0, 0.48] }
+            }
+          },
+          {
+            "piece": "agy-ascii",
+            "params": { "mode": 2, "color": 0, "levels": 5, "contrast": 1.25, "scanlines": 0.18, "mix": 0.88 },
+            "ranges": { "cell": [10, 18], "bass": [0.45, 1.1] }
+          },
+          {
+            "piece": "agy-pixelsort",
+            "params": { "direction": 1, "threshold": 0.28, "ceiling": 0.95, "energy": 0.62, "onset_boost": 0.95, "mix": 0.78 },
+            "ranges": { "length": [36, 92] }
+          },
+          {
+            "piece": "claude-crt",
+            "params": { "scanlines": 0.46, "curve": 0.3, "vignette": 0.36 },
+            "ranges": { "chroma": [0.35, 0.82], "tracking": [0.32, 0.78], "jitter": [0.25, 0.65] }
+          }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#06140c #0f380f #306230 #8bac0f #d8f878", "cycle": 0.22 } },
+          { "piece": "core-swatch", "params": { "colors": "#0b0718 #551a8b #ff33cc #00f0ff #ffffff", "cycle": 0.3 } },
+          { "piece": "core-harmony", "params": { "scheme": 4, "chroma": 0.2, "light": 0.72, "contrast": 0.65 }, "ranges": { "hue": [0.0, 1.0] } }
+        ]
+      }
+    ]
+  }
+}

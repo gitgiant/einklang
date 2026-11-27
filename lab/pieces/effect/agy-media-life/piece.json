@@ -1,0 +1,42 @@
+{
+  "id": "agy-media-life",
+  "kind": "effect",
+  "name": "Media cellular automata",
+  "doc": "Cellular automata (Life-like rules and continuous Lenia) seeded from the input media's edges and brightness, with every living cell inheriting and evolving the picture's own colours alongside retro Bayer-dithered palette accents; beats snap colonies to the picture, bar-level spectral peaks shift rules, and onsets ignite cellular bursts.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video whose colours live inside the cells" },
+      "luma": { "type": "mask", "optional": true, "doc": "media brightness mask (e.g. core-media.luma) guiding cell fertility and seeding" },
+      "edges": { "type": "field", "optional": true, "doc": "media edge gradient (e.g. core-media.edges) seeding contours and advecting Lenia" },
+      "palette": { "type": "palette", "optional": true, "doc": "accent palette for newborn flashes, afterglow and dithered colour modes" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["life", "lenia", "alternate"], "doc": "discrete Life-like rules, smooth embossed Lenia, or alternating every few bars" },
+    "bars": { "type": "int", "default": 4, "min": 1, "max": 16, "doc": "bars per regime in alternate mode" },
+    "cells": { "type": "int", "default": 180, "min": 64, "max": 360, "doc": "grid height in cells (width follows the screen aspect)" },
+    "rate": { "type": "float", "default": 6, "min": 1, "max": 16, "doc": "Life steps per beat" },
+    "radius": { "type": "int", "default": 6, "min": 3, "max": 9, "doc": "Lenia ring kernel radius in cells" },
+    "dt": { "type": "float", "default": 0.12, "min": 0.04, "max": 0.28, "doc": "Lenia integration step (loudness speeds it up)" },
+    "edge_seed": { "type": "float", "default": 1.25, "min": 0, "max": 3, "doc": "how strongly media edges emit new cells" },
+    "luma_seed": { "type": "float", "default": 0.65, "min": 0, "max": 2, "doc": "how strongly bright regions of the picture emit cells" },
+    "media_pull": { "type": "float", "default": 1.0, "min": 0, "max": 2, "doc": "how strongly media luma and edges steer growth and contour drift" },
+    "decay": { "type": "float", "default": 0.86, "min": 0.5, "max": 0.98, "doc": "afterglow persistence of dead cells" },
+    "colour": { "type": "enum", "default": 1, "options": ["picture", "both", "palette"], "doc": "cell colours: inherited picture RGB, picture + palette dither accents, or full palette" },
+    "pal_mix": { "type": "float", "default": 0.38, "min": 0, "max": 1, "doc": "palette blend on newborn cells, afterglow and dither accents" },
+    "dither": { "type": "float", "default": 0.35, "min": 0, "max": 1, "doc": "4x4 Bayer ordered dither stylization on cell tones" },
+    "gap": { "type": "float", "default": 0.12, "min": 0, "max": 0.45, "doc": "dark pixel border between cells in Life mode" },
+    "relief": { "type": "float", "default": 5.0, "min": 0, "max": 10, "doc": "3D emboss lighting depth in Lenia mode" },
+    "under": { "type": "float", "default": 0.22, "min": 0, "max": 0.8, "doc": "dim live picture underlay beneath the cells" },
+    "glow": { "type": "float", "default": 1.25, "min": 0.4, "max": 3, "doc": "overall brightness" },
+    "flash": { "type": "float", "default": 1.1, "min": 0, "max": 2.5, "doc": "onset newborn flash and pixel RGB pop" },
+    "react": { "type": "float", "default": 1.2, "min": 0, "max": 2.5, "doc": "audio reactivity multiplier" }
+  },
+  "budget": { "ms": 1.1, "scales": "res" },
+  "tags": ["media", "cellular-automata", "life", "lenia", "simulation", "pixel", "dither", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-27", "by": "agy/gemini-4-neon-high", "note": "first version: media-seeded and video-coloured Life & Lenia cellular automata" }]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "agy-pixel-sand",
+  "kind": "effect",
+  "name": "Falling-sand pixel physics",
+  "doc": "GPU Margolus falling-sand simulation of the input picture: pinned image pixels fracture into falling coloured sand grains on beats, bass hits and drops, piling up into dunes or catching on the picture's own edges, pushed laterally by the edge field, bouncing on bass quakes, and re-crystallizing back into the live video.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video whose pixels crumble into sand" },
+      "luma": { "type": "mask", "optional": true, "doc": "media brightness mask (e.g. core-media.luma) guiding crumble order and regrowth" },
+      "edges": { "type": "field", "optional": true, "doc": "media edge gradient (e.g. core-media.edges) acting as sand ledges and lateral wind" },
+      "palette": { "type": "palette", "optional": true, "doc": "accent palette for fracture sparks, falling trails and dithered highlights" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "cells": { "type": "int", "default": 180, "min": 80, "max": 360, "doc": "grid height in sand grains (width follows the screen aspect)" },
+    "steps": { "type": "int", "default": 4, "min": 2, "max": 8, "doc": "Margolus falling-sand physics substeps per frame" },
+    "floor": { "type": "enum", "default": 0, "options": ["pile", "drain", "bounce"], "doc": "bottom behaviour: pile into dunes, drain like a pixel waterfall, or bounce up on bass" },
+    "crumble": { "type": "float", "default": 1.0, "min": 0, "max": 2, "doc": "how strongly drops, onsets and bass fracture pinned image chunks into falling sand" },
+    "erosion": { "type": "float", "default": 0.28, "min": 0, "max": 1, "doc": "steady ambient pixel erosion so the image always shimmers like an hourglass" },
+    "resurface": { "type": "float", "default": 0.65, "min": 0.05, "max": 2, "doc": "how fast empty cavities and settled grains re-crystallize into the live picture" },
+    "edge_wall": { "type": "float", "default": 0.55, "min": 0, "max": 1, "doc": "cohesion along media edges so contours catch falling sand like shelves" },
+    "wind": { "type": "float", "default": 0.7, "min": 0, "max": 2, "doc": "lateral drift from the media edge field and audio highs" },
+    "fluidity": { "type": "float", "default": 0.48, "min": 0, "max": 1, "doc": "horizontal avalanche spread of loose sand grains" },
+    "quake": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "upward bass-kick bounce that launches settled sand plumes into the air" },
+    "pal_mix": { "type": "float", "default": 0.32, "min": 0, "max": 1, "doc": "palette colour accent on fracture sparks and falling trails" },
+    "dither": { "type": "float", "default": 0.35, "min": 0, "max": 1, "doc": "4x4 Bayer ordered dither styling on grains and void ghost" },
+    "under": { "type": "float", "default": 0.16, "min": 0, "max": 0.6, "doc": "dim dithered ghost of the picture visible inside crumbled voids" },
+    "trail": { "type": "float", "default": 0.9, "min": 0, "max": 2, "doc": "glowing streak trail left behind falling sand grains" },
+    "glow": { "type": "float", "default": 1.18, "min": 0.4, "max": 3, "doc": "overall brightness" },
+    "flash": { "type": "float", "default": 1.0, "min": 0, "max": 2.5, "doc": "onset fracture spark brightness and pixel RGB split" },
+    "react": { "type": "float", "default": 1.25, "min": 0, "max": 2.5, "doc": "audio reactivity multiplier" }
+  },
+  "budget": { "ms": 0.9, "scales": "res" },
+  "tags": ["media", "falling-sand", "granular", "physics", "simulation", "pixel", "dither", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-27", "by": "agy/gemini-4-neon-high", "note": "first version: GPU Margolus falling-sand pixel physics driven by media and audio drops" }]
+}

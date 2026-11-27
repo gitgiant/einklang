@@ -1,0 +1,184 @@
+{
+  "format": 1,
+  "id": "agy-evolve-sim-ecosystem",
+  "name": "Evolve sim: Living Pixels",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "lenia", "falling-sand", "physarum", "boids", "fluid", "pixel", "dither"],
+  "doc": "Your image, video or camera feeds an evolving multi-simulation ecosystem that swaps every phrase across continuous Lenia, falling-sand pixel physics, physarum slime veins, flocking bird swarms and swirling fluid smoke, unified by tactile pixel-art Bayer dither, halftone, ASCII and kaleidoscope finishes under shifting arcade palettes.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#070d1f #17375e #00e5a0 #ff3d81 #ffd23f #f4fff8", "cycle": 0.26 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.28, "pulse": 0.3, "drift": 0.36, "contrast": 1.2, "saturation": 1.18, "edge_width": 2.4 }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-media-life",
+      "params": {
+        "mode": 1,
+        "cells": 168,
+        "radius": 6,
+        "dt": 0.13,
+        "edge_seed": 1.25,
+        "luma_seed": 0.8,
+        "media_pull": 1.2,
+        "decay": 0.9,
+        "colour": 1,
+        "pal_mix": 0.4,
+        "dither": 0.28,
+        "relief": 5.5,
+        "under": 0.2,
+        "glow": 1.25,
+        "flash": 1.2,
+        "react": 1.35
+      },
+      "bind": {
+        "glow": { "from": "bass.out", "range": [1.0, 1.75] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "claude-pixel-art",
+      "params": { "pixels": 180, "palette": 6, "dither": 0.72, "matrix": 1, "gain": 1.15, "grid": 0.16 },
+      "bind": {
+        "shake": { "from": "bass.out", "range": [0.0, 0.45] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" },
+    { "from": "pal.palette", "to": "fx.palette" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.35, "threshold": 0.75 },
+  "evolve": {
+    "every": "phrase",
+    "transition": "core-dissolve",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "sim",
+        "pool": [
+          {
+            "piece": "agy-pixel-sand",
+            "params": {
+              "cells": 176,
+              "steps": 4,
+              "floor": 0,
+              "crumble": 1.2,
+              "erosion": 0.32,
+              "resurface": 0.65,
+              "edge_wall": 0.55,
+              "wind": 0.75,
+              "fluidity": 0.52,
+              "quake": 0.72,
+              "pal_mix": 0.35,
+              "dither": 0.3,
+              "under": 0.18,
+              "trail": 1.0,
+              "glow": 1.22,
+              "flash": 1.2,
+              "react": 1.35
+            },
+            "ranges": { "wind": [0.45, 1.35], "quake": [0.45, 0.95] },
+            "bind": {
+              "crumble": { "from": "bass.out", "range": [0.6, 1.85] }
+            }
+          },
+          {
+            "piece": "claude-picture-slime",
+            "params": { "agents": 180, "cells": 400, "steps": 2, "food": 1.3, "hunger": 1.1, "contrast": 1.6, "colour": 2, "under": 0.1, "react": 1.4, "flash": 1.1, "glow": 1.3 },
+            "ranges": { "angle": [22, 54], "reach": [6, 16], "decay": [0.86, 0.94] }
+          },
+          {
+            "piece": "claude-picture-swarm",
+            "params": { "count": 80, "grid": 64, "speed": 0.34, "food": 1.3, "hunger": 1.3, "settle": 0.6, "react": 1.8, "scatter": 1.6, "flash": 0.8, "glow": 1.25 },
+            "ranges": { "size": [1.8, 3.2], "wander": [0.5, 1.4] },
+            "bind": {
+              "streak": { "from": "hi.out", "range": [1.0, 2.8] },
+              "under": { "from": "bass.out", "range": [0.06, 0.28] }
+            }
+          },
+          {
+            "piece": "claude-picture-smoke",
+            "params": { "cells": 160, "res": 540, "iters": 16, "restore": 1.1, "snap": 1.2, "swirls": 3, "spin": 1.35, "breath": 1.5, "burst": 1.1, "buoyancy": 1.1, "flash": 0.45 },
+            "ranges": { "size": [0.18, 0.3], "vorticity": [0.9, 1.8] },
+            "bind": {
+              "sheen": { "from": "hi.out", "range": [0.2, 0.9] }
+            }
+          },
+          {
+            "piece": "agy-media-life",
+            "params": {
+              "mode": 0,
+              "cells": 176,
+              "rate": 6,
+              "edge_seed": 1.4,
+              "luma_seed": 0.7,
+              "colour": 1,
+              "pal_mix": 0.42,
+              "dither": 0.35,
+              "gap": 0.14,
+              "under": 0.2,
+              "glow": 1.25,
+              "flash": 1.25,
+              "react": 1.35
+            },
+            "ranges": { "rate": [4, 9], "decay": [0.82, 0.92] },
+            "bind": {
+              "edge_seed": { "from": "hi.out", "range": [0.9, 2.2] }
+            }
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "agy-bayer-dither",
+            "params": { "mix": 0.9 },
+            "ranges": { "cells": [96, 176], "levels": [4, 7], "dither": [0.78, 1.0], "pal_mix": [0.38, 0.72] },
+            "bind": { "chroma": { "from": "hi.out", "range": [0.25, 1.15] } }
+          },
+          {
+            "piece": "agy-halftone",
+            "params": { "contrast": 1.25, "sharpness": 0.86, "mix": 0.84 },
+            "ranges": { "cell": [10, 18], "angle": [-25, 35], "bass": [0.45, 1.05] }
+          },
+          {
+            "piece": "agy-ascii",
+            "params": { "mode": 2, "color": 0, "levels": 5, "contrast": 1.25, "scanlines": 0.16, "mix": 0.88 },
+            "ranges": { "cell": [10, 18], "bass": [0.45, 1.05] }
+          },
+          {
+            "piece": "core-kaleido",
+            "ranges": { "segments": [4, 8], "spin": [-0.08, 0.08] },
+            "bind": { "zoom": { "from": "bass.out", "range": [1.0, 1.34] } }
+          }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#1d2b53 #7e2553 #ff004d #ffa300 #ffec27 #29adff", "cycle": 0.3 } },
+          { "piece": "core-harmony", "params": { "scheme": 2, "chroma": 0.19, "light": 0.7, "contrast": 0.65 },
+            "bind": { "hue": { "from": "lfo.out", "range": [0.1, 0.9] } } }
+        ]
+      }
+    ]
+  }
+}
