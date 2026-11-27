@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "codex-pendulum-ink",
+  "name": "Pendulum Ink",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    { "id": "pen", "piece": "codex-harmonograph", "params": { "spread": 0.95, "ink": 1.15 } }
+  ],
+  "edges": [],
+  "out": "pen.out",
+  "post": { "bloom": 0.46, "threshold": 0.40, "exposure": 1.1 }
+}
