@@ -66,7 +66,11 @@ fn swirl(uv: vec2f, c: vec2f, r: f32) -> vec3f {
   let w = ld(tb, c).x;
   var n = 0.5 * vec2f(wr - wl, wb - wt);
   n = n / (length(n) + 1e-4);
+  // confinement, capped so strong settings sharpen eddies instead of going unstable
   var f = u.vort * vec2f(n.y * w, -n.x * w);
+  let fl = length(f);
+  let cap = 4.0 * u.size.y;
+  if (fl > cap) { f *= cap / fl; }
   // bright parts of the picture rise like hot smoke, dark parts sink a little
   f.y -= u.buoy * (luma_at(uv) - 0.35);
   // the swirls (bass) and their outward breath (beat)
@@ -86,7 +90,10 @@ fn swirl(uv: vec2f, c: vec2f, r: f32) -> vec3f {
   // soft walls: the edges slow the flow so colours don't pile up there
   let edge = min(min(uv.x, 1.0 - uv.x) * u.look2.z, min(uv.y, 1.0 - uv.y));
   vel *= smoothstep(0.0, 0.03, edge);
-  vel = clamp(vel, vec2f(-2000.0), vec2f(2000.0));
+  // at most ~2.5 screen heights per second
+  let vl = length(vel);
+  let vmax = 2.5 * u.size.y;
+  if (vl > vmax) { vel *= vmax / vl; }
   return vec4f(vel, 0.0, 1.0);
 }
 
@@ -159,7 +166,7 @@ fn pal(x: f32) -> vec3f {
   let sp = length(vel);
   let x = fract(clamp(sp * 0.9, 0.0, 1.0) * 0.6 + 0.3 + u.look2.y);
   let tri = 1.0 - abs(x * 2.0 - 1.0);
-  col += pal(0.35 + 0.65 * tri) * smoothstep(0.05, 0.9, sp) * u.look.z;
+  col += pal(0.35 + 0.65 * tri) * smoothstep(0.15, 1.4, sp) * u.look.z;
   col *= u.look.x * (1.0 + u.look.y);
   return vec4f(col, 1.0);
 }

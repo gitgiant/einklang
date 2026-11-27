@@ -132,9 +132,11 @@ fn vnoise(p: vec2f) -> f32 {
   let ang = vnoise(p * 3.0 + vec2f(sim.time * 0.13, -sim.time * 0.07)) * TAU * 2.0;
   a += sim.wander * vec2f(cos(ang), sin(ang));
   // soft walls
-  let m = 0.05;
-  a.x += smoothstep(m, 0.0, p.x) * 6.0 - smoothstep(sim.aspect - m, sim.aspect, p.x) * 6.0;
-  a.y += smoothstep(m, 0.0, p.y) * 6.0 - smoothstep(1.0 - m, 1.0, p.y) * 6.0;
+  // soft walls: a wide, gentle turn back, so the flock doesn't pile up along the edges
+  let m = 0.12;
+  let wk = 3.0 * sim.cruise + 0.5;
+  a.x += (smoothstep(m, 0.0, p.x) - smoothstep(sim.aspect - m, sim.aspect, p.x)) * wk;
+  a.y += (smoothstep(m, 0.0, p.y) - smoothstep(1.0 - m, 1.0, p.y)) * wk;
   v += a * sim.dt;
   // the onset scatter: a blast out of a point
   if (sim.scatter > 0.0) {
@@ -144,7 +146,8 @@ fn vnoise(p: vec2f) -> f32 {
   }
   // ease to the cruising speed, slower over bright food: they linger on the picture
   let here = bright(p);
-  let want = sim.cruise * (1.0 - sim.settle * here) * (0.85 + 0.3 * rnd(i, 7u));
+  let edge = min(min(p.x, sim.aspect - p.x), min(p.y, 1.0 - p.y));
+  let want = sim.cruise * (1.0 - sim.settle * here * smoothstep(0.0, 0.08, edge)) * (0.85 + 0.3 * rnd(i, 7u));
   let sp = max(length(v), 1e-4);
   v = v / sp * mix(sp, want, 0.06);
   p += v * sim.dt;

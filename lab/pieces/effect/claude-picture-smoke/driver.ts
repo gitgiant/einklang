@@ -94,7 +94,7 @@ export default definePiece({
         uf.fill(0);
         uf.set([W, H, DW, DH], 0);
         const keep = Math.pow(0.5, dt / Math.max(0.05, params.memory as number));
-        uf.set([dt, keep, (params.vorticity as number) * 25 * (1 + react * 1.5 * high), (params.buoyancy as number) * 70 * s * (0.4 + react * 1.2 * mid)], 4);
+        uf.set([dt, keep, (params.vorticity as number) * 12 * (1 + react * 1.5 * high), (params.buoyancy as number) * 70 * s * (0.4 + react * 1.2 * mid)], 4);
         // relax rate per second: the base, plus a surge right after each beat
         const rate = (params.restore as number) * (0.5 + 2.5 * (params.snap as number) * beatEnv * (0.5 + react * 0.5));
         uf.set([1 - Math.exp(-rate * dt), 1 - (params.fade as number) * dt, lumaT ? 1 : 0, fresh ? 1 : 0], 8);
