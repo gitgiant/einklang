@@ -1,0 +1,74 @@
+{
+  "id": "agy-fireworks",
+  "kind": "generator",
+  "name": "Starburst fireworks",
+  "doc": "GPU-simulated firework starbursts triggered on audio onsets, with burst scale driven by loudness, palette-colored chrysanthemum, willow, and ring shells, gravity arcs, and glowing spark trails.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "colors each firework shell, spark core, and fading willow trail"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "burst_scale": {
+      "type": "float",
+      "default": 1.15,
+      "min": 0.4,
+      "max": 2.2,
+      "doc": "burst radius and launch velocity multiplier"
+    },
+    "gravity": {
+      "type": "float",
+      "default": 0.52,
+      "min": 0.1,
+      "max": 1.4,
+      "doc": "downward gravitational pull on firework sparks"
+    },
+    "trails": {
+      "type": "float",
+      "default": 0.84,
+      "min": 0.3,
+      "max": 0.95,
+      "doc": "persistence of glowing spark trails in the sky"
+    },
+    "sparkle": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0,
+      "doc": "high-frequency crackle and glitter twinkle on dying sparks"
+    },
+    "gain": {
+      "type": "float",
+      "default": 1.25,
+      "min": 0.3,
+      "max": 2.5,
+      "doc": "overall HDR firework brilliance"
+    }
+  },
+  "budget": {
+    "ms": 1.2,
+    "scales": "n"
+  },
+  "tags": [
+    "fireworks",
+    "starburst",
+    "particles",
+    "onset",
+    "gravity",
+    "trails",
+    "compute"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  }
+}

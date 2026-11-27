@@ -35,7 +35,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] L-systems / trees
 - [ ] Cellular automata
 - [x] Spectrum terrain / ridgeline → agy-ridgeline, scene agy-unknown-ridges
-- [ ] Voronoi
+- [x] Voronoi → agy-voronoi, scene agy-shatter
 - [ ] Noise fields
 - [x] Text / lyrics → core-text
 - [ ] MIDI piano-roll
@@ -50,6 +50,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Plasma → core-plasma
 - [x] Spectrum bars → core-bars
 - [x] Spectrogram → agy-spectrogram, scene agy-spectrogram-wall, agy-waterfall
+- [x] Starburst / fireworks → agy-fireworks, scene agy-finale
 
 ### Color
 - [x] Palette picker (agent chooses stops) → core-swatch
