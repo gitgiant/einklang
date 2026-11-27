@@ -94,8 +94,8 @@ export default definePiece({
         ticks = Math.min(ticks, MAX_CATCHUP);
         lastTick = tick;
 
-        let bass = 0;
-        for (let ago = 0; ago < 8; ago++) { const f = past(ago); bass += (f.bands[0] + f.bands[1] + f.bands[2]) / 24; }
+        let bass = 0, loud = 0;
+        for (let ago = 0; ago < 8; ago++) { const f = past(ago); bass += (f.bands[0] + f.bands[1] + f.bands[2]) / 24; loud += f.rms / 8; }
         let kick = 0, onsetAgo = -1;
         for (let ago = 0; ago < 30; ago++) if (past(ago).onset) { kick = Math.max(kick, Math.exp(-ago / 7)); if (onsetAgo < 0) onsetAgo = ago; }
 
@@ -121,18 +121,19 @@ export default definePiece({
         }
         pass.end();
 
-        // camera: a slow orbit at a tilt that breathes, a touch closer on the bass
+        // camera: a slow orbit at a tilt that breathes, pushing in on the bass
         const aspect = width / height;
         const az = time * (params.orbit as number) * Math.PI * 2 / 60;
         const el = (params.tilt as number) + 0.12 * Math.sin(time * 0.05);
-        const dist = (params.distance as number) * (1 - 0.04 * bass);
+        const dist = (params.distance as number) * (1 - 0.12 * bass);
         const eye = [dist * Math.cos(el) * Math.cos(az), dist * Math.sin(el), dist * Math.cos(el) * Math.sin(az)];
         const pal = (ins.palette as Palette | undefined)?.stops ?? Array.from({ length: 6 }, (_, i) => oklch(0.12 + i * 0.16, 0.12, audio.pal + 0.62 + i / 12));
         const bps = (audio.bpm > 0 ? audio.bpm : 120) / 60;
         df.fill(0);
         df.set(lookAt(eye, [0, 0, 0]), 0);
         df.set(perspective(0.8, aspect, 0.05, 50), 16);
-        df.set([params.size as number, params.glow as number, kick, (time * bps / 16) * (params.cycle as number)], 32);
+        const pulse = params.pulse as number, glow = (params.glow as number) * (1 - pulse + pulse * (0.45 + 1.3 * loud));
+        df.set([params.size as number, glow, kick, (time * bps / 16) * (params.cycle as number)], 32);
         df.set([Math.min(8, pal.length), coreM, params.coreglow as number, params.bg as number], 36);
         df.set([aspect, Math.sqrt(coreM + 0.9), params.dust as number, 0], 40);
         pal.slice(0, 8).forEach((st, i) => df.set(st, 44 + i * 4));

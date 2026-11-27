@@ -111,7 +111,7 @@ fn pattern(uv: vec2f) -> vec3f {
   let e = min(min(v.uv.x, 1.0 - v.uv.x) * dr.grid.x / dr.grid.y, min(v.uv.y, 1.0 - v.uv.y));
   base *= mix(0.55, 1.0, smoothstep(0.012, 0.022, e));
   var col = base * (0.18 + 0.95 * diff + 0.55 * through) + (pal(1.0) * 0.6 + vec3f(0.4)) * sheen + pal(0.6) * rim;
-  col += base * dr.kick * 0.45;
+  col += base * dr.kick * 0.9;
   return vec4f(col * dr.glow, 1.0);
 }
 

@@ -53,7 +53,7 @@ const CORNERS = array<vec2f, 6>(vec2f(-1.0, -1.0), vec2f(1.0, -1.0), vec2f(1.0, 
   let x = clamp(0.95 - 0.75 * p.w + 0.15 * clamp(rel - 0.8, 0.0, 1.0), 0.0, 1.0);
   let hue = 1.0 - abs(fract((x + dr.shift) * 0.5) * 2.0 - 1.0);
   let k = mix(1.0, 0.12, dust);
-  o.col = pal(mix(x, hue, 0.35)) * k * (0.7 + 0.5 * clamp(rel - 0.5, 0.0, 1.0) + 0.9 * dr.kick);
+  o.col = pal(mix(x, hue, 0.35)) * k * (0.7 + 0.5 * clamp(rel - 0.5, 0.0, 1.0) + 1.5 * dr.kick);
   return o;
 }
 

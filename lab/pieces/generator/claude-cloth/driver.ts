@@ -131,24 +131,26 @@ export default definePiece({
 
         const avg = (lo: number, hi: number, f = audio) => { let s = 0; for (let b = lo; b <= hi; b++) s += f.bands[b]; return s / (hi - lo + 1); };
         let bass = 0, mid = 0, high = 0;
-        for (let ago = 0; ago < 10; ago++) { const f = past(ago); bass += avg(0, 3, f) / 10; mid += avg(4, 9, f) / 10; high += avg(10, 15, f) / 10; }
+        let loud = 0;
+        for (let ago = 0; ago < 10; ago++) { const f = past(ago); bass += avg(0, 3, f) / 10; mid += avg(4, 9, f) / 10; high += avg(10, 15, f) / 10; loud += f.rms / 10; }
         let kick = 0;
-        for (let ago = 0; ago < 40; ago++) if (past(ago).onset) { kick = Math.max(kick, Math.exp(-ago / 12)); }
+        for (let ago = 0; ago < 40; ago++) if (past(ago).onset) { kick = Math.max(kick, Math.exp(-ago / 15)); }
 
         const steps = Math.max(1, Math.round(params.steps as number));
         const iters = Math.max(1, Math.round(params.iters as number)) | 1;
         const dt = 1 / (60 * steps);
-        const lvl = (params.idle as number) + (params.react as number) * bass * 1.3;
-        const S = (params.wind as number) * (1.5 + 8 * lvl);
+        // quiet: a limp flag stirring; loud: flying flat out, so the music changes the whole silhouette
+        const lvl = (params.idle as number) + (params.react as number) * bass * 1.6;
+        const S = (params.wind as number) * (1 + 12 * lvl);
         // the wind blows away from the pole, or through the banner toward the camera, and the mids swing it
         const sw = (params.swing as number) * (0.35 * Math.sin(time * 0.11) + 0.6 * (mid - 0.25));
         const base = mode === 0 ? [Math.cos(sw), 0.04, -Math.sin(sw) - 0.12] : [Math.sin(sw) + 0.2, 0.05, 1];
         const bl = Math.hypot(...base), dir = base.map((c) => c / bl);
-        const gust = (params.gust as number) * kick * S * 1.2;
+        const gust = (params.gust as number) * kick * (4 + 1.5 * S);
         su.set([COLS, ROWS, MODE, 0], 0);
         sf.set([dt, 1 - (params.damping as number), WIDTH / (COLS - 1), 0.45 * (params.stiffness as number)], 4);
         sf.set([dir[0] * S, dir[1] * S, dir[2] * S, params.aero as number], 8);
-        sf.set([dir[0] * gust, dir[1] * gust, dir[2] * gust, (params.flutter as number) * (1.5 + 6 * high)], 12);
+        sf.set([dir[0] * gust, dir[1] * gust, dir[2] * gust, (params.flutter as number) * (0.6 + 8 * high)], 12);
         sf.set([time, 1.6, 0.12, 9.8 * (params.gravity as number)], 16);
         device.queue.writeBuffer(simU, 0, simData);
 
@@ -175,7 +177,9 @@ export default definePiece({
         df.set(lookAt(eye, target), 0);
         df.set(perspective(0.75, aspect, 0.05, 30), 16);
         df.set([...eye, time], 32);
-        df.set([-0.45, 0.75, 0.55, params.glow as number], 36);
+        // the light swells with the loudness
+        const pulse = params.pulse as number;
+        df.set([-0.45, 0.75, 0.55, (params.glow as number) * (1 - pulse + pulse * (0.55 + 1.1 * loud))], 36);
         df.set([COLS, ROWS, Math.min(8, pal.length), Math.round(params.pattern as number)], 40);
         df.set([params.stripes as number, kick * (params.flash as number), (time * bps / 16) * (params.cycle as number), params.bg as number], 44);
         df.set([...rodA, mode === 0 ? 0.018 : 0.013], 48);
