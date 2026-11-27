@@ -106,7 +106,7 @@ export default definePiece({
           uf.set([W, H, width / height, (tk / TICKS_PER_BEAT) % 64], o);
           uf.set([rate, 0.02 + 0.2 * (params.branch as number), params.along as number, params.wiggle as number], o + 4);
           const seedp = (fresh && k === 0 ? 0.004 : 0) + (hit && k === 0 ? seedAmt * 0.006 * (0.5 + react * bass) : 0);
-          const melt = (params.melt as number) * 0.0015 + (params.reform as number) * env * 0.12;
+          const melt = (params.melt as number) * 0.004 + (params.reform as number) * env * 0.12;
           uf.set([seedp, params.edge as number, melt, (tk * 8 + k) % 16777216], o + 8);
           uf.set([params.show as number, params.tint as number, params.sparkle as number, params.glow as number], o + 12);
           uf.set([kickEnv, audio.rms, (time * bps / 16) * (params.cycle as number), Math.min(8, pal.length)], o + 16);
