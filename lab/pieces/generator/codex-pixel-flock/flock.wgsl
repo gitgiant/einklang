@@ -130,17 +130,17 @@ struct GrainVertex {
   let axis = vec2f(u.frame.x, 1.0);
   let rgb = max(vec3f(0.0), textureSampleLevel(photo, linear_clamp, g.home, 0.0).rgb);
   let l = sample_luma(g.home);
-  let active = smoothstep(0.13, 0.39, g.weight + g.seed * 0.24);
+  let coverage = smoothstep(0.13, 0.39, g.weight + g.seed * 0.24);
   let speed = length(g.velocity);
   let heading = g.velocity + vec2f(0.014, -0.009);
   let direction = heading / max(length(heading), 0.0001);
   let across = vec2f(-direction.y, direction.x);
   let bead = u.print.y > 0.5 && u.print.y < 1.5;
   let stretch = select(1.16 + min(5.2, speed * 14.0), 1.0 + min(1.6, speed * 4.0), bead);
-  let radius = u.spring.w * (0.0012 + l * 0.0017 + g.seed * 0.0008) * active;
+  let radius = u.spring.w * (0.0012 + l * 0.0017 + g.seed * 0.0008) * coverage;
   let xy = g.home + (g.shift + radius * (direction * local.x * stretch + across * local.y)) / axis;
   let hue = rgb * (0.66 + l * 0.34) + grain_ink() * (0.08 + 0.15 * min(1.0, speed * 6.0));
-  let gain = active * (0.40 + 0.42 * u.sound.x + min(0.45, speed * 1.7));
+  let gain = coverage * (0.40 + 0.42 * u.sound.x + min(0.45, speed * 1.7));
   return GrainVertex(vec4f(xy * vec2f(2.0, -2.0) + vec2f(-1.0, 1.0), 0.0, 1.0), local, hue * gain);
 }
 
