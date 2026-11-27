@@ -1,0 +1,146 @@
+{
+  "format": 1,
+  "id": "agy-evolve-media-datamask",
+  "name": "Evolve media: Data Mask",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "glitch", "datamask", "dither", "lumakey"],
+  "doc": "Your picture (image, video or camera) split by brightness into two live glitch layers: the foreground punched through an audio data mask (swapping between spectrogram, matrix rain, piano roll and oscilloscope), the background edge-displaced through VHS tape tracking, fracture plates or tideline ripples, finished by evolving Bayer dither, pixel sort, halftone, CRT, dots or kaleidoscope passes on hard stutter cuts.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#07081a #1e2a78 #00e5ff #ff2e63 #ffe66d", "cycle": 0.26 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.34, "pulse": 0.3, "drift": 0.42, "contrast": 1.2, "saturation": 1.15, "edge_width": 2.5 }
+    },
+    {
+      "id": "data",
+      "piece": "agy-spectrogram",
+      "params": { "direction": 0, "speed": 1.75, "freq_scale": 0, "gain": 1.55, "gamma": 1.15, "pal_mode": 0, "mirror": true, "onset_mark": 0.8, "tilt": 0.0, "glow": 1.55 }
+    },
+    {
+      "id": "mask",
+      "piece": "agy-data-mask",
+      "params": { "threshold": 0.22, "soft": 0.16, "ghost": 0.34, "data_glow": 0.72, "edge_glow": 1.05, "rgb_split": 0.55, "block_glitch": 0.46, "invert": false },
+      "bind": {
+        "rgb_split": { "from": "hi.out", "range": [0.22, 1.15] },
+        "block_glitch": { "from": "bass.out", "range": [0.16, 0.92] }
+      }
+    },
+    {
+      "id": "warp",
+      "piece": "claude-displace",
+      "params": { "amount": 0.032, "swirl": 0.65, "beat": 0.65, "bass": 0.65, "chroma": 0.55, "outline": 0.4 }
+    },
+    {
+      "id": "bg",
+      "piece": "codex-tracking",
+      "params": { "tracking": 0.55, "phosphor": 0.28 }
+    },
+    {
+      "id": "mix",
+      "piece": "claude-lumakey",
+      "params": { "threshold": 0.46, "soft": 0.1, "bass": 0.4, "rim": 1.35 }
+    },
+    {
+      "id": "fx",
+      "piece": "agy-bayer-dither",
+      "params": { "cells": 144, "levels": 5, "dither": 0.88, "pal_mix": 0.52, "chroma": 0.55, "mix": 0.88 },
+      "bind": { "chroma": { "from": "hi.out", "range": [0.25, 1.2] } }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "data.palette" },
+    { "from": "pal.palette", "to": "mask.palette" },
+    { "from": "pal.palette", "to": "warp.palette" },
+    { "from": "pal.palette", "to": "mix.palette" },
+    { "from": "pal.palette", "to": "fx.palette" },
+    { "from": "media.out", "to": "mask.in" },
+    { "from": "data.out", "to": "mask.data" },
+    { "from": "media.edges", "to": "mask.edges" },
+    { "from": "media.out", "to": "warp.in" },
+    { "from": "media.edges", "to": "warp.by" },
+    { "from": "warp.out", "to": "bg.picture" },
+    { "from": "mask.out", "to": "mix.fg" },
+    { "from": "bg.out", "to": "mix.bg" },
+    { "from": "media.luma", "to": "mix.key" },
+    { "from": "mix.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.44, "threshold": 0.72 },
+  "evolve": {
+    "every": 2,
+    "transition": "core-stutter",
+    "beats": 1,
+    "slots": [
+      {
+        "node": "data",
+        "pool": [
+          {
+            "piece": "agy-matrix",
+            "params": { "density": 0.88, "flare": 1.25, "glitch": 0.5, "glow": 1.35 },
+            "ranges": { "columns": [54, 96], "speed": [1.0, 1.9], "trail": [0.65, 0.84] }
+          },
+          {
+            "piece": "agy-pianoroll",
+            "params": { "gain": 1.6, "threshold": 0.18, "keyboard_h": 0.16, "glow": 1.7, "grid": 0.35 },
+            "ranges": { "speed": [1.3, 2.2], "perspective": [0.15, 0.42] }
+          },
+          {
+            "piece": "core-scope"
+          }
+        ]
+      },
+      {
+        "node": "bg",
+        "pool": [
+          {
+            "piece": "codex-fracture-plate",
+            "ranges": { "tiles": [10, 20], "breakup": [0.28, 0.58] }
+          },
+          {
+            "piece": "codex-tideline"
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "agy-pixelsort",
+            "params": { "direction": 0, "threshold": 0.32, "ceiling": 0.95, "energy": 0.6, "onset_boost": 0.95, "mix": 0.76 },
+            "ranges": { "length": [36, 88] }
+          },
+          {
+            "piece": "claude-dots",
+            "params": { "under": 0.24, "burst": 0.65, "glow": 1.35 },
+            "ranges": { "cell": [10, 18], "wander": [0.25, 0.55] }
+          },
+          {
+            "piece": "agy-halftone",
+            "params": { "contrast": 1.25, "sharpness": 0.86, "mix": 0.85 },
+            "ranges": { "cell": [10, 20], "angle": [-30, 45], "bass": [0.45, 1.1] }
+          },
+          {
+            "piece": "claude-crt",
+            "params": { "scanlines": 0.48, "curve": 0.32, "vignette": 0.4 },
+            "ranges": { "chroma": [0.35, 0.85], "tracking": [0.35, 0.8], "jitter": [0.28, 0.68] }
+          },
+          {
+            "piece": "core-kaleido",
+            "ranges": { "segments": [4, 8], "spin": [-0.1, 0.1] },
+            "bind": { "zoom": { "from": "bass.out", "range": [1.0, 1.32] } }
+          }
+        ]
+      }
+    ]
+  }
+}
