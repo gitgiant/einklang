@@ -34,6 +34,16 @@ export function galleryTrans(qs: URLSearchParams): GalleryTrans {
   return v === 'all' ? 'all' : resolveTrans(v) ?? 'random';
 }
 
+/** Which scene the gallery's cycle goes to next: weighted by votes, list order, liked ones only, or none. */
+export const GALLERY_ROTS = ['weighted', 'order', 'liked', 'stay'] as const;
+export type GalleryRot = (typeof GALLERY_ROTS)[number];
+
+/** `rot=` wins. Without it: `stay` when transitions are off, list order for stills, else weighted. */
+export function galleryRot(qs: URLSearchParams): GalleryRot {
+  const v = GALLERY_ROTS.find((r) => r === qs.get('rot'));
+  return v ?? (!galleryTrans(qs) ? 'stay' : qs.has('at') || qs.has('stop') ? 'order' : 'weighted');
+}
+
 /** The gallery's transition length: `len=` wins, then the remembered choice (not for `at=` / `stop=` stills). */
 export function galleryBeats(qs: URLSearchParams, remembered: string | null): number {
   const v = qs.get('len') ?? (qs.has('at') || qs.has('stop') ? null : remembered);

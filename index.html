@@ -31,13 +31,12 @@
   #toast { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 12px); background: #000d; color: #fff; padding: 8px 16px; border-radius: 18px; font: 15px system-ui, sans-serif; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
   #tvote { position: fixed; right: 8px; bottom: 52px; max-width: 340px; background: #000c; padding: 6px 8px; border-radius: 6px; }
-  #tvote:not(:has(.trow:not(.hide))) { display: none; }
-  #tvote .trow, #tvote .ttags { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-  #tvote .ttags { width: 100%; gap: 3px; }
-  #tvote .trow > button { font-size: 18px; background: none; border: 0; cursor: pointer; padding: 2px 6px; }
-  #tvote .trow > button:disabled { opacity: .3; cursor: default; }
-  #tvote .ttags button { font-size: 11px; color: #999; background: none; border-radius: 10px; padding: 2px 7px; cursor: pointer; }
-  #tvote .ttags button[aria-pressed=true] { color: #000; background: #ddd; }
+  #tvote .trow { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  #tvote .tvoted, #tvote .tpick { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; }
+  #tvote .trow button { font-size: 18px; background: none; border: 0; cursor: pointer; min-width: 36px; min-height: 36px; padding: 2px 6px; }
+  #tvote .trow button:disabled { opacity: .3; cursor: default; }
+  #tvote .tpick button { border: 1px solid #555; border-radius: 4px; }
+  #tvote .tpick span { min-width: 10em; text-align: center; }
   #tvote .tnote { color: #999; }
   #panel, #bar, #hosts, #tvote { transition: opacity .4s; }
   body.idle #panel, body.idle #bar, body.idle #hosts, body.idle #tvote { opacity: 0; pointer-events: none; }
