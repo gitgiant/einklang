@@ -142,6 +142,7 @@ test('media host: a video pauses when not shown, unless its sound drives the mus
   assert.equal(s.video.paused, false, 'its sound drives the music: plays on');
   host.frame(device, 1);
   assert.equal(b.video.paused, false, 'shown again: plays');
+  host.clear(); // stops the idle timer
 });
 
 test('media files and camera errors', () => {

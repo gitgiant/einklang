@@ -40,6 +40,8 @@ export class MediaHost {
   private list: MediaItem[] = [];
   private caches: { device: GPUDevice; map: Map<MediaItem, Tex> }[] = [];
   private failed = new Set<MediaItem>();
+  /** Pauses videos while no scene asks for them (no media scene on screen). */
+  private timer: ReturnType<typeof setInterval> | null = null;
   readonly listeners = new Set<() => void>();
   /** The clock for play/pause bookkeeping (tests replace it). */
   now = () => performance.now();
@@ -53,6 +55,9 @@ export class MediaHost {
     for (const c of this.caches) for (const [it, t] of c.map) if (!keep.has(it)) { t.tex.destroy(); c.map.delete(it); }
     this.list = items;
     this.failed.clear();
+    const videos = items.some((it) => it.video);
+    if (videos && !this.timer) this.timer = setInterval(() => this.sweep(null, this.now()), 1000);
+    else if (!videos && this.timer) { clearInterval(this.timer); this.timer = null; }
     for (const f of this.listeners) f();
   }
   clear(): void { this.set([]); }
@@ -94,7 +99,7 @@ export class MediaHost {
   }
 
   /** Play the shown video; pause the others that haven't shown for a while (their sound aside). */
-  private sweep(shown: MediaItem, now: number): void {
+  private sweep(shown: MediaItem | null, now: number): void {
     for (const it of this.list) {
       const v = it.video;
       if (!v || it.kind === 'camera') continue;

@@ -42,14 +42,15 @@
         "beat_zoom": 0.3,
         "pulse": 0.25,
         "drift": 0.6,
-        "edge_width": 3
+        "edge_width": 3,
+        "brightness": 1.25
       }
     },
     {
       "id": "bg",
       "piece": "core-plasma",
       "params": {
-        "gain": 0.5
+        "gain": 0.35
       }
     },
     {
@@ -74,9 +75,10 @@
       "id": "key",
       "piece": "claude-lumakey",
       "params": {
-        "threshold": 0.45,
-        "soft": 0.08,
-        "rim": 1.2
+        "threshold": 0.12,
+        "soft": 0.06,
+        "rim": 1.2,
+        "bass": 0.15
       }
     },
     {
@@ -84,15 +86,15 @@
       "piece": "core-kaleido",
       "params": {
         "segments": 6,
-        "spin": 0.03,
+        "spin": 0.05,
         "zoom": 1
       },
       "bind": {
         "zoom": {
           "from": "lfo.out",
           "range": [
-            0.8,
-            1.4
+            0.6,
+            1.2
           ]
         }
       }

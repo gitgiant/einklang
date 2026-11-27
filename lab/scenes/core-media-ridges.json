@@ -42,15 +42,15 @@
       "piece": "claude-ridges",
       "params": {
         "lines": 60,
-        "height": 0.12,
+        "height": 0.16,
         "tilt": 0.6
       },
       "bind": {
         "height": {
           "from": "bass.out",
           "range": [
-            0.08,
-            0.2
+            0.1,
+            0.24
           ]
         }
       }
