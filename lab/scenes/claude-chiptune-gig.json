@@ -1,0 +1,149 @@
+{
+  "format": 1,
+  "id": "claude-chiptune-gig",
+  "name": "Chiptune stage",
+  "version": 1,
+  "author": {
+    "vendor": "claude",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "kick",
+      "piece": "core-envelope",
+      "params": {
+        "source": 0,
+        "attack": 0.01,
+        "decay": 0.3,
+        "curve": 3
+      }
+    },
+    {
+      "id": "stage",
+      "piece": "claude-chip-stage",
+      "params": {
+        "dancers": 5,
+        "per_beat": 1,
+        "eq": 1.3,
+        "lights": 0.7
+      },
+      "bind": {
+        "kick": {
+          "from": "kick.out",
+          "range": [
+            0,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "id": "px",
+      "piece": "claude-pixel-art",
+      "params": {
+        "pixels": 180,
+        "palette": 0,
+        "dither": 0.5,
+        "matrix": 1
+      },
+      "bind": {
+        "shake": {
+          "from": "kick.out",
+          "range": [
+            0,
+            0.4
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "stage.out",
+      "to": "px.in"
+    }
+  ],
+  "out": "px.out",
+  "post": {
+    "bloom": 0,
+    "threshold": 1
+  },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-pixelate",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "drop",
+        "when": {
+          "section": "drop"
+        },
+        "transition": "core-flash",
+        "beats": 1,
+        "params": {
+          "stage": {
+            "dancers": 7,
+            "per_beat": 2,
+            "eq": 1.6,
+            "lights": 1
+          },
+          "px": {
+            "palette": 1
+          }
+        },
+        "bind": {
+          "px": {
+            "shake": {
+              "from": "kick.out",
+              "range": [
+                0,
+                0.7
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "build",
+        "when": {
+          "section": "build"
+        },
+        "params": {
+          "stage": {
+            "dancers": 3,
+            "per_beat": 2,
+            "hue": 0.4
+          },
+          "px": {
+            "palette": 2,
+            "matrix": 2
+          }
+        }
+      },
+      {
+        "id": "breakdown",
+        "when": {
+          "section": "breakdown"
+        },
+        "transition": "core-dissolve",
+        "beats": 2,
+        "params": {
+          "stage": {
+            "dancers": 1,
+            "per_beat": 0.5,
+            "lights": 0.4,
+            "pixels": 144
+          },
+          "px": {
+            "palette": 4,
+            "pixels": 144,
+            "grid": 0.6,
+            "dither": 0.8
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "format": 1, "id": "claude-pixel-parallax", "name": "Pixel valley", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "kick", "piece": "core-envelope", "params": { "source": 0, "attack": 0.01, "decay": 0.35, "curve": 3 } },
+    { "id": "land", "piece": "claude-pixel-valley", "params": { "mood": 2, "speed": 1, "bounce": 0.7, "sun": 0.6 },
+      "bind": { "kick": { "from": "kick.out", "range": [0, 0.8] } } },
+    { "id": "px", "piece": "claude-pixel-art", "params": { "pixels": 180, "palette": 5, "dither": 0.6, "matrix": 1 },
+      "bind": { "shake": { "from": "kick.out", "range": [0, 0.2] } } }
+  ],
+  "edges": [ { "from": "land.out", "to": "px.in" } ],
+  "out": "px.out",
+  "post": { "bloom": 0, "threshold": 1 },
+  "sections": {
+    "on": "phrase", "transition": "core-pixelate", "beats": 2,
+    "variants": [
+      { "id": "intro", "when": { "section": "intro" },
+        "params": { "land": { "mood": 0, "speed": 0.6, "bounce": 0.5 }, "px": { "palette": 0 } } },
+      { "id": "build", "when": { "section": "build" },
+        "params": { "land": { "mood": 1, "speed": 1.6, "sun": 0.4 }, "px": { "palette": 0, "dither": 0.4 } } },
+      { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+        "params": { "land": { "mood": 2, "speed": 2.4, "bounce": 1, "sun": 0.9 }, "px": { "palette": 5, "matrix": 0 } },
+        "bind": { "px": { "shake": { "from": "kick.out", "range": [0, 0.45] } } } },
+      { "id": "breakdown", "when": { "section": "breakdown" }, "transition": "core-dissolve", "beats": 4,
+        "params": { "land": { "mood": 3, "speed": 0.4, "bounce": 0.5, "sun": 0.3 }, "px": { "palette": 2, "dither": 0.8, "matrix": 2 } } }
+    ]
+  }
+}

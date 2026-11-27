@@ -1,0 +1,14 @@
+{
+  "format": 1, "id": "claude-pixel-downpour", "name": "Pixel city rain", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "style": "claude-pico8",
+  "nodes": [
+    { "id": "bolt", "piece": "core-envelope", "params": { "source": 0, "attack": 0.01, "decay": 0.3, "curve": 3 } },
+    { "id": "drift", "piece": "core-lfo", "params": { "beats": 64, "shape": 2 } },
+    { "id": "city", "piece": "claude-pixel-city", "params": { "speed": 1, "hats": 0.85, "rain": 0.5, "notes": 0.5 },
+      "bind": { "flash": { "from": "bolt.out", "range": [0, 0.6] }, "hue": { "from": "drift.out", "range": [0, 1] } } }
+  ],
+  "edges": [],
+  "out": "city.out",
+  "post": { "bloom": 0, "threshold": 1 }
+}
