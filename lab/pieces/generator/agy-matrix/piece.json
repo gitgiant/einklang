@@ -1,0 +1,28 @@
+{
+  "id": "agy-matrix",
+  "kind": "generator",
+  "name": "Matrix rain",
+  "doc": "Multi-layer falling Katakana-inspired glyph columns with bright white-hot heads and fading phosphor tails; fall speed locks to the beat and columns flare vividly on onsets.",
+  "ports": {
+    "in": {
+      "palette": { "type": "palette", "optional": true, "doc": "colors the background, fading tails, onset flares, and bright heads" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "columns": { "type": "int", "default": 64, "min": 24, "max": 140, "doc": "foreground glyph columns across the screen" },
+    "speed": { "type": "float", "default": 1.15, "min": 0.15, "max": 4, "doc": "fall speed multiplier scaled by beat tempo" },
+    "trail": { "type": "float", "default": 0.72, "min": 0.2, "max": 1, "doc": "length of fading glyph tails" },
+    "density": { "type": "float", "default": 0.82, "min": 0.25, "max": 1, "doc": "fraction of active falling streams" },
+    "flare": { "type": "float", "default": 1.15, "min": 0, "max": 2, "doc": "column flare strength on onsets" },
+    "depth": { "type": "float", "default": 0.65, "min": 0, "max": 1, "doc": "parallax background rain layer intensity" },
+    "glitch": { "type": "float", "default": 0.4, "min": 0, "max": 1, "doc": "rate of in-place glyph mutation" },
+    "glow": { "type": "float", "default": 1.15, "min": 0.25, "max": 2.5, "doc": "head glow and phosphor emission" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.35, "scales": "res" },
+  "tags": ["matrix", "rain", "glyphs", "cyberpunk", "text", "retro"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}

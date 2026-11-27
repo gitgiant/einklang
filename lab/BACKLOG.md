@@ -69,7 +69,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Chromatic aberration
 - [x] Glitch / datamosh → agy-glitch, scene agy-corrupt
 - [x] CRT / VHS → claude-crt, scene claude-late-show
-- [ ] ASCII / dither (Bayer, error diffusion)
+- [x] ASCII / dither (Bayer, error diffusion) → agy-ascii, scene agy-terminal
 - [x] Halftone → agy-halftone, scene agy-print-run
 - [ ] Edge / toon
 - [ ] Displacement by field
@@ -97,7 +97,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Sphere / cylinder wrap
 - [ ] Page curl
 - [ ] Voronoi shatter
-- [ ] Pixel sort
+- [x] Pixel sort → agy-pixelsort, scene agy-smear
 - [ ] Mesh-grid displace
 - [ ] Sine warp
 
@@ -272,7 +272,7 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 - [ ] BPM / title OSD
 - [ ] Kinetic typography (per letter on onset)
 - [ ] Marquee and sine scroller
-- [ ] Matrix rain
+- [x] Matrix rain → agy-matrix, scene agy-rain-code
 - [ ] ASCII-art renderer
 - [ ] Text as particles
 - [ ] Text masks

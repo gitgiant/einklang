@@ -1,0 +1,27 @@
+{
+  "id": "agy-pixelsort",
+  "kind": "effect",
+  "name": "Pixel sort",
+  "doc": "GPU compute segmented bitonic pixel sort along rows or columns by brightness above an energy-driven threshold, with onsets triggering dramatically longer sorted runs.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "direction": { "type": "enum", "default": 1, "options": ["rows", "columns"], "doc": "sort along horizontal rows or vertical columns" },
+    "reverse": { "type": "bool", "default": false, "doc": "sort bright-to-dark instead of dark-to-bright" },
+    "threshold": { "type": "float", "default": 0.3, "min": 0.02, "max": 0.9, "doc": "base normalized brightness threshold above which runs are sorted" },
+    "ceiling": { "type": "float", "default": 0.96, "min": 0.2, "max": 1.0, "doc": "upper brightness cutoff above which highlights stay pinned" },
+    "energy": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "how strongly audio energy lowers the sort threshold" },
+    "length": { "type": "int", "default": 48, "min": 8, "max": 256, "doc": "base maximum sorted run length in pixels" },
+    "onset_boost": { "type": "float", "default": 1, "min": 0, "max": 1, "doc": "how much onsets extend sort runs up to 256 pixels" },
+    "mix": { "type": "float", "default": 1, "min": 0, "max": 1, "doc": "blend between original and sorted output" }
+  },
+  "budget": { "ms": 0.65, "scales": "res" },
+  "tags": ["pixelsort", "glitch", "warp", "compute", "smear"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}
