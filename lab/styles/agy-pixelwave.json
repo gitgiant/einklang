@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "id": "agy-pixelwave",
+  "name": "Pixelwave",
+  "doc": "Vaporwave pink, purple, sunset peach and neon cyan with pixel font and CRT/VHS tube finish.",
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "palette": ["#140726", "#5c167e", "#ff47a3", "#ff9e5e", "#00f0ff", "#7affd4"],
+  "cycle": 0.35,
+  "fx": [
+    {
+      "piece": "claude-crt",
+      "params": {
+        "scanlines": 0.42,
+        "curve": 0.32,
+        "vignette": 0.38,
+        "chroma": 0.48,
+        "tracking": 0.45,
+        "jitter": 0.3
+      }
+    }
+  ],
+  "post": { "bloom": 0.42, "threshold": 0.72 },
+  "font": "pixel5x8"
+}

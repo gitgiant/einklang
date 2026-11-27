@@ -1,0 +1,22 @@
+{
+  "id": "agy-pixel-outrun",
+  "kind": "generator",
+  "name": "Pixel outrun",
+  "doc": "Low-res Bayer-dithered pixel-art vaporwave outrun highway with slatted sun, spectrum mountains, scrolling neon grid and swaying pixel palms.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "cells": { "type": "float", "default": 180, "min": 64, "max": 360, "doc": "Vertical pixel resolution of the retro grid" },
+    "speed": { "type": "float", "default": 1.1, "min": 0.2, "max": 3.0, "doc": "Forward highway scroll speed" },
+    "horizon": { "type": "float", "default": 0.52, "min": 0.36, "max": 0.66, "doc": "Vertical horizon line position" },
+    "dither": { "type": "float", "default": 0.85, "min": 0.0, "max": 1.0, "doc": "4x4 Bayer dither strength on sky and reflections" },
+    "palms": { "type": "float", "default": 1.0, "min": 0.0, "max": 1.0, "doc": "Visibility of scrolling pixel palm silhouettes" },
+    "glow": { "type": "float", "default": 1.25, "min": 0.4, "max": 2.6, "doc": "Neon intensity of sun, grid and onset flares" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.45, "scales": "res" },
+  "tags": ["pixel", "vaporwave", "synthwave", "retro", "outrun", "dither"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}

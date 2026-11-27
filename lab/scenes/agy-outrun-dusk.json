@@ -1,0 +1,97 @@
+{
+  "format": 1,
+  "id": "agy-outrun-dusk",
+  "name": "Pixel Outrun Dusk",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "style": "agy-pixelwave",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "gain": 1.45 } },
+    {
+      "id": "road",
+      "piece": "agy-pixel-outrun",
+      "params": { "cells": 180, "speed": 1.1, "horizon": 0.52, "dither": 0.85, "palms": 1.0, "glow": 1.25 },
+      "bind": {
+        "glow": { "from": "bass.out", "range": [0.95, 2.2] },
+        "speed": { "from": "audio.rms", "range": [0.75, 1.8] }
+      }
+    },
+    {
+      "id": "sparks",
+      "piece": "core-sprite-emitter",
+      "params": {
+        "sheet": 1,
+        "burst": 10,
+        "trickle": 3,
+        "speed": 0.55,
+        "gravity": -0.25,
+        "spread": 0.85,
+        "life": 1.6,
+        "size": 0.045,
+        "x": 0.5,
+        "y": 0.42,
+        "tint": 0.65,
+        "glow": 1.4
+      }
+    },
+    { "id": "mix", "piece": "core-blend", "params": { "mode": 1 } }
+  ],
+  "edges": [
+    { "from": "road.out", "to": "mix.a" },
+    { "from": "sparks.out", "to": "mix.b" }
+  ],
+  "out": "mix.out",
+  "sections": {
+    "on": "phrase",
+    "transition": "core-pixelate",
+    "beats": 2,
+    "variants": [
+      {
+        "id": "drop",
+        "when": { "section": "drop" },
+        "transition": "core-flash",
+        "beats": 1,
+        "nodes": [
+          {
+            "id": "tear",
+            "piece": "agy-glitch",
+            "params": { "amount": 0.42, "displace": 0.35, "smear": 0.3, "rgb": 0.55, "burst": 0.85, "blocks": 20 }
+          }
+        ],
+        "edges": [
+          { "from": "mix.out", "to": "tear.in" }
+        ],
+        "params": {
+          "road": { "cells": 156, "speed": 1.75, "glow": 1.55 },
+          "sparks": { "burst": 18, "speed": 0.85 }
+        },
+        "out": "tear.out",
+        "post": { "bloom": 0.62, "threshold": 0.64 }
+      },
+      {
+        "id": "breakdown",
+        "when": { "section": "breakdown" },
+        "transition": "core-blend",
+        "beats": 4,
+        "nodes": [
+          {
+            "id": "echo",
+            "piece": "core-trails",
+            "params": { "decay": 0.78, "zoom": 0.004, "rotate": 0 }
+          }
+        ],
+        "edges": [
+          { "from": "mix.out", "to": "echo.in" }
+        ],
+        "params": {
+          "road": { "cells": 200, "speed": 0.65, "dither": 0.95 }
+        },
+        "out": "echo.out",
+        "post": { "bloom": 0.5, "threshold": 0.72 }
+      }
+    ]
+  }
+}

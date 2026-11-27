@@ -1,0 +1,21 @@
+{
+  "id": "agy-pixel-bust",
+  "kind": "generator",
+  "name": "Pixel Greek bust",
+  "doc": "Low-res Bayer-dithered pixel-art classical marble bust over a vaporwave checkerboard temple with neon rim light, floating prisms and onset holographic scans.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "cells": { "type": "float", "default": 168, "min": 64, "max": 320, "doc": "Vertical pixel resolution" },
+    "spin": { "type": "float", "default": 0.45, "min": 0.0, "max": 2.0, "doc": "Bust rotation sway speed" },
+    "dither": { "type": "float", "default": 0.9, "min": 0.0, "max": 1.0, "doc": "4x4 Bayer dithering strength on marble shading" },
+    "holo": { "type": "float", "default": 0.75, "min": 0.0, "max": 1.5, "doc": "Neon rim light and onset holographic glitch intensity" },
+    "glow": { "type": "float", "default": 1.2, "min": 0.4, "max": 2.5, "doc": "Overall HDR brightness" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.65, "scales": "res" },
+  "tags": ["pixel", "vaporwave", "bust", "statue", "dither", "retro", "3d"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}
