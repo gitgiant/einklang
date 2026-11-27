@@ -1,0 +1,16 @@
+{
+  "format": 1, "id": "claude-knockdown", "name": "Knockdown", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "high", "piece": "core-follow", "params": { "lo": 9, "hi": 15, "window": 8, "gain": 1.6 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#07060c #2a1d3a #d2462e #f08a3c #f5c84c #3e8ec4 #8fd6ea #fff6e6", "cycle": 0, "pads": true } },
+    { "id": "stage", "piece": "claude-rigid",
+      "params": { "impulse": 1.3, "restack": 1, "rattle": 0.7, "idle": 3.5, "view": 0.95, "shake": 1, "reflect": 1, "bg": 1, "cycle": 0.1 },
+      "bind": { "glow": { "from": "high.out", "range": [0.9, 1.35] } } },
+    { "id": "smear", "piece": "core-trails", "params": { "decay": 0.3, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [ { "from": "pal.palette", "to": "stage.palette" }, { "from": "stage.out", "to": "smear.in" } ],
+  "out": "smear.out",
+  "post": { "bloom": 0.5, "threshold": 0.75 }
+}
