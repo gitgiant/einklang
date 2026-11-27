@@ -113,7 +113,7 @@ fn shade(uv: vec2f) -> vec4f {
     let tilt = p_tilt() + 0.08 * sin(time() * 0.21);
     let dist = max(d.x, d.y) * 0.95 / p_zoom() * (1.0 - 0.07 * p_kick());
     let tgt = vec3f(0.0, 0.5, 0.0);
-    cam = mc_look(tgt + dist * vec3f(sin(yaw) * cos(tilt), sin(tilt), -cos(yaw) * cos(tilt)), tgt, 1.5);
+    cam = mc_look(tgt + dist * vec3f(sin(yaw) * cos(tilt), sin(tilt), -cos(yaw) * cos(tilt)), tgt, 1.5 * (1.0 + 0.08 * p_kick()));
   } else {
     cam = mc_cam(i32(p_path()), d.x * 0.5, d.y * 0.5, p_height() * 0.6, p_kick());
   }
