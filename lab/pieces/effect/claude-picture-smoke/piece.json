@@ -21,7 +21,7 @@
     "memory": { "type": "float", "default": 0.6, "min": 0.05, "max": 4, "doc": "half-life of the flow in seconds" },
     "swirls": { "type": "int", "default": 3, "min": 0, "max": 4, "doc": "roaming swirls (spun by the bass)" },
     "size": { "type": "float", "default": 0.22, "min": 0.05, "max": 0.6, "doc": "swirl radius in screen heights" },
-    "idle": { "type": "float", "default": 0.25, "min": 0, "max": 2, "doc": "swirl strength on silence" },
+    "idle": { "type": "float", "default": 0.35, "min": 0, "max": 2, "doc": "swirl strength on silence" },
     "spin": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "swirl strength (times idle + bass)" },
     "breath": { "type": "float", "default": 1, "min": 0, "max": 4, "doc": "outward push of the swirls on the beat" },
     "react": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "how much the music drives the flow" },
