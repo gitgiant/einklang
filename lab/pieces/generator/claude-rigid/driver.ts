@@ -50,14 +50,14 @@ export default definePiece({
         const speed = params.speed as number;
         for (let k = ticks - 1; k >= 0; k--) {
           const f = past(k), t0 = tick - k, bass = bassOf(f);
-          if (f.onset && bass > 0.5 && impulse > 0) {
-            const g = stage.pick(rand(t0, 21));
+          // a kick knocks a structure that stands (mostly rebuilt); with none standing it rattles
+          const g = stage.pick(rand(t0, 21)), up = stage.intact(g) > 0.6;
+          if (f.onset && bass > 0.5 && impulse > 0 && up) {
             stage.kick(g, stage.groupX(g) + (rand(t0, 22) - 0.5) * 0.2, impulse * (0.6 + 2.2 * f.rms) * (0.5 + 0.5 * bass), (i) => rand(t0, 30 + i) - 0.5);
             lastKick = stage.t;
           } else if (f.onset && rattle > 0) {
-            stage.rattle(rattle * (0.3 + 1.2 * f.rms), (i) => rand(t0, 200 + i));
-          } else if (idle > 0 && stage.t - lastKick > idle && f.rms > 0.06) {
-            const g = stage.pick(rand(t0, 23));
+            stage.rattle(rattle * (0.3 + 1.2 * f.rms) * (bass > 0.5 ? 1.5 : 1), (k) => rand(t0, 200 + k));
+          } else if (idle > 0 && stage.t - lastKick > idle && f.rms > 0.06 && up) {
             stage.kick(g, stage.groupX(g) + (rand(t0, 24) - 0.5) * 0.2, impulse * (0.5 + 1.5 * f.rms), (i) => rand(t0, 60 + i) - 0.5);
             lastKick = stage.t;
           }

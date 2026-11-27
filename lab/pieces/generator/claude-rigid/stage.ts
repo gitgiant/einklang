@@ -51,6 +51,8 @@ export class Stage {
   /** Indices of the movable bodies (after the four static ones). */
   first = 0;
   stun: number[] = [];
+  /** Knocked and not yet back in its slot: flies home as a ghost. */
+  away: boolean[] = [];
   glow: number[] = [];
   kicks: Kick[] = [];
   t = 0;
@@ -73,6 +75,7 @@ export class Stage {
     for (const b of bodies) this.world.add(b);
     this.slots = slots;
     this.stun = slots.map(() => -100);
+    this.away = slots.map(() => false);
     this.glow = slots.map(() => 0);
     this.kicks = [];
     this.t = 0;
@@ -104,17 +107,16 @@ export class Stage {
     return best;
   }
 
-  /** A small hop for every body on or near the floor that is held in place (a snare's rattle). */
-  rattle(amp: number, jitter: (i: number) => number): void {
+  /** A hop for each standing structure, all its held bodies together (a snare's rattle). */
+  rattle(amp: number, jitter: (g: number) => number): void {
     for (let i = 0; i < this.count; i++) {
-      const b = this.body(i);
-      if (this.hold(i) > 0.9) { b.vy += amp * (0.5 + 0.5 * jitter(i)) / (1 + 2 * this.slots[i].level); b.w += (jitter(i + 99) - 0.5) * amp * 2; }
+      if (this.hold(i) > 0.9 && !this.away[i]) this.body(i).vy += amp * (0.5 + 0.5 * jitter(this.slots[i].group));
     }
   }
 
   /** Knock: everything in `group` and within `reach` of x is stunned and thrown up and away from below x. */
   kick(group: number, x: number, amp: number, spin: (i: number) => number): void {
-    const reach = 0.3;
+    const reach = 0.12;
     for (let i = 0; i < this.count; i++) {
       const b = this.body(i);
       const dx = b.x - x, dy = b.y + 0.15;
@@ -123,6 +125,7 @@ export class Stage {
       const fall = near ? 1 : 0.55;
       const d = Math.hypot(dx, dy);
       this.stun[i] = this.t;
+      this.away[i] = true;
       this.glow[i] = Math.min(1.5, this.glow[i] + amp * 0.4);
       b.vx += (dx / d) * amp * fall * 0.8;
       b.vy += (dy / d) * amp * fall;
@@ -141,7 +144,8 @@ export class Stage {
       const b = this.body(i), s = this.slots[i];
       let ea = 0;
       if (s.sym > 0) { ea = s.a - b.a; ea -= s.sym * Math.round(ea / s.sym); }
-      b.ghost = holds[i] > 0.02 && (Math.hypot(b.x - s.x, b.y - s.y) > 0.012 || Math.abs(ea) > 0.12);
+      if (this.away[i] && holds[i] > 0.5 && Math.hypot(b.x - s.x, b.y - s.y) < 0.012 && Math.abs(ea) < 0.12) this.away[i] = false;
+      b.ghost = this.away[i] && holds[i] > 0.02;
     }
     w.step(dt, (b, k) => {
       const i = k - first;
@@ -164,8 +168,8 @@ export class Stage {
       if (i < 0 || j < 0) continue;
       const bi = this.body(i), bj = this.body(j);
       const fast = (b: Body) => Math.hypot(b.vx, b.vy) > 0.9;
-      if (holds[i] < 0.3 && holds[j] > 0.3 && fast(bi) && P * bj.invMass > 0.35) { this.stun[j] = this.t; this.glow[j] = Math.max(this.glow[j], 0.5); }
-      if (holds[j] < 0.3 && holds[i] > 0.3 && fast(bj) && P * bi.invMass > 0.35) { this.stun[i] = this.t; this.glow[i] = Math.max(this.glow[i], 0.5); }
+      if (holds[i] < 0.3 && holds[j] > 0.3 && fast(bi) && P * bj.invMass > 0.35) { this.stun[j] = this.t; this.away[j] = true; this.glow[j] = Math.max(this.glow[j], 0.5); }
+      if (holds[j] < 0.3 && holds[i] > 0.3 && fast(bj) && P * bi.invMass > 0.35) { this.stun[i] = this.t; this.away[i] = true; this.glow[i] = Math.max(this.glow[i], 0.5); }
     }
     const fade = Math.exp(-dt / 0.3);
     for (let i = 0; i < this.count; i++) {

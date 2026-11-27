@@ -138,7 +138,7 @@ export default definePiece({
         sf.set([(0.12 + 0.76 * rand(pt, 13)) * TW, 0.75 * fill * TH - 0.06, 0.14, (params.splash as number) * 2.4 * (0.5 + ploud)], 16);
         sf.set([6, wall, CEIL], 20);
         su[23] = Math.floor(rand(7, 7) * 0xffffffff) >>> 0;
-        sf.set([Math.max(1, Math.floor((TW * 0.45) / sp)), sp, TW / 2, TH / 2], 24);
+        sf.set([Math.max(1, Math.floor((TW * 0.62) / sp)), sp, TW / 2, TH / 2], 24);
         device.queue.writeBuffer(simU, 0, simData);
 
         const gx = Math.ceil(N / 128), gc = Math.ceil((GX * GY) / 128);
