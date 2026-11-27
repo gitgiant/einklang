@@ -1,0 +1,111 @@
+{
+  "format": 1,
+  "id": "agy-evolve-media-terminal",
+  "name": "Evolve media: Phosphor Terminal",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "ascii", "terminal", "glitch", "phosphor"],
+  "doc": "Your photo, video or camera rendered live on a phosphor terminal that swaps every phrase across ASCII wireframe, pure ASCII ramp, 2x4 Braille dot-matrix, hex telemetry, hybrid Bayer-ASCII and ANSI shade blocks, fed through evolving onset glitch, beat slices, pixel sort and VHS tape distortion.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#031008 #0c4d24 #1fe066 #7dffaa #dcffea", "cycle": 0.16 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.36, "pulse": 0.35, "drift": 0.42, "contrast": 1.28, "saturation": 1.18, "edge_width": 2.5 }
+    },
+    {
+      "id": "pre",
+      "piece": "agy-glitch",
+      "params": { "amount": 0.36, "displace": 0.38, "smear": 0.44, "rgb": 0.45, "burst": 0.88, "blocks": 20 },
+      "bind": {
+        "displace": { "from": "bass.out", "range": [0.16, 0.68] },
+        "rgb": { "from": "hi.out", "range": [0.2, 0.85] }
+      }
+    },
+    {
+      "id": "term",
+      "piece": "agy-media-terminal",
+      "params": { "charset": 0, "cell": 13, "color_mix": 0.3, "edge_lock": 1.25, "scan_beam": 0.85, "glitch": 0.62, "glow": 1.35, "scanlines": 0.24 },
+      "bind": {
+        "glow": { "from": "bass.out", "range": [1.05, 1.95] },
+        "glitch": { "from": "hi.out", "range": [0.3, 1.15] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "pre.in" },
+    { "from": "pre.out", "to": "term.in" },
+    { "from": "pal.palette", "to": "term.palette" }
+  ],
+  "out": "term.out",
+  "post": { "bloom": 0.42, "threshold": 0.72 },
+  "evolve": {
+    "every": "phrase",
+    "transition": "codex-scanline-roll",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "term",
+        "pool": [
+          {
+            "piece": "agy-ascii",
+            "params": { "mode": 0, "color": 2, "contrast": 1.3, "bg": "#030a06", "scanlines": 0.24, "mix": 1.0 },
+            "ranges": { "cell": [9, 20], "bass": [0.45, 1.1] }
+          },
+          {
+            "piece": "agy-media-terminal",
+            "params": { "charset": 1, "scan_beam": 0.82, "scanlines": 0.2 },
+            "ranges": { "cell": [8, 16], "color_mix": [0.22, 0.58], "edge_lock": [0.9, 1.7] }
+          },
+          {
+            "piece": "agy-media-terminal",
+            "params": { "charset": 2, "scan_beam": 0.9, "scanlines": 0.22 },
+            "ranges": { "cell": [11, 20], "color_mix": [0.2, 0.52], "edge_lock": [0.85, 1.65] }
+          },
+          {
+            "piece": "agy-media-terminal",
+            "params": { "charset": 3, "scan_beam": 0.75, "scanlines": 0.24 },
+            "ranges": { "cell": [10, 22], "color_mix": [0.3, 0.7], "edge_lock": [0.8, 1.5] }
+          }
+        ]
+      },
+      {
+        "node": "pre",
+        "pool": [
+          {
+            "piece": "claude-slices",
+            "params": { "dir": 0, "settle": 0.45 },
+            "ranges": { "count": [8, 24], "shift": [0.14, 0.34], "glitch": [0.35, 0.8] }
+          },
+          {
+            "piece": "agy-pixelsort",
+            "params": { "direction": 1, "threshold": 0.3, "ceiling": 0.95, "energy": 0.62, "onset_boost": 0.95 },
+            "ranges": { "length": [36, 92], "mix": [0.65, 0.92] }
+          },
+          {
+            "piece": "claude-crt",
+            "params": { "scanlines": 0.35, "curve": 0.35, "vignette": 0.32 },
+            "ranges": { "chroma": [0.4, 0.9], "tracking": [0.45, 0.9], "jitter": [0.3, 0.75] }
+          }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#120702 #5c2804 #ff8c00 #ffd25a #fff6d6", "cycle": 0.2 } },
+          { "piece": "core-swatch", "params": { "colors": "#020a14 #09355e #00d4ff #7af2ff #ebfdff", "cycle": 0.22 } },
+          { "piece": "core-swatch", "params": { "colors": "#140208 #5c0a24 #ff245b #ff85a8 #ffe6ee", "cycle": 0.24 } },
+          { "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.21, "light": 0.72 }, "ranges": { "hue": [0.0, 1.0] } }
+        ]
+      }
+    ]
+  }
+}
