@@ -1,0 +1,192 @@
+{
+  "format": 1,
+  "id": "agy-evolve-sim-sandfall",
+  "name": "Evolve sim: Crumbling Sand",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "falling-sand", "physics", "glitch", "pixel", "dither"],
+  "doc": "Your image, video or camera fractures into falling coloured sand grains on drops and beats, catching on its own edge contours, bouncing on bass quakes and re-crystallizing back into the live picture; evolves on song sections across dune-pile sand, draining pixel waterfalls, slit-scan datamosh and cellular automata under pixel-sort, Bayer dither, beat slices and macroblock glitch.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.7 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#140a08 #541d14 #d95d39 #f2a65a #ff4d8d #fff1d0", "cycle": 0.26 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.32, "pulse": 0.3, "drift": 0.38, "contrast": 1.18, "saturation": 1.18, "edge_width": 2.4 }
+    },
+    {
+      "id": "sim",
+      "piece": "agy-pixel-sand",
+      "params": {
+        "cells": 180,
+        "steps": 4,
+        "floor": 0,
+        "crumble": 1.15,
+        "erosion": 0.32,
+        "resurface": 0.65,
+        "edge_wall": 0.55,
+        "wind": 0.75,
+        "fluidity": 0.5,
+        "quake": 0.7,
+        "pal_mix": 0.32,
+        "dither": 0.35,
+        "under": 0.18,
+        "trail": 0.95,
+        "glow": 1.2,
+        "flash": 1.15,
+        "react": 1.35
+      },
+      "bind": {
+        "crumble": { "from": "bass.out", "range": [0.55, 1.85] },
+        "wind": { "from": "hi.out", "range": [0.35, 1.55] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "agy-pixelsort",
+      "params": { "direction": 1, "threshold": 0.3, "ceiling": 0.95, "energy": 0.62, "length": 54, "onset_boost": 0.95, "mix": 0.72 }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.4, "threshold": 0.74 },
+  "evolve": {
+    "every": "section",
+    "most": 2,
+    "transition": "core-glitch",
+    "beats": 1,
+    "slots": [
+      {
+        "node": "sim",
+        "pool": [
+          {
+            "piece": "agy-pixel-sand",
+            "params": {
+              "cells": 160,
+              "steps": 6,
+              "floor": 1,
+              "crumble": 1.35,
+              "erosion": 0.45,
+              "resurface": 0.85,
+              "edge_wall": 0.35,
+              "wind": 1.2,
+              "fluidity": 0.75,
+              "quake": 0.3,
+              "pal_mix": 0.42,
+              "dither": 0.45,
+              "under": 0.2,
+              "trail": 1.25,
+              "glow": 1.22,
+              "flash": 1.25,
+              "react": 1.4
+            },
+            "ranges": { "wind": [0.7, 1.7], "resurface": [0.55, 1.2], "trail": [0.85, 1.55] },
+            "bind": {
+              "crumble": { "from": "bass.out", "range": [0.75, 1.95] }
+            }
+          },
+          {
+            "piece": "agy-pixel-sand",
+            "params": {
+              "cells": 144,
+              "steps": 5,
+              "floor": 2,
+              "crumble": 1.25,
+              "erosion": 0.35,
+              "resurface": 0.58,
+              "edge_wall": 0.72,
+              "wind": 0.65,
+              "fluidity": 0.6,
+              "quake": 0.95,
+              "pal_mix": 0.48,
+              "dither": 0.5,
+              "under": 0.16,
+              "trail": 1.1,
+              "glow": 1.25,
+              "flash": 1.3,
+              "react": 1.45
+            },
+            "ranges": { "edge_wall": [0.45, 0.88], "quake": [0.65, 1.0] },
+            "bind": {
+              "crumble": { "from": "bass.out", "range": [0.65, 1.9] }
+            }
+          },
+          {
+            "piece": "agy-slitscan",
+            "params": { "axis": 1, "live_mix": 0.34, "decay": 0.93 },
+            "ranges": { "slit": [0.1, 0.22], "edge_warp": [0.45, 0.95], "tear": [0.45, 0.95] },
+            "bind": {
+              "drift": { "from": "bass.out", "range": [0.22, 0.84] },
+              "rgb": { "from": "hi.out", "range": [0.28, 1.05] }
+            }
+          },
+          {
+            "piece": "agy-media-life",
+            "params": {
+              "mode": 2,
+              "bars": 2,
+              "cells": 160,
+              "rate": 6,
+              "colour": 1,
+              "pal_mix": 0.42,
+              "dither": 0.4,
+              "under": 0.2,
+              "glow": 1.25,
+              "flash": 1.2,
+              "react": 1.35
+            },
+            "ranges": { "edge_seed": [0.95, 2.0], "decay": [0.82, 0.92] }
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "agy-bayer-dither",
+            "params": { "mix": 0.9 },
+            "ranges": { "cells": [96, 180], "levels": [4, 7], "dither": [0.75, 1.0], "pal_mix": [0.38, 0.72] },
+            "bind": { "chroma": { "from": "hi.out", "range": [0.28, 1.2] } }
+          },
+          {
+            "piece": "claude-slices",
+            "params": { "settle": 0.45 },
+            "ranges": { "count": [10, 26], "shift": [0.12, 0.32], "glitch": [0.35, 0.75] }
+          },
+          {
+            "piece": "agy-glitch",
+            "params": { "smear": 0.44, "burst": 0.88, "blocks": 22 },
+            "ranges": { "amount": [0.28, 0.56], "displace": [0.24, 0.58], "rgb": [0.32, 0.82] }
+          },
+          {
+            "piece": "claude-pixel-art",
+            "params": { "palette": 5, "matrix": 1, "gain": 1.15, "grid": 0.15 },
+            "ranges": { "pixels": [128, 200], "dither": [0.6, 0.9] },
+            "bind": { "shake": { "from": "bass.out", "range": [0.0, 0.48] } }
+          }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#140726 #5c167e #ff47a3 #ff9e5e #00f0ff #7affd4", "cycle": 0.32 } },
+          { "piece": "core-swatch", "params": { "colors": "#080a18 #00f5d4 #ff006e #fee440 #9b5de5", "cycle": 0.28 } },
+          { "piece": "claude-cycle", "params": { "mode": 0, "every": 0, "stride": 2, "flash": 0.14 } }
+        ]
+      }
+    ]
+  }
+}
