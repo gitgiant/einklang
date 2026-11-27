@@ -17,6 +17,7 @@ import { MidiRelay } from './midi.ts';
 import { ACCEPT, Player } from './player.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
 import { FrameStats } from './framestats.ts';
+import { PerfView } from './perfpanel.ts';
 import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
@@ -397,7 +398,7 @@ function toast(text: string) {
 
 // ---- render ----
 async function start() {
-  const gpu = await initGpu();
+  const gpu = await initGpu({ timestamps: true }); // for the debug panel's GPU frame times
   const engine = new Engine(gpu, $<HTMLCanvasElement>('c'));
   // particle budget: benchmark before the first frame, report it; the room's N comes back in the state
   engine.budget.n = (t) => flowNAt(room.flow, t);
@@ -429,7 +430,8 @@ async function start() {
   const fstats = new FrameStats();
   const rate = new Rate();
   const nameOf = (id: number | null) => (id === null ? 'none' : (room.hosts.find((h) => h.id === id)?.name ?? `#${id}`) + (id === me ? ' (this)' : ''));
-  const panel = new DebugPanel(() => {
+  const perf = new PerfView({ gpu, sceneName: (id) => names.get(id) ?? id, transName, close: () => panel.toggle(false) });
+  const panel: DebugPanel = new DebugPanel(() => {
     const r = rate.sample(net), f = lastF;
     const hasWave = window.__ek?.wave ? 'streamed' : 'none (scope synthesizes)';
     const ageS = net.lastPong ? ((performance.now() - net.lastPong) / 1000).toFixed(1) : '-';
@@ -471,7 +473,7 @@ async function start() {
         `secure ${isSecureContext}  visibility ${document.visibilityState}  offset ${offsetMs}ms`,
       ]],
     ];
-  }, restartControl(withToken));
+  }, perf, restartControl(withToken));
   $('dbgBtn').onclick = () => panel.toggle();
   // D-pad up/down cycles this host's own view (an override, like the hosts panel)
   const pads = new PadRelay(send, {
@@ -500,7 +502,7 @@ async function start() {
   });
   $('fs').onclick = () => document.documentElement.requestFullscreen?.();
 
-  const loop = () => {
+  const loop = (rafNow?: number) => {
     requestAnimationFrame(loop);
     // display time: tick f plus a sub-tick (0..255) that closed-form scenes interpolate to
     const tF = modeTickF(room, sNow() + offsetMs), f = Math.floor(tF), sub = interp ? Math.floor((tF - f) * 256) : 0;
@@ -519,10 +521,12 @@ async function start() {
     pads.poll();
     const FE = withEvents(F, events);
     const fx = (lastFx = fxAt(events, f));
+    perf.before(engine);
     const hash = engine.frame(f, FE, fx, room.scene, sub);
     lastHash = hash; lastF = f;
     fstats.frame(performance.now(), engine.transition?.type ?? null);
     panel.frame(f);
+    if (rafNow !== undefined) perf.frame(engine, rafNow, engine.scene.def.id, engine.transition);
     lastTick = Math.max(lastTick, f);
     const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0, wave: false, trans: '', transSeen: [] as string[] });
     dbg.trans = engine.transition?.type ?? '';

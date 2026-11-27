@@ -30,6 +30,9 @@ export interface SheetHost {
   release(): void;
   info(): boolean;
   setInfo(on: boolean): void;
+  /** The frame-time histogram panel. */
+  debug(): boolean;
+  setDebug(on: boolean): void;
   grid(): boolean;
   toggleGrid(): void;
   /** A link to the shown scene with these transition settings. */
@@ -163,6 +166,8 @@ export function pickerSheet(host: SheetHost): Sheet {
   const drawDisplay = (pane: HTMLElement) => {
     const row = el('div', 'options');
     row.append(button('info + frame time (i)', () => { host.setInfo(!host.info()); draw(); }, host.info()));
+    // turning it on closes the sheet, which would cover it
+    row.append(button('debug: frame times (d)', () => { const on = !host.debug(); host.setDebug(on); if (on) close(); else draw(); }, host.debug()));
     row.append(button('grid of four (g)', () => { host.toggleGrid(); draw(); }, host.grid()));
     const canFull = !!(root.requestFullscreen ?? root.webkitRequestFullscreen);
     const fs = button('fullscreen', () => {
