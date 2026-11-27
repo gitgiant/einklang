@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "codex-evolve-afterglow",
+  "name": "Afterglow Highway",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    { "id": "swatch", "piece": "core-swatch", "params": { "colors": "#120d27 #3c1850 #ed3684 #ff8059 #ffeaaa", "pads": false } },
+    { "id": "colors", "piece": "claude-cycle", "params": { "mode": 1, "every": 1, "stride": 0, "flash": 0.045 } },
+    { "id": "road", "piece": "codex-grid-floor", "params": { "pace": 0.85, "horizon": 0.53, "glow": 1.3 } },
+    { "id": "light", "piece": "codex-neon-phosphor", "params": { "cool": "#242766", "warm": "#f02d63", "drive": 0.28, "origin": 0.52 } }
+  ],
+  "edges": [
+    { "from": "swatch.palette", "to": "colors.palette" },
+    { "from": "colors.palette", "to": "road.palette" },
+    { "from": "road.out", "to": "light.in" }
+  ],
+  "out": "light.out",
+  "post": { "bloom": 0.53, "threshold": 0.58, "exposure": 1.02 },
+  "evolve": {
+    "every": 2, "transition": "core-blend", "beats": 2,
+    "slots": [
+      { "node": "road", "jitter": 0, "pool": [
+        { "piece": "codex-wire-mountains", "params": { "lift": 0.47, "glow": 1.35 }, "ranges": { "speed": [0.88, 1.12] } },
+        { "piece": "agy-ridgeline", "params": { "rows": 34, "speed": 0.85, "height": 0.92, "perspective": 0.82, "glow": 0.95, "thickness": 1.22, "fill": 0.68 } }
+      ] },
+      { "node": "colors", "jitter": 0, "pool": [
+        { "piece": "core-harmony", "params": { "hue": 0.70, "scheme": 3, "chroma": 0.18, "light": 0.59, "contrast": 0.78, "pads": false } },
+        { "piece": "core-swatch", "params": { "colors": "#070e22 #17335a #19b9ba #7ae9dc #ffe4a1", "pads": false } }
+      ] }
+    ]
+  }
+}

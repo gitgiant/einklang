@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "codex-evolve-phosphor",
+  "name": "Phosphor Curves",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    { "id": "trace", "piece": "codex-harmonograph", "params": { "spread": 1.02, "ink": 1.3 } },
+    { "id": "glass", "piece": "claude-crt", "params": { "scanlines": 0.2, "curve": 0.24, "vignette": 0.25, "chroma": 0.39, "tracking": 0.25, "jitter": 0.12 } },
+    { "id": "light", "piece": "codex-neon-phosphor", "params": { "cool": "#4320ad", "warm": "#ff2576", "drive": 0.67, "origin": 0.50 } }
+  ],
+  "edges": [
+    { "from": "trace.out", "to": "glass.in" },
+    { "from": "glass.out", "to": "light.in" }
+  ],
+  "out": "light.out",
+  "post": { "decay": 0.64, "bloom": 0.74, "threshold": 0.39, "exposure": 1.13 },
+  "evolve": {
+    "every": "phrase", "transition": "core-blend", "beats": 3,
+    "slots": [
+      { "node": "trace", "jitter": 0, "pool": [
+        { "piece": "codex-ribbons", "params": { "width": 1.12 }, "ranges": { "orbit": [0.13, 0.2] } },
+        "core-scope"
+      ] },
+      { "node": "glass", "jitter": 0, "pool": [
+        { "piece": "core-kaleido", "params": { "zoom": 0.99 }, "ranges": { "segments": [3, 5], "spin": [-0.014, 0.014] } },
+        { "piece": "agy-halftone", "params": { "mode": 1, "cell": 11, "angle": 33, "bass": 0.48, "paper": "#101026", "ink": "#f58cff", "mix": 0.2 } }
+      ] }
+    ]
+  }
+}
