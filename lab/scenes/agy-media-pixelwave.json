@@ -1,0 +1,97 @@
+{
+  "format": 1,
+  "id": "agy-media-pixelwave",
+  "name": "Media: Pixelwave",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "pixel", "vaporwave", "dither", "crt", "evolve"],
+  "nodes": [
+    { "id": "env", "piece": "core-envelope", "params": { "source": 0, "attack": 0.005, "decay": 0.26, "sustain": 0, "curve": 2.4 } },
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.6 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#140726 #5c167e #ff47a3 #ff9e5e #00f0ff #7affd4", "cycle": 0.32 } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.45, "pulse": 0.38, "drift": 0.45, "contrast": 1.18, "saturation": 1.25, "edge_width": 2.5 }
+    },
+    {
+      "id": "warp",
+      "piece": "claude-displace",
+      "params": { "amount": 0.028, "swirl": 0.45, "beat": 0.65, "bass": 0.6, "chroma": 0.5, "outline": 0.65 },
+      "bind": {
+        "amount": { "from": "bass.out", "range": [0.012, 0.055] },
+        "outline": { "from": "env.out", "range": [0.35, 1.45] }
+      }
+    },
+    {
+      "id": "look",
+      "piece": "agy-bayer-dither",
+      "params": { "cells": 160, "levels": 5, "dither": 0.9, "pal_mix": 0.68, "chroma": 0.6, "mix": 1.0 },
+      "bind": {
+        "chroma": { "from": "bass.out", "range": [0.25, 1.25] }
+      }
+    },
+    {
+      "id": "finish",
+      "piece": "claude-crt",
+      "params": { "scanlines": 0.38, "curve": 0.25, "vignette": 0.35, "chroma": 0.45, "tracking": 0.52, "jitter": 0.35 }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "warp.in" },
+    { "from": "media.edges", "to": "warp.by" },
+    { "from": "pal.palette", "to": "warp.palette" },
+    { "from": "warp.out", "to": "look.in" },
+    { "from": "pal.palette", "to": "look.palette" },
+    { "from": "look.out", "to": "finish.in" }
+  ],
+  "out": "finish.out",
+  "post": { "bloom": 0.42, "threshold": 0.72 },
+  "evolve": {
+    "every": "phrase",
+    "transition": "core-pixelate",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "look",
+        "pool": [
+          {
+            "piece": "claude-pixel-art",
+            "params": { "pixels": 176, "palette": 5, "dither": 0.78, "matrix": 1, "gain": 1.15, "grid": 0.12 },
+            "ranges": { "pixels": [120, 220], "dither": [0.55, 0.95] },
+            "bind": { "shake": { "from": "env.out", "range": [0.0, 0.65] } }
+          },
+          {
+            "piece": "claude-slices",
+            "params": { "settle": 0.55, "glitch": 0.42 },
+            "ranges": { "count": [8, 22], "shift": [0.06, 0.22] },
+            "bind": { "shift": { "from": "bass.out", "range": [0.04, 0.22] } }
+          },
+          {
+            "piece": "claude-pixel-art",
+            "params": { "pixels": 156, "palette": 0, "dither": 0.72, "matrix": 1, "gain": 1.12, "grid": 0.14 },
+            "ranges": { "pixels": [108, 196] },
+            "bind": { "shake": { "from": "env.out", "range": [0.0, 0.7] } }
+          }
+        ]
+      },
+      {
+        "node": "finish",
+        "pool": [
+          {
+            "piece": "core-trails",
+            "params": { "zoom": 0.006, "rotate": 0.002 },
+            "ranges": { "decay": [0.48, 0.74] }
+          },
+          {
+            "piece": "agy-bayer-dither",
+            "params": { "cells": 210, "levels": 6, "dither": 0.85, "pal_mix": 0.35, "chroma": 0.5, "mix": 0.85 },
+            "ranges": { "cells": [140, 250], "pal_mix": [0.2, 0.6] }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "agy-pixel-sunset",
+  "kind": "effect",
+  "name": "Pixel sunset sky",
+  "doc": "Integrates the input media into a Bayer-dithered pixel-art vaporwave sunset sky with a slatted bass-reactive sun, spectrum mountains sculpted by media luma, swaying pixel palms, and shimmering water-grid reflections.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "media painted into the sunset sky and reflected in the water" },
+      "luma": { "type": "mask", "optional": true, "doc": "media brightness (drives sky cloud glow and mountain height)" },
+      "edges": { "type": "field", "optional": true, "doc": "media contours (neon pixel rim highlights on onsets)" },
+      "palette": { "type": "palette", "optional": true, "doc": "sunset and vaporwave accent palette" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "cells": { "type": "float", "default": 200, "min": 80, "max": 360, "doc": "Vertical pixel-art grid resolution" },
+    "horizon": { "type": "float", "default": 0.56, "min": 0.4, "max": 0.72, "doc": "Vertical horizon line position" },
+    "sky_mix": { "type": "float", "default": 0.68, "min": 0.0, "max": 1.0, "doc": "How strongly the input media shapes and colors the sunset sky" },
+    "sun_size": { "type": "float", "default": 0.23, "min": 0.12, "max": 0.4, "doc": "Radius of the slatted retro sun" },
+    "dither": { "type": "float", "default": 0.85, "min": 0.0, "max": 1.0, "doc": "4x4 Bayer ordered dither strength" },
+    "speed": { "type": "float", "default": 1.0, "min": 0.1, "max": 3.0, "doc": "Scroll speed of neon water grid and sky drift" },
+    "glow": { "type": "float", "default": 1.25, "min": 0.4, "max": 2.5, "doc": "Neon intensity of sun, grid, and onset edge flares" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.45, "scales": "res" },
+  "tags": ["pixel", "vaporwave", "sunset", "media", "dither", "retro"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}
