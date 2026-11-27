@@ -1,0 +1,116 @@
+{
+  "format": 1,
+  "id": "agy-spectrogram-wall",
+  "name": "Spectrogram wall",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.6
+      }
+    },
+    {
+      "id": "highs",
+      "piece": "core-follow",
+      "params": {
+        "lo": 9,
+        "hi": 15,
+        "window": 6,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#120c2b #3b1c71 #9d2ec5 #f25f5c #ffbd59 #fff6d6",
+        "cycle": 0.08
+      }
+    },
+    {
+      "id": "spec",
+      "piece": "agy-spectrogram",
+      "params": {
+        "direction": 0,
+        "speed": 1.8,
+        "freq_scale": 0,
+        "gamma": 1.25,
+        "pal_mode": 0,
+        "mirror": true,
+        "onset_mark": 0.75,
+        "tilt": 0.0
+      },
+      "bind": {
+        "gain": {
+          "from": "bass.out",
+          "range": [1.15, 2.05]
+        },
+        "glow": {
+          "from": "highs.out",
+          "range": [1.15, 2.15]
+        }
+      }
+    },
+    {
+      "id": "tunnel",
+      "piece": "core-tunnel"
+    },
+    {
+      "id": "mix",
+      "piece": "core-blend",
+      "params": {
+        "mode": 1
+      },
+      "bind": {
+        "amount": {
+          "from": "bass.out",
+          "range": [0.16, 0.52]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.32,
+        "zoom": 0.002,
+        "rotate": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "spec.palette"
+    },
+    {
+      "from": "spec.out",
+      "to": "mix.a"
+    },
+    {
+      "from": "tunnel.out",
+      "to": "mix.b"
+    },
+    {
+      "from": "mix.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.55,
+    "threshold": 0.75,
+    "exposure": 1.05
+  }
+}

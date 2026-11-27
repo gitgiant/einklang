@@ -1,0 +1,102 @@
+{
+  "id": "agy-spectrogram",
+  "kind": "generator",
+  "name": "Scrolling spectrogram",
+  "doc": "Scrolling time-frequency spectrogram backed by a persistent GPU ring-buffer texture, with configurable direction, log/mel/linear frequency scale, palette mapping, centre-out mirror, onset markers, and optional 3D perspective waterfall tilt.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "maps spectrum magnitude and peaks to HDR color"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "direction": {
+      "type": "enum",
+      "default": 0,
+      "options": ["left", "right", "up", "down"],
+      "doc": "scroll direction (left/right = horizontal time, up/down = vertical waterfall)"
+    },
+    "speed": {
+      "type": "float",
+      "default": 1.5,
+      "min": 0.2,
+      "max": 6.0,
+      "doc": "scroll speed in columns per 60 Hz tick"
+    },
+    "freq_scale": {
+      "type": "enum",
+      "default": 0,
+      "options": ["log", "mel", "linear"],
+      "doc": "frequency axis scaling"
+    },
+    "gain": {
+      "type": "float",
+      "default": 1.35,
+      "min": 0.2,
+      "max": 4.0,
+      "doc": "spectrum magnitude gain"
+    },
+    "gamma": {
+      "type": "float",
+      "default": 1.35,
+      "min": 0.4,
+      "max": 3.0,
+      "doc": "magnitude curve exponent (higher = deeper darks and sharper peaks)"
+    },
+    "pal_mode": {
+      "type": "enum",
+      "default": 0,
+      "options": ["palette", "thermal", "vivid", "mono"],
+      "doc": "color mapping style"
+    },
+    "mirror": {
+      "type": "bool",
+      "default": false,
+      "doc": "mirror frequency axis centre-out"
+    },
+    "onset_mark": {
+      "type": "float",
+      "default": 0.65,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "brighter column highlight on audio onsets"
+    },
+    "tilt": {
+      "type": "float",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "3D perspective waterfall floor tilt (0 = flat wall, 1 = deep horizon)"
+    },
+    "glow": {
+      "type": "float",
+      "default": 1.4,
+      "min": 0.2,
+      "max": 3.5,
+      "doc": "HDR peak luminance intensity"
+    }
+  },
+  "budget": {
+    "ms": 0.4,
+    "scales": "res"
+  },
+  "tags": [
+    "spectrum",
+    "spectrogram",
+    "waterfall",
+    "audio",
+    "ring-buffer"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  }
+}

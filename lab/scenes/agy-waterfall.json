@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "id": "agy-waterfall",
+  "name": "Sonar waterfall",
+  "version": 1,
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 3,
+        "window": 8,
+        "gain": 1.5
+      }
+    },
+    {
+      "id": "rms",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 15,
+        "window": 12,
+        "gain": 1.4
+      }
+    },
+    {
+      "id": "drift",
+      "piece": "core-lfo",
+      "params": {
+        "beats": 32,
+        "shape": 0
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#0a1628 #0e4d64 #18a596 #7df9d6 #ffe066 #fff7e6",
+        "cycle": 0.04
+      }
+    },
+    {
+      "id": "waterfall",
+      "piece": "agy-spectrogram",
+      "params": {
+        "direction": 3,
+        "speed": 1.6,
+        "freq_scale": 1,
+        "gamma": 1.3,
+        "pal_mode": 1,
+        "mirror": false,
+        "onset_mark": 0.85
+      },
+      "bind": {
+        "tilt": {
+          "from": "drift.out",
+          "range": [0.62, 0.88]
+        },
+        "gain": {
+          "from": "bass.out",
+          "range": [1.2, 2.1]
+        },
+        "glow": {
+          "from": "rms.out",
+          "range": [1.2, 2.2]
+        }
+      }
+    },
+    {
+      "id": "trails",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.25,
+        "zoom": 0.001,
+        "rotate": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "waterfall.palette"
+    },
+    {
+      "from": "waterfall.out",
+      "to": "trails.in"
+    }
+  ],
+  "out": "trails.out",
+  "post": {
+    "bloom": 0.5,
+    "threshold": 0.72,
+    "exposure": 1.05
+  }
+}
