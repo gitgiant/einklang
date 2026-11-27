@@ -14,10 +14,15 @@ const stream = (...tracks: Track[]) => ({
 }) as unknown as MediaStream;
 
 function fakeDevice() {
-  const log = { destroyed: 0, sources: [] as unknown[] };
+  const log = { destroyed: 0, sources: [] as unknown[], scaled: 0, pipelines: 0 };
+  const pass = { setPipeline: () => {}, setBindGroup: () => {}, draw: () => {}, end: () => {} };
   const device = {
-    createTexture: () => ({ destroy: () => { log.destroyed++; } }),
-    queue: { copyExternalImageToTexture: (s: { source: unknown }) => { log.sources.push(s.source); } },
+    createTexture: () => ({ destroy: () => { log.destroyed++; }, createView: () => ({}) }),
+    createShaderModule: () => ({}), createSampler: () => ({}), createBindGroup: () => ({}),
+    createRenderPipeline: () => { log.pipelines++; return { getBindGroupLayout: () => ({}) }; },
+    importExternalTexture: () => ({}),
+    createCommandEncoder: () => ({ beginRenderPass: () => pass, finish: () => ({}) }),
+    queue: { copyExternalImageToTexture: (s: { source: unknown }) => { log.sources.push(s.source); }, submit: () => { log.scaled++; } },
   } as unknown as GPUDevice;
   return { device, log };
 }
@@ -109,27 +114,24 @@ test('share frames larger than the render target are scaled down before the uplo
   assert.deepEqual(capSize(1280, 720, 1920, 1080), [1280, 720], 'never up');
   assert.deepEqual(capSize(0, 0, 1920, 1080), [0, 0]);
 
-  let frameCb: (() => void) | null = null, draws = 0, removed = 0;
+  let frameCb: (() => void) | null = null, removed = 0;
   const video = { style: {}, videoWidth: 3840, videoHeight: 2160, readyState: 4, paused: false, srcObject: null as unknown, setAttribute: () => {}, play: () => Promise.resolve(), pause: () => {}, remove: () => { removed++; }, requestVideoFrameCallback: (f: () => void) => { frameCb = f; } };
   const g = globalThis as unknown as Record<string, unknown>;
   g.document = { createElement: () => video, body: { append: () => {} } };
   g.MediaStream = class {};
-  g.OffscreenCanvas = class { width: number; height: number; constructor(w: number, h: number) { this.width = w; this.height = h; } getContext() { return { drawImage: () => { draws++; } }; } };
   try {
     const t = track('video'), host = new MediaHost(), { device, log } = fakeDevice();
     const release = host.share(shareItem(t as unknown as MediaStreamTrack, () => [1920, 1080]));
     const f = host.frame(device, 0)!;
     host.frame(device, 0);
-    assert.deepEqual([f.width, f.height, f.mirror, draws, log.sources.length], [1920, 1080, false, 1, 1]);
-    assert.notEqual(log.sources[0], video);
+    assert.deepEqual([f.width, f.height, f.mirror, log.scaled, log.sources.length], [1920, 1080, false, 1, 0]);
     assert.match(host.shareLine()!, /^shared video 3840x2160 → 1920x1080, upload \d+\.\d\d ms/);
     frameCb!(); host.frame(device, 0);
-    assert.deepEqual([draws, log.sources.length], [2, 2]);
-    // a small share goes straight from the video
+    assert.deepEqual([log.scaled, log.pipelines], [2, 1]);
+    // a small share is copied straight from the video
     video.videoWidth = 1280; video.videoHeight = 720; frameCb!(); host.frame(device, 0);
-    assert.equal(log.sources[2], video);
-    assert.equal(draws, 2);
+    assert.deepEqual([log.scaled, log.sources], [2, [video]]);
     release();
     assert.deepEqual([t.stopped, removed, video.srcObject, host.shareLine()], [1, 1, null, null]);
-  } finally { delete g.document; delete g.MediaStream; delete g.OffscreenCanvas; }
+  } finally { delete g.document; delete g.MediaStream; }
 });

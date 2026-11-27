@@ -23,9 +23,7 @@ export interface MediaItem {
   poll?(): void;
   /** A video: playing while it shows (or always, when `audio`), paused while it doesn't. */
   video?: HTMLVideoElement;
-  /** Draws the current frame at `w`x`h` (a downscale) and returns that instead of `source`. */
-  grab?(w: number, h: number): Source;
-  /** Smoothed CPU time of a new frame's grab + upload (ms). */
+  /** Smoothed CPU time of a new frame's upload (ms). */
   uploadMs?: number;
   /** Its sound drives the music features: keeps playing when another item shows. */
   audio?: boolean;
@@ -40,6 +38,36 @@ const USAGE = 0x04 | 0x02 | 0x10;
 const IDLE_MS = 1500;
 
 interface Tex { tex: GPUTexture; gen: number; w: number; h: number }
+
+const DOWNSCALE = `
+@group(0) @binding(0) var samp: sampler;
+@group(0) @binding(1) var src: texture_external;
+struct V { @builtin(position) pos: vec4f, @location(0) uv: vec2f }
+@vertex fn vs(@builtin(vertex_index) i: u32) -> V {
+  let uv = vec2f(f32((i << 1u) & 2u), f32(i & 2u));
+  return V(vec4f(uv * vec2f(2.0, -2.0) + vec2f(-1.0, 1.0), 0.0, 1.0), uv);
+}
+@fragment fn fs(v: V) -> @location(0) vec4f { return textureSampleBaseClampToEdge(src, samp, v.uv); }
+`;
+const scalers = new WeakMap<GPUDevice, { pipe: GPURenderPipeline; samp: GPUSampler }>();
+
+/** Draw the video's current frame into the smaller `tex` (its non-srgb view: the samples are encoded already). */
+function downscale(device: GPUDevice, video: HTMLVideoElement, tex: GPUTexture): void {
+  let s = scalers.get(device);
+  if (!s) {
+    const module = device.createShaderModule({ label: 'media downscale', code: DOWNSCALE });
+    s = {
+      pipe: device.createRenderPipeline({ label: 'media downscale', layout: 'auto', vertex: { module, entryPoint: 'vs' }, fragment: { module, entryPoint: 'fs', targets: [{ format: 'rgba8unorm' }] } }),
+      samp: device.createSampler({ magFilter: 'linear', minFilter: 'linear' }),
+    };
+    scalers.set(device, s);
+  }
+  const bind = device.createBindGroup({ layout: s.pipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: s.samp }, { binding: 1, resource: device.importExternalTexture({ source: video }) }] });
+  const enc = device.createCommandEncoder();
+  const pass = enc.beginRenderPass({ colorAttachments: [{ view: tex.createView({ format: 'rgba8unorm' }), loadOp: 'clear', storeOp: 'store' }] });
+  pass.setPipeline(s.pipe); pass.setBindGroup(0, bind); pass.draw(3); pass.end();
+  device.queue.submit([enc.finish()]);
+}
 
 export class MediaHost {
   private list: MediaItem[] = [];
@@ -125,13 +153,16 @@ export class MediaHost {
     if (!(w > 0 && h > 0)) return c ? frameOf(c) : null;
     if (!c || c.w !== w || c.h !== h) {
       c?.tex.destroy();
-      c = { tex: device.createTexture({ size: [w, h], format: 'rgba8unorm-srgb', usage: USAGE, label: `media ${it.name}` }), gen: -1, w, h };
+      c = { tex: device.createTexture({ size: [w, h], format: 'rgba8unorm-srgb', viewFormats: ['rgba8unorm'], usage: USAGE, label: `media ${it.name}` }), gen: -1, w, h };
       cache.set(it, c);
     }
     if (c.gen !== it.gen) {
       try {
         const t0 = this.now();
-        device.queue.copyExternalImageToTexture({ source: it.grab ? it.grab(w, h) : it.source }, { texture: c.tex }, [w, h]);
+        const v = it.video;
+        // a video wanted smaller than it is (a large share): scaled down on the GPU, no full-size copy
+        if (v && (v.videoWidth > w || v.videoHeight > h)) downscale(device, v, c.tex);
+        else device.queue.copyExternalImageToTexture({ source: it.source }, { texture: c.tex }, [w, h]);
         c.gen = it.gen;
         const ms = this.now() - t0;
         it.uploadMs = it.uploadMs === undefined ? ms : it.uploadMs + 0.05 * (ms - it.uploadMs);
@@ -247,7 +278,7 @@ const renderSize = (): [number, number] => [Math.round(innerWidth * (devicePixel
 
 /**
  * The video of a shared tab / window / screen. Frames larger than the render target are scaled
- * down on a canvas before the upload (and the capture is asked to deliver no more than the screen).
+ * down on the GPU as they come in (and the capture is asked to deliver no more than the screen).
  * stop() stops the track.
  */
 export function shareItem(track: MediaStreamTrack, limit: () => [number, number] = renderSize): MediaItem {
@@ -257,16 +288,7 @@ export function shareItem(track: MediaStreamTrack, limit: () => [number, number]
   v.muted = true; v.srcObject = new MediaStream([track]);
   v.play().catch(() => {});
   const it = videoItem(v, 'video', track.label || 'shared video', false, () => { track.stop(); v.srcObject = null; v.remove(); });
-  let canvas: OffscreenCanvas | null = null, g: OffscreenCanvasRenderingContext2D | null = null;
   it.size = () => capSize(v.videoWidth, v.videoHeight, ...limit());
-  it.grab = (w, h) => {
-    if (w === v.videoWidth && h === v.videoHeight) return v;
-    if (!canvas || canvas.width !== w || canvas.height !== h) {
-      canvas = new OffscreenCanvas(w, h); g = canvas.getContext('2d', { alpha: false })!; g.imageSmoothingQuality = 'medium';
-    }
-    g!.drawImage(v, 0, 0, w, h);
-    return canvas;
-  };
   return it;
 }
 
