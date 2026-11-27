@@ -50,7 +50,7 @@ export function restartControl(withToken: (path: string) => string, back: () => 
   const label = document.createElement('label'), box = document.createElement('input'); box.type = 'checkbox';
   label.append(box, ' rebuild first');
   const note = document.createElement('span'); note.className = 'note';
-  const out = document.createElement('pre'); out.hidden = true;
+  const out = document.createElement('div'); out.className = 'out'; out.hidden = true;
   el.append(button, label, note, out);
   button.onclick = async () => {
     button.blur(); // keys go back to the page

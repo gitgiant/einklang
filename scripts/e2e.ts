@@ -142,15 +142,15 @@ try {
 
   // particle budget: both hosts benchmarked and run the same N; a weak host joining schedules a
   // drop to its capability at the next reseed, on both
-  const flowLine = (p: Page) => p.$eval('#debug pre', (e) => /flow N .*/.exec(e.textContent ?? '')?.[0] ?? '');
-  const caps = /hosts: (.*)/.exec(await a.$eval('#debug pre', (e) => e.textContent ?? ''))?.[1] ?? '';
+  const flowLine = (p: Page) => p.$eval('#debug-text', (e) => /flow N .*/.exec(e.textContent ?? '')?.[0] ?? '');
+  const caps = /hosts: (.*)/.exec(await a.$eval('#debug-text', (e) => e.textContent ?? ''))?.[1] ?? '';
   const [fa, fb] = [await flowLine(a), await flowLine(b)];
   const nA = /flow N (\d+)/.exec(fa)?.[1], nB = /flow N (\d+)/.exec(fb)?.[1];
   check(!!nA && nA === nB && /cap \d+.*cap \d+/.test(caps), `flow budget: N ${nA} on both (${caps}); B: ${/N \S+( \+ dust \d+)?/.exec(hud)?.[0]}`);
   // join early in a reseed period: the next boundary is then further off than the wait below, so
   // the drop must still read as scheduled (a join just before a boundary would already be applied)
   await a.waitForFunction((period) => {
-    const t = / tick (\d+) /.exec(document.querySelector('#debug pre')?.textContent ?? '')?.[1];
+    const t = / tick (\d+) /.exec(document.querySelector('#debug-text')?.textContent ?? '')?.[1];
     return t !== undefined && Number(t) % period < period - 180;
   }, { timeout: 10000 }, RESEED_TICKS);
   const before = await flowLine(a);
@@ -183,7 +183,7 @@ try {
   const hudA = await a.$eval('#hud', (e) => e.textContent ?? '');
   check(/midi 120 bpm/.test(hudA) && /cc 1:90/.test(hudA), `midi clock + cc shown in HUD (${/midi .*/.exec(hudA)?.[0]})`);
   await sleep(600);
-  const dtext = await a.$eval('#debug pre', (e) => e.textContent ?? '');
+  const dtext = await a.$eval('#debug-text', (e) => e.textContent ?? '');
   check(/room clock master: midi-box/.test(dtext) && /fps \d/.test(dtext), 'debug panel shows frames, network and clock master');
   if (process.env.SHOT) await a.screenshot({ path: process.env.SHOT });
   // pads: the same socket plays a gamepad (shockwave + kaleido held, sticks and triggers in),
@@ -206,7 +206,7 @@ try {
   c = compare(da, db);
   const frozen = new Set(da.hashes.slice(-30).map(([, h]) => h)).size === 1;
   check(c.shared > 20 && c.diff === 0 && frozen, `pads + freeze: ${c.shared} shared ticks, ${c.diff} mismatches, frozen ${frozen}`);
-  const ptext = await a.$eval('#debug pre', (e) => e.textContent ?? '');
+  const ptext = await a.$eval('#debug-text', (e) => e.textContent ?? '');
   check(/slot 0 .*held 1001/.test(ptext) && /slot 1 /.test(ptext), 'debug panel lists both pad slots');
   msend({ t: 'ev', type: 'freeze' });
   msend({ t: 'ev', type: 'pad', payload: { l: 0, b: 0, a: [0, 0, 0, 0], t: [0, 0] } });
@@ -262,11 +262,11 @@ try {
 
   // instrument mode: A takes Chrome's fake mic as line-in; every host (A too) renders 2 ticks behind
   await a.$eval('#live', (e) => (e as HTMLButtonElement).click());
-  await b.waitForFunction(() => /live features: delay 2t/.test(document.querySelector('#debug pre')?.textContent ?? ''), { timeout: 10000 });
+  await b.waitForFunction(() => /live features: delay 2t/.test(document.querySelector('#debug-text')?.textContent ?? ''), { timeout: 10000 });
   await sleep(3000);
   da = await dbg(a); db = await dbg(b);
   c = compare(da, db);
-  const liveB = /live features: .*/.exec(await b.$eval('#debug pre', (e) => e.textContent ?? ''))?.[0] ?? '';
+  const liveB = /live features: .*/.exec(await b.$eval('#debug-text', (e) => e.textContent ?? ''))?.[0] ?? '';
   check(c.shared > 20 && c.diff === 0, `instrument mode (2-tick delay): ${c.shared} shared ticks, ${c.diff} mismatches; B ${liveB}`);
   await a.$eval('#stop', (e) => (e as HTMLButtonElement).click());
 } catch (e) {
