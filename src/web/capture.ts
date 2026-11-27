@@ -4,6 +4,7 @@
 import { Analyzer, N } from '../core/analysis.ts';
 import { FPS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import { decimateWave } from '../core/features.ts';
+import { bindStream } from './sharevideo.ts';
 
 const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
 /** Hint to append to a capture error (capture needs a secure context: localhost or https). */
@@ -36,17 +37,32 @@ function permError(dev: 'mic' | 'camera', e: { name: string; message: string }, 
 /**
  * Music already playing elsewhere: a Chrome tab ("Share tab audio") or any app via "Entire screen" +
  * "Share system audio" (Windows/ChromeOS). The source keeps playing normally. Call from a user gesture.
+ * With `video` its picture comes along (LiveAnalyzer shows it as this host's media).
  */
-export async function openShare(): Promise<MediaStream> {
+export async function openShare(video = false): Promise<MediaStream> {
   const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: true, // required by Chrome; dropped below
+    video: true, // required by Chrome; dropped below unless wanted
     audio: { ...RAW_AUDIO, suppressLocalAudioPlayback: false },
     systemAudio: 'include', selfBrowserSurface: 'exclude', surfaceSwitching: 'include', preferCurrentTab: false,
   } as DisplayMediaStreamOptions);
   const audio = stream.getAudioTracks();
-  stream.getVideoTracks().forEach((t) => t.stop());
+  const keep = video && audio.length ? stream.getVideoTracks().slice(0, 1) : [];
+  for (const t of stream.getVideoTracks()) if (!keep.includes(t)) t.stop();
   if (!audio.length) throw new Error('no audio was shared: pick a tab with "Share tab audio" on, or Entire screen with "Share system audio"');
-  return new MediaStream(audio);
+  return new MediaStream([...audio, ...keep]);
+}
+
+const VIDEO_KEY = 'share.video';
+/** The "use its video too" box next to a page's tab / system audio button (default on, remembered). */
+export function shareVideoBox(): { el: HTMLLabelElement; box: HTMLInputElement } {
+  const el = document.createElement('label'), box = document.createElement('input');
+  el.className = 'sharevideo';
+  el.title = 'also show the shared tab\'s / screen\'s picture in media scenes, replacing picked media while sharing (this device only, never uploaded; applies to the next share)';
+  box.type = 'checkbox';
+  try { box.checked = localStorage.getItem(VIDEO_KEY) !== '0'; } catch { box.checked = true; }
+  box.onchange = () => { try { localStorage.setItem(VIDEO_KEY, box.checked ? '1' : '0'); } catch { /* private mode */ } };
+  el.append(box, ' use its video too');
+  return { el, box };
 }
 
 /** Live audio to analyze: a capture stream, or a playing media element (a video's sound). */
@@ -65,6 +81,8 @@ export class LiveAnalyzer {
   private wr: AnalyserNode;
   private bl = new Float32Array(2048);
   private br = new Float32Array(2048);
+  /** A captured stream: stops its tracks and takes its video off the screen. */
+  private unbind: (() => void) | null = null;
 
   /**
    * `ended`: the user pressed "Stop sharing" in Chrome's bar, the device went away, or the media
@@ -91,7 +109,7 @@ export class LiveAnalyzer {
     this.wl.fftSize = this.wr.fftSize = 2048;
     src.connect(split); split.connect(this.wl, 0); split.connect(this.wr, 1);
     ac.resume().catch(() => {}); // Safari starts contexts suspended
-    if (!el) for (const t of (source as MediaStream).getAudioTracks()) t.onended = ended;
+    if (!el) this.unbind = bindStream(source as MediaStream, ended);
   }
 
   /**
@@ -113,5 +131,5 @@ export class LiveAnalyzer {
     }
   }
 
-  close(): void { if (this.source instanceof MediaStream) this.source.getTracks().forEach((t) => t.stop()); this.ac.close(); }
+  close(): void { this.unbind?.(); this.ac.close(); }
 }

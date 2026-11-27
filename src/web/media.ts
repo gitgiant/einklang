@@ -1,7 +1,8 @@
 // Visual media picked on this host: image files, video files, the camera. Per host and never
 // hashed or sent anywhere (no upload): pieces read it through GpuInit.media (lab/api/media.ts),
 // which this module serves. Images upload to the GPU once; a video or the camera copies a frame
-// into its texture only when a new one exists (requestVideoFrameCallback).
+// into its texture only when a new one exists (requestVideoFrameCallback). A shared tab's /
+// screen's video (sharevideo.ts) replaces the picked items while it is shared.
 import type { MediaFrame, MediaInput, MediaKind } from '../../lab/api/media.ts';
 
 type Source = ImageBitmap | HTMLVideoElement | HTMLCanvasElement | OffscreenCanvas;
@@ -22,6 +23,8 @@ export interface MediaItem {
   poll?(): void;
   /** A video: playing while it shows (or always, when `audio`), paused while it doesn't. */
   video?: HTMLVideoElement;
+  /** Smoothed CPU time of a new frame's upload (ms). */
+  uploadMs?: number;
   /** Its sound drives the music features: keeps playing when another item shows. */
   audio?: boolean;
   /** When frame() last asked for it (ms). */
@@ -36,8 +39,40 @@ const IDLE_MS = 1500;
 
 interface Tex { tex: GPUTexture; gen: number; w: number; h: number }
 
+const DOWNSCALE = `
+@group(0) @binding(0) var samp: sampler;
+@group(0) @binding(1) var src: texture_external;
+struct V { @builtin(position) pos: vec4f, @location(0) uv: vec2f }
+@vertex fn vs(@builtin(vertex_index) i: u32) -> V {
+  let uv = vec2f(f32((i << 1u) & 2u), f32(i & 2u));
+  return V(vec4f(uv * vec2f(2.0, -2.0) + vec2f(-1.0, 1.0), 0.0, 1.0), uv);
+}
+@fragment fn fs(v: V) -> @location(0) vec4f { return textureSampleBaseClampToEdge(src, samp, v.uv); }
+`;
+const scalers = new WeakMap<GPUDevice, { pipe: GPURenderPipeline; samp: GPUSampler }>();
+
+/** Draw the video's current frame into the smaller `tex` (its non-srgb view: the samples are encoded already). */
+function downscale(device: GPUDevice, video: HTMLVideoElement, tex: GPUTexture): void {
+  let s = scalers.get(device);
+  if (!s) {
+    const module = device.createShaderModule({ label: 'media downscale', code: DOWNSCALE });
+    s = {
+      pipe: device.createRenderPipeline({ label: 'media downscale', layout: 'auto', vertex: { module, entryPoint: 'vs' }, fragment: { module, entryPoint: 'fs', targets: [{ format: 'rgba8unorm' }] } }),
+      samp: device.createSampler({ magFilter: 'linear', minFilter: 'linear' }),
+    };
+    scalers.set(device, s);
+  }
+  const bind = device.createBindGroup({ layout: s.pipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: s.samp }, { binding: 1, resource: device.importExternalTexture({ source: video }) }] });
+  const enc = device.createCommandEncoder();
+  const pass = enc.beginRenderPass({ colorAttachments: [{ view: tex.createView({ format: 'rgba8unorm' }), loadOp: 'clear', storeOp: 'store' }] });
+  pass.setPipeline(s.pipe); pass.setBindGroup(0, bind); pass.draw(3); pass.end();
+  device.queue.submit([enc.finish()]);
+}
+
 export class MediaHost {
   private list: MediaItem[] = [];
+  /** Shared videos, newest last: while there is one, it shows instead of `list`. */
+  private shares: MediaItem[] = [];
   private caches: { device: GPUDevice; map: Map<MediaItem, Tex> }[] = [];
   private failed = new Set<MediaItem>();
   /** Pauses videos while no scene asks for them (no media scene on screen). */
@@ -46,25 +81,55 @@ export class MediaHost {
   /** The clock for play/pause bookkeeping (tests replace it). */
   now = () => performance.now();
 
+  /** What is picked (kept, but not shown, while a video is shared). */
   get items(): readonly MediaItem[] { return this.list; }
+  private get shown(): readonly MediaItem[] { return this.shares.length ? this.shares.slice(-1) : this.list; }
+
+  /** Show `item` instead of the picked media until the returned function is called (it stops the item). */
+  share(item: MediaItem): () => void {
+    this.shares.push(item);
+    this.changed();
+    return () => {
+      const i = this.shares.indexOf(item);
+      if (i < 0) return;
+      this.shares.splice(i, 1);
+      item.stop();
+      this.drop((it) => it === item);
+      this.failed.delete(item);
+      this.changed();
+    };
+  }
+
+  /** HUD line about the shared video, null when none is shared. */
+  shareLine(): string | null {
+    const it = this.shares.at(-1);
+    if (!it?.ready()) return null;
+    const [w, h] = it.size(), v = it.video, from = v && (v.videoWidth !== w || v.videoHeight !== h) ? `${v.videoWidth}x${v.videoHeight} → ` : '';
+    return `shared video ${from}${w}x${h}${it.uploadMs === undefined ? '' : `, upload ${it.uploadMs.toFixed(2)} ms CPU per new frame`}`;
+  }
+
+  private drop(which: (it: MediaItem) => boolean): void {
+    for (const c of this.caches) for (const [it, t] of c.map) if (which(it)) { t.tex.destroy(); c.map.delete(it); }
+  }
+  private changed(): void { for (const f of this.listeners) f(); }
 
   /** Replace what is picked (the old items stop, their textures go). */
   set(items: MediaItem[]): void {
     const keep = new Set(items);
     for (const it of this.list) if (!keep.has(it)) it.stop();
-    for (const c of this.caches) for (const [it, t] of c.map) if (!keep.has(it)) { t.tex.destroy(); c.map.delete(it); }
+    this.drop((it) => !keep.has(it) && !this.shares.includes(it));
     this.list = items;
     this.failed.clear();
     const videos = items.some((it) => it.video);
     if (videos && !this.timer) this.timer = setInterval(() => this.sweep(null, this.now()), 1000);
     else if (!videos && this.timer) { clearInterval(this.timer); this.timer = null; }
-    for (const f of this.listeners) f();
+    this.changed();
   }
   clear(): void { this.set([]); }
 
   /** The piece API view of this host's media on `device`. */
   input(device: GPUDevice): MediaInput {
-    return { count: () => this.list.length, frame: (i) => this.frame(device, i) };
+    return { count: () => this.shown.length, frame: (i) => this.frame(device, i) };
   }
 
   private cache(device: GPUDevice): Map<MediaItem, Tex> {
@@ -74,9 +139,9 @@ export class MediaHost {
   }
 
   frame(device: GPUDevice, i: number): MediaFrame | null {
-    const n = this.list.length;
+    const list = this.shown, n = list.length;
     if (!n) return null;
-    const it = this.list[((i % n) + n) % n], now = this.now();
+    const it = list[((i % n) + n) % n], now = this.now();
     it.used = now;
     this.sweep(it, now);
     it.poll?.();
@@ -88,11 +153,20 @@ export class MediaHost {
     if (!(w > 0 && h > 0)) return c ? frameOf(c) : null;
     if (!c || c.w !== w || c.h !== h) {
       c?.tex.destroy();
-      c = { tex: device.createTexture({ size: [w, h], format: 'rgba8unorm-srgb', usage: USAGE, label: `media ${it.name}` }), gen: -1, w, h };
+      c = { tex: device.createTexture({ size: [w, h], format: 'rgba8unorm-srgb', viewFormats: ['rgba8unorm'], usage: USAGE, label: `media ${it.name}` }), gen: -1, w, h };
       cache.set(it, c);
     }
     if (c.gen !== it.gen) {
-      try { device.queue.copyExternalImageToTexture({ source: it.source }, { texture: c.tex }, [w, h]); c.gen = it.gen; }
+      try {
+        const t0 = this.now();
+        const v = it.video;
+        // a video wanted smaller than it is (a large share): scaled down on the GPU, no full-size copy
+        if (v && (v.videoWidth > w || v.videoHeight > h)) downscale(device, v, c.tex);
+        else device.queue.copyExternalImageToTexture({ source: it.source }, { texture: c.tex }, [w, h]);
+        c.gen = it.gen;
+        const ms = this.now() - t0;
+        it.uploadMs = it.uploadMs === undefined ? ms : it.uploadMs + 0.05 * (ms - it.uploadMs);
+      }
       catch (e) { this.failed.add(it); console.warn(`media ${it.name}: can't upload (${(e as Error).message})`); }
     }
     return frameOf(c);
@@ -191,6 +265,31 @@ export async function openCamera(ended: () => void = () => {}): Promise<MediaIte
   for (const t of stream.getVideoTracks()) t.onended = ended;
   try { await v.play(); } catch (e) { stop(); throw e; }
   return videoItem(v, 'camera', stream.getVideoTracks()[0]?.label || 'camera', true, stop);
+}
+
+/** `w`x`h` scaled down (never up) to what covers `max`, keeping the aspect. */
+export function capSize(w: number, h: number, maxW: number, maxH: number): [number, number] {
+  const k = Math.max(maxW / w, maxH / h);
+  return k > 0 && k < 1 ? [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))] : [w, h];
+}
+
+/** This window in device pixels: the largest the render target gets. */
+const renderSize = (): [number, number] => [Math.round(innerWidth * (devicePixelRatio || 1)), Math.round(innerHeight * (devicePixelRatio || 1))];
+
+/**
+ * The video of a shared tab / window / screen. Frames larger than the render target are scaled
+ * down on the GPU as they come in (and the capture is asked to deliver no more than the screen).
+ * stop() stops the track.
+ */
+export function shareItem(track: MediaStreamTrack, limit: () => [number, number] = renderSize): MediaItem {
+  const dpr = globalThis.devicePixelRatio || 1;
+  if (globalThis.screen) track.applyConstraints?.({ width: { max: Math.round(screen.width * dpr) }, height: { max: Math.round(screen.height * dpr) } }).catch(() => {}); // best effort
+  const v = videoElement();
+  v.muted = true; v.srcObject = new MediaStream([track]);
+  v.play().catch(() => {});
+  const it = videoItem(v, 'video', track.label || 'shared video', false, () => { track.stop(); v.srcObject = null; v.remove(); });
+  it.size = () => capSize(v.videoWidth, v.videoHeight, ...limit());
+  return it;
 }
 
 /** A canvas the caller redraws (the lab's generated test media): call `touch()` after each draw. */

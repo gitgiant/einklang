@@ -22,8 +22,9 @@ import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
-import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
+import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare, shareVideoBox, type LiveSource } from './capture.ts';
 import { mediaPicker } from './mediapicker.ts';
+import { MEDIA } from './media.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
 import { TRANS_KEYS, transRow } from './transvote.ts';
 
@@ -227,9 +228,11 @@ $('live').onclick = async () => {
 };
 
 $('capture').hidden = !canShare();
+const shareVideo = shareVideoBox();
+if (canShare()) $('capture').after(shareVideo.el);
 $('capture').onclick = async () => {
   try {
-    const stream = await openShare();
+    const stream = await openShare(shareVideo.box.checked);
     startLive(stream, `live: capturing "${stream.getAudioTracks()[0].label || 'tab/app audio'}" (${delay(LIVE_DELAY)})`, LIVE_DELAY);
   } catch (e) {
     if ((e as Error).name !== 'NotAllowedError') msg(`capture failed: ${(e as Error).message}${insecure()}`);
@@ -526,6 +529,7 @@ async function start() {
         `${label}  ·  ${tr ? names.get(tr.from) : engine.scene.def.name}${pending}`,
         `tick ${f}  hash ${hash}`,
         fstats.line(transName),
+        MEDIA.shareLine(),
         st,
         FE.get(f, K_BPM) ? `midi ${FE.get(f, K_BPM)} bpm  beat ${FE.get(f, K_BAR) + 1}/4` : null,
         ccLine(f),
