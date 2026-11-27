@@ -1,0 +1,86 @@
+{
+  "id": "agy-fifths",
+  "kind": "generator",
+  "name": "Circle-of-fifths wheel",
+  "doc": "Interactive circle-of-fifths harmonic wheel displaying the 12 pitch classes in fifths order, lighting active chroma pitches, highlighting and rotating toward the estimated key, and mapping key to hue.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "optional palette tint blended with key-to-hue OKLCh harmony"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "gain": {
+      "type": "float",
+      "default": 1.45,
+      "min": 0.4,
+      "max": 3.5,
+      "doc": "chroma activation sensitivity"
+    },
+    "rot_speed": {
+      "type": "float",
+      "default": 0.12,
+      "min": 0.02,
+      "max": 0.5,
+      "doc": "wheel rotation responsiveness toward the estimated key"
+    },
+    "web": {
+      "type": "float",
+      "default": 0.85,
+      "min": 0.0,
+      "max": 1.5,
+      "doc": "intensity of inner harmonic interval filaments connecting active pitch classes"
+    },
+    "pulse": {
+      "type": "float",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0,
+      "doc": "bass and onset radial pulse strength"
+    },
+    "glow": {
+      "type": "float",
+      "default": 1.45,
+      "min": 0.4,
+      "max": 3.5,
+      "doc": "HDR glow intensity for active wedges, tonic crown, and center orb"
+    },
+    "labels": {
+      "type": "bool",
+      "default": true,
+      "doc": "show pitch-class note labels (C, G, D, A...) on the 12 wedges"
+    },
+    "key_hue": {
+      "type": "float",
+      "default": 0.85,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "blend from input palette (0) to estimated key-to-hue OKLCh color (1)"
+    }
+  },
+  "budget": {
+    "ms": 0.5,
+    "scales": "res"
+  },
+  "tags": [
+    "harmony",
+    "fifths",
+    "chroma",
+    "key",
+    "wheel",
+    "music",
+    "generator"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  }
+}

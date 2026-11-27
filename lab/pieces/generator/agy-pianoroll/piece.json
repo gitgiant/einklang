@@ -1,0 +1,87 @@
+{
+  "id": "agy-pianoroll",
+  "kind": "generator",
+  "name": "MIDI piano-roll",
+  "doc": "Falling piano-roll note highway driven by audio spectral pitch bands and live MIDI note-on events, with a lit 4-octave keyboard and onset-reactive strike line.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true,
+        "doc": "maps pitch class and octave to note and key colors"
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "speed": {
+      "type": "float",
+      "default": 1.6,
+      "min": 0.4,
+      "max": 4.0,
+      "doc": "fall speed of notes in rows per 60 Hz tick"
+    },
+    "gain": {
+      "type": "float",
+      "default": 1.45,
+      "min": 0.3,
+      "max": 3.5,
+      "doc": "audio note detection sensitivity"
+    },
+    "threshold": {
+      "type": "float",
+      "default": 0.22,
+      "min": 0.05,
+      "max": 0.65,
+      "doc": "minimum energy required to trigger a falling note bar"
+    },
+    "perspective": {
+      "type": "float",
+      "default": 0.28,
+      "min": 0.0,
+      "max": 0.8,
+      "doc": "3D highway tilt perspective (0 = flat vertical roll, 0.8 = deep arcade highway)"
+    },
+    "keyboard_h": {
+      "type": "float",
+      "default": 0.2,
+      "min": 0.1,
+      "max": 0.34,
+      "doc": "height of the piano keyboard at the bottom of the frame"
+    },
+    "glow": {
+      "type": "float",
+      "default": 1.5,
+      "min": 0.3,
+      "max": 3.5,
+      "doc": "HDR glow intensity for active notes, strike line, and lit keys"
+    },
+    "grid": {
+      "type": "float",
+      "default": 0.45,
+      "min": 0.0,
+      "max": 1.0,
+      "doc": "visibility of octave lanes and beat-synced horizontal grid lines"
+    }
+  },
+  "budget": {
+    "ms": 0.5,
+    "scales": "res"
+  },
+  "tags": [
+    "midi",
+    "piano",
+    "notes",
+    "keyboard",
+    "music",
+    "generator"
+  ],
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  }
+}
