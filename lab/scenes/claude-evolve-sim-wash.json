@@ -1,0 +1,36 @@
+{
+  "format": 1, "id": "claude-evolve-sim-wash", "name": "Evolve sim: wet wash", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "watercolor", "ink", "water"],
+  "doc": "Your picture (image, video or camera) painted in ink on wet paper: its darks and contours are the ink, every onset drops water that blooms outward with tide lines and the bass tips the sheet so the wash runs along its contours and drags the ink with it. Each phrase the simulation changes (big wet-in-wet blooms, a running wash, frost growing from the contours, the water carving the picture as a landscape) and the picture re-forms.",
+  "nodes": [
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#1b1530 #3b2c5e #7a3b69 #c8553d #e7a977 #f4ecd8" } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.05, "pulse": 0.15, "drift": 0.25, "contrast": 1.2, "saturation": 1.1, "edge_width": 2.5 } },
+    { "id": "sim", "piece": "claude-media-erode", "params": { "look": 1, "carve": 0, "relief": 2, "rain": 0.8, "flood": 1.6, "tilt": 1.1, "ink": 0.9, "react": 1.3 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.2, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.25, "threshold": 0.85 },
+  "evolve": {
+    "every": "phrase", "transition": "agy-ink", "beats": 4,
+    "slots": [
+      { "node": "sim", "pool": [
+        { "piece": "claude-media-erode", "params": { "look": 1, "carve": 0, "flood": 2.6, "rain": 0.5, "tilt": 0.6, "ink": 1.2, "evap": 0.2 },
+          "ranges": { "relief": [1.5, 3], "tint": [0.3, 0.6] } },
+        { "piece": "claude-media-erode", "params": { "look": 1, "carve": 0, "tilt": 2.2, "rain": 1.4, "relief": 1.5, "evap": 0.15, "flood": 1 },
+          "ranges": { "ink": [0.6, 1.2], "gloss": [0.6, 1.2] } },
+        { "piece": "claude-media-frost", "params": { "branch": 0.7, "seed": 1.4, "show": 0.5, "tint": 0.45 },
+          "ranges": { "along": [0.7, 1], "wiggle": [0.3, 0.7] } },
+        { "piece": "claude-media-erode", "params": { "relief": 3.5, "rain": 1.1, "tilt": 1.4, "carve": 1.4, "flood": 1.3 },
+          "ranges": { "evap": [0.2, 0.4], "water": [0.9, 1.3] } }
+      ] }
+    ]
+  }
+}
