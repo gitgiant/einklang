@@ -1,5 +1,6 @@
-// Room token + bind addresses. The server only listens on localhost and the tailnet, and every
-// HTTP and WebSocket request must carry the room token (?t=, or the cookie set by a ?t= page load).
+// Room token + bind addresses. The server only listens on localhost and the tailnet (and, with
+// $EINKLANG_LAN=1, private LAN addresses), and every HTTP and WebSocket request must carry the room token
+// (?t=, or the cookie set by a ?t= page load).
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -39,7 +40,26 @@ export function authorize(req: IncomingMessage, token: string): 'query' | 'cooki
   return null;
 }
 
-export const setCookie = (token: string): string => `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict`;
+export const setCookie = (token: string, secure = false): string => `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict${secure ? '; Secure' : ''}`;
+
+/** An IPv4-mapped IPv6 address (::ffff:192.168.0.2) as plain IPv4. */
+export const plainAddress = (addr: string): string => addr.replace(/^::ffff:(?=\d+\.)/i, '');
+
+export const isLoopback = (addr: string): boolean => addr === '::1' || plainAddress(addr).startsWith('127.');
+
+/** RFC 1918: the addresses a home or office LAN hands out. */
+export const isPrivateLan = (addr: string): boolean => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)\d+\.\d+(\.\d+)?$/.test(addr);
+
+/** Adapters of VMs, containers and VPNs: no LAN device reaches them, and some change address every boot. */
+const VIRTUAL = /wsl|default switch|docker|^br-|^veth|virbr|vmware|vmnet|vbox|virtualbox|zerotier/i;
+
+type Interfaces = ReturnType<typeof os.networkInterfaces>;
+
+/** This machine's private IPv4 addresses on real network adapters. */
+export function lanAddresses(ifaces: Interfaces = os.networkInterfaces()): string[] {
+  return [...new Set(Object.entries(ifaces).filter(([name]) => !VIRTUAL.test(name))
+    .flatMap(([, list]) => list ?? []).filter((i) => !i.internal && isPrivateLan(i.address)).map((i) => i.address))];
+}
 
 /** Tailscale hands out addresses from 100.64.0.0/10 (and fd7a:115c:a1e0::/48 for IPv6). */
 export function isTailnet(addr: string): boolean {
@@ -48,12 +68,12 @@ export function isTailnet(addr: string): boolean {
   return !!m && +m[1] >= 64 && +m[1] <= 127;
 }
 
-/** localhost + every tailnet address; $BIND (comma-separated) overrides, e.g. BIND=0.0.0.0. */
-export function bindAddresses(): string[] {
+/** localhost + every tailnet address (+ `lan` ones); $BIND (comma-separated) overrides, e.g. BIND=0.0.0.0. */
+export function bindAddresses(lan = false): string[] {
   const env = process.env.BIND?.trim();
   if (env) return env.split(',').map((s) => s.trim()).filter(Boolean);
   const tail = Object.values(os.networkInterfaces()).flat()
     .filter((i): i is os.NetworkInterfaceInfo => !!i && isTailnet(i.address))
     .map((i) => i.address);
-  return ['127.0.0.1', ...new Set(tail)];
+  return [...new Set(['127.0.0.1', ...tail, ...(lan ? lanAddresses() : [])])];
 }

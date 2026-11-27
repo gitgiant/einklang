@@ -49,7 +49,8 @@ All inputs from any host are relayed through the server and stamped with an **ef
 
 ## 6. Server & security
 - Plain Node, no dependencies: static files, WS (RFC 6455), clock sync, relay, track hosting with Range support, the 8-bar replay log, and state that it decides (scene, views, N, clock master, mode).
-- Binds to the tailnet or localhost only. A **room token** in the URL is required for all WS and HTTP operations.
+- Binds to the tailnet or localhost only; private LAN addresses are opt-in (`EINKLANG_LAN=1`). A **room token** in the URL is required for all WS and HTTP operations.
+- **HTTPS** for other devices (a secure context for WebGPU, mic, screen share, wake lock): `tailscale cert` renewed automatically, or `EINKLANG_CERT`/`_KEY`, on port 8444; LAN devices get a self-signed certificate. Plain HTTP from anything but loopback is redirected (308) and its WebSocket upgrades are refused. Variables: README "HTTPS".
 
 ## 7. Stack
 TypeScript + Vite, with a shared core used by the page, the extension and the server. Build: Vite + naga. The existing prototype in `public/` + `server.js` is the reference for the protocol and determinism.

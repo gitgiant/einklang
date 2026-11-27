@@ -1,13 +1,21 @@
 // Zero-dependency sync server: static files, clock sync, room state + event relay, track hosting.
-// Run: npm run server   (PORT, default 8080; BIND to override localhost+tailnet; EINKLANG_TOKEN). That goes
-// through supervisor.ts, which starts this file again on POST /admin/restart (restart.ts).
+// Run: npm run server   (PORT, default 8080; BIND to override localhost+tailnet; EINKLANG_TOKEN; HTTPS
+// settings in https.ts / README). That goes through supervisor.ts, which starts this file again on
+// POST /admin/restart (restart.ts).
 // Serves the Vite build from dist/. In dev, run `npm run dev` alongside; Vite proxies /ws and /track.
 import crypto from 'node:crypto';
 import http from 'node:http';
+import https from 'node:https';
+import tls from 'node:tls';
+import type { AddressInfo } from 'node:net';
+import type { Duplex } from 'node:stream';
 import fs from 'node:fs';
 import path from 'node:path';
 import { processRestarter, restartRoute, type Restarter } from './restart.ts';
-import { authorize, bindAddresses, loadToken, setCookie } from './auth.ts';
+import { authorize, bindAddresses, isLoopback, loadToken, setCookie } from './auth.ts';
+import { fingerprint, keepFresh, type Cert } from './certs.ts';
+import { httpPort, httpsSetup, lanEnabled, publicUrl } from './https.ts';
+import { plainRequest, redirectTarget, type RedirectTargets } from './redirect.ts';
 import { Room, type VoteStore } from './room.ts';
 import { WsConn, MAX_FRAME } from './ws.ts';
 import { DEFAULT_PRESETS } from '../core/protocol.ts';
@@ -27,6 +35,12 @@ export interface ServerOpts {
   votesFile?: string;
   /** How POST /admin/restart restarts (default: it can't). */
   restart?: Restarter;
+  /** Also serve TLS on `hosts`. `main` has `name`; `lan` is for clients that ask for anything else. */
+  https?: { port: number; main?: Cert; lan?: Cert; name?: string; lanNames?: string[] };
+  /** https URL that other devices on plain HTTP are sent to (instead of this server's own HTTPS). */
+  publicUrl?: string;
+  /** A further port on `hosts` that only redirects to https. */
+  httpPort?: number;
 }
 
 /** Votes in an append-only JSONL file (created on the first vote). */
@@ -47,7 +61,39 @@ export function labCatalog(dir: string): string[] {
   const rank = (id: string) => { const i = DEFAULT_PRESETS.indexOf(id); return i < 0 ? DEFAULT_PRESETS.length : i; };
   return ids.map((id, i) => [id, i] as const).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([id]) => id);
 }
-export interface Running { room: Room; servers: http.Server[]; close(): Promise<void> }
+export interface Running {
+  room: Room;
+  /** Plain HTTP, one per host. */
+  servers: http.Server[];
+  /** TLS, one per host; empty without `https`, or if it could not listen. */
+  secure: https.Server[];
+  /** The $EINKLANG_HTTP_PORT listeners. */
+  redirectors: http.Server[];
+  /** What could not be started. */
+  warnings: string[];
+  /** Serve this certificate from now on. */
+  setCert(which: 'main' | 'lan', c: Cert): void;
+  close(): Promise<void>;
+}
+
+/** Listen on every host, or on none of them. */
+async function listenAll<S extends http.Server>(hosts: string[], port: number, make: () => S): Promise<S[]> {
+  const done = await Promise.allSettled(hosts.map((host) => new Promise<S>((ok, fail) => {
+    const s = make();
+    s.once('error', fail);
+    s.listen(port, host, () => ok(s));
+  })));
+  const up = done.flatMap((d) => (d.status === 'fulfilled' ? [d.value] : []));
+  const bad = done.find((d) => d.status === 'rejected');
+  if (!bad) return up;
+  for (const s of up) s.close();
+  throw bad.reason;
+}
+
+function refuseUpgrade(sock: Duplex, to: string): void {
+  const body = `Plain ws:// is refused from other devices. Open ${to.split('?')[0].replace(/\/ws$/, '/')} (with your ?t=...) instead.\n`;
+  sock.end(`HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nContent-Length: ${Buffer.byteLength(body)}\r\nConnection: close\r\n\r\n${body}`);
+}
 
 export async function startServer(o: ServerOpts): Promise<Running> {
   const room = new Room(undefined, undefined, { catalog: o.scenes, votes: o.votesFile ? fileVotes(o.votesFile) : undefined });
@@ -61,7 +107,9 @@ export async function startServer(o: ServerOpts): Promise<Running> {
       res.writeHead(401, { 'Content-Type': 'text/plain' });
       return res.end('Missing or wrong room token. Open the join URL the server printed (it ends in ?t=...).\n');
     }
-    if (auth === 'query') res.setHeader('Set-Cookie', setCookie(o.token));
+    // over TLS here, or at a local proxy in front (`tailscale serve`)
+    const secure = 'encrypted' in req.socket || (isLoopback(req.socket.remoteAddress ?? '') && req.headers['x-forwarded-proto'] === 'https');
+    if (auth === 'query') res.setHeader('Set-Cookie', setCookie(o.token, secure));
     const url = (req.url ?? '/').split('?')[0];
 
     if (url === '/scores') {
@@ -111,22 +159,74 @@ export async function startServer(o: ServerOpts): Promise<Running> {
     });
   };
 
-  const servers = await Promise.all(o.hosts.map((host) => new Promise<http.Server>((ok, fail) => {
-    const s = http.createServer(handler);
-    s.on('upgrade', (req, sock) => {
-      if (!authorize(req, o.token)) { sock.end('HTTP/1.1 401 Unauthorized\r\n\r\n'); return; }
-      const ws = WsConn.accept(req, sock);
-      if (ws) room.join(ws);
+  const upgrade = (req: http.IncomingMessage, sock: Duplex) => {
+    if (!authorize(req, o.token)) { sock.end('HTTP/1.1 401 Unauthorized\r\n\r\n'); return; }
+    const ws = WsConn.accept(req, sock);
+    if (ws) room.join(ws);
+  };
+
+  const warnings: string[] = [];
+  const certs = { main: o.https?.main, lan: o.https?.lan };
+  let secure: https.Server[] = [], sni: tls.SecureContext | undefined;
+  /** The default certificate (clients that name no host, or another one); `sni` holds `main` beside it. */
+  const fallback = () => (certs.lan ?? certs.main)!;
+  const useSni = () => { sni = certs.main && certs.lan ? tls.createSecureContext(certs.main) : undefined; };
+  if (o.https && (certs.main || certs.lan)) {
+    useSni();
+    try {
+      secure = await listenAll(o.hosts, o.https.port, () => {
+        const s = https.createServer({
+          ...fallback(),
+          SNICallback: (name, done) => done(null, sni && new crypto.X509Certificate(certs.main!.cert).checkHost(name) ? sni : undefined),
+        }, handler);
+        s.on('upgrade', upgrade);
+        return s;
+      });
+    } catch (e) { warnings.push(`no HTTPS: ${(e as Error).message}`); }
+  }
+
+  const targets: RedirectTargets = {
+    publicUrl: o.publicUrl,
+    https: secure.length ? { port: (secure[0].address() as AddressInfo).port, name: o.https!.name, lanNames: certs.lan ? o.https!.lanNames : undefined } : undefined,
+  };
+  const redirect = (res: http.ServerResponse, to: string) => { res.writeHead(308, { Location: to, 'Cache-Control': 'no-store' }); res.end(); };
+  const plain = (redirectOnly: boolean) => () => {
+    const s = http.createServer((req, res) => {
+      const to = redirectTarget(plainRequest(req), targets, redirectOnly);
+      if (to) return redirect(res, to);
+      handler(req, res);
     });
-    s.once('error', fail);
-    s.listen(o.port, host, () => ok(s));
-  })));
+    s.on('upgrade', (req, sock) => {
+      const to = redirectTarget(plainRequest(req), targets, redirectOnly);
+      if (to) refuseUpgrade(sock, to); else upgrade(req, sock);
+    });
+    return s;
+  };
+
+  let servers: http.Server[], redirectors: http.Server[] = [];
+  try { servers = await listenAll(o.hosts, o.port, plain(false)); } catch (e) {
+    clearInterval(auto);
+    for (const s of secure) s.close();
+    throw e;
+  }
+  if (o.httpPort !== undefined) {
+    if (!targets.publicUrl && !targets.https) warnings.push(`not listening on port ${o.httpPort}: there is no https URL to redirect to`);
+    else {
+      try { redirectors = await listenAll(o.hosts, o.httpPort, plain(true)); } catch (e) { warnings.push(`no redirect on port ${o.httpPort}: ${(e as Error).message}`); }
+    }
+  }
 
   return {
-    room, servers,
+    room, servers, secure, redirectors, warnings,
+    setCert: (which, c) => {
+      tls.createSecureContext(c); // throws before anything changes if unusable
+      certs[which] = c;
+      useSni();
+      for (const s of secure) s.setSecureContext(fallback());
+    },
     close: async () => {
       clearInterval(auto);
-      for (const s of servers) { s.closeAllConnections(); await new Promise((ok) => s.close(ok)); }
+      for (const s of [...servers, ...secure, ...redirectors]) { s.closeAllConnections(); await new Promise((ok) => s.close(ok)); }
     },
   };
 }
@@ -137,16 +237,47 @@ if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) {
   const pub = path.join(root, 'dist');
   if (!fs.existsSync(pub)) console.warn('dist/ not found: run `npm run build`, or use `npm run dev` for the page.');
   const token = loadToken(path.join(root, '.einklang-token'));
-  const hosts = bindAddresses();
+  const lan = lanEnabled(process.env);
+  const hosts = bindAddresses(lan);
   const scenes = labCatalog(path.join(root, 'lab/scenes')), votesFile = path.join(root, 'data/votes.jsonl');
   const restart = process.env.EINKLANG_SUPERVISED ? processRestarter(root, !!process.env.EINKLANG_RESPAWNED) : undefined;
-  startServer({ port, pub, token, hosts, scenes, votesFile, restart }).then(({ room }) => {
+  const main = async () => {
+    const pubUrl = publicUrl(process.env), redirectPort = httpPort(process.env);
+    const setup = await httpsSetup(process.env, root);
+    const running = await startServer({
+      port, pub, token, hosts, scenes, votesFile, restart, publicUrl: pubUrl, httpPort: redirectPort,
+      https: setup ? { port: setup.port, main: setup.main?.current, lan: setup.lan?.current, name: setup.name, lanNames: setup.lanNames } : undefined,
+    });
+    const { room, secure } = running;
+    for (const which of ['main', 'lan'] as const) {
+      const source = setup?.[which];
+      if (source && secure.length) keepFresh(source.current, source.load, (c) => running.setCert(which, c));
+    }
     for (const p of TRANSITION_PROBLEMS) console.warn(`transition skipped: ${p}`);
+    for (const w of running.warnings) console.warn(w);
     console.log(`${transitions().length} transitions`);
     console.log(`${room.state.presets.length} scenes live (${scenes.length - room.state.presets.length} retired by votes), votes in data/votes.jsonl`);
     console.log('einklang listening. Join URLs:');
-    for (const h of hosts) console.log(`  http://${h.includes(':') ? `[${h}]` : h === '0.0.0.0' ? 'localhost' : h}:${port}/?t=${token}`);
+    const join = (base: string, note = '') => console.log(`  ${base}/?t=${token}${note}`);
+    const urlHost = (h: string) => (h.includes(':') ? `[${h}]` : h === '0.0.0.0' ? 'localhost' : h);
+    if (pubUrl) join(pubUrl);
+    if (secure.length) {
+      if (setup!.main && setup!.name) join(`https://${setup!.name}:${setup!.port}`);
+      else if (setup!.main) for (const h of hosts) join(`https://${urlHost(h)}:${setup!.port}`);
+      if (setup!.lan) {
+        console.log('  LAN, self-signed: accept the browser warning once, after comparing the certificate\'s SHA-256 fingerprint:');
+        console.log(`  ${fingerprint(setup!.lan.current.cert)}`);
+        for (const n of setup!.lanNames!) join(`https://${n}:${setup!.port}`);
+      }
+    }
+    // with https, other devices are redirected, so plain http is only worth listing for this machine
+    for (const h of hosts) {
+      const local = h === '0.0.0.0' || h === '::' || isLoopback(h);
+      if (local || (!secure.length && !pubUrl)) join(`http://${urlHost(h === '::' ? 'localhost' : h)}:${port}`);
+    }
+    if (!secure.length && !pubUrl) console.log('  (no HTTPS: other devices get no mic, screen share or wake lock over http)');
     if (hosts.length === 1) console.log('  (no tailnet address found; set BIND to listen elsewhere)');
     console.log(`Dev (Vite): http://localhost:5173/?t=${token}`);
-  }).catch((e: Error) => { console.error(e.message); process.exit(1); });
+  };
+  main().catch((e: Error) => { console.error(e.message); process.exit(1); });
 }
