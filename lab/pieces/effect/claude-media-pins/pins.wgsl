@@ -16,19 +16,19 @@ fn mp_cam(mode: i32, hx: f32, hz: f32, hm: f32, kick: f32) -> MpCam {
   let z = p_zoom();
   if (mode == 1) {
     let s = 0.5 + 0.5 * sin(t * 0.06);
-    let ro = vec3f(hx * 0.35 * sin(t * 0.083), hm * 3.5 + R * 0.1 - kick * hm * 0.3, mix(-hz * 1.3, -hz * 0.5, s));
-    return mp_look(ro, vec3f(ro.x * 0.3 + R * 0.1 * sin(t * 0.05), 0.0, ro.z + R * 0.95), 1.5 * z);
+    let ro = vec3f(hx * 0.35 * sin(t * 0.083), hm * 3.5 + R * 0.1 - kick * hm * 0.6, mix(-hz * 1.3, -hz * 0.5, s));
+    return mp_look(ro, vec3f(ro.x * 0.3 + R * 0.1 * sin(t * 0.05), 0.0, ro.z + R * 0.95), 1.5 * z * (1.0 + 0.1 * kick));
   }
   if (mode == 2) {
     let ro = vec3f(hx * 0.12 * sin(t * 0.07), R * 1.25 + hm - kick * R * 0.12, -hz * 0.15 + hz * 0.1 * cos(t * 0.05));
     let f = normalize(vec3f(0.1 * sin(t * 0.09), -1.0, 0.25));
     let a = 0.25 * sin(t * 0.04) + 0.08 * sin(t * 0.13);
     let s = normalize(cross(vec3f(sin(a), 0.0, cos(a)), f));
-    return MpCam(ro, f, s, cross(f, s), 1.5 * z);
+    return MpCam(ro, f, s, cross(f, s), 1.5 * z * (1.0 + 0.1 * kick));
   }
   if (mode == 3) {
     let ro = vec3f(hx * 0.75 * sin(t * 0.09), hm * 0.8 + R * 0.06, -hz - R * 0.45 + kick * R * 0.06);
-    return mp_look(ro, vec3f(ro.x * 0.35, hm * 0.3, 0.0), 1.5 * z);
+    return mp_look(ro, vec3f(ro.x * 0.35, hm * 0.3, 0.0), 1.5 * z * (1.0 + 0.1 * kick));
   }
   var yaw = p_swing() * sin(t * 0.13) + t * p_spin() * 2.0 * MP_PI / 6.0;
   var el = p_tilt() + 0.08 * sin(t * 0.21);
