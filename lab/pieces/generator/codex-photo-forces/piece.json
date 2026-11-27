@@ -1,0 +1,22 @@
+{
+  "id": "codex-photo-forces",
+  "kind": "generator",
+  "name": "Photo Forces",
+  "doc": "The brightest spots in the picture lift magnetic needles or form gravity wells that pull dust coloured by the picture. Bass strengthens both forces and phrase boundaries let the picture settle.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "colour of the surface, needles and dust" },
+      "height": { "type": "mask", "doc": "brightness locates wells and raises peaks" },
+      "flow": { "type": "field", "doc": "picture contours steer the dust and refract the surface" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["ferrofluid", "gravity"] },
+    "drive": { "type": "float", "default": 1.25, "min": 0.6, "max": 1.6, "doc": "how hard bass and percussion drive the forces" },
+    "tint": { "type": "color", "default": "#7ebbf5", "doc": "metallic highlights or gravity halos" }
+  },
+  "budget": { "ms": 1.5, "scales": "res" },
+  "tags": ["media", "sim", "ferrofluid", "gravity"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}
