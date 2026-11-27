@@ -453,7 +453,8 @@ async function main() {
     if (gate) {
       if (lab.cpu) say('note: no GPU here, so the ms/frame budget was not enforced');
       const pr = await profile(lab.cpu);
-      writeJunit([...results.map((r) => ({ name: r.id, classname: 'lab.gate', failure: r.failures.length ? r.failures.join('\n') : undefined, time: r.ms / 1000 })), ...pr]);
+      const dbg = [...results.flatMap((r) => [r.id, ...r.notes]), ...(pr[0]?.out ?? '').split('\n').filter((l) => /evolve|^\| (cold|first)|^#|^\| label|worst/i.test(l)).slice(0, 60)].join('\n');
+      writeJunit([...results.map((r) => ({ name: r.id, classname: 'lab.gate', failure: r.failures.length ? r.failures.join('\n') : undefined, time: r.ms / 1000 })), ...pr, { name: 'numbers', classname: 'lab.debug', failure: dbg }]);
       const md = ['# Lab gate', '', `WebGPU: ${lab.adapter}, ${w}x${h}, fixtures ${fixtures.join(', ')}`, '',
         ...results.flatMap((r) => [`## ${r.failures.length ? '✗' : '✓'} ${r.id}`, '', ...r.notes.map((n) => `- ${n}`), ...r.failures.map((f) => `- **${f}**`), '']),
         ...(pr[0]?.out ? [pr[0].out] : [])].join('\n');
