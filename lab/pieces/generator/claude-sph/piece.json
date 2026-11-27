@@ -1,0 +1,38 @@
+{
+  "id": "claude-sph",
+  "kind": "generator",
+  "name": "SPH liquid tank",
+  "doc": "A few thousand SPH particles (double density relaxation on the GPU, uniform-grid neighbours) slosh in a glass tank, drawn as one smooth liquid surface from splatted density with a bump-lit rim, glints, foam where it moves fast and glowing spray. Bass drives a paddle at the left wall that pushes waves across; kicks tilt and jolt the tank (the liquid feels the turn and the shove as inertia); every onset throws up a crown splash; loudness brightens it.",
+  "ports": {
+    "in": { "palette": { "type": "palette", "optional": true, "doc": "stop 0 is the backdrop, the middle stops the liquid from deep to shallow, the top stops rims, foam and glass" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "count": { "type": "int", "default": 6144, "min": 1024, "max": 16384, "doc": "number of particles (rounded to 256); the particle spacing shrinks to keep the same volume" },
+    "substeps": { "type": "int", "default": 4, "min": 2, "max": 8, "doc": "sim steps per tick: fewer is cheaper but bouncier" },
+    "speed": { "type": "float", "default": 1, "min": 0.25, "max": 2, "doc": "sim time scale" },
+    "gravity": { "type": "float", "default": 4, "min": 1, "max": 10, "doc": "gravity in tank units per second squared (the tank is 1.6 x 0.9)" },
+    "stiff": { "type": "float", "default": 16, "min": 4, "max": 40, "doc": "pressure stiffness: higher is less squashy (and less stable at few substeps)" },
+    "near": { "type": "float", "default": 30, "min": 5, "max": 80, "doc": "near pressure: keeps particles apart, gives surface tension-like drops" },
+    "visc": { "type": "float", "default": 0.25, "min": 0, "max": 0.8, "doc": "viscosity: 0 is water, high is syrup" },
+    "fill": { "type": "float", "default": 0.5, "min": 0.25, "max": 0.75, "doc": "liquid volume as a share of the tank (before it settles a little)" },
+    "waves": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "how far the bass drives the wave paddle in" },
+    "tilt": { "type": "float", "default": 0.18, "min": 0, "max": 0.5, "doc": "tank tilt per kick, radians" },
+    "shake": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "sideways jolt per kick" },
+    "splash": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "onset splash strength (0 = off)" },
+    "sway": { "type": "float", "default": 0.05, "min": 0, "max": 0.3, "doc": "slow idle rocking, radians: keeps quiet tracks moving" },
+    "size": { "type": "float", "default": 0.8, "min": 0.4, "max": 1, "doc": "tank size on screen (1 = the tank's height fills 90% of the screen)" },
+    "blob": { "type": "float", "default": 2, "min": 1.2, "max": 3.5, "doc": "splat radius in particle spacings: bigger is smoother and rounder" },
+    "thresh": { "type": "float", "default": 0.35, "min": 0.1, "max": 0.8, "doc": "surface threshold on the normalised density" },
+    "foam": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "white foam where the liquid moves fast" },
+    "glow": { "type": "float", "default": 1, "min": 0.2, "max": 3, "doc": "liquid brightness" },
+    "bg": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "backdrop brightness" },
+    "cycle": { "type": "float", "default": 0.1, "min": 0, "max": 1, "doc": "palette drift of the liquid, sweeps per 16 beats" }
+  },
+  "budget": { "ms": 0.9, "scales": "n" },
+  "tags": ["sph", "liquid", "water", "particles", "simulation", "compute", "physics"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [
+    { "date": "2026-11-27", "by": "claude/claude-opus-5-5", "note": "first version" }
+  ]
+}
