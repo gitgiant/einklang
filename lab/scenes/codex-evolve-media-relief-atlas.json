@@ -2,8 +2,8 @@
   "format": 1,
   "id": "codex-evolve-media-relief-atlas",
   "name": "Relief Atlas",
-  "doc": "Luma lifts the picked picture into contour ridges, a flyover, a tunnel, or stacked blocks. The relief takes a screen print or phosphor finish as the music moves between sections.",
-  "version": 2,
+  "doc": "Luma lifts the picked picture into contour ridges, a flyover, a tunnel, or stacked blocks. Bass lights the ridges and lifts the blocks. The relief takes a screen print or phosphor finish as the music moves between sections.",
+  "version": 3,
   "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
   "status": "live",
   "created": "2026-11-27",
@@ -14,7 +14,9 @@
       "params": { "contrast": 1.08, "saturation": 1.06, "beat_zoom": 0.25, "pulse": 0.36, "drift": 0.48, "cycle": 0 },
       "bind": { "brightness": { "from": "level.out", "range": [0.63, 1.55] } } },
     { "id": "ink", "piece": "core-swatch", "params": { "colors": "#17102c #55309f #16d4db #fa67a6 #fbe1b8", "pads": false } },
-    { "id": "relief", "piece": "claude-ridges", "params": { "lines": 64, "height": 0.17, "bass": 0.78, "colour": 1, "fill": 0.78, "glow": 1.22 } },
+    { "id": "relief", "piece": "claude-ridges",
+      "params": { "lines": 64, "height": 0.17, "bass": 0.78, "colour": 1, "fill": 0.78 },
+      "bind": { "glow": { "from": "level.out", "range": [1.02, 3.45] } } },
     { "id": "screen", "piece": "agy-halftone", "params": { "cell": 13, "mix": 0.45, "paper": "#ffe3cd", "ink": "#281c55" } }
   ],
   "edges": [
@@ -30,11 +32,12 @@
     "slots": [
       { "node": "relief", "jitter": 0, "pool": [
         { "piece": "claude-media-tunnel", "params": { "sides": 8, "relief": 0.47, "speed": 1.2, "colour": 2, "rings": 0.8 } },
-        { "piece": "claude-media-cubes", "params": { "cells": 32, "height": 3, "bass": 0.75, "colour": 2, "edges": 0.62 } },
-        { "piece": "claude-luma-terrain", "params": { "height": 0.82, "pitch": 0.32, "speed": 1.35, "colour": 2, "contour": 1.02 } }
+        { "piece": "claude-media-cubes", "params": { "cells": 32, "bass": 0.88, "colour": 2, "edges": 0.62 },
+          "bind": { "height": { "from": "level.out", "range": [2.5, 3.8] } } },
+        { "piece": "claude-luma-terrain", "params": { "height": 0.82, "bass": 0.45, "pitch": 0.32, "speed": 1.35, "surge": 0.48, "colour": 2, "contour": 1.02 } }
       ] },
       { "node": "screen", "jitter": 0, "pool": [
-        { "piece": "claude-dots", "params": { "cell": 12, "jitter": 0.27, "glow": 1.14, "under": 0.48 } },
+        { "piece": "claude-dots", "params": { "cell": 15, "size": 1.15, "jitter": 0.27, "wander": 0.24, "glow": 1.18, "under": 0.85 } },
         { "piece": "codex-neon-phosphor", "params": { "cool": "#187cce", "warm": "#fa3f9b", "drive": 0.7 } }
       ] },
       { "node": "ink", "jitter": 0, "pool": [
