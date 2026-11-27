@@ -1,11 +1,11 @@
-// What drives the gallery: the synthetic demo track, a live input or an audio file, all local. Each
+// What drives the gallery: the synthetic demo track, a live input or a playlist track, all local. Each
 // one is a feature source plus its own clock (fractional ticks).
 import { demoSource, sectionAt } from '../core/demo.ts';
 import { FPS } from '../core/constants.ts';
 import { fileSource, mapSource, type FeatureSource } from '../core/features.ts';
 import { parseLrc } from '../core/lrc.ts';
 import { LiveAnalyzer, type LiveSource } from './capture.ts';
-import type { Player } from './player.ts';
+import type { Prepared } from './player.ts';
 
 export interface Input {
   F: FeatureSource;
@@ -45,14 +45,12 @@ export function liveInput(stream: LiveSource, name: string, ended: () => void): 
   };
 }
 
-/** Decode, analyze and loop the first track of `player`. `blocked`: the browser wants a tap before it plays. */
-export async function fileInput(player: Player, progress: (p: number) => void, blocked: () => void): Promise<Input> {
-  const p = await player.prepare(0, progress), name = player.names[0];
-  const lrc = await player.lyrics(0).catch(() => null), lyrics = lrc ? parseLrc(lrc) : [];
-  const au = new Audio(URL.createObjectURL(new Blob([p.bytes], { type: p.type })));
-  au.loop = true;
-  const play = () => au.play().then(() => removeEventListener('pointerup', play), () => { blocked(); addEventListener('pointerup', play, { once: true }); });
-  play();
+/**
+ * A playlist track on `au` (the gallery's one audio element, already loaded with its sound): the
+ * analysis `p`, the element's clock. `owns()`: it is still the element's track (stop() then pauses it).
+ */
+export function trackInput(au: HTMLMediaElement, p: Prepared, name: string, lrc: string | null, owns: () => boolean): Input {
+  const lyrics = lrc ? parseLrc(lrc) : [];
   // currentTime advances in coarse steps: run on the page clock and resync when the two drift apart
   let at = 0, time = 0;
   return {
@@ -63,6 +61,6 @@ export async function fileInput(player: Player, progress: (p: number) => void, b
       return est * FPS;
     },
     label: (t) => `${name} ${(t / FPS).toFixed(2)}s`,
-    stop: () => { removeEventListener('pointerup', play); au.pause(); URL.revokeObjectURL(au.src); },
+    stop: () => { if (owns()) au.pause(); },
   };
 }

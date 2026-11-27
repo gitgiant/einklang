@@ -16,6 +16,12 @@
   #err { position: fixed; inset: 0; display: none; place-items: center; color: #f88; text-align: center; padding: 2em; }
   #hosts { position: fixed; top: 64px; left: 8px; background: #000c; padding: 8px; border-radius: 6px; display: grid; grid-template-columns: auto auto; gap: 4px 10px; align-items: center; }
   #hosts .me { color: #7fe3ff; }
+  #inputs { position: fixed; top: 64px; left: 8px; width: min(460px, calc(100vw - 16px)); max-height: calc(100vh - 140px); max-height: calc(100dvh - 140px); overflow: auto; overscroll-behavior: contain; background: #000d; padding: 10px; border-radius: 6px; box-sizing: border-box; z-index: 5; }
+  #inputs button { min-height: 32px; }
+  #inputs button[aria-pressed=true] { color: #000; background: #ddd; }
+  #inputs button:disabled { opacity: .35; }
+  /* a phone: no zoom on focus */
+  @media (max-width: 640px) { #inputs select { font-size: 16px; } #inputs button { min-height: 40px; } }
   .row { display: contents; }
   #debug { position: fixed; top: 8px; right: 8px; background: #000d; padding: 8px; border-radius: 6px; max-width: min(640px, 60vw); max-height: 92vh; overflow: auto; }
   #debug .restart { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
@@ -43,25 +49,18 @@
   #tvote .tpick button { border: 1px solid #555; border-radius: 4px; }
   #tvote .tpick span { min-width: 10em; text-align: center; }
   #tvote .tnote { color: #999; }
-  #panel, #bar, #hosts, #tvote { transition: opacity .4s; }
-  body.idle #panel, body.idle #bar, body.idle #hosts, body.idle #tvote { opacity: 0; pointer-events: none; }
+  #panel, #bar, #hosts, #tvote, #inputs { transition: opacity .4s; }
+  body.idle #panel, body.idle #bar, body.idle #hosts, body.idle #tvote, body.idle #inputs { opacity: 0; pointer-events: none; }
   body.idle { cursor: none; }
   /* hidden by double-tap: stays hidden until the next one */
-  body.ui-off :is(#panel, #bar, #hosts, #hud, #debug, #tvote) { opacity: 0; visibility: hidden; pointer-events: none; }
+  body.ui-off :is(#panel, #bar, #hosts, #hud, #debug, #tvote, #inputs) { opacity: 0; visibility: hidden; pointer-events: none; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="panel">
-  <button id="fileBtn" title="one or more audio files (mp3, wav, flac, ogg, m4a, ...)">files</button>
-  <button id="folderBtn" title="every audio file in a folder, played in order">folder</button>
-  <input type="file" id="file" multiple hidden>
-  <input type="file" id="folder" webkitdirectory multiple hidden>
-  <button id="capture" title="Use music already playing in another tab or app">capture tab / app audio</button>
-  <button id="live">mic / line-in</button>
-  <button id="stop">stop</button>
-  <label><input type="checkbox" id="aud"> audio here</label>
-  <span id="media" title="pictures for this screen only"></span>
+  <button id="inputBtn" title="music input: off, mic, external (tab / system audio), file playlist; the camera">input ▾</button>
+  <label title="play the room's track on this device too"><input type="checkbox" id="aud"> audio here</label>
   <label>offset ms <input type="number" id="off" step="5" style="width:5em"></label>
   <span>scene <button id="prev" title="previous scene ([)">&lt;</button> <select id="scene"></select> <button id="next" title="next scene (])">&gt;</button></span>
   <label>on <select id="quant"><option value="beat">beat</option><option value="bar" selected>bar</option><option value="now">now</option></select></label>
@@ -77,6 +76,7 @@
   <span id="msg"></span>
 </div>
 <div id="hosts" class="hide"></div>
+<div id="inputs" class="hide"><input type="file" id="file" multiple hidden><input type="file" id="folder" webkitdirectory multiple hidden></div>
 <div id="hud" class="hide"></div>
 <div id="bar">
   <button id="tPrev" title="previous / restart">⏮</button>

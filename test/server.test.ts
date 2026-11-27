@@ -137,6 +137,14 @@ test('file mode: features relayed, new epoch, logs reset', async () => {
   const st = await b.state((s) => s.mode === 'file');
   assert.equal(st.epoch, e0 + 1);
   assert.equal(st.mode === 'file' && st.frames, 3);
+  assert.equal(st.mode === 'file' && st.media, null, 'no file reference sent');
+  // the file the track came from goes along (name, size, hash: never the file), cleaned
+  a.send({ t: 'play', name: 'clip', media: { name: 'clip.mp4', size: 1234, hash: '00ab12cd34ef56', video: true, extra: 1 } as never });
+  const sm = await b.state((s) => s.mode === 'file' && !!s.media);
+  assert.deepEqual(sm.mode === 'file' && sm.media, { name: 'clip.mp4', size: 1234, hash: '00ab12cd34ef56', video: true });
+  a.send({ t: 'play', media: { name: 'x', size: -1, hash: 'zz', video: true } });
+  const bad = await b.state((s) => s.mode === 'file' && s.epoch > sm.epoch);
+  assert.equal(bad.mode === 'file' && bad.media, null, 'a malformed reference is dropped');
   const c = await Peer.open();
   const log = await c.next<{ events: TickEvent[] }>((m) => !(m instanceof Uint8Array) && m.t === 'log');
   assert.equal(log.events.length, 0);

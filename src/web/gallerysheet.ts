@@ -1,4 +1,4 @@
-// The gallery's picker: a sheet (bottom on a phone, centered on a desktop) with tabs for scenes, playback,
+// The gallery's menu: a sheet (bottom on a phone, centered on a desktop) with tabs for scenes, playback,
 // input, the shown scene's variants and the display. A tap outside it or Esc closes it.
 import { TRANS_BEATS } from '../core/protocol.ts';
 import { transName, transitions } from '../core/transitions.ts';
@@ -19,7 +19,7 @@ export interface SheetHost {
   /** The settings chosen (maybe still waiting for the next switch). */
   settings(): Settings;
   change(patch: Partial<Settings>): void;
-  /** The input picker, kept here. */
+  /** The input menu, kept here. */
   input: HTMLElement;
   /** The server restart control, kept here too (it may be waiting for the server). */
   restart: HTMLElement;
@@ -61,7 +61,7 @@ const ROT_NAMES: Record<GalleryRot, string> = { weighted: 'random, weighted by v
 
 export function pickerSheet(host: SheetHost): Sheet {
   const back = el('div', 'hide'); back.id = 'sheet';
-  const box = el('div', 'box'); box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'picker'); box.tabIndex = -1;
+  const box = el('div', 'box'); box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'menu'); box.tabIndex = -1;
   const tabs = el('nav', 'tabs'), body = el('div', 'body'), said = el('div', 'dim said');
   back.append(box); box.append(tabs, said, body); document.body.append(back);
 

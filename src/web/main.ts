@@ -5,7 +5,7 @@ import { fileSource, mapSource, silence, type FeatureSource } from '../core/feat
 import { EventLog, withEvents } from '../core/events.ts';
 import {
   modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS,
-  type ClientMsg, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
+  type ClientMsg, type MediaRef, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
   ranTransition,
 } from '../core/protocol.ts';
 import './transitions.ts'; // installs the transition registry (lab/transitions/)
@@ -14,7 +14,10 @@ import { initGpu } from './gpu/gpu.ts';
 import { VIEWS } from '../core/post.ts';
 import { Engine } from './engine.ts';
 import { MidiRelay } from './midi.ts';
-import { ACCEPT, Player } from './player.ts';
+import { title } from './player.ts';
+import { FilePlaylist, type Deck } from './playlistui.ts';
+import { inputMenu, type InputMenu } from './inputmenu.ts';
+import { sameFile, type Fingerprint } from './playlist.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
 import { FrameStats } from './framestats.ts';
 import { PerfView } from './perfpanel.ts';
@@ -24,9 +27,8 @@ import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
 import { restartControl } from './restart.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
-import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare, shareVideoBox, type LiveSource } from './capture.ts';
-import { mediaPicker } from './mediapicker.ts';
-import { MEDIA } from './media.ts';
+import { LiveAnalyzer, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
+import { MEDIA, lockVideo, openVideo } from './media.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
 import { TRANS_KEYS, transRow } from './transvote.ts';
 import { stepChoice } from './pickerlist.ts';
@@ -146,77 +148,105 @@ function connect() {
       events.add(m.ev);
       if (window.__ek) window.__ek.events++;
       if (m.ev.tick <= lastTick) { net.lateEvents++; listeners.lateEvent.forEach((f) => f(m.ev.tick)); } // arrived late: replay
-    } else if (m.t === 'track') playIndex(m.index);
+    } else if (m.t === 'track') files.playAt(m.index);
     else if (m.t === 'vote' || m.t === 'transvote') listeners.vote.forEach((f) => f(m));
   };
 }
 connect();
 setInterval(pingBurst, 3000);
 
-// ---- leader: file(s) / folder ----
-// The host that loads tracks owns the playlist: any host's prev/next is relayed to it, and it
-// auto-advances at the end of each track, preparing the next one while the current one plays.
-const player = new Player();
-let playing = -1, advancing = false;
-const fileIn = $<HTMLInputElement>('file'), folderIn = $<HTMLInputElement>('folder');
-fileIn.accept = ACCEPT;
-fileIn.onchange = () => loadFiles(fileIn.files);
-folderIn.onchange = () => loadFiles(folderIn.files);
-$('fileBtn').onclick = () => fileIn.click();
-$('folderBtn').onclick = () => folderIn.click();
-
-function loadFiles(list: FileList | null) {
-  if (!list?.length) return;
-  const n = player.setFiles(list);
-  fileIn.value = ''; folderIn.value = '';
-  if (!n) { msg('no audio files there'); return; }
-  if (!audBox.checked) { audBox.checked = true; audBox.onchange?.(new Event('change')); } // the uploader usually wants to hear it
-  playing = -1;
-  playIndex(0);
-}
-
-async function playIndex(i: number, tries = 0): Promise<void> {
-  const n = player.files.length;
-  if (!n) return;
-  i = ((i % n) + n) % n;
-  const name = player.names[i], tag = n > 1 ? ` (${i + 1}/${n})` : '';
-  try {
-    const p = await player.prepare(i, (x) => msg(`analyzing ${name}${tag} ${(x * 100) | 0}%`));
-    msg(`uploading ${name}${tag}`);
+// ---- leader: the playlist ----
+// The host that plays its playlist owns the room's track list: any host's prev/next is relayed to
+// it, and it moves on at the end of each track (preparing the next meanwhile). A track's sound is
+// uploaded (a video's as WAV); its pictures stay on this host. Every host holding the same video
+// file (name, size, hash of its ends) shows it held on the room clock.
+let inMenu: InputMenu | null = null;
+/** The track this host leads; `pending` until a state carries it. */
+let lead: { fp: Fingerprint; pending: boolean } | null = null, advancing = false;
+const fileTarget = () => {
+  if (room.mode !== 'file') return null;
+  return { at: (room.paused ?? modeTickF(room, sNow() + offsetMs)) / FPS, playing: room.paused === null };
+};
+const leading = () => !!lead && room.mode === 'file' && !!room.media && sameFile(room.media, lead.fp);
+const deck: Deck = {
+  async play(e, prepare, lyrics) {
+    const fp = await files.fingerprint(e), name = title(e.name);
+    if (!fp) return;
+    const media: MediaRef = { ...fp, video: e.kind === 'video' };
+    // the room still plays this very file (this host reloaded): lead it again where it is
+    if (room.mode === 'file' && room.media && sameFile(room.media, fp) && modeTick(room, sNow()) < room.frames) {
+      lead = { fp, pending: false };
+      send({ t: 'playlist', ...files.listing() });
+      msg(`${name}: leading again`);
+      return;
+    }
+    const p = await prepare((x) => msg(`analyzing ${name} ${(x * 100) | 0}%`));
+    msg(`uploading ${name}`);
     await fetch(withToken('/track'), { method: 'POST', headers: { 'content-type': p.type }, body: p.bytes.slice(0) });
     sendBin(p.feat.slice());
-    const lrc = await player.lyrics(i).catch(() => null), lyrics = lrc ? parseLrc(lrc) : [];
-    send({ t: 'play', name, ...(lyrics.length ? { lyrics } : {}) });
-    send({ t: 'playlist', names: player.names, index: i });
-    player.index = playing = i;
-    msg(`${name}${tag}: playing in 2.5 s`);
-    if (n > 1) player.prepare((i + 1) % n).catch(() => {}); // ready before this one ends
-  } catch (e) {
-    msg((e as Error).message);
-    if (n > 1 && tries < n - 1) return playIndex(i + 1, tries + 1);
-  }
-}
+    const lrc = await lyrics().catch(() => null), lines = lrc ? parseLrc(lrc) : [];
+    send({ t: 'play', name, media, ...(lines.length ? { lyrics: lines } : {}) });
+    lead = { fp, pending: true };
+    send({ t: 'playlist', ...files.listing() });
+    if (!audBox.checked) { audBox.checked = true; audBox.onchange?.(new Event('change')); } // the uploader usually wants to hear it
+    msg(`${name}: playing in 2.5 s`);
+  },
+  idle() { lead = null; },
+  status: () => (leading() && room.mode === 'file' ? { pos: Math.max(0, Math.min(room.frames, room.paused ?? modeTick(room, sNow()))) / FPS, dur: room.frames / FPS, playing: room.paused === null } : null),
+  toggle: () => { if (leading() && room.mode === 'file') send({ t: room.paused !== null ? 'resume' : 'pause' }); },
+  seek: (sec) => { if (leading()) send({ t: 'seek', frame: Math.round(sec * FPS) }); },
+  clock: fileTarget,
+  listed: (names, index) => { if (lead) send({ t: 'playlist', names, index }); },
+};
+const files = new FilePlaylist({
+  key: 'app.playlist', deck, note: msg, tpb: () => room.grid.tpb, fileInput: $<HTMLInputElement>('file'), folderInput: $<HTMLInputElement>('folder'),
+  changed: (on) => inMenu?.filesChanged(on),
+});
 
 // auto-advance: the owner moves on once the track has ended everywhere
 setInterval(() => {
-  if (advancing || playing < 0 || room.mode !== 'file' || room.paused !== null || room.playlist?.owner !== me) return;
+  if (advancing || !leading() || room.mode !== 'file' || room.paused !== null || room.playlist?.owner !== me) return;
   if (modeTick(room, sNow()) < room.frames + 30) return;
-  advancing = true;
-  if (player.files.length > 1) playIndex(playing + 1).finally(() => { advancing = false; });
-  else { send({ t: 'pause' }); advancing = false; }
+  advancing = true; lead = null;
+  if (!files.ended()) send({ t: 'pause' });
+  advancing = false;
 }, 200);
+
+/** Another host's video, when this host holds the same file: shown on the room clock. */
+let mirror: { key: string; release: () => void } | null = null, mirrorAsk = 0;
+async function syncMirror() {
+  const m = room.mode === 'file' ? room.media ?? null : null, key = m?.video ? `${m.name}|${m.size}|${m.hash}` : '';
+  if ((mirror?.key ?? '') === key && (key === '' || mirror)) return;
+  const mine = ++mirrorAsk;
+  mirror?.release(); mirror = null;
+  if (!m?.video || (lead && sameFile(lead.fp, m))) return; // this host's own track shows through its playlist
+  const e = await files.find(m);
+  if (!e?.file || mine !== mirrorAsk) return;
+  try {
+    const it = await openVideo(e.file);
+    if (mine !== mirrorAsk) { it.stop(); return; }
+    const unlock = lockVideo(it, fileTarget), release = MEDIA.share(it);
+    mirror = { key, release: () => { unlock(); release(); } };
+    msg(`showing "${m.name}" from this device, synced to the room`);
+  } catch (err) { msg((err as Error).message); }
+}
+listeners.state.push(() => {
+  // the room left this host's track (another input, another host's track): the playlist stops
+  if (lead && room.mode === 'file' && room.media && sameFile(room.media, lead.fp)) lead.pending = false;
+  else if (lead && !lead.pending) { lead = null; if (files.on && files.pl.hasTracks) { files.stop(); if (inMenu?.kind === 'file') inMenu.set('off'); } }
+  syncMirror();
+});
 
 // ---- leader: live (capture needs a secure context: localhost or https) ----
 const delay = (t: number) => `${t}-tick delay, ${((t * 1000) / FPS).toFixed(0)} ms`;
 
 /**
- * Analyze `stream` (a capture, or a playing video's sound) on this host and stream features to the
- * room as the live leader. `delay`: ticks every host renders behind (INSTRUMENT_DELAY for line-in,
- * LIVE_DELAY for captured audio).
+ * Analyze `stream` (a capture) on this host and stream features to the room as the live leader.
+ * `delay`: ticks every host renders behind (INSTRUMENT_DELAY for line-in, LIVE_DELAY for captured audio).
  */
 function startLive(stream: LiveSource, label: string, delay: number) {
   stopLeaderLive();
-  const an: LiveAnalyzer = new LiveAnalyzer(stream, () => { if (leaderLive?.an === an) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); } });
+  const an: LiveAnalyzer = new LiveAnalyzer(stream, () => { if (leaderLive?.an === an) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); inMenu?.set('off'); } });
   leaderLive = { an, pending: true };
   send({ t: 'live', delay });
   msg(label);
@@ -224,37 +254,43 @@ function startLive(stream: LiveSource, label: string, delay: number) {
 function stopLeaderLive() {
   if (!leaderLive) return;
   leaderLive.an.close(); leaderLive = null;
+  // the room moved on without this host's capture
+  if (inMenu && (inMenu.kind === 'mic' || inMenu.kind === 'external')) inMenu.set('off');
 }
-
-$('live').onclick = async () => {
-  try { startLive(await openMic(), `live: instrument / line-in (${delay(INSTRUMENT_DELAY)})`, INSTRUMENT_DELAY); }
-  catch (e) { msg(micError(e as Error, insecure(), navigator)); }
-};
-
-$('capture').hidden = !canShare();
-const shareVideo = shareVideoBox();
-if (canShare()) $('capture').after(shareVideo.el);
-$('capture').onclick = async () => {
-  try {
-    const stream = await openShare(shareVideo.box.checked);
-    startLive(stream, `live: capturing "${stream.getAudioTracks()[0].label || 'tab/app audio'}" (${delay(LIVE_DELAY)})`, LIVE_DELAY);
-  } catch (e) {
-    if ((e as Error).name !== 'NotAllowedError') msg(`capture failed: ${(e as Error).message}${insecure()}`);
-  }
-};
 setInterval(() => {
   if (!leaderLive || room.mode !== 'live') return;
   const cur = Math.floor(((sNow() - room.start) * FPS) / 1000);
   leaderLive.an.pull(cur, (tick, m) => { live.set(tick, m.slice(5)); sendBin(m); });
 }, 8);
 
-$('stop').onclick = () => { send({ t: 'stop' }); stopLeaderLive(); };
-
-// ---- pictures for this host (image / video / camera; never uploaded). A video's sound leads live. ----
-$('media').replaceWith(mediaPicker({
-  sound: (v, name) => startLive(v, `live: video sound "${name}" (${delay(LIVE_DELAY)})`, LIVE_DELAY),
-  note: (t) => { if (t) msg(t); },
-}));
+// ---- the input menu (input ▾): off, mic, external, file; the camera ----
+inMenu = inputMenu({
+  page: 'app', kinds: ['off', 'mic', 'external', 'file'], ids: { off: 'stop', mic: 'live', external: 'capture' }, files, note: msg,
+  open: async (kind, video) => {
+    if (kind === 'off') { send({ t: 'stop' }); stopLeaderLive(); msg(''); return true; }
+    if (kind === 'mic') {
+      try { startLive(await openMic(), `live: instrument / line-in (${delay(INSTRUMENT_DELAY)})`, INSTRUMENT_DELAY); return true; }
+      catch (e) { msg(micError(e as Error, insecure(), navigator)); return false; }
+    }
+    if (kind === 'external') {
+      try {
+        const stream = await openShare(video);
+        startLive(stream, `live: capturing "${stream.getAudioTracks()[0].label || 'tab/app audio'}" (${delay(LIVE_DELAY)})`, LIVE_DELAY);
+        return true;
+      } catch (e) {
+        if ((e as Error).name !== 'NotAllowedError') msg(`capture failed: ${(e as Error).message}${insecure()}`);
+        return false;
+      }
+    }
+    return false;
+  },
+});
+$('inputs').prepend(inMenu.el);
+const inputBtn = $('inputBtn');
+const showKind = () => { inputBtn.textContent = `input: ${files.on && files.pl.hasTracks ? 'file' : inMenu!.kind} ▾`; };
+inputBtn.onclick = () => { $('inputs').classList.toggle('hide'); showKind(); };
+setInterval(showKind, 500);
+showKind();
 
 // ---- audio follow (file mode) ----
 const au = $<HTMLAudioElement>('au');
@@ -311,7 +347,7 @@ const fmt = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.flo
 function playPause() {
   if (room.mode === 'file') send({ t: room.paused !== null ? 'resume' : 'pause' });
   else if (room.playlist) send({ t: 'track', index: room.playlist.index });
-  else fileIn.click();
+  else files.pick();
 }
 $('tPlay').onclick = playPause;
 $('tPrev').onclick = () => {
@@ -385,7 +421,7 @@ function renderHosts(names: Map<string, string>) {
   autoSel.value = String(room.auto?.bars ?? 0);
 }
 
-autoHideUi(() => [$('panel'), $('bar'), $('hosts'), $('tvote')]);
+autoHideUi(() => [$('panel'), $('bar'), $('hosts'), $('tvote'), $('inputs')]);
 toggleUiOnDoubleTap((el) => el.id === 'c');
 
 // ---- votes (owner only: anyone with the room token) ----
@@ -486,7 +522,7 @@ async function start() {
   addEventListener('keydown', (e) => {
     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
     if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
-    else if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar', 'tvote']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) $('hosts').classList.add('hide'); }
+    else if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar', 'tvote']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) { $('hosts').classList.add('hide'); $('inputs').classList.add('hide'); } }
     else if (e.key === 'p') playPause();
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       if (room.mode === 'file') send({ t: 'seek', frame: Math.max(0, Math.min(room.frames, modeTick(room, sNow())) + (e.key === 'ArrowLeft' ? -10 : 10) * FPS) });
