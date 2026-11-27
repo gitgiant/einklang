@@ -147,7 +147,7 @@ test('page: waits for a new boot id, shows a failed build', async () => {
 test('supervisor + server: restart brings up a new process on the same port and token', { timeout: 60_000 }, async () => {
   const port = await new Promise<number>((ok) => { const s = createServer().listen(0, '127.0.0.1', () => { const p = (s.address() as AddressInfo).port; s.close(() => ok(p)); }); });
   const proc = spawn(process.execPath, ['--experimental-strip-types', '--no-warnings', resolve(import.meta.dirname, '../src/server/supervisor.ts')], {
-    env: { ...process.env, PORT: String(port), BIND: '127.0.0.1', EINKLANG_TOKEN: TOKEN },
+    env: { ...process.env, PORT: String(port), BIND: '127.0.0.1', EINKLANG_TOKEN: TOKEN, EINKLANG_HTTPS: '0', EINKLANG_HTTP_PORT: '', EINKLANG_PUBLIC_URL: '', EINKLANG_LAN: '' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let out = '';

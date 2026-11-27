@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-live/
 .einklang-token
+.einklang-certs/
 docs/mockups/trans-*.png
 lab/out/
 data/
