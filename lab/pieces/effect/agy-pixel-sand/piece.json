@@ -34,7 +34,7 @@
     "react": { "type": "float", "default": 1.25, "min": 0, "max": 2.5, "doc": "audio reactivity multiplier" }
   },
   "budget": { "ms": 0.9, "scales": "res" },
-  "tags": ["media", "falling-sand", "granular", "physics", "simulation", "pixel", "dither", "glitch", "compute"],
+  "tags": ["media", "falling-sand", "granular", "physics", "simulation", "pixel", "dither", "compute"],
   "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
   "changelog": [{ "date": "2026-11-27", "by": "agy/gemini-4-neon-high", "note": "first version: GPU Margolus falling-sand pixel physics driven by media and audio drops" }]
 }

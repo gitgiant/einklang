@@ -79,9 +79,9 @@ fn idx_of(x: u32, y: u32) -> u32 {
   let pic = textureSampleLevel(tpic, smp, uv, 0.0).rgb;
   let lum = sample_luma(uv, pic);
   let emag = clamp(length(sample_edges(uv)), 0.0, 2.0);
-  let patch = vnoise(uv * vec2f(10.0, 7.0) + vec2f(3.1, 1.7));
+  let noisePatch = vnoise(uv * vec2f(10.0, 7.0) + vec2f(3.1, 1.7));
   let h = hashf(idx, sim.hash ^ 0x51a7u);
-  let loose = (patch > 0.62 && uv.y < 0.78) || (h < 0.12 && lum < 0.55);
+  let loose = (noisePatch > 0.62 && uv.y < 0.78) || (h < 0.12 && lum < 0.55);
   let kind = select(1.0, 2.0, loose);
   cells[idx] = Cell(vec4f(kind, 0.0, 0.0, select(0.0, 0.5, loose)), vec4f(pic, emag));
 }
@@ -253,7 +253,7 @@ fn step_margolus(gid: vec2u, ox: u32, oy: u32, upward: bool) {
   let windForce = clamp(evec.x * sim.wind + sim.wind_bias * sim.wind * 0.45, -1.5, 1.5);
   let spreadProb = clamp(sim.fluidity * 0.55 + abs(windForce) * 0.35, 0.0, 0.85);
   if (h < spreadProb) {
-    let goRight = select(h < spreadProb * 0.5, windForce > 0.0, abs(windForce) > 0.12);
+    let goRight = select((h < spreadProb * 0.5), (windForce > 0.0), (abs(windForce) > 0.12));
     if (goRight && is_sand(bl) && is_empty(br)) {
       let oldEmpty = br;
       br = bl;
