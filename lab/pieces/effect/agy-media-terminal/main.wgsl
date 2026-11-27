@@ -189,8 +189,8 @@ fn shade(uv: vec2f) -> vec4f {
       glyph_px = sample_bits(ebits, local);
     } else {
       let hex_i = u32(clamp(floor(luma_drive * 15.0 + cell_rnd * (2.5 + 8.0 * glitch_on + 3.0 * energy)), 0.0, 15.0));
-      let active = step(0.11, luma_drive + glitch_on * 0.35);
-      glyph_px = sample_bits(hex_bits(hex_i), local) * active;
+      let cell_on = step(0.11, luma_drive + glitch_on * 0.35);
+      glyph_px = sample_bits(hex_bits(hex_i), local) * cell_on;
     }
   } else if (charset == 3) {
     // ANSI shade blocks (░▒▓█▄▀) with crisp edge brackets
