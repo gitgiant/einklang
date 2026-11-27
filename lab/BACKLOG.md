@@ -45,6 +45,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Tunnel / warp → core-tunnel
 - [x] Plasma → core-plasma
 - [x] Spectrum bars → core-bars
+- [x] Spectrogram → agy-spectrogram, scene agy-spectrogram-wall, agy-waterfall
 
 ### Color
 - [x] Palette picker (agent chooses stops) → core-swatch
