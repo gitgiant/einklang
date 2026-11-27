@@ -1,9 +1,12 @@
 // Zero-dependency sync server: static files, clock sync, room state + event relay, track hosting.
-// Run: npm run server   (PORT, default 8080; BIND to override localhost+tailnet; EINKLANG_TOKEN).
+// Run: npm run server   (PORT, default 8080; BIND to override localhost+tailnet; EINKLANG_TOKEN). That goes
+// through supervisor.ts, which starts this file again on POST /admin/restart (restart.ts).
 // Serves the Vite build from dist/. In dev, run `npm run dev` alongside; Vite proxies /ws and /track.
+import crypto from 'node:crypto';
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import { processRestarter, restartRoute, type Restarter } from './restart.ts';
 import { authorize, bindAddresses, loadToken, setCookie } from './auth.ts';
 import { Room, type VoteStore } from './room.ts';
 import { WsConn, MAX_FRAME } from './ws.ts';
@@ -22,6 +25,8 @@ export interface ServerOpts {
   scenes?: string[];
   /** Append-only vote log (default: in memory). */
   votesFile?: string;
+  /** How POST /admin/restart restarts (default: it can't). */
+  restart?: Restarter;
 }
 
 /** Votes in an append-only JSONL file (created on the first vote). */
@@ -47,6 +52,7 @@ export interface Running { room: Room; servers: http.Server[]; close(): Promise<
 export async function startServer(o: ServerOpts): Promise<Running> {
   const room = new Room(undefined, undefined, { catalog: o.scenes, votes: o.votesFile ? fileVotes(o.votesFile) : undefined });
   const auto = setInterval(() => room.tickAuto(), 250);
+  const restart = restartRoute(o.restart), boot = crypto.randomUUID(); // /scores tells processes apart by it
   let track: Buffer | null = null, trackType = 'application/octet-stream';
 
   const handler: http.RequestListener = (req, res) => {
@@ -60,8 +66,9 @@ export async function startServer(o: ServerOpts): Promise<Running> {
 
     if (url === '/scores') {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      return res.end(JSON.stringify({ scores: room.state.scores, live: room.state.presets, transScores: room.state.transScores }));
+      return res.end(JSON.stringify({ scores: room.state.scores, live: room.state.presets, transScores: room.state.transScores, boot }));
     }
+    if (url === '/admin/restart') return restart(req, res);
     if (url === '/vote' && req.method === 'POST') {
       let body = '';
       req.on('data', (c: Buffer) => { body += c; if (body.length > 4096) req.destroy(); });
@@ -132,7 +139,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === import.meta.filename) {
   const token = loadToken(path.join(root, '.einklang-token'));
   const hosts = bindAddresses();
   const scenes = labCatalog(path.join(root, 'lab/scenes')), votesFile = path.join(root, 'data/votes.jsonl');
-  startServer({ port, pub, token, hosts, scenes, votesFile }).then(({ room }) => {
+  const restart = process.env.EINKLANG_SUPERVISED ? processRestarter(root, !!process.env.EINKLANG_RESPAWNED) : undefined;
+  startServer({ port, pub, token, hosts, scenes, votesFile, restart }).then(({ room }) => {
     for (const p of TRANSITION_PROBLEMS) console.warn(`transition skipped: ${p}`);
     console.log(`${transitions().length} transitions`);
     console.log(`${room.state.presets.length} scenes live (${scenes.length - room.state.presets.length} retired by votes), votes in data/votes.jsonl`);

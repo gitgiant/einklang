@@ -249,7 +249,9 @@ test('server: POST /vote and GET /scores (token required), votes appended to the
     assert.deepEqual(await r.json(), { score: -1, retired: false });
     assert.equal((await post({ scene: 'nope', vote: 1 })).status, 400);
     assert.equal((await post({ scene: 'tunnel', vote: 0 })).status, 400);
-    assert.deepEqual(await (await fetch(`${base}/scores?t=tk`)).json(), { scores: { tunnel: -1 }, live: ['radial', 'tunnel'], transScores: {} });
+    const { boot, ...listed } = await (await fetch(`${base}/scores?t=tk`)).json();
+    assert.equal(typeof boot, 'string');
+    assert.deepEqual(listed, { scores: { tunnel: -1 }, live: ['radial', 'tunnel'], transScores: {} });
     const lines = parseVotes(readFileSync(file, 'utf8'));
     assert.deepEqual(lines.map((v) => [v.scene, v.vote, v.tags, v.live]), [['tunnel', -1, ['boring'], undefined]]);
     const tv = await post({ transition: 'core-iris', from: 'radial', to: 'tunnel', beats: 8, vote: 1, tags: ['smooth', 'x'] });

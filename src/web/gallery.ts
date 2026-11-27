@@ -29,6 +29,7 @@
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { FrameStats } from './framestats.ts';
+import { restartControl } from './restart.ts';
 import { FPS } from '../core/constants.ts';
 import { ranTransition, type SceneSched } from '../core/protocol.ts';
 import './transitions.ts'; // installs the transition registry (lab/transitions/)
@@ -113,9 +114,11 @@ function votePanel(
     label.title = online ? '' : 'voting needs the server (npm run server)';
     up.disabled = down.disabled = !online;
   };
-  fetch(withToken('/scores')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+  /** Scores from the server: on load, and again once a restarted server is back. */
+  const load = () => fetch(withToken('/scores')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
     .then((j: { scores: Record<string, number>; live: string[]; transScores?: Record<string, number> }) => { scores = j.scores; live = j.live; transScores = j.transScores ?? {}; online = true; scored(scores, transScores); show(); })
     .catch(() => { online = false; show(); });
+  load();
   const send = async (vote: 1 | -1) => {
     const sc = sceneOf(), id = sc?.id;
     if (!id || !online) return;
@@ -132,7 +135,7 @@ function votePanel(
   up.onclick = () => send(1); down.onclick = () => send(-1);
   /** Key votes count only while the panel is on screen. */
   const voteTrans = (v: 1 | -1) => { if (sceneOf()) trans.vote(v); };
-  return { el, show, send, voteTrans, trans, online: () => online };
+  return { el, show, send, voteTrans, trans, load, online: () => online };
 }
 
 /** The input picker. `change` takes over each newly opened input; `say` mirrors its status text. */
@@ -344,6 +347,7 @@ async function main() {
     settings: chosen,
     change: set,
     input: inputEl,
+    restart: restartControl(withToken, () => votes.load()),
     now: () => {
       const sc = cells[0].engine.scene;
       return { id: sc.def.id, name: sc.def.name, sections: sc.graph.sections ? [...sc.sections] : [], section: sc.section(), evolve: sc.evolve(), held: held === sc.def.id };

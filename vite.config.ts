@@ -12,6 +12,7 @@ export default defineConfig({
       '/track': 'http://localhost:8080',
       '/vote': 'http://localhost:8080',
       '/scores': 'http://localhost:8080',
+      '/admin': 'http://localhost:8080',
     },
   },
   build: {

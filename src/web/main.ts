@@ -21,6 +21,7 @@ import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
 import { autoHideUi } from './idle.ts';
+import { restartControl } from './restart.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
 import { LiveAnalyzer, canShare, insecure, micError, openMic, openShare, shareVideoBox, type LiveSource } from './capture.ts';
 import { mediaPicker } from './mediapicker.ts';
@@ -129,7 +130,8 @@ function connect() {
       // a state sent before the server saw our 'live' must not cancel the capture we just started
       if (room.mode === 'live' && leaderLive) leaderLive.pending = false;
       else if (room.mode !== 'live' && !leaderLive?.pending) stopLeaderLive();
-      if (room.mode !== 'file') { fileFeat = null; $<HTMLAudioElement>('au').pause(); }
+      // audTrack: a restarted server numbers its tracks from 1 again
+      if (room.mode !== 'file') { fileFeat = null; audTrack = -1; $<HTMLAudioElement>('au').pause(); }
       if (room.mode === 'file' && $<HTMLInputElement>('aud').checked) loadAudio();
       if (!autoRestored) {
         autoRestored = true;
@@ -469,7 +471,7 @@ async function start() {
         `secure ${isSecureContext}  visibility ${document.visibilityState}  offset ${offsetMs}ms`,
       ]],
     ];
-  });
+  }, restartControl(withToken));
   $('dbgBtn').onclick = () => panel.toggle();
   // D-pad up/down cycles this host's own view (an override, like the hosts panel)
   const pads = new PadRelay(send, {
