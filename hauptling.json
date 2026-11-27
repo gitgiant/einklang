@@ -12,9 +12,11 @@
   ],
   "junit": "{junit}",
   "gpu": [
-    "sh",
-    "-c",
-    "npm run lab -- gate --junit {junit}.gate; node --experimental-strip-types --no-warnings diag-gate.ts {junit}"
+    "node",
+    "--experimental-strip-types",
+    "--no-warnings",
+    "diag-gate.ts",
+    "{junit}"
   ],
   "gateGpu": true,
   "gpuMemMB": 2048

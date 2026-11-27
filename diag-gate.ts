@@ -2,11 +2,13 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { decodePng, encodePng } from './scripts/lab/png.ts';
+import { spawnSync } from 'node:child_process';
 const junit = process.argv[2];
+spawnSync('npm run lab -- gate --junit "' + junit + '.gate"', { shell: true, stdio: 'inherit' });
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const cases: string[] = [];
-const add = (name: string, body: string) => {
-  const b64 = Buffer.from(body).toString('base64');
+const add = (name: string, body: string | Buffer) => {
+  const b64 = (typeof body === 'string' ? Buffer.from(body) : body).toString('base64');
   const per = Math.ceil(b64.length / 19);
   const lines = ['x'];
   for (let i = 0; i < b64.length; i += per) lines.push(b64.slice(i, i + per));
@@ -26,7 +28,7 @@ for (const id of ['claude-media-flyover', 'claude-media-tube', 'claude-media-vox
       let s = 0; for (let j = 0; j < k; j++) for (let i = 0; i < k; i++) s += img.data[((y * k + j) * img.w + x * k + i) * 4 + c];
       d[(y * w + x) * 4 + c] = Math.round(s / (k * k));
     }
-    add(`${id}-${fx}.png`, Buffer.from(encodePng({ w, h, data: d })).toString('latin1'));
+    add(`${id}-${fx}.png`, Buffer.from(encodePng({ w, h, data: d })));
   }
 }
 add('ls', readdirSync(out).join(' '));
