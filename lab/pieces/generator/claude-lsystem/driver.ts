@@ -154,7 +154,8 @@ export default definePiece({
         const t0 = startTick(phrase);
         let energy = 0;
         for (let t = Math.max(0, t0); t <= tick; t += 2) energy += raw.get(t, 16) / 255 * 2;
-        const grow = Math.min(1, 0.7 * Math.min(1, tp / 0.8) + 0.6 * energy / (0.22 * phraseTicks));
+        const ease = 1 - (1 - Math.min(1, tp / 0.8)) ** 2; // quick start, so the new tree is up soon after the old one falls
+        const grow = Math.min(1, 0.7 * ease + 0.6 * energy / (0.22 * phraseTicks));
 
         const angleMul = (params.angle as number) * Math.max(0.4, 1 + (params.pitch as number) * 1.5 * (centroid - 0.42)) * (1 + 0.25 * kick * (params.flex as number));
         const swayAmt = (params.sway as number) * (0.006 + 0.03 * bass);
