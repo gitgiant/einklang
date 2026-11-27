@@ -2,9 +2,14 @@
   "id": "claude-reaction",
   "kind": "generator",
   "name": "Reaction-diffusion",
-  "doc": "Gray-Scott reaction-diffusion stepped several times per tick on a ping-pong cell grid, streaming slowly outward and turning. Bass pushes feed/kill from mitosis spots toward coral and speeds the drift; onsets seed new spots; the B concentration is coloured through the palette with embossed relief.",
+  "doc": "Gray-Scott reaction-diffusion stepped several times per tick on a ping-pong cell grid, streaming slowly outward and turning. Bass pushes feed/kill from mitosis spots toward coral and speeds the drift; onsets seed new spots; the B concentration is coloured through the palette with embossed relief. Fed a picture (in, luma, edges from core-media) it grows from the picture's contours instead, coral on its bright areas and spots on its dark ones, regrows from the contours at every phrase start, and shows the picture lit through the embossed pattern.",
   "ports": {
-    "in": { "palette": { "type": "palette", "optional": true, "doc": "stop 0 is the background tint, the last stop the highlights" } },
+    "in": {
+      "palette": { "type": "palette", "optional": true, "doc": "stop 0 is the background tint, the last stop the highlights" },
+      "in": { "type": "tex", "optional": true, "doc": "media path (with luma and edges): the picture, lit through the pattern (core-media.out)" },
+      "luma": { "type": "mask", "optional": true, "doc": "media path: the regime follows the picture's brightness, bright = coral (core-media.luma)" },
+      "edges": { "type": "field", "optional": true, "doc": "media path: the picture's contours seed the reaction (core-media.edges)" }
+    },
     "out": { "out": { "type": "tex" } }
   },
   "params": {
@@ -18,10 +23,19 @@
     "swirl": { "type": "float", "default": 0.002, "min": -0.02, "max": 0.02, "doc": "turn per tick, strongest at the centre" },
     "glow": { "type": "float", "default": 1.2, "min": 0, "max": 4, "doc": "brightness" },
     "relief": { "type": "float", "default": 3, "min": 0, "max": 10, "doc": "emboss strength of the lighting" },
-    "cycle": { "type": "float", "default": 0.5, "min": 0, "max": 4, "doc": "palette drift, sweeps per 16 beats" }
+    "cycle": { "type": "float", "default": 0.5, "min": 0, "max": 4, "doc": "palette drift, sweeps per 16 beats" },
+    "edge_seed": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "media path: how hard the contours seed (a trickle always, a stamp on each onset)" },
+    "threshold": { "type": "float", "default": 0.2, "min": 0, "max": 1.5, "doc": "media path: edge strength that seeds" },
+    "luma_map": { "type": "float", "default": 0.8, "min": -1.5, "max": 1.5, "doc": "media path: how far the picture's brightness moves the regime (negative = dark areas coral)" },
+    "reform": { "type": "float", "default": 0.7, "min": 0, "max": 1, "doc": "media path: how much of the pattern each phrase start wipes, so it regrows from the contours" },
+    "show": { "type": "float", "default": 0.25, "min": 0, "max": 1, "doc": "media path: the bare picture between the pattern" },
+    "picture": { "type": "float", "default": 0.75, "min": 0, "max": 1, "doc": "media path: the pattern takes the picture's colours (0 = the palette's)" }
   },
   "budget": { "ms": 0.8, "scales": "res" },
-  "tags": ["reaction-diffusion", "simulation", "organic", "compute"],
+  "tags": ["reaction-diffusion", "simulation", "organic", "compute", "media"],
   "author": { "vendor": "claude", "model": "claude-opus-5-5" },
-  "changelog": [{ "date": "2026-11-26", "by": "claude/claude-opus-5-5", "note": "first version" }]
+  "changelog": [
+    { "date": "2026-11-26", "by": "claude/claude-opus-5-5", "note": "first version" },
+    { "date": "2026-11-27", "by": "claude/claude-opus-5-5", "note": "optional media path: in/luma/edges inputs (edge-seeded, luma-mapped regime, phrase wipe, picture lit through the pattern) and its params; unchanged when they are not wired" }
+  ]
 }

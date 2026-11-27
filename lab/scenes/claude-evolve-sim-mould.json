@@ -1,0 +1,40 @@
+{
+  "format": 1, "id": "claude-evolve-sim-mould", "name": "Evolve sim: slime garden", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "physarum", "organic"],
+  "doc": "A slime mould grazing on your picture (image, video or camera): hundreds of thousands of agents smell its bright areas as food and its contours as walls, and their veins redraw it in its own colours; bass stretches their reach, onsets drop blooms of spores and flash the veins. Each phrase the colony or its treatment changes (fine veins hugging the light, thick glowing cords, reaction-diffusion coral growing from the edges, the picture melting as dye; trails, a zoom feed or a kaleidoscope), and at every phrase start the picture glows back and the colony respawns on it.",
+  "nodes": [
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#06100a #1d4d2b #6fae3f #e8d36a #fff6d8" } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.08, "pulse": 0.15, "drift": 0.25, "contrast": 1.15, "saturation": 1.1, "edge_width": 2 } },
+    { "id": "sim", "piece": "claude-media-mould", "params": { "agents": 240, "food": 1.6, "wall": 0.6, "show": 0.2, "tint": 0.25 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.45, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.55, "threshold": 0.7 },
+  "evolve": {
+    "every": "phrase", "transition": "core-luma", "beats": 4,
+    "slots": [
+      { "node": "sim", "pool": [
+        { "piece": "claude-media-mould", "params": { "agents": 320, "angle": 22, "food": 2.6, "wall": 1.2, "tint": 0.12, "sat": 1.5 },
+          "ranges": { "reach": [11, 16], "decay": [0.86, 0.92] } },
+        { "piece": "claude-media-mould", "params": { "agents": 160, "deposit": 2, "decay": 0.95, "diffuse": 0.8, "show": 0.28, "tint": 0.5, "glow": 1 },
+          "ranges": { "turn": [20, 45], "food": [1, 2] } },
+        { "piece": "claude-reaction", "params": { "cells": 360, "steps": 10, "show": 0.3, "picture": 0.6, "luma_map": -0.8 },
+          "ranges": { "regime": [0.45, 0.65], "edge_seed": [0.5, 0.9] } },
+        { "piece": "claude-media-dye", "params": { "stir": 0.8, "tint": 0.5, "gloss": 0.5 },
+          "ranges": { "along": [0.5, 1], "edge": [0.5, 1] } }
+      ] },
+      { "node": "fx", "jitter": 0.03, "pool": [
+        { "piece": "claude-zoomfeed", "params": { "decay": 0.7, "zoom": 0.008, "hue": 0.0 }, "ranges": { "rotate": [-0.005, 0.005] } },
+        { "piece": "core-kaleido", "params": { "zoom": 1.1 }, "ranges": { "segments": [4, 8], "spin": [-0.03, 0.03] } }
+      ] }
+    ]
+  }
+}
