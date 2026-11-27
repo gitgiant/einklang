@@ -37,6 +37,43 @@ export interface SceneGraph {
   sections?: Sections;
   /** Filled in by applyStyle for a scene with sections: every variant, expanded and styled (not in files). */
   expanded?: SceneGraph[];
+  /** Slots that swap pieces over time, steered by votes (see evolve.ts, lab/AGENTS.md "Evolving scenes"). */
+  evolve?: Evolve;
+  /** Filled in by resolveEvolve: the pools expanded and weighted by the scores in effect (not in files). */
+  evolved?: import('./evolve.ts').ResolvedEvolve;
+}
+
+/** One candidate of an evolve slot: a piece, its fixed params, ranges params are drawn from, its own bindings. */
+export interface EvolveCandidate {
+  piece: string;
+  params?: Record<string, ParamValue>;
+  /** Drawn uniformly at each step that brings this candidate in: float, int or enum params. */
+  ranges?: Record<string, [number, number]>;
+  bind?: Record<string, Binding>;
+}
+
+/** A node of the base graph whose piece is swapped for candidates that fit the same ports. */
+export interface EvolveSlot {
+  node: string;
+  /** Explicit candidates (piece ids or full entries); the base node is always candidate 0. */
+  pool?: (string | EvolveCandidate)[];
+  /** Candidates from the registry: kind (default the base piece's), any of the tags, vendors, exclusions. */
+  filter?: { kind?: string; tags?: string[]; vendor?: string[]; exclude?: string[] };
+  /** Pool cap, base included (default and max 6). */
+  max?: number;
+  /** Float params without a range move by up to this share of their span (default 0.08; 0 = off). */
+  jitter?: number;
+}
+
+export interface Evolve {
+  /** Cadence: a step every bar, every phrase (default), every N bars (1..16), or on song-section changes. */
+  every?: 'bar' | 'phrase' | 'section' | number;
+  /** With every "section": phrases without a change before it steps anyway (1..16, default 4). */
+  most?: number;
+  /** The blend into the swapped piece: a registered id or "random" (default core-blend), over `beats` (default 4). */
+  transition?: string;
+  beats?: number;
+  slots: EvolveSlot[];
 }
 
 /** When a section variant is active, checked at each boundary; every key given must hold. */

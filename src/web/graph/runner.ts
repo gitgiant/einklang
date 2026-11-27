@@ -8,7 +8,9 @@ import type { GpuInit, GpuInstance, PadFx, Palette, ParamValue } from '../../../
 import type { PieceDef } from '../../core/graph/types.ts';
 import { NO_FX } from '../../core/fx.ts';
 import { CPU_PORTS, TEX_FORMAT, isTexPort } from '../../../lab/api/index.ts';
-import { strHash, type Plan, type PlanNode, type CpuFrame } from '../../core/graph/eval.ts';
+import { noHelpers, strHash, type Plan, type PlanNode, type CpuFrame } from '../../core/graph/eval.ts';
+import type { Socket } from '../../core/graph/scenecpu.ts';
+import type { Transition } from '../../core/transitions.ts';
 import { splitRef } from '../../core/graph/types.ts';
 import { shader } from '../gpu/gpu.ts';
 import { autoFragment, autoLayout, defaultPalette, writeAuto, type AutoLayout } from './auto.ts';
@@ -105,10 +107,24 @@ interface DriverRun { kind: 'driver'; inst: GpuInstance | null }
 interface CpuOnly { kind: 'cpu' }
 type Run = AutoRun | DriverRun | CpuOnly;
 
-/** A node of the merged graph: `key` = node id + a hash of its definition and everything upstream. */
-interface MNode { key: string; pn: PlanNode; run: Run; /** input port -> "sourceKey.port" */ inputs: Record<string, string> }
+/** One way to run a merged node: its plan node, its GPU state, input port -> "sourceKey.port". */
+interface Alt { pn: PlanNode; run: Run; inputs: Record<string, string> }
+/**
+ * A node of the merged graph: `key` = node id + a hash of its definition and everything upstream. An
+ * evolving scene's slot is a socket: `alts` are its candidates (0 = the node itself), each built at
+ * load; the one a job picks runs, and while a swap blends, the old one too, mixed by `mixer`.
+ */
+interface MNode extends Alt { key: string; alts?: Alt[]; mixer?: GpuInstance | null }
 /** One plan to draw this frame: its CPU frame and the HDR target its output is copied into. */
-export interface Job { plan: number; target: GPUTexture; frame: CpuFrame }
+export interface Job {
+  plan: number; target: GPUTexture; frame: CpuFrame;
+  /** Sockets: the candidate each slot shows (default 0). */
+  pick?: Record<string, number>;
+  /** Sockets swapping this frame: the outgoing state's CPU frame and picks, and the blend. */
+  blend?: { frame: CpuFrame; pick: Record<string, number>; trans: Transition };
+}
+export interface RunnerOpts { sockets?: Socket[]; /** core-transition: blends a socket's swap. */ mixer?: PieceDef }
+interface Live { job: Job; frame: CpuFrame }
 
 /** Keys of every plan's nodes: equal keys = same piece, params, bindings and inputs, recursively. */
 function nodeKeys(plan: Plan): Map<string, string> {
@@ -146,7 +162,7 @@ export class GraphRunner {
   private budget: Budget;
   /** The size the pool holds textures for (set by encode or prepare). */
   private sized = '';
-  constructor(device: GPUDevice, plans: Plan | Plan[], budget: Budget) {
+  constructor(device: GPUDevice, plans: Plan | Plan[], budget: Budget, opts: RunnerOpts = {}) {
     this.device = device; this.budget = budget;
     this.pool = new TexPool(device);
     this.samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
@@ -167,8 +183,19 @@ export class GraphRunner {
       }
       this.plans.push({ plan, at, out: ref(plan.graph.out) });
     }
+    for (const sk of opts.sockets ?? []) {
+      const P = this.plans[0], i = P?.at.get(sk.node);
+      if (i === undefined) continue;
+      const keys = nodeKeys(P.plan), mn = this.nodes[i];
+      const ref = (r: string) => { const [n, p] = splitRef(r); return `${keys.get(n)}.${p}`; };
+      mn.alts = sk.cands.map((pn, c) => (c === 0 ? { pn: mn.pn, run: mn.run, inputs: mn.inputs }
+        : { pn, run: this.build(pn), inputs: Object.fromEntries(Object.entries(pn.inputs).map(([p, r]) => [p, ref(r)])) }));
+      mn.mixer = opts.mixer ? instantiate(device, opts.mixer, budget) : null;
+    }
     this.lastUse = new Map();
-    this.nodes.forEach((mn, i) => { for (const r of Object.values(mn.inputs)) this.lastUse.set(r, Math.max(this.lastUse.get(r) ?? -1, i)); });
+    this.nodes.forEach((mn, i) => {
+      for (const a of mn.alts ?? [mn]) for (const r of Object.values(a.inputs)) this.lastUse.set(r, Math.max(this.lastUse.get(r) ?? -1, i));
+    });
     for (const p of this.plans) this.lastUse.set(p.out, Infinity);
   }
 
@@ -189,12 +216,12 @@ export class GraphRunner {
   /** Size the pool for w x h (a new size drops every texture, feedback included). */
   private size(w: number, h: number): void {
     this.sized = `${w}x${h}`;
-    if (this.pool.resize(w, h)) for (const { run: r } of this.nodes) if (r.kind === 'auto' && r.fb) { r.fb.forEach((t) => t.destroy()); r.fb = null; }
+    if (this.pool.resize(w, h)) for (const r of this.runs) if (r.kind === 'auto' && r.fb) { r.fb.forEach((t) => t.destroy()); r.fb = null; }
   }
 
-  /** Node i's image outputs for this frame: its feedback texture (flipped when `flip`) or pooled ones (recorded in `pooled`). */
-  private outputs(i: number, w: number, h: number, pooled: Map<string, GPUTexture>, flip: boolean): Record<string, GPUTexture> {
-    const { run: r, pn, key } = this.nodes[i], m = pn.def.manifest, id = pn.node.id;
+  /** A node's image outputs for this frame: its feedback texture (flipped when `flip`) or pooled ones (recorded in `pooled`). */
+  private outputs(a: Alt, key: string, w: number, h: number, pooled: Map<string, GPUTexture>, flip: boolean): Record<string, GPUTexture> {
+    const { run: r, pn } = a, m = pn.def.manifest, id = pn.node.id;
     const outTex: Record<string, GPUTexture> = {};
     for (const [p, s] of Object.entries(m.ports.out)) {
       if (!isTexPort(s.type)) continue;
@@ -228,7 +255,10 @@ export class GraphRunner {
     if (this.sized === `${w}x${h}`) return;
     this.size(w, h);
     const pooled = new Map<string, GPUTexture>();
-    this.nodes.forEach((_, i) => { this.outputs(i, w, h, pooled, false); this.release(i, pooled); });
+    this.nodes.forEach((mn, i) => {
+      for (const a of mn.alts?.slice(1) ?? []) { const own = new Map<string, GPUTexture>(); this.outputs(a, mn.key, w, h, own, false); for (const t of own.values()) this.pool.put(t); }
+      this.outputs(mn, mn.key, w, h, pooled, false); this.release(i, pooled);
+    });
     for (const t of pooled.values()) this.pool.put(t);
   }
 
@@ -237,24 +267,91 @@ export class GraphRunner {
     this.encodeJobs(enc, [{ plan: 0, target, frame }], pads);
   }
 
-  /** The merged nodes the jobs need this frame, each with the CPU frame (and plan) it draws from. */
-  private live(jobs: Job[]): Map<number, Job> {
-    const need = new Map<number, Job>();
+  /** The candidate a socket shows for this job (the node itself when it isn't one), and the outgoing one while it swaps. */
+  private altsOf(mn: MNode, job: Job): { cur: Alt; old: Alt | null } {
+    if (!mn.alts) return { cur: mn, old: null };
+    const id = mn.pn.node.id, c = job.pick?.[id] ?? 0, o = job.blend?.pick[id];
+    const cur = mn.alts[c] ?? mn;
+    return { cur, old: o !== undefined && o !== c && mn.alts[o] ? mn.alts[o] : null };
+  }
+
+  /**
+   * The merged nodes the jobs need this frame, each with the job and the CPU frame it draws from (a node
+   * only the outgoing candidate of a swapping socket reads draws from the outgoing state's frame).
+   */
+  private live(jobs: Job[]): Map<number, Live> {
+    const need = new Map<number, Live>();
     for (const job of jobs) {
-      const P = this.plans[job.plan], stack = [P.at.get(splitRef(P.plan.graph.out)[0])!];
-      while (stack.length) {
-        const i = stack.pop()!;
-        if (need.has(i)) continue;
-        need.set(i, job);
-        const { pn } = this.nodes[i], use = job.frame.outs.get(pn.node.id)?.use;
-        for (const [p, ref] of Object.entries(pn.inputs)) {
-          if (CPU_PORTS.includes(pn.def.manifest.ports.in![p].type) || (use && !use.includes(p))) continue;
-          const j = P.at.get(splitRef(ref)[0]);
-          if (j !== undefined) stack.push(j);
+      const P = this.plans[job.plan], later: [number, CpuFrame][] = [];
+      const walk = (stack: [number, CpuFrame][]) => {
+        while (stack.length) {
+          const [i, frame] = stack.pop()!;
+          if (need.has(i)) continue;
+          need.set(i, { job, frame });
+          const mn = this.nodes[i], { cur, old } = this.altsOf(mn, job);
+          const pull = (a: Alt, fr: CpuFrame, into: [number, CpuFrame][]) => {
+            const use = fr.outs.get(a.pn.node.id)?.use;
+            for (const [p, ref] of Object.entries(a.pn.inputs)) {
+              if (CPU_PORTS.includes(a.pn.def.manifest.ports.in![p].type) || (use && !use.includes(p))) continue;
+              const j = P.at.get(splitRef(ref)[0]);
+              if (j !== undefined) into.push([j, fr]);
+            }
+          };
+          pull(cur, frame, stack);
+          if (old && job.blend) pull(old, job.blend.frame, later);
         }
-      }
+      };
+      walk([[P.at.get(splitRef(P.plan.graph.out)[0])!, job.frame]]);
+      walk(later);
     }
     return need;
+  }
+
+  /** Run one node (or socket candidate) into `outTex`; returns its non-image GPU outputs. */
+  private runOne(enc: GPUCommandEncoder, a: Alt, frame: CpuFrame, gpuVals: Map<string, unknown>, outTex: Record<string, GPUTexture>, pads: PadFx, w: number, h: number): Record<string, unknown> {
+    const { run: r, pn } = a, m = pn.def.manifest, id = pn.node.id;
+    const params = frame.params.get(id)!, cpu = frame.outs.get(id), use = cpu?.use;
+    const ins: Record<string, unknown> = {};
+    for (const [p, ref] of Object.entries(pn.inputs)) {
+      if (CPU_PORTS.includes(m.ports.in![p].type)) { const [n, q] = splitRef(ref); ins[p] = frame.outs.get(n)?.[q]; }
+      else if (!use || use.includes(p)) ins[p] = gpuVals.get(a.inputs[p]);
+    }
+    if (r.kind === 'auto') this.runAuto(enc, r, ins, outTex, params, frame, w, h);
+    else if (r.kind === 'driver' && r.inst) {
+      const res = r.inst.frame({ ...frame.base, ...frame.helpers.get(id)!, params, in: ins, device: this.device, enc, width: w, height: h, out: outTex, cpu: cpu ?? {}, pads });
+      const out: Record<string, unknown> = {};
+      for (const [p, v] of Object.entries(res ?? {})) if (!isTexPort(m.ports.out[p]?.type)) out[p] = v;
+      return out;
+    }
+    return {};
+  }
+
+  /**
+   * A socket swapping: the outgoing and the incoming candidate each render into textures of their own,
+   * and the scene's transition blends their first tex output into the socket's (other outputs: the new one's).
+   */
+  private runSwap(enc: GPUCommandEncoder, mn: MNode, cur: Alt, old: Alt, live: Live, gpuVals: Map<string, unknown>, pooled: Map<string, GPUTexture>, pads: PadFx, w: number, h: number): void {
+    const { job, frame } = live, blend = job.blend!, tmp = new Map<string, GPUTexture>(), fresh = new Map<string, GPUTexture>();
+    const a = this.outputs(old, `${mn.key}~old`, w, h, tmp, true);
+    this.runOne(enc, old, blend.frame, gpuVals, a, pads, w, h);
+    const b = this.outputs(cur, mn.key, w, h, fresh, true), res = this.runOne(enc, cur, frame, gpuVals, b, pads, w, h);
+    const outs = cur.pn.def.manifest.ports.out;
+    const mixed = Object.keys(outs).find((p) => outs[p].type === 'tex' && a[p] && b[p]);
+    for (const [p, t] of Object.entries(b)) {
+      let shown = t;
+      if (p === mixed && mn.mixer) {
+        shown = this.pool.get('rgba16float', `${mn.pn.node.id}.${p}.swap`);
+        const tr = blend.trans, params = { type: tr.kind, p: tr.p, flash: tr.flash16 / 65536, seed: tr.seed, roll: tr.roll, pads: true }, ins = { a: a[p], b: t };
+        mn.mixer.frame({ ...frame.base, ...noHelpers(params, ins), params, in: ins, device: this.device, enc, width: w, height: h, out: { out: shown }, cpu: {}, pads });
+        const own = fresh.get(`${mn.key}.${p}`);
+        if (own) { tmp.set(`${mn.key}.${p}`, own); fresh.delete(`${mn.key}.${p}`); }
+        fresh.set(`${mn.key}.${p}`, shown);
+      }
+      gpuVals.set(`${mn.key}.${p}`, shown);
+    }
+    for (const [k, t] of fresh) pooled.set(k, t);
+    for (const t of tmp.values()) this.pool.put(t);
+    for (const [p, v] of Object.entries(res)) gpuVals.set(`${mn.key}.${p}`, v);
   }
 
   /** Encode one frame of each job's plan into its target; nodes the plans share run once. */
@@ -267,24 +364,15 @@ export class GraphRunner {
     const pooled = new Map<string, GPUTexture>();
 
     this.nodes.forEach((mn, i) => {
-      const job = need.get(i);
-      if (!job) return;
-      const { run: r, pn } = mn, m = pn.def.manifest, id = pn.node.id, frame = job.frame;
-      const params = frame.params.get(id)!, cpu = frame.outs.get(id), use = cpu?.use;
-      const ins: Record<string, unknown> = {};
-      for (const [p, ref] of Object.entries(pn.inputs)) {
-        if (CPU_PORTS.includes(m.ports.in![p].type)) { const [n, q] = splitRef(ref); ins[p] = frame.outs.get(n)?.[q]; }
-        else if (!use || use.includes(p)) ins[p] = gpuVals.get(mn.inputs[p]);
+      const live = need.get(i);
+      if (!live) return;
+      const { cur, old } = this.altsOf(mn, live.job);
+      if (old && live.job.blend) this.runSwap(enc, mn, cur, old, live, gpuVals, pooled, pads, w, h);
+      else {
+        const outTex = this.outputs(cur, mn.key, w, h, pooled, true);
+        for (const [p, t] of Object.entries(outTex)) gpuVals.set(`${mn.key}.${p}`, t);
+        for (const [p, v] of Object.entries(this.runOne(enc, cur, live.frame, gpuVals, outTex, pads, w, h))) gpuVals.set(`${mn.key}.${p}`, v);
       }
-      const outTex = this.outputs(i, w, h, pooled, true);
-      for (const [p, t] of Object.entries(outTex)) gpuVals.set(`${mn.key}.${p}`, t);
-
-      if (r.kind === 'auto') this.runAuto(enc, r, ins, outTex, params, frame, w, h);
-      else if (r.kind === 'driver' && r.inst) {
-        const res = r.inst.frame({ ...frame.base, ...frame.helpers.get(id)!, params, in: ins, device: this.device, enc, width: w, height: h, out: outTex, cpu: cpu ?? {}, pads });
-        for (const [p, v] of Object.entries(res ?? {})) if (!isTexPort(m.ports.out[p]?.type)) gpuVals.set(`${mn.key}.${p}`, v);
-      }
-
       this.release(i, pooled);
     });
 
@@ -313,7 +401,8 @@ export class GraphRunner {
     rp.setPipeline(pipeOf(this.device, r.pipe)); rp.setBindGroup(0, bg); rp.draw(3); rp.end();
   }
 
-  private get instances(): GpuInstance[] { return this.nodes.flatMap(({ run: r }) => (r.kind === 'driver' && r.inst ? [r.inst] : [])); }
+  private get runs(): Run[] { return this.nodes.flatMap((mn) => (mn.alts ?? [mn]).map((a) => a.run)); }
+  private get instances(): GpuInstance[] { return this.runs.flatMap((r) => (r.kind === 'driver' && r.inst ? [r.inst] : [])); }
   /** The first sim's benchmark (particles this GPU can run), or null without a sim. */
   async bench(): Promise<number | null> { const i = this.instances.find((x) => x.bench); return i ? i.bench!() : null; }
   get hasBench(): boolean { return this.instances.some((x) => x.bench); }
@@ -322,9 +411,10 @@ export class GraphRunner {
 
   destroy(): void {
     this.pool.destroy(); this.black.destroy();
-    for (const { run: r } of this.nodes) {
+    for (const r of this.runs) {
       if (r.kind === 'auto') { r.ubuf.destroy(); r.fb?.forEach((t) => t.destroy()); }
       else if (r.kind === 'driver') r.inst?.dispose?.();
     }
+    for (const mn of this.nodes) mn.mixer?.dispose?.();
   }
 }

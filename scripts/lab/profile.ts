@@ -5,7 +5,7 @@
 //   warm    the same switch again
 //   scenes  radial -> each scene, first time that scene draws (its own cold start) + A+B steady cost
 //   trans   radial -> tunnel with each transition: first frame + the mix's own cost
-//   acts    each scene with sections: base -> each variant, the first time it shows (cold for its nodes),
+//   acts    each scene with sections: base -> each variant (an evolving scene: s0 -> s1..s3), the first time it shows (cold for its nodes),
 //           and the same change again (warm)
 // Numbers only; nothing here fails the gate (a switch that can't run is listed as not profiled).
 import type { Lab } from './browser.ts';

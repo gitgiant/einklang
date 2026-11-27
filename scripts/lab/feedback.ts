@@ -4,7 +4,7 @@
 // delegator) commits them. Spec: docs/prd-lab.md "Voting".
 import type { Registry, SceneGraph } from '../../src/core/graph/types.ts';
 import { CUT_ID } from '../../src/core/transitions.ts';
-import { RETIRE_AT, score, tally, type Tally, type TransVote, type Vote } from '../../src/core/votes.ts';
+import { RETIRE_AT, count, score, tally, type EvolveVote, type SceneVote, type Tally, type TransVote, type Vote } from '../../src/core/votes.ts';
 
 export interface Score { up: number; down: number; score: number; tags: Record<string, number> }
 export interface SceneScore extends Score { name: string; vendor: string; live: number; status: 'live' | 'retired'; pieces: string[] }
@@ -15,6 +15,10 @@ export interface TransScore extends Score {
   /** Where it was voted on: scene pair and length, with the votes cast there. */
   contexts: { from: string; to: string; beats: number | null; up: number; down: number }[];
 }
+/** A state of an evolving scene that was voted on: its step when last liked (or seen) and the pieces + params shown. */
+export interface StateScore extends Score { step: number; slots: EvolveVote['slots'] }
+/** Votes cast while an evolving scene showed: per slot and piece, and per state (key = "slot=piece,..."). */
+export interface EvolveScore { slots: Record<string, Record<string, Score>>; states: Record<string, StateScore> }
 export interface Digest {
   votes: number;
   /** Date of the newest vote (ISO), or null. */
@@ -31,6 +35,8 @@ export interface Digest {
   transitionTags: Record<string, number>;
   /** Scenes this run moved to retired. */
   retired: string[];
+  /** Evolving scenes: which mutations the votes liked (their slot scores weight the pools, with the piece scores). */
+  evolve: Record<string, EvolveScore>;
 }
 
 const zero = (): Score => ({ up: 0, down: 0, score: 0, tags: {} });
@@ -52,7 +58,7 @@ function contexts(votes: TransVote[]): TransScore['contexts'] {
 
 /** Pure: the digest of `votes` over `scenes`. Scenes at net <= RETIRE_AT come back with status retired. */
 export function digest(votes: Vote[], scenes: SceneGraph[], reg: Registry, transitions: readonly { id: string; name: string; vendor: string }[] = []): Digest {
-  const t = tally(votes), d: Digest = { votes: votes.length, latest: null, scenes: {}, pieces: {}, vendors: {}, tags: {}, transitions: {}, transitionTags: {}, retired: [] };
+  const t = tally(votes), d: Digest = { votes: votes.length, latest: null, scenes: {}, pieces: {}, vendors: {}, tags: {}, transitions: {}, transitionTags: {}, retired: [], evolve: {} };
   for (const v of votes) if (!d.latest || v.at > d.latest) d.latest = v.at;
   const vendor = (name: string) => (d.vendors[name] ??= { scenes: zero(), pieces: zero(), transitions: zero() });
   for (const g of scenes) {
@@ -62,13 +68,22 @@ export function digest(votes: Vote[], scenes: SceneGraph[], reg: Registry, trans
     const s: SceneScore = { ...zero(), name: g.name, vendor: g.author.vendor, live: votes.filter((v) => v.scene === g.id && v.live).length, status, pieces };
     add(s, tl);
     d.scenes[g.id] = s;
+    const mine = votes.filter((v): v is SceneVote => v.scene === g.id), slots = new Set((g.evolve?.slots ?? []).map((x) => x.node));
+    if (g.evolve) d.evolve[g.id] = evolveScore(mine.filter((v) => v.evolve && Object.keys(v.evolve.slots).every((n) => slots.has(n))));
     if (!tl.up && !tl.down) continue;
     add(vendor(g.author.vendor).scenes, tl);
-    for (const p of pieces) {
+    // credit goes to the pieces on screen: an evolving scene's slots to the piece the vote saw there
+    const credit = new Map<string, Tally>();
+    for (const v of mine) {
+      const seen = v.evolve?.slots ?? {}, on = new Set(g.nodes.filter((n) => !(slots.has(n.id) && seen[n.id])).map((n) => n.piece));
+      for (const [n, x] of Object.entries(seen)) if (slots.has(n)) on.add(x.piece);
+      for (const p of on) credit.set(p, count(credit.get(p) ?? { up: 0, down: 0, tags: {} }, v));
+    }
+    for (const [p, ct] of [...credit].sort((a, b) => (a[0] < b[0] ? -1 : 1))) {
       const pv = reg.get(p)?.manifest.author.vendor ?? '?';
       const ps = (d.pieces[p] ??= { ...zero(), vendor: pv, scenes: 0 });
-      add(ps, tl); ps.scenes++;
-      add(vendor(pv).pieces, tl);
+      add(ps, ct); ps.scenes++;
+      add(vendor(pv).pieces, ct);
     }
     for (const [k, n] of Object.entries(tl.tags)) d.tags[k] = (d.tags[k] ?? 0) + n;
   }
@@ -84,6 +99,19 @@ export function digest(votes: Vote[], scenes: SceneGraph[], reg: Registry, trans
     for (const [k, n] of Object.entries(tl.tags)) d.transitionTags[k] = (d.transitionTags[k] ?? 0) + n;
   }
   return d;
+}
+
+function evolveScore(votes: SceneVote[]): EvolveScore {
+  const e: EvolveScore = { slots: {}, states: {} }, one = (v: Vote) => count({ up: 0, down: 0, tags: {} }, v);
+  for (const v of votes) {
+    const ev = v.evolve!;
+    for (const [node, x] of Object.entries(ev.slots)) add(((e.slots[node] ??= {})[x.piece] ??= zero()), one(v));
+    const st = (e.states[ev.key] ??= { ...zero(), step: ev.step, slots: ev.slots });
+    add(st, one(v));
+    // freeze uses the params of the latest thumbs-up
+    if (v.vote > 0) { st.step = ev.step; st.slots = ev.slots; }
+  }
+  return e;
 }
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
@@ -123,6 +151,8 @@ export function feedbackMd(d: Digest): string {
     '',
     '## Bottom transitions', '', tBottom.length ? [tHead, ...tBottom.map(tRow)].join('\n') : 'None.',
     '',
+    '## Evolving scenes', '', evolveMd(d),
+    '',
     '## Vendors', '', '| vendor | scenes | pieces | transitions |\n|---|---|---|---|',
     ...Object.entries(d.vendors).sort().map(([v, s]) => `| ${v} | ${[s.scenes, s.pieces, s.transitions].map((x) => `${signed(x.score)} (${x.up}↑ ${x.down}↓)`).join(' | ')} |`),
     '',
@@ -138,5 +168,25 @@ export function feedbackMd(d: Digest): string {
     '',
     '## Not voted on yet', '', unvoted.join(', ') || 'None.',
     '',
+  ].join('\n');
+}
+
+/** Liked and disliked states of evolving scenes, and per-slot picks. */
+function evolveMd(d: Digest): string {
+  const rows = Object.entries(d.evolve).flatMap(([scene, e]) => Object.entries(e.states).map(([key, s]) => ({ scene, key, s })));
+  if (!rows.length) return 'No votes on evolving scenes yet. A vote cast while one shows records its state (the pieces and params in its slots).';
+  const head = '| scene | state | score | step | tags |\n|---|---|---|---|---|';
+  const row = (r: (typeof rows)[number]) => `| ${r.scene} | \`${r.key}\` | ${signed(r.s.score)} (${r.s.up}↑ ${r.s.down}↓) | s${r.s.step} | ${topTags(r.s.tags) || '-'} |`;
+  const liked = rows.filter((r) => r.s.score > 0).sort((a, b) => b.s.score - a.s.score).slice(0, 10);
+  const disliked = rows.filter((r) => r.s.score < 0).sort((a, b) => a.s.score - b.s.score).slice(0, 10);
+  const slots = Object.entries(d.evolve).flatMap(([scene, e]) => Object.entries(e.slots).map(([node, ps]) => {
+    const list = Object.entries(ps).sort((a, b) => b[1].score - a[1].score).map(([p, s]) => `${p} ${signed(s.score)}`).join(', ');
+    return `- ${scene} · ${node}: ${list}`;
+  }));
+  return [
+    'Liked states can become scenes of their own: `npm run lab -- evolve freeze <scene> "<state>"` (writes a scene with `parent`). Slot scores add to the piece scores when the pool is weighted.',
+    '', '### Liked mutations', '', liked.length ? [head, ...liked.map(row)].join('\n') : 'None yet.',
+    '', '### Disliked mutations', '', disliked.length ? [head, ...disliked.map(row)].join('\n') : 'None.',
+    '', '### Per slot', '', slots.join('\n') || 'None.',
   ].join('\n');
 }

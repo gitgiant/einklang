@@ -178,6 +178,31 @@ A scene can change its graph with the music: `sections` lists variants of the ba
 - The active section is part of the sync hash. Keep each variant good on its own: the gate shows every one.
 - `lab render` and the gate force base and then each variant in turn (equal parts of the run, with your transitions); the sheet labels each frame with its section, and each section is judged on its own frames too. `render --sections auto` lets `when` pick instead (the fixtures are steady: techno reads as a drop throughout), `--sections <id>` shows one.
 
+## Evolving scenes
+
+A scene can evolve on its own: `evolve` names **slots** (nodes of the graph) and a **pool** of candidate pieces for each. At every step one slot swaps to another candidate (the slots take turns), with params drawn from the candidate's `ranges` (other float params jittered around its values), and the swap blends in with a transition. Which candidate comes is weighted by the owner's votes, so liked pieces show more often.
+
+```json
+"evolve": {
+  "every": "phrase", "transition": "core-blend", "beats": 4,
+  "slots": [
+    { "node": "gen", "pool": ["claude-reaction", "agy-voronoi",
+        { "piece": "claude-metaballs", "params": { "edge": 0.1 }, "ranges": { "count": [8, 16], "speed": [0.3, 1.6] },
+          "bind": { "pulse": { "from": "audio.bass" } } }] },
+    { "node": "fx", "filter": { "kind": "effect", "tags": ["retro", "glitch"], "exclude": ["agy-pixelsort"] }, "max": 5, "jitter": 0.12 }
+  ]
+}
+```
+
+- `every`: `"bar"`, `"phrase"` (default), a number of bars (1..16), or `"section"`: on a song-section change (`core-section`'s classifier, checked each phrase), and at least every `most` phrases (1..16, default 4) when the music doesn't change.
+- `transition` (a registered id or `"random"`, default `core-blend`) and `beats` (default 4, at most half a step): the swap blends inside the slot, so everything downstream (trails, feedback) runs on through it.
+- A slot (at most 3): `node` (on the way to `out`), and `pool` (piece ids or `{ piece, params, ranges, bind }`) and/or `filter` (`kind`, default the base piece's; any of `tags`; `vendor` list; `exclude`). The base node is always candidate 0; explicit entries come next, then filter matches by score. `max` caps the pool (2..6, default 6, base included). `jitter` (0..0.5, default 0.08): share of a float param's span it moves by when it has no range; 0 = off.
+- **Fit:** a candidate takes the slot's edges. Every GPU input fed into the slot (tex, mask, field, particles, geo) needs a same-named input of that type on the candidate, its own required inputs must all be fed, and every output read downstream (edges, `out`, bindings) must exist with the same type. CPU inputs it lacks (a palette) are dropped. The slot's bindings carry over to params of the same name; the candidate's own `bind` wins. With a style pack, a candidate's palette input gets the style palette.
+- **Votes steer it:** a candidate's weight is 2^(piece score + this slot's score for it), clamped like the rotation; at -2 it leaves the pool. Scores come from `lab/feedback.json`, the one committed with the build, so every host agrees; the pools and weights join the sync hash. A vote cast while an evolving scene shows records its state (step, key `slot=piece,...`, each slot's piece and params); `npm run lab -- feedback` lists liked and disliked mutations under "Evolving scenes".
+- **Freeze** a liked state into a scene of its own (`parent` = the evolving scene): `npm run lab -- evolve freeze <scene> "<state key>"` (the voted params) or `... <scene> s12` (step 12 as the scores weigh it now); `--id`, `--name`. `npm run lab -- evolve show <scene> [--steps 12]` prints the sequence.
+- Step 0 is the base graph as written. Every candidate is built when the scene loads (that's why pools are capped), unselected ones pause; keep each candidate within the scene budget and good on its own, since any combination can show.
+- A scene has `sections` or `evolve`, not both. `validate` checks the block, that every candidate fits and that each one's graph (its ranges at both ends) is valid; render and the gate force steps s0..s3 in turn (the sheet labels the step and its pieces) and judge each on its own frames.
+
 ## Transitions (`lab/transitions/<id>/`)
 
 A transition is how the show switches from scene A to scene B. Each one is a self-contained folder, so you never touch a shared list: the registry, the selectors, the server's `random` pick and the shader's switch are built from the folders.

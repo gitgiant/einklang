@@ -9,6 +9,7 @@ import { noHelpers } from '../../core/graph/eval.ts';
 import type { Registry, SceneGraph } from '../../core/graph/types.ts';
 import { sceneCpu, type SceneFrame } from '../../core/graph/scenecpu.ts';
 import { sectionGraphs, sectionIds, type ForcePlan } from '../../core/graph/sections.ts';
+import type { EvolveInfo } from '../../core/graph/evolve.ts';
 import { transEntry } from '../../core/transitions.ts';
 import { POST_DEFAULT, mixPost, type PostParams } from '../../core/post.ts';
 import { DEFAULT_PRESETS } from '../../core/protocol.ts';
@@ -33,15 +34,19 @@ export interface GraphScene {
   readonly sections: string[];
   /** The section shown in the last state (null without sections) and the one blending out, if any. */
   section(): { id: string; from: string | null } | null;
-  /** The lab: force sections in turn (null = back to `when`). */
+  /** The lab: force sections (or evolve steps) in turn (null = back to `when` / the grid). */
   force(plan: ForcePlan | null): void;
+  /** An evolving scene: the state shown in the last state (what a vote records), else null. */
+  evolve(): EvolveInfo | null;
 }
 
 export function graphScene(device: GPUDevice, g: SceneGraph, budget: Budget, reg: Registry = REGISTRY): GraphScene {
-  const cpu = sceneCpu(g, reg), graphs = sectionGraphs(g);
-  const runner = new GraphRunner(device, cpu.plans, budget);
+  const cpu = sceneCpu(g, reg), graphs = g.evolve ? [g] : sectionGraphs(g), evo = cpu.evolve;
+  // an evolving scene: every slot is a socket holding all its candidates, swaps blended by a transition of its own
+  const runner = new GraphRunner(device, cpu.plans, budget, evo ? { sockets: evo.sockets, mixer: reg.get('core-transition') } : {});
   const posts = graphs.map((x) => ({ ...POST_DEFAULT, ...x.post }));
-  const ids = g.sections ? sectionIds(g) : [];
+  const ids = g.sections || g.evolve ? sectionIds(g) : [];
+  const picks = (p: number[]) => Object.fromEntries(evo!.ev.slots.map((s, i) => [s.node, p[i]]));
   /** Section blends: the two variants' targets and a transition node of the scene's own. */
   const mix = g.sections ? instantiate(device, reg.get('core-transition')!, budget) : null;
   let pair: [GPUTexture, GPUTexture] | null = null;
@@ -70,6 +75,12 @@ export function graphScene(device: GPUDevice, g: SceneGraph, budget: Budget, reg
     get post() { return post; },
     encode(enc, target, s, tick, F, sub, pads) {
       const sf = frames.get(s) ?? cpu.state(tick, F, sub), tr = sf.trans;
+      if (sf.evolve) {
+        const e = sf.evolve, blend = tr && sf.prev ? { frame: sf.prev, pick: picks(e.prevPick), trans: tr } : undefined;
+        runner.encodeJobs(enc, [{ plan: 0, target, frame: sf.cur, pick: picks(e.pick), blend }], pads);
+        post = posts[0];
+        return;
+      }
       if (!tr || !mix) {
         runner.encodeJobs(enc, [{ plan: sf.plan, target, frame: sf.cur }], pads);
         post = posts[sf.plan];
@@ -88,8 +99,10 @@ export function graphScene(device: GPUDevice, g: SceneGraph, budget: Budget, reg
     bench: runner.hasBench ? async () => (await runner.bench())! : undefined,
     invalidate: (t) => runner.invalidate(t),
     status: () => runner.status(),
-    section: () => (last?.step ? { id: ids[last.plan], from: last.trans ? ids[last.from] : null } : null),
+    section: () => (last?.evolve ? { id: `s${last.evolve.step.k}`, from: last.trans ? `s${last.evolve.step.prev}` : null }
+      : last?.step ? { id: ids[last.plan], from: last.trans ? ids[last.from] : null } : null),
     force: (p) => cpu.force(p),
+    evolve: () => (last?.evolve && evo ? evo.info(last) : null),
   };
 }
 

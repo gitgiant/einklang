@@ -70,7 +70,7 @@ const withToken = (p: string) => (token ? `${p}?t=${encodeURIComponent(token)}` 
  * The vote panel: 👍/👎 and reason tags for the scene shown, and under it the row for the last transition,
  * posted to the server. `scored`: the transition scores, whenever they arrive or change.
  */
-function votePanel(sceneOf: () => { id: string; name: string } | null, scored: (s: Record<string, number>) => void) {
+function votePanel(sceneOf: () => { id: string; name: string; evolve?: unknown } | null, scored: (s: Record<string, number>) => void) {
   const el = document.createElement('div'); el.id = 'vote';
   const label = document.createElement('span'), up = document.createElement('button'), down = document.createElement('button');
   const tags = document.createElement('div'); tags.className = 'tags';
@@ -114,10 +114,11 @@ function votePanel(sceneOf: () => { id: string; name: string } | null, scored: (
     .then((j: { scores: Record<string, number>; live: string[]; transScores?: Record<string, number> }) => { scores = j.scores; live = j.live; transScores = j.transScores ?? {}; online = true; scored(transScores); show(); })
     .catch(() => { online = false; show(); });
   const send = async (vote: 1 | -1) => {
-    const id = sceneOf()?.id;
+    const sc = sceneOf(), id = sc?.id;
     if (!id || !online) return;
     try {
-      const j = await post({ scene: id, vote, tags: [...picked] });
+      // an evolving scene: the state on screen goes with the vote (the digest learns which mutations are liked)
+      const j = await post({ scene: id, vote, tags: [...picked], ...(sc.evolve ? { evolve: sc.evolve } : {}) });
       scores[id] = j.score;
       if (j.retired) live = live.filter((x) => x !== id); else if (!live.includes(id)) live.push(id);
       note.textContent = `${vote > 0 ? '👍' : '👎'} saved${picked.size ? ` (${[...picked].join(', ')})` : ''}`;
@@ -246,7 +247,7 @@ async function main() {
     else beats = next;
   };
   const votes = votePanel(
-    () => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name }),
+    () => (grid || !hud ? null : { id: cells[0].engine.scene.def.id, name: cells[0].engine.scene.def.name, evolve: cells[0].engine.scene.evolve() ?? undefined }),
     (s) => { if (!qs.has('at') && !qs.has('stop')) latestScores = s; }, // stills repeat, votes or not
   );
   /** The tick space starts over (new input, looped file): sims replay, the cycle carries on from the scene showing. */

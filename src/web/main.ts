@@ -406,7 +406,10 @@ async function start() {
     if (v.t === 'transvote' && v.host === hostName) tvote.saved('saved');
   });
   /** Vote on the scene showing now (during a transition: the one coming in). A 👎 also skips. */
-  const vote = (v: 1 | -1) => send({ t: 'vote', scene: sceneAt(room.scene, lastF), vote: v, quant: quant(), trans: transReq() });
+  const vote = (v: 1 | -1) => {
+    const id = sceneAt(room.scene, lastF), evolve = engine.scenes.find((s) => s.def.id === id)?.evolve() ?? undefined;
+    send({ t: 'vote', scene: id, vote: v, quant: quant(), trans: transReq(), ...(evolve ? { evolve } : {}) });
+  };
   listeners.lateEvent.push((t) => engine.invalidate(t));
 
   let hudOn = true, lastHash = '', lastF = 0;
