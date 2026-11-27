@@ -21,6 +21,8 @@ export interface SheetHost {
   change(patch: Partial<Settings>): void;
   /** The input picker, kept here. */
   input: HTMLElement;
+  /** The server restart control, kept here too (it may be waiting for the server). */
+  restart: HTMLElement;
   /** The shown scene's variants: its sections or evolve state. */
   now(): { id: string; name: string; sections: string[]; section: { id: string; from: string | null } | null; evolve: EvolveInfo | null; held: boolean };
   nextStep(): void;
@@ -178,6 +180,7 @@ export function pickerSheet(host: SheetHost): Sheet {
     if (!canFull) pane.append(el('p', 'dim', 'this browser has no fullscreen (iPhone)'));
     if (wake.disabled) pane.append(el('p', 'dim', `keeping the screen awake needs ${isSecureContext ? 'a newer browser' : 'https or localhost'}`));
     pane.append(el('p', 'dim', 'double-tap the picture hides the controls; tap its left / right third for the previous / next scene'));
+    pane.append(host.restart);
   };
 
   // ---- shell ----

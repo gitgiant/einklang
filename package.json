@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "server": "node --experimental-strip-types --no-warnings src/server/main.ts",
+    "server": "node --experimental-strip-types --no-warnings src/server/supervisor.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\"",
     "build:live": "node --experimental-strip-types --no-warnings scripts/build-live.ts",

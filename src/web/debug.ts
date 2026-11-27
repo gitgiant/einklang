@@ -22,7 +22,8 @@ export class DebugPanel {
   private nextText = 0;
   private sections: () => [string, string[]][];
 
-  constructor(sections: () => [string, string[]][]) {
+  /** `controls` sit above the readouts. */
+  constructor(sections: () => [string, string[]][], ...controls: HTMLElement[]) {
     this.sections = sections;
     this.el = document.createElement('div');
     this.el.id = 'debug';
@@ -30,7 +31,7 @@ export class DebugPanel {
     this.cv = document.createElement('canvas');
     this.cv.width = HIST * 2; this.cv.height = 90;
     this.txt = document.createElement('pre');
-    this.el.append(this.cv, this.txt);
+    this.el.append(...controls, this.cv, this.txt);
     document.body.append(this.el);
     try {
       new PerformanceObserver((l) => { this.longTasks += l.getEntries().length; }).observe({ type: 'longtask', buffered: false });
