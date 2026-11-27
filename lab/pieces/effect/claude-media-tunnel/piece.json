@@ -1,0 +1,28 @@
+{
+  "id": "claude-media-tunnel", "kind": "effect", "name": "Media tunnel",
+  "doc": "Flies down a tunnel (round or a polygon) whose walls are lined with the picture, tiled around and along it, and pushed inward by its brightness into relief; the beat surges the flight and fires rings of light down the walls, the bass bulges the relief, the tunnel twists and rolls with the bar.",
+  "ports": {
+    "in": {
+      "height": { "type": "mask", "doc": "relief 0..1, e.g. core-media.luma" },
+      "in": { "type": "tex", "optional": true, "doc": "wall colours (colour mode: picture)" },
+      "palette": { "type": "palette", "optional": true, "doc": "rings, glow and fog" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "sides": { "type": "int", "default": 0, "min": 0, "max": 8, "doc": "0 = round, 3..8 = a polygon" },
+    "repeat": { "type": "int", "default": 2, "min": 1, "max": 6, "doc": "times the picture goes around (mirrored, so no seam)" },
+    "relief": { "type": "float", "default": 0.35, "min": 0, "max": 0.8, "doc": "how far bright parts stand out of the wall (tunnel radius = 1)" },
+    "bass": { "type": "float", "default": 0.6, "min": 0, "max": 1.5, "doc": "the bass bulges the relief" },
+    "speed": { "type": "float", "default": 1.5, "min": 0, "max": 8, "doc": "flight speed, radii per second" },
+    "surge": { "type": "float", "default": 0.8, "min": 0, "max": 2, "doc": "forward lurch on each beat" },
+    "twist": { "type": "float", "default": 0.08, "min": -0.5, "max": 0.5, "doc": "turns per radius of depth" },
+    "roll": { "type": "float", "default": 0.3, "min": 0, "max": 1, "doc": "the view rolls back and forth over the bar" },
+    "colour": { "type": "enum", "default": 0, "options": ["picture", "palette", "picture + palette"] },
+    "rings": { "type": "float", "default": 1.0, "min": 0, "max": 3, "doc": "rings of light fired down the walls on the beat" },
+    "fog": { "type": "float", "default": 0.12, "min": 0, "max": 0.5 }
+  },
+  "shader": "tunnel.wgsl", "budget": { "ms": 0.8, "scales": "res" },
+  "tags": ["3d", "tunnel", "flight", "relief", "media"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

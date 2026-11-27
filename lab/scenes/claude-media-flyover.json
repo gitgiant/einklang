@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "id": "claude-media-flyover",
+  "name": "Media: flyover",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "3d", "terrain"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 10, "gain": 1.5 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 8, "gain": 2 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 2, "chroma": 0.17, "light": 0.7, "contrast": 0.55 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.5, 0.9] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.1, "drift": 0.15, "contrast": 1.15, "saturation": 1.1 } },
+    { "id": "land", "piece": "claude-luma-terrain",
+      "params": { "height": 1.1, "bass": 0.7, "speed": 1.4, "surge": 0.7, "scale": 7, "pitch": 0.2, "bank": 0.6, "colour": 0, "contour": 0.9, "fog": 0.05 },
+      "bind": { "contour": { "from": "high.out", "range": [0.5, 1.6] } } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.3, "zoom": 0.004, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.luma", "to": "land.height" },
+    { "from": "media.out", "to": "land.in" },
+    { "from": "pal.palette", "to": "land.palette" },
+    { "from": "land.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.6, "threshold": 0.65 },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-blend", "beats": 2,
+    "variants": [
+      { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+        "params": { "land": { "colour": 2, "speed": 3.2, "surge": 1.3, "height": 1.5, "grid": 1.2, "pitch": 0.26 }, "fx": { "decay": 0.5 } },
+        "post": { "bloom": 0.85 } },
+      { "id": "build", "when": { "section": "build" },
+        "params": { "land": { "speed": 2.2, "surge": 1.0, "grid": 0.5 } } },
+      { "id": "breakdown", "when": { "section": "breakdown" }, "transition": "core-dissolve", "beats": 4,
+        "params": { "land": { "colour": 1, "speed": 0.7, "surge": 0.4, "contour": 1.8, "fog": 0.08, "pitch": 0.34, "height": 0.8 } },
+        "bind": { "land": { "contour": null } } }
+    ]
+  }
+}

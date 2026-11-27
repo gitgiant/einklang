@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "id": "claude-media-tube",
+  "name": "Media: tube ride",
+  "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "3d", "tunnel"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.6 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 48, "shape": 0 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 4, "chroma": 0.18, "light": 0.7, "contrast": 0.6 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.0, 1.0] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.15, "drift": 0.2, "contrast": 1.2, "saturation": 1.15 } },
+    { "id": "tube", "piece": "claude-media-tunnel",
+      "params": { "sides": 0, "repeat": 2, "relief": 0.3, "bass": 0.8, "speed": 1.6, "surge": 0.9, "twist": 0.06, "roll": 0.35, "colour": 0, "rings": 1.0, "fog": 0.12 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.45, "zoom": 0.01, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.luma", "to": "tube.height" },
+    { "from": "media.out", "to": "tube.in" },
+    { "from": "pal.palette", "to": "tube.palette" },
+    { "from": "tube.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.65, "threshold": 0.6 },
+  "sections": {
+    "on": "phrase",
+    "transition": "random", "beats": 2,
+    "variants": [
+      { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+        "params": { "tube": { "sides": 6, "speed": 3.6, "surge": 1.4, "twist": 0.16, "colour": 2, "rings": 1.8, "relief": 0.4 }, "fx": { "decay": 0.6 } },
+        "post": { "bloom": 0.85 } },
+      { "id": "build", "when": { "section": "build" },
+        "params": { "tube": { "sides": 4, "speed": 2.4, "twist": -0.1, "repeat": 3 } } },
+      { "id": "breakdown", "when": { "section": "breakdown" }, "transition": "core-dissolve", "beats": 4,
+        "params": { "tube": { "speed": 0.6, "surge": 0.4, "colour": 1, "relief": 0.5, "roll": 0.7, "fog": 0.18 } } }
+    ]
+  }
+}
