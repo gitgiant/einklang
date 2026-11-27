@@ -1,0 +1,50 @@
+{
+  "format": 1, "id": "claude-evolve-media-strata", "name": "Evolve media: strata", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "3d", "terrain"],
+  "doc": "Your picture (image, video or camera) raised into 3D by its own brightness, and the relief changes body every phrase: a low flight over a mirrored terrain, a tunnel lined with it, a field of cubes, stacked ridgelines; the picture always colours the surface, seen through soft trails, a kaleidoscope, dots, halftone or pixels, under palettes that drift from dusk to sea to ember.",
+  "nodes": [
+    { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 8, "gain": 2 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 2, "chroma": 0.16, "light": 0.7, "contrast": 0.55 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.55, 0.9] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.12, "drift": 0.2, "contrast": 1.15, "saturation": 1.1 } },
+    { "id": "relief", "piece": "claude-luma-terrain",
+      "params": { "height": 1.1, "bass": 0.7, "speed": 1.4, "surge": 0.7, "scale": 7, "pitch": 0.2, "bank": 0.6, "colour": 0, "contour": 0.9, "fog": 0.05 },
+      "bind": { "contour": { "from": "high.out", "range": [0.5, 1.6] } } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.3, "zoom": 0.004, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.luma", "to": "relief.height" },
+    { "from": "media.out", "to": "relief.in" },
+    { "from": "pal.palette", "to": "relief.palette" },
+    { "from": "relief.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.55, "threshold": 0.68 },
+  "evolve": {
+    "every": "phrase", "transition": "core-luma", "beats": 4,
+    "slots": [
+      { "node": "relief", "pool": [
+        { "piece": "claude-media-tunnel", "params": { "colour": 0, "rings": 1.2, "roll": 0.3 },
+          "ranges": { "sides": [0, 6], "repeat": [1, 3], "relief": [0.25, 0.55], "twist": [-0.2, 0.2], "speed": [1, 2.5] } },
+        { "piece": "claude-media-cubes", "params": { "colour": 0, "edges": 0.9 },
+          "ranges": { "cells": [28, 56], "height": [3, 6], "tilt": [0.6, 1.0], "spin": [-0.08, 0.08] } },
+        { "piece": "claude-ridges", "params": { "colour": 0, "fill": 0.92 },
+          "ranges": { "lines": [44, 90], "height": [0.1, 0.2], "tilt": [0.35, 0.65], "glow": [1, 2] } },
+        { "piece": "claude-luma-terrain", "params": { "colour": 2, "grid": 0.8, "contour": 1.2 },
+          "ranges": { "speed": [1.2, 2.6], "height": [0.9, 1.5], "pitch": [0.18, 0.3], "scale": [5, 9] } }
+      ] },
+      { "node": "fx", "pool": [
+        { "piece": "core-kaleido", "params": { "zoom": 1.1 }, "ranges": { "segments": [4, 8], "spin": [-0.05, 0.05] } },
+        { "piece": "claude-dots", "params": { "under": 0.2 }, "ranges": { "cell": [8, 16], "wander": [0.2, 0.5] } },
+        { "piece": "agy-halftone" },
+        { "piece": "core-pixelate" }
+      ] },
+      { "node": "pal", "pool": [
+        { "piece": "core-swatch", "params": { "colors": "#06121f #0d4c63 #2a9d8f #e9c46a #f4f1de" } },
+        { "piece": "core-swatch", "params": { "colors": "#12060a #4a1024 #b8332f #f08a4b #ffe3b3" } }
+      ] }
+    ]
+  }
+}

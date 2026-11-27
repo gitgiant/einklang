@@ -1,0 +1,48 @@
+{
+  "format": 1, "id": "claude-evolve-media-layers", "name": "Evolve media: layers", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "key", "composite"],
+  "doc": "Your picture (image, video or camera) split by its own brightness into two layers that each change treatment over the song: the bright parts as stained glass or a line-screen print, the dark parts warped along their contours and shattered into refracting shards, bent over a CRT or hung as a billboard over water; the key breathes with the bass and the cut line glows in palettes that drift per phrase.",
+  "nodes": [
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 48, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.16, "light": 0.72, "contrast": 0.55 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.0, 0.35] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.2, "pulse": 0.2, "drift": 0.35, "contrast": 1.1, "saturation": 1.05 } },
+    { "id": "warp", "piece": "claude-displace", "params": { "amount": 0.025, "swirl": 0.7, "beat": 0.6, "bass": 0.5, "chroma": 0.4, "outline": 0.3 } },
+    { "id": "fg", "piece": "codex-leadlight", "params": { "cells": 11 } },
+    { "id": "bg", "piece": "codex-fracture-plate", "params": { "tiles": 13, "breakup": 0.34 } },
+    { "id": "mix", "piece": "claude-lumakey", "params": { "threshold": 0.5, "soft": 0.08, "bass": 0.35, "rim": 1.2 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "warp.in" },
+    { "from": "media.edges", "to": "warp.by" },
+    { "from": "pal.palette", "to": "warp.palette" },
+    { "from": "media.out", "to": "fg.picture" },
+    { "from": "media.luma", "to": "fg.light" },
+    { "from": "warp.out", "to": "bg.picture" },
+    { "from": "fg.out", "to": "mix.fg" },
+    { "from": "bg.out", "to": "mix.bg" },
+    { "from": "media.luma", "to": "mix.key" },
+    { "from": "pal.palette", "to": "mix.palette" }
+  ],
+  "out": "mix.out",
+  "post": { "bloom": 0.3, "threshold": 0.75 },
+  "evolve": {
+    "every": "phrase", "transition": "core-luma", "beats": 4,
+    "slots": [
+      { "node": "fg", "pool": [
+        { "piece": "codex-nodal-print", "ranges": { "nodal": [0.08, 0.16], "lines": [80, 140] } },
+        { "piece": "codex-leadlight", "ranges": { "cells": [7, 16] } }
+      ] },
+      { "node": "bg", "pool": [
+        { "piece": "codex-tracking", "ranges": { "tracking": [0.3, 0.7], "phosphor": [0, 0.4] } },
+        { "piece": "codex-tideline" },
+        { "piece": "codex-fracture-plate", "ranges": { "tiles": [9, 20], "breakup": [0.25, 0.5] } }
+      ] },
+      { "node": "pal", "pool": [
+        { "piece": "core-swatch", "params": { "colors": "#0b0614 #3a1c5d #c0398f #ffb86b #fff3d6" } },
+        { "piece": "core-swatch", "params": { "colors": "#03140f #0f5040 #3fb68b #d6f26b #fbfff0" } }
+      ] }
+    ]
+  }
+}
