@@ -3,27 +3,118 @@
   "id": "agy-forge",
   "name": "Forge",
   "version": 1,
-  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
-  "status": "live",
+  "author": {
+    "vendor": "agy",
+    "model": "gemini-4-neon-medium"
+  },
+  "status": "retired",
   "created": "2026-11-26",
   "nodes": [
-    { "id": "heat", "piece": "core-follow", "params": { "lo": 0, "hi": 5, "window": 10, "gain": 2.2 } },
-    { "id": "sub", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.8 } },
-    { "id": "bb", "piece": "agy-blackbody", "params": { "min_k": 950, "max_k": 5200, "heat": 9500, "gamma": 1.35, "bright": 1.1 } },
-    { "id": "molten", "piece": "core-plasma", "params": { "scale": 3.0, "speed": 0.4, "gain": 0.95 },
-      "bind": { "warp": { "from": "sub.out", "range": [0.2, 1.35] } } },
-    { "id": "flames", "piece": "core-bars", "params": { "height": 0.85, "gap": 0.14, "glow": 1.7 } },
-    { "id": "mix", "piece": "core-blend", "params": { "mode": 0, "amount": 0.85 } },
-    { "id": "glow", "piece": "core-trails", "params": { "decay": 0.84, "zoom": 0.015, "rotate": 0 } }
+    {
+      "id": "heat",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 5,
+        "window": 10,
+        "gain": 2.2
+      }
+    },
+    {
+      "id": "sub",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 6,
+        "gain": 1.8
+      }
+    },
+    {
+      "id": "bb",
+      "piece": "agy-blackbody",
+      "params": {
+        "min_k": 950,
+        "max_k": 5200,
+        "heat": 9500,
+        "gamma": 1.35,
+        "bright": 1.1
+      }
+    },
+    {
+      "id": "molten",
+      "piece": "core-plasma",
+      "params": {
+        "scale": 3,
+        "speed": 0.4,
+        "gain": 0.95
+      },
+      "bind": {
+        "warp": {
+          "from": "sub.out",
+          "range": [
+            0.2,
+            1.35
+          ]
+        }
+      }
+    },
+    {
+      "id": "flames",
+      "piece": "core-bars",
+      "params": {
+        "height": 0.85,
+        "gap": 0.14,
+        "glow": 1.7
+      }
+    },
+    {
+      "id": "mix",
+      "piece": "core-blend",
+      "params": {
+        "mode": 0,
+        "amount": 0.85
+      }
+    },
+    {
+      "id": "glow",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.84,
+        "zoom": 0.015,
+        "rotate": 0
+      }
+    }
   ],
   "edges": [
-    { "from": "heat.out", "to": "bb.energy" },
-    { "from": "bb.palette", "to": "molten.palette" },
-    { "from": "bb.palette", "to": "flames.palette" },
-    { "from": "molten.out", "to": "mix.a" },
-    { "from": "flames.out", "to": "mix.b" },
-    { "from": "mix.out", "to": "glow.in" }
+    {
+      "from": "heat.out",
+      "to": "bb.energy"
+    },
+    {
+      "from": "bb.palette",
+      "to": "molten.palette"
+    },
+    {
+      "from": "bb.palette",
+      "to": "flames.palette"
+    },
+    {
+      "from": "molten.out",
+      "to": "mix.a"
+    },
+    {
+      "from": "flames.out",
+      "to": "mix.b"
+    },
+    {
+      "from": "mix.out",
+      "to": "glow.in"
+    }
   ],
   "out": "glow.out",
-  "post": { "bloom": 0.65, "threshold": 0.65 }
+  "post": {
+    "bloom": 0.65,
+    "threshold": 0.65
+  }
 }

@@ -7,7 +7,7 @@
     "vendor": "agy",
     "model": "gemini-4-neon-medium"
   },
-  "status": "live",
+  "status": "retired",
   "created": "2026-11-27",
   "nodes": [
     {
@@ -27,7 +27,7 @@
         "lo": 10,
         "hi": 15,
         "window": 5,
-        "gain": 2.0
+        "gain": 2
       }
     },
     {
@@ -50,7 +50,10 @@
       "bind": {
         "hue": {
           "from": "hue_lfo.out",
-          "range": [0.02, 0.98]
+          "range": [
+            0.02,
+            0.98
+          ]
         }
       }
     },
@@ -65,11 +68,17 @@
       "bind": {
         "burst_scale": {
           "from": "bass.out",
-          "range": [0.75, 1.85]
+          "range": [
+            0.75,
+            1.85
+          ]
         },
         "sparkle": {
           "from": "highs.out",
-          "range": [0.4, 1.85]
+          "range": [
+            0.4,
+            1.85
+          ]
         }
       }
     },
@@ -79,7 +88,7 @@
       "params": {
         "decay": 0.42,
         "zoom": 0.003,
-        "rotate": 0.0
+        "rotate": 0
       }
     }
   ],

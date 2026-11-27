@@ -7,7 +7,7 @@
     "vendor": "agy",
     "model": "gemini-4-neon-high"
   },
-  "status": "live",
+  "status": "retired",
   "created": "2026-11-26",
   "nodes": [
     {
@@ -50,7 +50,10 @@
       "bind": {
         "hue": {
           "from": "hue_lfo.out",
-          "range": [0.62, 0.88]
+          "range": [
+            0.62,
+            0.88
+          ]
         }
       }
     },
@@ -65,15 +68,24 @@
       "bind": {
         "bolts": {
           "from": "bass.out",
-          "range": [0.95, 2.2]
+          "range": [
+            0.95,
+            2.2
+          ]
         },
         "glow": {
           "from": "highs.out",
-          "range": [1.1, 2.25]
+          "range": [
+            1.1,
+            2.25
+          ]
         },
         "haze": {
           "from": "bass.out",
-          "range": [0.45, 0.95]
+          "range": [
+            0.45,
+            0.95
+          ]
         }
       }
     },
@@ -101,6 +113,6 @@
   "post": {
     "bloom": 0.72,
     "threshold": 0.68,
-    "exposure": 1.0
+    "exposure": 1
   }
 }

@@ -1,11 +1,31 @@
 {
- "votes": 0,
- "latest": null,
+ "votes": 51,
+ "latest": "2026-11-27T12:57:04.901Z",
  "scenes": {
-  "agy-attractor-bloom": {
+  "agy-aesthetic-beach": {
    "up": 0,
    "down": 0,
    "score": 0,
+   "tags": {},
+   "name": "Aesthetic Beach",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-dolphin-beach",
+    "claude-crt",
+    "core-audio",
+    "core-blend",
+    "core-follow",
+    "core-sprite-emitter",
+    "core-swatch",
+    "core-text"
+   ]
+  },
+  "agy-attractor-bloom": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
    "tags": {},
    "name": "Attractor bloom",
    "vendor": "agy",
@@ -38,15 +58,206 @@
     "core-tunnel"
    ]
   },
-  "agy-forge": {
+  "agy-evolve-glitch": {
    "up": 0,
    "down": 0,
    "score": 0,
    "tags": {},
-   "name": "Forge",
+   "name": "Evolve: glitch",
    "vendor": "agy",
    "live": 0,
    "status": "live",
+   "pieces": [
+    "agy-matrix",
+    "agy-pixelsort",
+    "core-audio",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-harmony": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: harmony",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-pianoroll",
+    "core-audio",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-evolve-media-datamask": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: Data Mask",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-bayer-dither",
+    "agy-data-mask",
+    "agy-spectrogram",
+    "claude-displace",
+    "claude-lumakey",
+    "codex-tracking",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-media-mosh": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: Glitch Mosh",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-pixelsort",
+    "agy-slitscan",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-media-relief": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: Glitch Relief",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-lumakey",
+    "claude-media-tunnel",
+    "claude-slices",
+    "codex-nodal-print",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-sim-automata": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: Cellular Pixel",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-bayer-dither",
+    "agy-media-life",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-sim-ecosystem": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: Living Pixels",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-media-life",
+    "claude-pixel-art",
+    "core-follow",
+    "core-lfo",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-sim-sandfall": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: Crumbling Sand",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-pixel-sand",
+    "agy-pixelsort",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-spectra": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: spectra",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-spectrogram",
+    "claude-copper",
+    "core-audio",
+    "core-harmony",
+    "core-trails"
+   ]
+  },
+  "agy-falling-notes": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Falling notes",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-pianoroll",
+    "core-follow",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-finale": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Grand finale",
+   "vendor": "agy",
+   "live": 0,
+   "status": "retired",
+   "pieces": [
+    "agy-fireworks",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-trails"
+   ]
+  },
+  "agy-forge": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Forge",
+   "vendor": "agy",
+   "live": 0,
+   "status": "retired",
    "pieces": [
     "agy-blackbody",
     "core-bars",
@@ -56,10 +267,171 @@
     "core-trails"
    ]
   },
-  "agy-print-run": {
+  "agy-harmony-wheel": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Harmony wheel",
+   "vendor": "agy",
+   "live": 0,
+   "status": "retired",
+   "pieces": [
+    "agy-fifths",
+    "core-blend",
+    "core-follow",
+    "core-trails",
+    "core-tunnel"
+   ]
+  },
+  "agy-media-crt-room": {
    "up": 0,
    "down": 0,
    "score": 0,
+   "tags": {},
+   "name": "Media: CRT Room",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-crt-room",
+    "core-envelope",
+    "core-follow",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-media-matrix": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "name": "Media: Matrix Code",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-media-rain",
+    "core-follow",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-media-pixelwave": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: Pixelwave",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-bayer-dither",
+    "claude-crt",
+    "claude-displace",
+    "core-envelope",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-media-slitscan": {
+   "up": 2,
+   "down": 1,
+   "score": 1,
+   "tags": {},
+   "name": "Media: Slit-Scan Mosh",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-glitch",
+    "agy-pixelsort",
+    "agy-slitscan",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-media-specmask": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: Spectral Mask",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-data-mask",
+    "agy-spectrogram",
+    "core-follow",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-media-sunset": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: Pixel Sunset",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-pixel-sunset",
+    "claude-crt",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-outrun-dusk": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Pixel Outrun Dusk",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-pixel-outrun",
+    "claude-crt",
+    "core-audio",
+    "core-blend",
+    "core-follow",
+    "core-sprite-emitter",
+    "core-swatch"
+   ]
+  },
+  "agy-pixelwave-evolve": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: Pixelwave",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-bayer-dither",
+    "agy-pixel-bust",
+    "claude-crt",
+    "core-audio",
+    "core-follow",
+    "core-swatch"
+   ]
+  },
+  "agy-print-run": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
    "tags": {},
    "name": "Print run",
    "vendor": "agy",
@@ -75,15 +447,88 @@
     "core-swatch"
    ]
   },
-  "agy-storm": {
+  "agy-rain-code": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Rain code",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-matrix",
+    "core-follow",
+    "core-lfo",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-shatter": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Crystal shatter",
+   "vendor": "agy",
+   "live": 0,
+   "status": "retired",
+   "pieces": [
+    "agy-voronoi",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-trails"
+   ]
+  },
+  "agy-smear": {
    "up": 0,
    "down": 0,
    "score": 0,
    "tags": {},
-   "name": "High-voltage storm",
+   "name": "Chrome smear",
    "vendor": "agy",
    "live": 0,
    "status": "live",
+   "pieces": [
+    "agy-pixelsort",
+    "core-blend",
+    "core-follow",
+    "core-kaleido",
+    "core-lfo",
+    "core-plasma",
+    "core-radial",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-spectrogram-wall": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Spectrogram wall",
+   "vendor": "agy",
+   "live": 0,
+   "status": "retired",
+   "pieces": [
+    "agy-spectrogram",
+    "core-blend",
+    "core-follow",
+    "core-swatch",
+    "core-trails",
+    "core-tunnel"
+   ]
+  },
+  "agy-storm": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "High-voltage storm",
+   "vendor": "agy",
+   "live": 0,
+   "status": "retired",
    "pieces": [
     "agy-lightning",
     "core-follow",
@@ -92,10 +537,29 @@
     "core-trails"
    ]
   },
-  "agy-unknown-ridges": {
-   "up": 0,
+  "agy-terminal": {
+   "up": 2,
    "down": 0,
-   "score": 0,
+   "score": 2,
+   "tags": {},
+   "name": "Phosphor terminal",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-ascii",
+    "claude-metaballs",
+    "core-blend",
+    "core-follow",
+    "core-lfo",
+    "core-scope",
+    "core-swatch"
+   ]
+  },
+  "agy-unknown-ridges": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
    "tags": {},
    "name": "Unknown ridges",
    "vendor": "agy",
@@ -109,10 +573,58 @@
     "core-trails"
    ]
   },
-  "claude-copper-sky": {
+  "agy-waterfall": {
    "up": 0,
    "down": 0,
    "score": 0,
+   "tags": {},
+   "name": "Sonar waterfall",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-spectrogram",
+    "core-follow",
+    "core-lfo",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-banner": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Banner",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-cloth",
+    "core-audio",
+    "core-lfo",
+    "core-swatch"
+   ]
+  },
+  "claude-chiptune-gig": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Chiptune stage",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-chip-stage",
+    "claude-pixel-art",
+    "core-envelope"
+   ]
+  },
+  "claude-copper-sky": {
+   "up": 0,
+   "down": 1,
+   "score": -1,
    "tags": {},
    "name": "Copper sky",
    "vendor": "claude",
@@ -130,8 +642,8 @@
   },
   "claude-coral": {
    "up": 0,
-   "down": 0,
-   "score": 0,
+   "down": 1,
+   "score": -1,
    "tags": {},
    "name": "Coral",
    "vendor": "claude",
@@ -162,15 +674,200 @@
     "core-swatch"
    ]
   },
-  "claude-handheld": {
+  "claude-evolve-media-dissolve": {
    "up": 0,
    "down": 0,
    "score": 0,
    "tags": {},
-   "name": "Handheld",
+   "name": "Evolve media: dissolve",
    "vendor": "claude",
    "live": 0,
    "status": "live",
+   "pieces": [
+    "claude-media-melt",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-media-layers": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: layers",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-displace",
+    "claude-lumakey",
+    "codex-fracture-plate",
+    "codex-leadlight",
+    "core-harmony",
+    "core-lfo",
+    "core-media"
+   ]
+  },
+  "claude-evolve-media-strata": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: strata",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-luma-terrain",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-mycelium": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: mycelium",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-physarum",
+    "core-audio",
+    "core-harmony",
+    "core-kaleido"
+   ]
+  },
+  "claude-evolve-sim-coral": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: coral print",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-reaction",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-sim-ink": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: ink tank",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-dye",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-sim-mould": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: slime garden",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-mould",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-tidepool": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: tide pool",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-sph",
+    "claude-zoomfeed",
+    "core-audio",
+    "core-harmony"
+   ]
+  },
+  "claude-evolve-weather": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: weather",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-boids",
+    "core-audio",
+    "core-harmony",
+    "core-trails"
+   ]
+  },
+  "claude-galaxy": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Galaxy",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-nbody",
+    "core-follow",
+    "core-lfo",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-grove": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Grove",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-lsystem",
+    "core-follow",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-handheld": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Handheld",
+   "vendor": "claude",
+   "live": 0,
+   "status": "retired",
    "pieces": [
     "core-bars",
     "core-blend",
@@ -199,18 +896,34 @@
   },
   "claude-julia-dive": {
    "up": 0,
-   "down": 0,
-   "score": 0,
+   "down": 2,
+   "score": -2,
    "tags": {},
    "name": "Julia dive",
    "vendor": "claude",
    "live": 0,
-   "status": "live",
+   "status": "retired",
    "pieces": [
     "claude-julia",
     "core-follow",
     "core-post",
     "core-swatch"
+   ]
+  },
+  "claude-knockdown": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "name": "Knockdown",
+   "vendor": "claude",
+   "live": 0,
+   "status": "retired",
+   "pieces": [
+    "claude-rigid",
+    "core-follow",
+    "core-swatch",
+    "core-trails"
    ]
   },
   "claude-late-show": {
@@ -248,6 +961,127 @@
     "core-trails"
    ]
   },
+  "claude-lenia": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Lenia",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-life",
+    "core-follow",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-media-flyover": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: flyover",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-luma-terrain",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-media-slime": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: slime feast",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-picture-slime",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-media-smoke": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: picture smoke",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-picture-smoke",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media"
+   ]
+  },
+  "claude-media-swarm": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: picture swarm",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-picture-swarm",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-media-tube": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: tube ride",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-tunnel",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "claude-media-voxels": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "name": "Media: cube field",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-cubes",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media"
+   ]
+  },
   "claude-murmuration": {
    "up": 0,
    "down": 0,
@@ -263,6 +1097,38 @@
     "core-lfo",
     "core-swatch",
     "core-trails"
+   ]
+  },
+  "claude-pixel-downpour": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Pixel city rain",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-pixel-art",
+    "claude-pixel-city",
+    "core-envelope",
+    "core-lfo",
+    "core-swatch"
+   ]
+  },
+  "claude-pixel-parallax": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Pixel valley",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-pixel-art",
+    "claude-pixel-valley",
+    "core-envelope"
    ]
   },
   "claude-rotozoom-party": {
@@ -314,6 +1180,22 @@
     "core-swatch"
    ]
   },
+  "claude-smoke-signals": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Smoke signals",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-fluid",
+    "core-follow",
+    "core-harmony",
+    "core-lfo"
+   ]
+  },
   "claude-sprite-party": {
    "up": 0,
    "down": 0,
@@ -330,6 +1212,22 @@
     "core-sprite-emitter",
     "core-swatch",
     "core-text",
+    "core-trails"
+   ]
+  },
+  "claude-tank": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Tank",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-sph",
+    "core-follow",
+    "core-swatch",
     "core-trails"
    ]
   },
@@ -363,6 +1261,451 @@
     "core-lfo"
    ]
   },
+  "codex-chrome-aura": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Chrome Aura",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-chrome-wordmark",
+    "core-swatch"
+   ]
+  },
+  "codex-dream-desktop": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "name": "Dream Desktop",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-tape-desktop",
+    "core-envelope",
+    "core-swatch"
+   ]
+  },
+  "codex-evolve-afterglow": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Afterglow Highway",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-cycle",
+    "codex-grid-floor",
+    "codex-neon-phosphor",
+    "core-swatch"
+   ]
+  },
+  "codex-evolve-media-relief-atlas": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Relief Atlas",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-halftone",
+    "claude-ridges",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "codex-evolve-media-soft-proof": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Soft Proof",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-fracture-plate",
+    "codex-leadlight",
+    "codex-neon-phosphor",
+    "core-follow",
+    "core-media"
+   ]
+  },
+  "codex-evolve-media-tape-index": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Tape Index",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-slitscan",
+    "claude-slices",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "codex-evolve-phosphor": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Phosphor Curves",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-crt",
+    "codex-harmonograph",
+    "codex-neon-phosphor"
+   ]
+  },
+  "codex-evolve-prism": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Prism Transit",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-neon-phosphor",
+    "codex-starfield",
+    "core-swatch"
+   ]
+  },
+  "codex-evolve-sim-contact-flock": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Contact Flock",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-pixel-flock",
+    "core-media"
+   ]
+  },
+  "codex-evolve-sim-dust-orbit": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Dust Orbit",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-photo-forces",
+    "core-media"
+   ]
+  },
+  "codex-evolve-sim-magnetic-plate": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Magnetic Plate",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-photo-forces",
+    "core-media"
+   ]
+  },
+  "codex-evolve-sim-satin-rail": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Satin Rail",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-photo-sail",
+    "core-media"
+   ]
+  },
+  "codex-evolve-sim-silver-bath": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Silver Bath",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-image-membrane",
+    "core-media"
+   ]
+  },
+  "codex-evolve-sim-tidal-negative": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Tidal Negative",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-image-membrane",
+    "core-media"
+   ]
+  },
+  "codex-hyperspace": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Hyperspace",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-starfield",
+    "core-audio",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "codex-media-after-hours": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "After Hours",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-tideline",
+    "core-media"
+   ]
+  },
+  "codex-media-contour-current": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Contour Current",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-contour-current",
+    "core-media"
+   ]
+  },
+  "codex-media-faultline": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Faultline",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-fracture-plate",
+    "core-media"
+   ]
+  },
+  "codex-media-leadlight": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Leadlight",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-leadlight",
+    "core-media"
+   ]
+  },
+  "codex-media-nodal-press": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Nodal Press",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-nodal-print",
+    "core-media"
+   ]
+  },
+  "codex-media-tape-deck": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Tape Deck",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-tracking",
+    "core-media"
+   ]
+  },
+  "codex-night-drive": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Night drive",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-wire-mountains",
+    "core-follow",
+    "core-swatch"
+   ]
+  },
+  "codex-outrun": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Outrun",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-grid-floor",
+    "core-swatch"
+   ]
+  },
+  "codex-pendulum-ink": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Pendulum Ink",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-harmonograph"
+   ]
+  },
+  "codex-ripple-tank": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Ripple tank",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-cymatics"
+   ]
+  },
+  "codex-sand-plate": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Sand plate",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-chladni"
+   ]
+  },
+  "codex-stereo-ribbon": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Stereo Ribbon",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-ribbons"
+   ]
+  },
+  "codex-sunset-atrium": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Sunset Atrium",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-marble-arcade",
+    "core-swatch"
+   ]
+  },
+  "core-acts-surge": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Acts: surge",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-metaballs",
+    "core-audio",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "core-acts-switchboard": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Acts: switchboard",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-grid-floor",
+    "codex-starfield",
+    "codex-wire-mountains",
+    "core-audio",
+    "core-crossfade",
+    "core-harmony",
+    "core-kaleido",
+    "core-random-walk",
+    "core-section",
+    "core-step",
+    "core-switch",
+    "core-trails"
+   ]
+  },
   "core-demo": {
    "up": 0,
    "down": 0,
@@ -380,6 +1723,109 @@
     "core-kaleido",
     "core-lfo",
     "core-plasma",
+    "core-trails"
+   ]
+  },
+  "core-evolve-circuit": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Evolve: circuit",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-crt",
+    "codex-grid-floor",
+    "core-audio",
+    "core-swatch"
+   ]
+  },
+  "core-evolve-garden": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve: garden",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-metaballs",
+    "core-audio",
+    "core-harmony",
+    "core-kaleido",
+    "core-trails"
+   ]
+  },
+  "core-media-dots": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Media: colour dots",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-dots",
+    "core-follow",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "core-media-kaleido": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: kaleido key",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-displace",
+    "claude-lumakey",
+    "core-follow",
+    "core-harmony",
+    "core-kaleido",
+    "core-lfo",
+    "core-media",
+    "core-plasma",
+    "core-trails"
+   ]
+  },
+  "core-media-ridges": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "name": "Media: ridgelines",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-ridges",
+    "core-follow",
+    "core-harmony",
+    "core-media",
+    "core-trails"
+   ]
+  },
+  "core-media-stage": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Media: stage",
+   "vendor": "core",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-slices",
+    "core-follow",
+    "core-media",
     "core-trails"
    ]
   },
@@ -452,20 +1898,494 @@
    ]
   }
  },
- "pieces": {},
- "vendors": {},
+ "pieces": {
+  "agy-attractor": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "core-blend": {
+   "up": 5,
+   "down": 9,
+   "score": -4,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 9
+  },
+  "core-follow": {
+   "up": 17,
+   "down": 19,
+   "score": -2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 22
+  },
+  "core-harmony": {
+   "up": 5,
+   "down": 6,
+   "score": -1,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 7
+  },
+  "core-lfo": {
+   "up": 9,
+   "down": 7,
+   "score": 2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 10
+  },
+  "core-trails": {
+   "up": 6,
+   "down": 14,
+   "score": -8,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 12
+  },
+  "agy-fireworks": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "agy-blackbody": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "core-bars": {
+   "up": 0,
+   "down": 4,
+   "score": -4,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 2
+  },
+  "core-plasma": {
+   "up": 1,
+   "down": 3,
+   "score": -2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 3
+  },
+  "agy-fifths": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "core-tunnel": {
+   "up": 0,
+   "down": 4,
+   "score": -4,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 2
+  },
+  "agy-ascii": {
+   "up": 3,
+   "down": 0,
+   "score": 3,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 2
+  },
+  "agy-glitch": {
+   "up": 4,
+   "down": 1,
+   "score": 3,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 3
+  },
+  "agy-media-rain": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "core-media": {
+   "up": 8,
+   "down": 1,
+   "score": 7,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 5
+  },
+  "core-swatch": {
+   "up": 17,
+   "down": 11,
+   "score": 6,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 18
+  },
+  "agy-pixelsort": {
+   "up": 2,
+   "down": 1,
+   "score": 1,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "agy-slitscan": {
+   "up": 2,
+   "down": 1,
+   "score": 1,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "agy-pixel-outrun": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "claude-crt": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "core-audio": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 2
+  },
+  "core-sprite-emitter": {
+   "up": 1,
+   "down": 1,
+   "score": 0,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 2
+  },
+  "agy-halftone": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "core-radial": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 1
+  },
+  "agy-matrix": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "agy-voronoi": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "agy-spectrogram": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "agy-lightning": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 1
+  },
+  "claude-metaballs": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "core-scope": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 1
+  },
+  "agy-ridgeline": {
+   "up": 3,
+   "down": 0,
+   "score": 3,
+   "tags": {},
+   "vendor": "agy",
+   "scenes": 2
+  },
+  "claude-copper": {
+   "up": 0,
+   "down": 1,
+   "score": -1,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "core-text": {
+   "up": 0,
+   "down": 3,
+   "score": -3,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 2
+  },
+  "claude-reaction": {
+   "up": 0,
+   "down": 1,
+   "score": -1,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "core-pixelate": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 1
+  },
+  "core-sprite": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 1
+  },
+  "claude-julia": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "core-post": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 1
+  },
+  "claude-rigid": {
+   "up": 0,
+   "down": 2,
+   "score": -2,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "claude-media-cubes": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "codex-tape-desktop": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "codex",
+   "scenes": 1
+  },
+  "core-envelope": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "core",
+   "scenes": 1
+  },
+  "codex-neon-phosphor": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "codex",
+   "scenes": 1
+  },
+  "codex-wire-mountains": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "codex",
+   "scenes": 1
+  },
+  "codex-grid-floor": {
+   "up": 2,
+   "down": 0,
+   "score": 2,
+   "tags": {},
+   "vendor": "codex",
+   "scenes": 2
+  },
+  "claude-dots": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  },
+  "claude-ridges": {
+   "up": 1,
+   "down": 0,
+   "score": 1,
+   "tags": {},
+   "vendor": "claude",
+   "scenes": 1
+  }
+ },
+ "vendors": {
+  "agy": {
+   "scenes": {
+    "up": 12,
+    "down": 13,
+    "score": -1,
+    "tags": {}
+   },
+   "pieces": {
+    "up": 20,
+    "down": 15,
+    "score": 5,
+    "tags": {}
+   },
+   "transitions": {
+    "up": 2,
+    "down": 0,
+    "score": 2,
+    "tags": {}
+   }
+  },
+  "core": {
+   "scenes": {
+    "up": 3,
+    "down": 0,
+    "score": 3,
+    "tags": {}
+   },
+   "pieces": {
+    "up": 76,
+    "down": 88,
+    "score": -12,
+    "tags": {}
+   },
+   "transitions": {
+    "up": 1,
+    "down": 2,
+    "score": -1,
+    "tags": {}
+   }
+  },
+  "claude": {
+   "scenes": {
+    "up": 2,
+    "down": 8,
+    "score": -6,
+    "tags": {}
+   },
+   "pieces": {
+    "up": 7,
+    "down": 6,
+    "score": 1,
+    "tags": {}
+   },
+   "transitions": {
+    "up": 1,
+    "down": 0,
+    "score": 1,
+    "tags": {}
+   }
+  },
+  "codex": {
+   "scenes": {
+    "up": 5,
+    "down": 0,
+    "score": 5,
+    "tags": {}
+   },
+   "pieces": {
+    "up": 6,
+    "down": 0,
+    "score": 6,
+    "tags": {}
+   },
+   "transitions": {
+    "up": 0,
+    "down": 2,
+    "score": -2,
+    "tags": {}
+   }
+  }
+ },
  "tags": {},
  "transitions": {
   "core-blend": {
    "up": 0,
-   "down": 0,
-   "score": 0,
+   "down": 1,
+   "score": -1,
    "tags": {},
    "name": "blend",
    "vendor": "core",
-   "live": 0,
+   "live": 1,
    "status": "live",
-   "contexts": []
+   "contexts": [
+    {
+     "from": "agy-unknown-ridges",
+     "to": "claude-chiptune-gig",
+     "beats": 8,
+     "up": 0,
+     "down": 1
+    }
+   ]
   },
   "core-flash": {
    "up": 0,
@@ -546,14 +2466,22 @@
   },
   "core-stutter": {
    "up": 0,
-   "down": 0,
-   "score": 0,
+   "down": 1,
+   "score": -1,
    "tags": {},
    "name": "stutter",
    "vendor": "core",
-   "live": 0,
+   "live": 1,
    "status": "live",
-   "contexts": []
+   "contexts": [
+    {
+     "from": "claude-evolve-mycelium",
+     "to": "claude-evolve-tidepool",
+     "beats": 8,
+     "up": 0,
+     "down": 1
+    }
+   ]
   },
   "core-swirl": {
    "up": 0,
@@ -589,37 +2517,61 @@
    "contexts": []
   },
   "core-pixelate": {
-   "up": 0,
+   "up": 1,
    "down": 0,
-   "score": 0,
+   "score": 1,
    "tags": {},
    "name": "pixelate",
    "vendor": "core",
    "live": 0,
    "status": "live",
-   "contexts": []
+   "contexts": [
+    {
+     "from": "claude-media-flyover",
+     "to": "core-media-kaleido",
+     "beats": 16,
+     "up": 1,
+     "down": 0
+    }
+   ]
   },
   "agy-film-burn": {
-   "up": 0,
+   "up": 1,
    "down": 0,
-   "score": 0,
+   "score": 1,
    "tags": {},
    "name": "film burn",
    "vendor": "agy",
    "live": 0,
    "status": "live",
-   "contexts": []
+   "contexts": [
+    {
+     "from": "codex-media-nodal-press",
+     "to": "agy-rain-code",
+     "beats": 16,
+     "up": 1,
+     "down": 0
+    }
+   ]
   },
   "agy-ink": {
-   "up": 0,
+   "up": 1,
    "down": 0,
-   "score": 0,
+   "score": 1,
    "tags": {},
    "name": "ink bleed",
    "vendor": "agy",
-   "live": 0,
+   "live": 1,
    "status": "live",
-   "contexts": []
+   "contexts": [
+    {
+     "from": "claude-evolve-weather",
+     "to": "claude-media-flyover",
+     "beats": 8,
+     "up": 1,
+     "down": 0
+    }
+   ]
   },
   "agy-liquid": {
    "up": 0,
@@ -655,15 +2607,23 @@
    "contexts": []
   },
   "claude-cube": {
-   "up": 0,
+   "up": 1,
    "down": 0,
-   "score": 0,
+   "score": 1,
    "tags": {},
    "name": "cube",
    "vendor": "claude",
-   "live": 0,
+   "live": 1,
    "status": "live",
-   "contexts": []
+   "contexts": [
+    {
+     "from": "codex-evolve-phosphor",
+     "to": "agy-media-crt-room",
+     "beats": 8,
+     "up": 1,
+     "down": 0
+    }
+   ]
   },
   "claude-page-turn": {
    "up": 0,
@@ -722,16 +2682,360 @@
   },
   "codex-strobe": {
    "up": 0,
-   "down": 0,
-   "score": 0,
+   "down": 2,
+   "score": -2,
    "tags": {},
    "name": "Beat Strobe",
    "vendor": "codex",
    "live": 0,
-   "status": "live",
-   "contexts": []
+   "status": "retired",
+   "contexts": [
+    {
+     "from": "core-evolve-circuit",
+     "to": "core-evolve-garden",
+     "beats": 8,
+     "up": 0,
+     "down": 1
+    },
+    {
+     "from": "core-media-kaleido",
+     "to": "core-media-ridges",
+     "beats": 16,
+     "up": 0,
+     "down": 1
+    }
+   ]
   }
  },
  "transitionTags": {},
- "retired": []
+ "retired": [
+  "agy-finale",
+  "agy-forge",
+  "agy-harmony-wheel",
+  "agy-shatter",
+  "agy-spectrogram-wall",
+  "agy-storm",
+  "claude-handheld",
+  "claude-julia-dive",
+  "claude-knockdown"
+ ],
+ "evolve": {
+  "agy-evolve-glitch": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-harmony": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-media-datamask": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-media-mosh": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-media-relief": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-sim-automata": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-sim-ecosystem": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-sim-sandfall": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-spectra": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-media-matrix": {
+   "slots": {
+    "fx": {
+     "agy-glitch": {
+      "up": 1,
+      "down": 0,
+      "score": 1,
+      "tags": {}
+     },
+     "agy-ascii": {
+      "up": 1,
+      "down": 0,
+      "score": 1,
+      "tags": {}
+     }
+    },
+    "pal": {
+     "core-swatch": {
+      "up": 2,
+      "down": 0,
+      "score": 2,
+      "tags": {}
+     }
+    }
+   },
+   "states": {
+    "fx=agy-glitch,pal=core-swatch#2": {
+     "up": 1,
+     "down": 0,
+     "score": 1,
+     "tags": {},
+     "step": 11,
+     "slots": {
+      "fx": {
+       "piece": "agy-glitch",
+       "params": {
+        "smear": 0.427,
+        "burst": 0.912,
+        "blocks": 22,
+        "amount": 0.478,
+        "displace": 0.557,
+        "rgb": 0.357
+       }
+      },
+      "pal": {
+       "piece": "core-swatch",
+       "params": {
+        "colors": "#100802 #4a2304 #ff8c00 #ffd166 #fff7db",
+        "cycle": 0.199
+       }
+      }
+     }
+    },
+    "fx=agy-ascii,pal=core-swatch#0": {
+     "up": 1,
+     "down": 0,
+     "score": 1,
+     "tags": {},
+     "step": 27,
+     "slots": {
+      "fx": {
+       "piece": "agy-ascii",
+       "params": {
+        "mode": 2,
+        "color": 0,
+        "contrast": 1.254,
+        "scanlines": 0.221,
+        "mix": 0.688,
+        "cell": 13.86,
+        "bass": 0.324
+       }
+      },
+      "pal": {
+       "piece": "core-swatch",
+       "params": {
+        "colors": "#020b05 #0a3b1e #00e676 #38ff9c #d8fff0",
+        "cycle": 0.088
+       }
+      }
+     }
+    }
+   }
+  },
+  "agy-media-pixelwave": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-pixelwave-evolve": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-media-dissolve": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-media-layers": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-media-strata": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-mycelium": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-sim-coral": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-sim-ink": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-sim-mould": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-tidepool": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-weather": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-media-slime": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-afterglow": {
+   "slots": {
+    "road": {
+     "agy-ridgeline": {
+      "up": 1,
+      "down": 0,
+      "score": 1,
+      "tags": {}
+     }
+    },
+    "colors": {
+     "core-harmony": {
+      "up": 1,
+      "down": 0,
+      "score": 1,
+      "tags": {}
+     }
+    }
+   },
+   "states": {
+    "road=agy-ridgeline,colors=core-harmony": {
+     "up": 1,
+     "down": 0,
+     "score": 1,
+     "tags": {},
+     "step": 174,
+     "slots": {
+      "road": {
+       "piece": "agy-ridgeline",
+       "params": {
+        "rows": 34,
+        "speed": 0.85,
+        "height": 0.92,
+        "perspective": 0.82,
+        "glow": 0.95,
+        "thickness": 1.22,
+        "fill": 0.68
+       }
+      },
+      "colors": {
+       "piece": "core-harmony",
+       "params": {
+        "hue": 0.7,
+        "scheme": 3,
+        "chroma": 0.18,
+        "light": 0.59,
+        "contrast": 0.78,
+        "pads": false
+       }
+      }
+     }
+    }
+   }
+  },
+  "codex-evolve-media-relief-atlas": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-media-soft-proof": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-media-tape-index": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-phosphor": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-prism": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-sim-contact-flock": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-sim-dust-orbit": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-sim-magnetic-plate": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-sim-satin-rail": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-sim-silver-bath": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-sim-tidal-negative": {
+   "slots": {},
+   "states": {}
+  },
+  "core-evolve-circuit": {
+   "slots": {
+    "gen": {
+     "codex-grid-floor": {
+      "up": 1,
+      "down": 0,
+      "score": 1,
+      "tags": {}
+     }
+    },
+    "fx": {
+     "agy-glitch": {
+      "up": 1,
+      "down": 0,
+      "score": 1,
+      "tags": {}
+     }
+    }
+   },
+   "states": {
+    "gen=codex-grid-floor,fx=agy-glitch": {
+     "up": 1,
+     "down": 0,
+     "score": 1,
+     "tags": {},
+     "step": 254,
+     "slots": {
+      "gen": {
+       "piece": "codex-grid-floor",
+       "params": {
+        "pace": 0.775,
+        "horizon": 0.565
+       }
+      },
+      "fx": {
+       "piece": "agy-glitch",
+       "params": {
+        "amount": 0.765,
+        "displace": 0.503,
+        "smear": 0.651,
+        "rgb": 0.605,
+        "burst": 0.889
+       }
+      }
+     }
+    }
+   }
+  },
+  "core-evolve-garden": {
+   "slots": {},
+   "states": {}
+  }
+ }
 }

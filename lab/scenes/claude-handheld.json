@@ -3,20 +3,81 @@
   "id": "claude-handheld",
   "name": "Handheld",
   "version": 1,
-  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
-  "status": "live",
+  "author": {
+    "vendor": "claude",
+    "model": "claude-opus-5-5"
+  },
+  "status": "retired",
   "created": "2026-11-26",
   "style": "core-gameboy",
   "nodes": [
-    { "id": "bars", "piece": "core-bars", "params": { "height": 0.55, "gap": 0.3, "glow": 1.2 } },
-    { "id": "hero", "piece": "core-sprite", "params": { "sheet": 0, "size": 0.42, "y": 0.42, "per_beat": 1, "bounce": 0.9, "swap": 1, "outline": 1 } },
-    { "id": "ticker", "piece": "core-text", "params": { "source": 2, "text": "EINKLANG  *  NOW PLAYING  *", "mode": 4, "size": 0.12, "y": 0.86, "speed": 0.3, "upper": true } },
-    { "id": "m1", "piece": "core-blend", "params": { "mode": 5 } },
-    { "id": "m2", "piece": "core-blend", "params": { "mode": 5 } }
+    {
+      "id": "bars",
+      "piece": "core-bars",
+      "params": {
+        "height": 0.55,
+        "gap": 0.3,
+        "glow": 1.2
+      }
+    },
+    {
+      "id": "hero",
+      "piece": "core-sprite",
+      "params": {
+        "sheet": 0,
+        "size": 0.42,
+        "y": 0.42,
+        "per_beat": 1,
+        "bounce": 0.9,
+        "swap": 1,
+        "outline": 1
+      }
+    },
+    {
+      "id": "ticker",
+      "piece": "core-text",
+      "params": {
+        "source": 2,
+        "text": "EINKLANG  *  NOW PLAYING  *",
+        "mode": 4,
+        "size": 0.12,
+        "y": 0.86,
+        "speed": 0.3,
+        "upper": true
+      }
+    },
+    {
+      "id": "m1",
+      "piece": "core-blend",
+      "params": {
+        "mode": 5
+      }
+    },
+    {
+      "id": "m2",
+      "piece": "core-blend",
+      "params": {
+        "mode": 5
+      }
+    }
   ],
   "edges": [
-    { "from": "bars.out", "to": "m1.a" }, { "from": "hero.out", "to": "m1.b" },
-    { "from": "m1.out", "to": "m2.a" }, { "from": "ticker.out", "to": "m2.b" }
+    {
+      "from": "bars.out",
+      "to": "m1.a"
+    },
+    {
+      "from": "hero.out",
+      "to": "m1.b"
+    },
+    {
+      "from": "m1.out",
+      "to": "m2.a"
+    },
+    {
+      "from": "ticker.out",
+      "to": "m2.b"
+    }
   ],
   "out": "m2.out"
 }

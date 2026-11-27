@@ -1,16 +1,93 @@
 {
-  "format": 1, "id": "claude-julia-dive", "name": "Julia dive", "version": 1,
-  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
-  "status": "live", "created": "2026-11-26",
+  "format": 1,
+  "id": "claude-julia-dive",
+  "name": "Julia dive",
+  "version": 1,
+  "author": {
+    "vendor": "claude",
+    "model": "claude-opus-5-5"
+  },
+  "status": "retired",
+  "created": "2026-11-26",
   "nodes": [
-    { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 9, "window": 24, "gain": 1.5 } },
-    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#02010a #1a0b3d #4b1d8f #1fb5c9 #f7f3e3 #ff6b35", "cycle": 0, "pads": true } },
-    { "id": "frac", "piece": "claude-julia",
-      "params": { "mode": 0, "iters": 220, "orbit": 0.7885, "period": 120, "phase": 0.12, "nudge": 1.2, "zoom": 0.15, "breathe": 32, "depth": 12, "fx": 0, "fy": 0, "density": 0.05, "spin": 0.008, "glow": 1.1, "flash": 1.2, "inner": 1, "cycle": 0.3 },
-      "bind": { "edge": { "from": "mid.out", "range": [1.2, 3.5] } } },
-    { "id": "fx", "piece": "core-post", "params": { "decay": 0.55, "zoom": 0.012, "rotate": 0, "bloom": 0, "threshold": 1, "exposure": 1, "view": 0 } }
+    {
+      "id": "mid",
+      "piece": "core-follow",
+      "params": {
+        "lo": 4,
+        "hi": 9,
+        "window": 24,
+        "gain": 1.5
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": {
+        "colors": "#02010a #1a0b3d #4b1d8f #1fb5c9 #f7f3e3 #ff6b35",
+        "cycle": 0,
+        "pads": true
+      }
+    },
+    {
+      "id": "frac",
+      "piece": "claude-julia",
+      "params": {
+        "mode": 0,
+        "iters": 220,
+        "orbit": 0.7885,
+        "period": 120,
+        "phase": 0.12,
+        "nudge": 1.2,
+        "zoom": 0.15,
+        "breathe": 32,
+        "depth": 12,
+        "fx": 0,
+        "fy": 0,
+        "density": 0.05,
+        "spin": 0.008,
+        "glow": 1.1,
+        "flash": 1.2,
+        "inner": 1,
+        "cycle": 0.3
+      },
+      "bind": {
+        "edge": {
+          "from": "mid.out",
+          "range": [
+            1.2,
+            3.5
+          ]
+        }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "core-post",
+      "params": {
+        "decay": 0.55,
+        "zoom": 0.012,
+        "rotate": 0,
+        "bloom": 0,
+        "threshold": 1,
+        "exposure": 1,
+        "view": 0
+      }
+    }
   ],
-  "edges": [ { "from": "pal.palette", "to": "frac.palette" }, { "from": "frac.out", "to": "fx.in" } ],
+  "edges": [
+    {
+      "from": "pal.palette",
+      "to": "frac.palette"
+    },
+    {
+      "from": "frac.out",
+      "to": "fx.in"
+    }
+  ],
   "out": "fx.out",
-  "post": { "bloom": 0.65, "threshold": 0.7 }
+  "post": {
+    "bloom": 0.65,
+    "threshold": 0.7
+  }
 }
