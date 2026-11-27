@@ -57,14 +57,14 @@ fn mc_height(cell: vec2i, d: vec2f) -> f32 {
   let wave = exp(-pow((r - beat * 1.6) * 5.0, 2.0)) * (1.0 - beat) * (0.35 + bass());
   return 0.15 + l * p_height() * (1.0 + p_bass() * bass() * 1.5) + wave * p_wave() + p_kick() * p_punch() * (0.3 + 0.7 * l);
 }
-// ray / box: entry t and normal (t < 0 = miss)
+// ray / box: entry t and normal (-1e9 = miss; t < 0 = the ray starts inside)
 fn mc_box(ro: vec3f, rd: vec3f, bmin: vec3f, bmax: vec3f) -> vec4f {
   let inv = 1.0 / rd;
   let t0 = (bmin - ro) * inv; let t1 = (bmax - ro) * inv;
   let tn = min(t0, t1); let tf = max(t0, t1);
   let tin = max(max(tn.x, tn.y), tn.z);
   let tout = min(min(tf.x, tf.y), tf.z);
-  if (tin > tout || tout < 0.0) { return vec4f(-1.0); }
+  if (tin > tout || tout < 0.0) { return vec4f(-1e9); }
   var n = vec3f(0.0, 1.0, 0.0);
   if (tin == tn.x) { n = vec3f(-sign(rd.x), 0.0, 0.0); }
   else if (tin == tn.z) { n = vec3f(0.0, 0.0, -sign(rd.z)); }
@@ -76,7 +76,7 @@ fn mc_trace(ro: vec3f, rd: vec3f, d: vec2f) -> McHit {
   let half = d * 0.5;
   let hmax = 0.15 + p_height() * (1.0 + p_bass() * 1.5) + p_wave() * 1.4 + p_punch() * p_kick() + 0.1;
   let bb = mc_box(ro, rd, vec3f(-half.x, 0.0, -half.y), vec3f(half.x, hmax, half.y));
-  if (bb.x < 0.0) { return res; }
+  if (bb.x < -1e8) { return res; } // a miss (a camera inside the box has tin < 0)
   let t0 = max(bb.x, 0.0) + 1e-3;
   let p = ro + rd * t0;
   var cell = vec2i(clamp(floor(p.xz + half), vec2f(0.0), d - 1.0));
