@@ -3,7 +3,7 @@
 import { CUE_MAX, CUE_PAD, FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import {
   CUT, DEFAULT_GRID, FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN, flowNAt, DEFAULT_PRESETS, INPUT_DELAY, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
-  type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
+  type ClientMsg, type ClockMsg, type HostInfo, type MediaRef, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
   type TickEvent, type TransReq, type TransSched, type TransType,
 } from '../core/protocol.ts';
 import { AUTO_BARS, DEFAULT_AUTO_BARS, DEFAULT_TRANS_BEATS } from '../core/protocol.ts';
@@ -52,6 +52,13 @@ export interface RoomOpts {
 }
 
 /** A transition request from a message: a registered id (short core names mapped) or 'random'; null if unusable. */
+/** A play message's file reference: name, size and hash only (no file is ever sent). */
+export function cleanMedia(m: unknown): MediaRef | null {
+  const o = m as Partial<MediaRef> | null;
+  if (!o || typeof o !== 'object' || typeof o.hash !== 'string' || !/^[0-9a-f]{1,32}$/.test(o.hash) || !(Number.isSafeInteger(o.size) && o.size! >= 0)) return null;
+  return { name: String(o.name ?? '').slice(0, 200), size: o.size!, hash: o.hash, video: o.video === true };
+}
+
 function cleanTransReq(r: unknown): TransReq | null {
   if (!r || typeof r !== 'object') return null;
   const o = r as { type?: unknown; beats?: unknown }, beats = Number(o.beats);
@@ -247,7 +254,7 @@ export class Room {
         this.leader = c;
         this.setMode({
           mode: 'file', start: this.now() + 2500, frames: this.fileFeat.readUInt32LE(1), track: this.trackId,
-          name: String(m.name ?? '').slice(0, 200), paused: null, lyrics: cleanLyrics(m.lyrics),
+          name: String(m.name ?? '').slice(0, 200), paused: null, lyrics: cleanLyrics(m.lyrics), media: cleanMedia(m.media),
         });
         for (const o of this.clients.values()) o.ws.send(this.fileFeat);
         return this.newTimeline();

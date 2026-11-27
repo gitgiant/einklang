@@ -65,9 +65,9 @@
   #sheet .said { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; }
   #input { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   #input .note { width: 100%; color: var(--dim); }
-  #input :is(.sharevideo, .media label) { display: flex; align-items: center; gap: 6px; min-height: 40px; color: var(--dim); cursor: pointer; }
-  #input .media { display: contents; }
-  #input .media [hidden] { display: none; }
+  #input .inmenu { width: 100%; }
+  #input .playlist .items { max-height: none; }
+  #input select { font-size: 16px; min-height: 40px; color: var(--fg); background: #000; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
   @media (max-width: 640px) {
     /* a phone: the picker is a bottom sheet */
     #sheet { align-items: flex-end; }

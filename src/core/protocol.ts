@@ -10,8 +10,11 @@ export const INPUT_DELAY = 6;
 
 export type Mode =
   | { mode: 'idle' }
-  /** `paused`: the frame the track is frozen on, or null while playing. */
-  | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null; lyrics?: Lyric[] | null }
+  /**
+   * `paused`: the frame the track is frozen on, or null while playing. `media`: the file the track
+   * came from (a video: hosts holding the same file show it, held on the room clock).
+   */
+  | { mode: 'file'; start: number; frames: number; track: number; name: string; paused: number | null; lyrics?: Lyric[] | null; media?: MediaRef | null }
   /** `delay`: ticks every host renders behind the leader (instrument mode 2, captured audio 6). */
   | { mode: 'live'; start: number; delay: number };
 
@@ -45,6 +48,12 @@ export interface SceneSched extends SceneStep { earlier: SceneStep[] }
 export interface Grid { origin: number; tpb: number }
 
 export interface Playlist { owner: number; names: string[]; index: number }
+
+/**
+ * A file on the leader's device, known by name, size and a hash of its ends (playlist.ts quickHash).
+ * The file itself is never sent: other hosts compare it with their own files.
+ */
+export interface MediaRef { name: string; size: number; hash: string; video: boolean }
 
 /** MIDI clock master: a host's beat `n` happened at server time `at` (ms), at tempo `bpm`. */
 export interface ClockMsg { t: 'clock'; at: number; bpm: number; n: number }
@@ -117,8 +126,8 @@ export type ClientMsg =
   | { t: 'transvote'; transition: string; from: string; to: string; beats: number; vote: 1 | -1; tags?: string[] }
   | { t: 'auto'; bars: number; trans?: TransReq }
   | { t: 'view'; host: number; view: number | null }
-  /** `lyrics`: the track's .lrc lines, if it came with one. */
-  | { t: 'play'; name?: string; lyrics?: Lyric[] } | { t: 'live'; delay?: number } | { t: 'stop' }
+  /** `lyrics`: the track's .lrc lines, if it came with one; `media`: the file it came from. */
+  | { t: 'play'; name?: string; lyrics?: Lyric[]; media?: MediaRef } | { t: 'live'; delay?: number } | { t: 'stop' }
   | { t: 'pause' } | { t: 'resume' } | { t: 'seek'; frame: number }
   /** Ask the playlist owner to play another track (absolute index, or a step from the current one). */
   | { t: 'track'; index?: number; step?: number }

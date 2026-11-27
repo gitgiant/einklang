@@ -1,5 +1,5 @@
-// Scene gallery: every scene driven by the synthetic demo track, or by an input (mic, tab / system audio, an
-// audio file; analyzed in the page), no server needed. The ☰ button (key `o`) opens the picker
+// Scene gallery: every scene driven by the synthetic demo track, or by an input (mic, external tab / system
+// audio, a playlist of files; analyzed in the page), no server needed. The ☰ button (key `o`) opens the menu
 // (gallerysheet.ts): scenes, rotation and transitions, input, the scene's variants, display. Double-tap or
 // double-click the picture to hide / show the UI. A single tap or click on its right / left third (also
 // with the UI hidden), or the right / left arrow key, goes to the next / previous scene.
@@ -20,7 +20,7 @@
 //                                    beats a switch every 4 bars, 4: every 3, 8: every 4, 16: every 6
 //   at=<s>                           with trans: one transition from `scene` to the next at demo
 //                                    time s instead of the cycle (for stills: add stop=<s>)
-//   len=<beats>                      transition length (default: the picker's speed choice,
+//   len=<beats>                      transition length (default: the menu's speed choice,
 //                                    remembered per device, else 8; stills ignore the remembered one)
 //   interp=0                         whole ticks only (no display-rate interpolation)
 //   t=<token>                        room token, for voting through the server (remembered like the app's)
@@ -31,7 +31,7 @@ import { Engine } from './engine.ts';
 import { FrameStats } from './framestats.ts';
 import { PerfView } from './perfpanel.ts';
 import { restartControl } from './restart.ts';
-import { FPS } from '../core/constants.ts';
+import { FPS, TICKS_PER_BEAT } from '../core/constants.ts';
 import { ranTransition, type SceneSched } from '../core/protocol.ts';
 import './transitions.ts'; // installs the transition registry (lab/transitions/)
 import { transIds, transName } from '../core/transitions.ts';
@@ -40,11 +40,12 @@ import { tapZone, toggleUiOnDoubleTap } from './doubletap.ts';
 import { galleryBeats, galleryHold, galleryRot, galleryTrans } from './defaults.ts';
 import { TRANS_KEYS, stepButton, transRow } from './transvote.ts';
 import { ZERO, change, cycleSched, holdAt, pickScene, step, switchAt, type Cycle, type Run, type Settings } from './cycle.ts';
-import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
-import { canShare, insecure, micError, openMic, openShare, shareVideoBox, type LiveSource } from './capture.ts';
-import { mediaPicker } from './mediapicker.ts';
+import { demoInput, liveInput, trackInput, type Input } from './inputs.ts';
+import { insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
 import { MEDIA } from './media.ts';
-import { ACCEPT, Player } from './player.ts';
+import { title } from './player.ts';
+import { FilePlaylist, type Deck } from './playlistui.ts';
+import { inputMenu, type InputMenu } from './inputmenu.ts';
 import { sceneTags, stepChoice, type SceneItem } from './pickerlist.ts';
 import { pickerSheet } from './gallerysheet.ts';
 import { REGISTRY } from './graph/registry.ts';
@@ -139,63 +140,84 @@ function votePanel(
   return { el, show, send, voteTrans, trans, load, online: () => online };
 }
 
-/** The input picker. `change` takes over each newly opened input; `say` mirrors its status text. */
+/** A tiny silent WAV: played on the first tap so iOS lets the audio element play later tracks by itself. */
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+
+/**
+ * The input menu (inputmenu.ts) for the sheet's input tab. `change` takes over each newly opened
+ * input; `say` mirrors its status text.
+ */
 function inputPanel(change: (i: Input) => void, say: (text: string) => void) {
   const el = document.createElement('div'); el.id = 'input';
   const note = document.createElement('span'); note.className = 'note';
   const tell = (t: string) => { note.textContent = t; say(t); };
-  const file = document.createElement('input'); file.type = 'file'; file.accept = ACCEPT; file.multiple = true; file.hidden = true; // multiple: a track and its .lrc
-  let player: Player | null = null, asked = 0, active: Input | null = null;
-  const buttons = new Map<string, HTMLButtonElement>();
-  const press = (kind: string) => { for (const [k, b] of buttons) b.setAttribute('aria-pressed', String(k === kind)); };
-  /** Open an input; a later pick wins over one still opening, and a failure keeps the current one. */
-  const pick = async (kind: string, open: () => Promise<Input>, failed: string) => {
+  let asked = 0, active: Input | null = null;
+  const take = (i: Input) => { change(active = i); };
+  const demo = () => take(demoInput(startTick));
+  // ---- the playlist's tracks play on one audio element (a video's picture is held on its clock) ----
+  const au = new Audio(); au.preload = 'auto';
+  let track: { input: Input; url: string } | null = null, unlocked = false;
+  const stopTrack = () => { if (!track) return; au.pause(); au.removeAttribute('src'); au.load(); URL.revokeObjectURL(track.url); track = null; };
+  const play = () => au.play().then(() => removeEventListener('pointerup', play), () => { tell('tap to start the sound'); addEventListener('pointerup', play, { once: true }); });
+  el.addEventListener('pointerup', () => {
+    if (unlocked || track) return;
+    unlocked = true; au.src = SILENT; au.play().then(() => au.pause(), () => {});
+  }, { capture: true });
+  const deck: Deck = {
+    async play(e, prepare, lyrics) {
+      const mine = ++asked, name = title(e.name);
+      const p = await prepare((x) => { if (mine === asked) tell(`analyzing ${name} ${(x * 100) | 0}%`); });
+      const lrc = await lyrics().catch(() => null);
+      if (mine !== asked) return;
+      stopTrack();
+      // an audio file plays as itself; a video's sound as the WAV made from it
+      const url = URL.createObjectURL(e.kind === 'video' ? new Blob([p.bytes], { type: p.type }) : e.file!);
+      au.src = url; au.loop = false;
+      const input: Input = trackInput(au, p, name, lrc, () => track?.input === input);
+      track = { input, url };
+      take(input);
+      play();
+      tell(name);
+    },
+    idle(off) {
+      const had = !!track && active === track.input;
+      ++asked; stopTrack();
+      if (had) { demo(); if (off) menu.set('demo'); }
+    },
+    status: () => (track && active === track.input ? { pos: au.currentTime, dur: au.duration, playing: !au.paused } : null),
+    toggle: () => { if (!track) return; if (au.paused) play(); else au.pause(); },
+    seek: (s) => { if (track) au.currentTime = s; },
+    clock: () => (track ? { at: au.currentTime, playing: !au.paused } : null),
+  };
+  au.onended = () => { if (track) files.ended(); };
+  let menu: InputMenu;
+  const files = new FilePlaylist({ key: 'gallery.playlist', deck, note: tell, tpb: () => TICKS_PER_BEAT, changed: (on) => menu?.filesChanged(on) });
+  /** Open a live input; a later pick wins over one still opening, and a failure keeps the current one. */
+  const live = async (kind: string, name: string, open: () => Promise<LiveSource>): Promise<boolean> => {
     const mine = ++asked;
     tell('');
     try {
-      const input = await open();
-      if (mine !== asked) return input.stop();
-      change(active = input); press(kind);
+      const src = await open();
+      const input: Input = liveInput(src, name, () => { if (active === input) { demo(); menu.set('demo'); tell(`${name} ended`); } });
+      if (mine !== asked) { input.stop(); return false; }
+      take(input);
+      return true;
     } catch (e) {
       const err = e as Error;
-      if (mine === asked) tell(kind === 'mic' ? micError(err, insecure(), navigator)
-        : err.name === 'NotAllowedError' && kind === 'share' ? '' : `${failed}: ${err.message}${kind === 'file' ? '' : insecure()}`);
+      if (mine === asked) tell(kind === 'mic' ? micError(err, insecure(), navigator) : err.name === 'NotAllowedError' ? '' : `${name} failed: ${err.message}${insecure()}`);
+      return false;
     }
   };
-  const demo = () => pick('demo', async () => demoInput(startTick), 'demo failed');
-  const live = (kind: string, name: string, open: () => Promise<LiveSource>) => pick(kind, async () => {
-    const input: Input = liveInput(await open(), name, () => { if (active === input) demo().then(() => tell(`${name} ended`)); });
-    return input;
-  }, `${name} failed`);
-  file.onchange = () => {
-    const list = [...(file.files ?? [])];
-    file.value = '';
-    if (!list.length) return;
-    player ??= new Player();
-    if (!player.setFiles(list)) { tell('no audio file there'); return; }
-    const p = player, mine = asked + 1, progress = (s: string) => { if (mine === asked) tell(s); };
-    pick('file', async () => {
-      const input = await fileInput(p, (x) => progress(`analyzing ${(x * 100) | 0}%`), () => progress('tap to start the sound'));
-      progress(p.names[0]);
-      return input;
-    }, 'file failed');
-  };
-  const shareVideo = shareVideoBox();
-  for (const [kind, text, run] of [
-    ['demo', 'demo track', demo],
-    ['mic', 'mic', () => live('mic', 'mic', openMic)],
-    ['share', 'tab / system audio', () => live('share', 'shared audio', () => openShare(shareVideo.box.checked))],
-    ['file', 'audio file', () => file.click()],
-  ] as const) {
-    if (kind === 'share' && !canShare()) continue;
-    const b = document.createElement('button'); b.textContent = text; b.onclick = () => { run(); };
-    buttons.set(kind, b); el.append(b);
-    if (kind === 'share') el.append(shareVideo.el);
-  }
-  // pictures: image / video files or the camera; a video's sound can take over as the input
-  const media = mediaPicker({ sound: (v) => { live('video', 'video sound', async () => v); }, note: tell });
-  el.append(media, note, file);
-  press('demo');
+  menu = inputMenu({
+    page: 'gallery', kinds: ['demo', 'mic', 'external', 'file'], files, autoMic: true, note: tell,
+    open: async (kind, video) => {
+      if (kind === 'demo') { ++asked; demo(); tell(''); return true; }
+      if (kind === 'mic') return live('mic', 'mic', openMic);
+      if (kind === 'external') return live('share', 'external audio', () => openShare(video));
+      return false;
+    },
+  });
+  el.append(menu.el, note);
   return el;
 }
 
@@ -261,7 +283,7 @@ async function main() {
     if (leaveGrid) { grid = false; layout(); }
     saveUrl(); showNext();
   };
-  /** A scene whose section or evolve step the picker holds. */
+  /** A scene whose section or evolve step the menu holds. */
   let held: string | null = null;
   const release = () => { if (held !== null) cells[0].engine.scenes.find((s) => s.def.id === held)?.force(null); held = null; };
   /** Hold the shown scene on variant `to` (a force index), blending from `from`. */
@@ -286,9 +308,9 @@ async function main() {
     release();
     for (const c of cells) c.engine.invalidate(-Infinity);
   };
-  // ---- controls: the picker button and its status line top left, the vote panel bottom right ----
+  // ---- controls: the menu button and its status line top left, the vote panel bottom right ----
   const tools = document.createElement('div'); tools.id = 'tools';
-  const menu = document.createElement('button'); menu.id = 'menu'; menu.textContent = '☰ picker'; menu.title = 'scenes, transitions, input, display (o)';
+  const menu = document.createElement('button'); menu.id = 'menu'; menu.textContent = '☰'; menu.title = 'menu: scenes, transitions, input, display (o)'; menu.setAttribute('aria-label', 'menu');
   const status = document.createElement('span'); status.id = 'status';
   menu.onclick = () => sheet.open();
   tools.append(menu, status);
@@ -304,7 +326,7 @@ async function main() {
     const zone = tapZone(x, innerWidth);
     if (zone) stepScene(zone);
   });
-  // ---- the debug view: frame-time histogram (key `d`, the picker's display tab, debug=1) ----
+  // ---- the debug view: frame-time histogram (key `d`, the menu's display tab, debug=1) ----
   let debug = false;
   const perf = new PerfView({
     gpu, transName, close: () => setDebug(false),
@@ -313,7 +335,7 @@ async function main() {
   const debugEl = document.createElement('div'); debugEl.id = 'perf'; debugEl.className = 'hide';
   debugEl.append(perf.el); document.body.append(debugEl);
   const setDebug = (on: boolean) => { debug = on; debugEl.classList.toggle('hide', !on); perf.show(on); };
-  /** The picker and the scene voted on follow what's showing (the cycle moves it). */
+  /** The menu and the scene voted on follow what's showing (the cycle moves it). */
   let marked = '';
   const mark = () => {
     marked = shownId();
@@ -385,7 +407,7 @@ async function main() {
     },
   });
   addEventListener('keydown', (e) => {
-    // typing in the picker (search, a link to copy) is not a shortcut
+    // typing in the menu (search, a link to copy) is not a shortcut
     if (e.target instanceof HTMLInputElement && e.target.type !== 'checkbox') return;
     if (e.key === 'o' || e.key === '/') { e.preventDefault(); sheet.open(); }
     else if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
@@ -436,7 +458,7 @@ async function main() {
         })()}` : null,
         !grid && sc.status ? sc.status() : null,
         MEDIA.shareLine(),
-        `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  o picker  ·  t transition  ·  g grid  ·  h UI  ·  i info  ·  d debug`,
+        `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  o menu  ·  t transition  ·  g grid  ·  h UI  ·  i info  ·  d debug`,
         `${fstats.line(transName)}  ·  WebGPU ${gpu.adapterInfo}`,
       ].filter(Boolean).join('\n');
     }

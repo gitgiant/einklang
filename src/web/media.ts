@@ -4,6 +4,7 @@
 // into its texture only when a new one exists (requestVideoFrameCallback). A shared tab's /
 // screen's video (sharevideo.ts) replaces the picked items while it is shared.
 import type { MediaFrame, MediaInput, MediaKind } from '../../lab/api/media.ts';
+import { videoSync } from './playlist.ts';
 
 type Source = ImageBitmap | HTMLVideoElement | HTMLCanvasElement | OffscreenCanvas;
 
@@ -27,6 +28,8 @@ export interface MediaItem {
   uploadMs?: number;
   /** Its sound drives the music features: keeps playing when another item shows. */
   audio?: boolean;
+  /** Held on a clock by lockVideo (a playlist track): the idle sweep leaves it alone. */
+  locked?: boolean;
   /** When frame() last asked for it (ms). */
   used?: number;
   stop(): void;
@@ -176,7 +179,7 @@ export class MediaHost {
   private sweep(shown: MediaItem | null, now: number): void {
     for (const it of this.list) {
       const v = it.video;
-      if (!v || it.kind === 'camera') continue;
+      if (!v || it.kind === 'camera' || it.locked) continue;
       if (it === shown || it.audio) { if (v.paused) v.play().catch(() => {}); }
       else if (!v.paused && now - (it.used ?? 0) > IDLE_MS) v.pause();
     }
@@ -189,7 +192,7 @@ export const MEDIA = new MediaHost();
 // ---------------------------------------------------------------- opening
 
 const IMAGE_EXT = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'avif', 'bmp'], VIDEO_EXT = ['mp4', 'webm', 'mov', 'm4v', 'ogv', 'mkv'];
-/** File picker filter for the media picker. */
+/** File chooser filter for pictures (images and videos). */
 export const MEDIA_ACCEPT = ['image/*', 'video/*', ...[...IMAGE_EXT, ...VIDEO_EXT].map((e) => `.${e}`)].join(',');
 const ext = (name: string) => name.slice(name.lastIndexOf('.') + 1).toLowerCase();
 export const isImage = (f: { name: string; type: string }) => f.type.startsWith('image/') || IMAGE_EXT.includes(ext(f.name));
@@ -237,12 +240,12 @@ function videoItem(v: HTMLVideoElement, kind: MediaKind, name: string, mirror: b
 }
 
 /**
- * Open a video file, looping. With `sound` its audio plays here (the caller routes it into the
- * analysis); without, it plays muted. `blocked`: the browser wants a tap before it plays.
+ * Open a video file, muted (its sound reaches the music through the playlist, never through this
+ * element), looping. `blocked`: the browser wants a tap before it plays.
  */
-export async function openVideo(f: File, sound: boolean, blocked: () => void = () => {}): Promise<MediaItem> {
+export async function openVideo(f: File, blocked: () => void = () => {}): Promise<MediaItem> {
   const v = videoElement(), url = URL.createObjectURL(f);
-  v.loop = true; v.muted = !sound; v.src = url;
+  v.loop = true; v.muted = true; v.src = url;
   const stop = () => { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); URL.revokeObjectURL(url); };
   try {
     await new Promise<void>((ok, no) => {
@@ -253,6 +256,29 @@ export async function openVideo(f: File, sound: boolean, blocked: () => void = (
   const play = () => v.play().then(() => removeEventListener('pointerup', play), () => { blocked(); addEventListener('pointerup', play, { once: true }); });
   play();
   return videoItem(v, 'video', f.name, false, () => { removeEventListener('pointerup', play); stop(); });
+}
+
+/**
+ * Hold `it`'s video on a clock: `target()` is where it should be (seconds), null while it should
+ * stand still (paused). Seeks when more than 0.5 s off, else nudges the rate. Returns the stop.
+ */
+export function lockVideo(it: MediaItem, target: () => { at: number; playing: boolean } | null): () => void {
+  const v = it.video;
+  if (!v) return () => {};
+  it.locked = true; v.loop = false;
+  const step = () => {
+    const t = target();
+    if (!t) { if (!v.paused) v.pause(); return; }
+    const dur = Number.isFinite(v.duration) ? v.duration : Infinity, at = Math.max(0, Math.min(dur - 0.05, t.at));
+    if (!t.playing || t.at < 0 || t.at >= dur) { if (!v.paused) v.pause(); if (Math.abs(v.currentTime - at) > 0.1) v.currentTime = at; return; }
+    const s = videoSync(at, v.currentTime);
+    if (s.seek !== null) v.currentTime = s.seek;
+    v.playbackRate = s.rate;
+    if (v.paused) v.play().catch(() => {});
+  };
+  step();
+  const timer = setInterval(step, 200);
+  return () => { clearInterval(timer); it.locked = false; v.playbackRate = 1; };
 }
 
 /** The front camera (selfie, mirrored). Call from a user gesture (iOS). `ended`: the camera went away. */

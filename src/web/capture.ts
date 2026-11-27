@@ -52,19 +52,6 @@ export async function openShare(video = false): Promise<MediaStream> {
   return new MediaStream([...audio, ...keep]);
 }
 
-const VIDEO_KEY = 'share.video';
-/** The "use its video too" box next to a page's tab / system audio button (default on, remembered). */
-export function shareVideoBox(): { el: HTMLLabelElement; box: HTMLInputElement } {
-  const el = document.createElement('label'), box = document.createElement('input');
-  el.className = 'sharevideo';
-  el.title = 'also show the shared tab\'s / screen\'s picture in media scenes, replacing picked media while sharing (this device only, never uploaded; applies to the next share)';
-  box.type = 'checkbox';
-  try { box.checked = localStorage.getItem(VIDEO_KEY) !== '0'; } catch { box.checked = true; }
-  box.onchange = () => { try { localStorage.setItem(VIDEO_KEY, box.checked ? '1' : '0'); } catch { /* private mode */ } };
-  el.append(box, ' use its video too');
-  return { el, box };
-}
-
 /** Live audio to analyze: a capture stream, or a playing media element (a video's sound). */
 export type LiveSource = MediaStream | HTMLMediaElement;
 
