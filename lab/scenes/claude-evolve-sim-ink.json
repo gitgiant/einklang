@@ -1,0 +1,42 @@
+{
+  "format": 1, "id": "claude-evolve-sim-ink", "name": "Evolve sim: ink tank", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "tags": ["media", "evolve", "sim", "fluid", "dye"],
+  "doc": "Your picture (image, video or camera) poured into a tank as dye: the bass winds up four stirrers that swirl it, every onset splashes it outward and its own contours steer the flow; each phrase the simulation or its treatment changes (a wilder stir, a splashy tank, a slime mould feeding on its bright areas, reaction-diffusion growing from its edges; a kaleidoscope or a zoom feed over it), and the picture re-forms at every phrase start before it melts again.",
+  "nodes": [
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 1, "chroma": 0.16, "light": 0.7, "contrast": 0.6 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.5, 0.85] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.1, "pulse": 0.15, "drift": 0.3, "contrast": 1.1, "saturation": 1.15, "edge_width": 2.5 } },
+    { "id": "sim", "piece": "claude-media-dye", "params": { "stir": 1, "react": 1.3, "kick": 1.2, "edge": 0.7, "along": 0.8, "tint": 0.3, "gloss": 0.7 } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.3, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "sim.in" },
+    { "from": "media.luma", "to": "sim.luma" },
+    { "from": "media.edges", "to": "sim.edges" },
+    { "from": "pal.palette", "to": "sim.palette" },
+    { "from": "sim.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.4, "threshold": 0.75 },
+  "evolve": {
+    "every": "phrase", "transition": "core-dissolve", "beats": 4,
+    "slots": [
+      { "node": "sim", "pool": [
+        { "piece": "claude-media-dye", "params": { "stir": 1.7, "along": -0.8, "tint": 0.45, "react": 1.5 },
+          "ranges": { "edge": [0.4, 1.2], "vort": [0.3, 0.9], "resurface": [0.15, 0.35] } },
+        { "piece": "claude-media-dye", "params": { "stir": 0.6, "kick": 2.2, "buoy": 0.9, "along": 0.3, "gloss": 1.2, "tint": 0.2 },
+          "ranges": { "drag": [0.015, 0.04], "resurface": [0.2, 0.4] } },
+        { "piece": "claude-media-mould", "params": { "show": 0.22 },
+          "ranges": { "food": [1.2, 2.5], "reach": [7, 13], "tint": [0.15, 0.4] } },
+        { "piece": "claude-reaction", "params": { "cells": 360, "steps": 10, "show": 0.3, "picture": 0.8 },
+          "ranges": { "luma_map": [0.5, 1.1], "edge_seed": [0.4, 0.8], "regime": [0.35, 0.55] } }
+      ] },
+      { "node": "fx", "jitter": 0.03, "pool": [
+        { "piece": "core-kaleido", "params": { "zoom": 1.05 }, "ranges": { "segments": [3, 6], "spin": [-0.04, 0.04] } },
+        { "piece": "claude-zoomfeed", "params": { "decay": 0.75, "zoom": 0.006, "hue": 0.01 }, "ranges": { "rotate": [-0.004, 0.004] } }
+      ] }
+    ]
+  }
+}

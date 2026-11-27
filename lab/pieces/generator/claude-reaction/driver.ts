@@ -1,10 +1,12 @@
-import { definePiece, oklch, type Palette } from '../../../api/index.ts';
+import { definePiece, oklch, BAR_TICKS, type Palette } from '../../../api/index.ts';
 
 // Gray-Scott reaction-diffusion. GPU state (not synced): two storage buffers of (A, B) per cell, ping-ponged.
 // Per frame: one advect pass (drift + seeds from every tick since the last frame), then `steps` sim steps
 // per elapsed tick, then the colour pass into the output.
+// With `in`, `luma` and `edges` wired (core-media) it runs media.wgsl instead: seeded from the picture's
+// contours, the regime mapped from its luma, wiped at each phrase start, drawn as the picture lit through it.
 
-const SIM_BYTES = 48 + 8 * 16, DRAW_BYTES = 32 + 8 * 16, MAX_SEEDS = 8, MAX_CATCHUP = 4;
+const SIM_BYTES = 48 + 8 * 16 + 16, DRAW_BYTES = 32 + 8 * 16 + 16, MAX_SEEDS = 8, MAX_CATCHUP = 4, PHRASE = 4 * BAR_TICKS;
 
 export default definePiece({
   gpu: ({ device, shader }) => {
@@ -25,13 +27,32 @@ export default definePiece({
       vertex: { module: drawMod, entryPoint: 'vs_full' },
       fragment: { module: drawMod, entryPoint: 'fs_draw', targets: [{ format: 'rgba16float' }] },
     });
+    // the media path: same buffers, its own pipelines with the picture in group 1
+    const medMod = shader('media.wgsl'), C = GPUShaderStage.COMPUTE, F = GPUShaderStage.FRAGMENT;
+    const mediaBgl = device.createBindGroupLayout({
+      label: 'claude-reaction media',
+      entries: [{ binding: 0, visibility: C | F, sampler: { type: 'filtering' } }, ...[1, 2, 3].map((binding) => ({ binding, visibility: C | F, texture: { sampleType: 'float' as const } }))],
+    });
+    const drawBglM = device.createBindGroupLayout({
+      label: 'claude-reaction media draw',
+      entries: [{ binding: 0, visibility: F, buffer: { type: 'uniform' } }, { binding: 1, visibility: F, buffer: { type: 'read-only-storage' } }],
+    });
+    const layoutM = device.createPipelineLayout({ bindGroupLayouts: [bgl, mediaBgl] });
+    const advectM = device.createComputePipeline({ label: 'claude-reaction media advect', layout: layoutM, compute: { module: medMod, entryPoint: 'cs_advect' } });
+    const stepM = device.createComputePipeline({ label: 'claude-reaction media step', layout: layoutM, compute: { module: medMod, entryPoint: 'cs_step' } });
+    const drawM = device.createRenderPipeline({
+      label: 'claude-reaction media draw', layout: device.createPipelineLayout({ bindGroupLayouts: [drawBglM, mediaBgl] }),
+      vertex: { module: medMod, entryPoint: 'vs_full' },
+      fragment: { module: medMod, entryPoint: 'fs_draw', targets: [{ format: 'rgba16float' }] },
+    });
+    const samp = device.createSampler({ magFilter: 'linear', minFilter: 'linear', addressModeU: 'clamp-to-edge', addressModeV: 'clamp-to-edge' });
     const simU = device.createBuffer({ label: 'claude-reaction sim u', size: SIM_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const drawU = device.createBuffer({ label: 'claude-reaction draw u', size: DRAW_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const simData = new ArrayBuffer(SIM_BYTES), su = new Uint32Array(simData), sf = new Float32Array(simData);
     const df = new Float32Array(DRAW_BYTES / 4);
 
     let W = 0, H = 0, cur = 0, lastTick = -Infinity;
-    let bufs: GPUBuffer[] = [], simBg: GPUBindGroup[] = [], drawBg: GPUBindGroup[] = [];
+    let bufs: GPUBuffer[] = [], simBg: GPUBindGroup[] = [], drawBg: GPUBindGroup[] = [], drawBgM: GPUBindGroup[] = [];
 
     const alloc = (w: number, h: number) => {
       for (const b of bufs) b.destroy();
@@ -43,6 +64,10 @@ export default definePiece({
       }));
       drawBg = [0, 1].map((i) => device.createBindGroup({
         layout: draw.getBindGroupLayout(0),
+        entries: [{ binding: 0, resource: { buffer: drawU } }, { binding: 1, resource: { buffer: bufs[i] } }],
+      }));
+      drawBgM = [0, 1].map((i) => device.createBindGroup({
+        layout: drawBglM,
         entries: [{ binding: 0, resource: { buffer: drawU } }, { binding: 1, resource: { buffer: bufs[i] } }],
       }));
     };
@@ -64,6 +89,10 @@ export default definePiece({
     return {
       frame({ enc, out, in: ins, params, audio, time, tick, past, rand, width, height }) {
         const h = Math.round(Math.min(720, Math.max(90, params.cells as number))), w = Math.max(16, Math.round((h * width) / height));
+        const med = ins.in && ins.luma && ins.edges ? device.createBindGroup({
+          layout: mediaBgl,
+          entries: [{ binding: 0, resource: samp }, ...[ins.in, ins.luma, ins.edges].map((t, i) => ({ binding: i + 1, resource: (t as GPUTexture).createView() }))],
+        }) : null;
         let fresh = false;
         if (w !== W || h !== H) { alloc(w, h); fresh = true; }
         let ticks = tick - lastTick;
@@ -91,12 +120,18 @@ export default definePiece({
           sf.set([(params.drift as number) * (0.5 + 1.5 * bass) * ticks, (params.swirl as number) * ticks, time, 0], 8);
           sf.fill(0, 12);
           sf.set(seeds.slice(0, nseed * 4), 12);
+          if (med) {
+            // contours seed a little all the time and more on onsets; each phrase start wipes it back to the bare picture
+            const tp = ((tick % PHRASE) + PHRASE) % PHRASE, wipe = tp < ticks && !fresh ? (params.reform as number) : 0;
+            sf.set([(params.edge_seed as number) * (0.04 + 0.5 * kick * kick), params.threshold as number, wipe, params.luma_map as number], 44);
+          }
           device.queue.writeBuffer(simU, 0, simData);
 
           const gx = Math.ceil(W / 16), gy = Math.ceil(H / 16);
           const cp = enc.beginComputePass({ label: 'claude-reaction' });
-          cp.setPipeline(advect); cp.setBindGroup(0, simBg[cur]); cp.dispatchWorkgroups(gx, gy); cur = 1 - cur;
-          cp.setPipeline(step);
+          if (med) cp.setBindGroup(1, med);
+          cp.setPipeline(med ? advectM : advect); cp.setBindGroup(0, simBg[cur]); cp.dispatchWorkgroups(gx, gy); cur = 1 - cur;
+          cp.setPipeline(med ? stepM : step);
           const n = Math.max(1, Math.round(params.steps as number)) * ticks;
           for (let i = 0; i < n; i++) { cp.setBindGroup(0, simBg[cur]); cp.dispatchWorkgroups(gx, gy); cur = 1 - cur; }
           cp.end();
@@ -107,9 +142,12 @@ export default definePiece({
         df.fill(0);
         df.set([W, H, Math.min(8, pal.length), params.glow as number, kick, audio.rms, (time * bps / 16) * (params.cycle as number), params.relief as number], 0);
         pal.slice(0, 8).forEach((s, i) => df.set(s, 8 + i * 4));
+        df.set([params.show as number, params.picture as number, 0, 0], 40);
         device.queue.writeBuffer(drawU, 0, df);
         const rp = enc.beginRenderPass({ colorAttachments: [{ view: out.out.createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }] });
-        rp.setPipeline(draw); rp.setBindGroup(0, drawBg[cur]); rp.draw(3); rp.end();
+        if (med) { rp.setPipeline(drawM); rp.setBindGroup(0, drawBgM[cur]); rp.setBindGroup(1, med); }
+        else { rp.setPipeline(draw); rp.setBindGroup(0, drawBg[cur]); }
+        rp.draw(3); rp.end();
       },
       dispose: () => { for (const b of bufs) b.destroy(); simU.destroy(); drawU.destroy(); },
       status: () => `${W}x${H} cells`,
