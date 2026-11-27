@@ -31,6 +31,7 @@ export class DebugPanel {
     this.cv = document.createElement('canvas');
     this.cv.width = HIST * 2; this.cv.height = 90;
     this.txt = document.createElement('pre');
+    this.txt.id = 'debug-text';
     this.el.append(...controls, this.cv, this.txt);
     document.body.append(this.el);
     try {
