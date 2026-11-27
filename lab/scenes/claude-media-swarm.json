@@ -8,13 +8,19 @@
   "created": "2026-11-27",
   "tags": ["media", "flock", "particles", "simulation"],
   "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.6 } },
     { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 8, "gain": 2 } },
     { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
     { "id": "pal", "piece": "core-harmony", "params": { "scheme": 1, "chroma": 0.12, "light": 0.6, "contrast": 0.6 },
       "bind": { "hue": { "from": "lfo.out", "range": [0.55, 0.85] } } },
     { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.25, "pulse": 0.35, "drift": 0.3, "contrast": 1.2, "saturation": 1.2 } },
-    { "id": "swarm", "piece": "claude-picture-swarm", "params": { "count": 120, "speed": 0.3, "food": 1.2, "settle": 0.6, "react": 2.2, "hunger": 1.5, "scatter": 2.2, "flash": 0.9, "glow": 1.2, "sky": 0.4, "under": 0.1 },
-      "bind": { "streak": { "from": "high.out", "range": [1.0, 3.0] } } },
+    { "id": "swarm", "piece": "claude-picture-swarm",
+      "params": { "count": 120, "speed": 0.3, "food": 1.2, "settle": 0.6, "react": 2.2, "hunger": 1.5, "scatter": 2.2, "flash": 0.9, "glow": 1.2 },
+      "bind": {
+        "streak": { "from": "high.out", "range": [1.0, 3.0] },
+        "under": { "from": "bass.out", "range": [0.03, 0.3] },
+        "sky": { "from": "bass.out", "range": [0.2, 1.0] }
+      } },
     { "id": "fx", "piece": "core-trails", "params": { "decay": 0.35, "zoom": 0, "rotate": 0 } }
   ],
   "edges": [
