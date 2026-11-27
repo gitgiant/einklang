@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "id": "codex-evolve-media-tape-index",
+  "name": "Tape Index",
+  "doc": "The picture is written to a slit-scan tape or decoded as falling glyphs. Its edges steer the scan, its brightness drives the glyphs, and the finishing pass alternates between tape slices, pixel sorting, pixel blocks, and a curved CRT.",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "tape", "neon"],
+  "nodes": [
+    { "id": "level", "piece": "core-follow", "params": { "lo": 0, "hi": 5, "window": 14, "gain": 2.8 } },
+    { "id": "media", "piece": "core-media",
+      "params": { "contrast": 1.06, "saturation": 1.18, "beat_zoom": 0.4, "pulse": 0.38, "drift": 0.44, "cycle": 0 },
+      "bind": { "brightness": { "from": "level.out", "range": [0.56, 1.74] } } },
+    { "id": "ink", "piece": "core-swatch", "params": { "colors": "#120b23 #1e53ad #e14eab #51efcf #ffd6a1", "pads": false } },
+    { "id": "codec", "piece": "agy-slitscan",
+      "params": { "axis": 1, "drift": 0.43, "slit": 0.2, "live_mix": 0.56, "edge_warp": 0.35, "tear": 0.4, "decay": 0.92 },
+      "bind": { "rgb": { "from": "level.out", "range": [0.27, 1.0] } } },
+    { "id": "deck", "piece": "claude-slices", "params": { "count": 14, "shift": 0.07, "settle": 0.44, "glitch": 0.3 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "codec.in" },
+    { "from": "media.luma", "to": "codec.luma" },
+    { "from": "media.edges", "to": "codec.edges" },
+    { "from": "ink.palette", "to": "codec.palette" },
+    { "from": "codec.out", "to": "deck.in" }
+  ],
+  "out": "deck.out",
+  "post": { "bloom": 0.25, "threshold": 0.75, "exposure": 1 },
+  "evolve": {
+    "every": "phrase", "transition": "core-blend", "beats": 2,
+    "slots": [
+      { "node": "codec", "jitter": 0, "pool": [
+        { "piece": "agy-media-rain",
+          "params": { "columns": 88, "speed": 1.06, "color_mix": 0.67, "edge_boost": 0.8, "scanlines": 0.1 },
+          "bind": { "glow": { "from": "level.out", "range": [0.85, 1.8] } } }
+      ] },
+      { "node": "deck", "jitter": 0, "pool": [
+        { "piece": "agy-pixelsort", "params": { "direction": 1, "threshold": 0.38, "length": 42, "mix": 0.53 } },
+        { "piece": "core-pixelate", "params": { "cells": 120, "levels": 8 } },
+        { "piece": "claude-crt", "params": { "scanlines": 0.32, "curve": 0.24, "vignette": 0.22, "chroma": 0.36, "tracking": 0.42, "jitter": 0.28 } }
+      ] }
+    ]
+  }
+}
