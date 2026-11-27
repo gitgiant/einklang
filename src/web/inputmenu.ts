@@ -27,6 +27,8 @@ export interface MenuOpts {
   autoMic?: boolean;
   /** Status / error text. */
   note(text: string): void;
+  /** More controls for the pictures row (the app's "use the room's stream"). */
+  pictures?: HTMLElement[];
 }
 
 const LABEL: Record<InputKind, string> = { demo: 'demo', off: 'off', mic: 'mic', external: 'external', file: 'file' };
@@ -104,7 +106,7 @@ export function inputMenu(o: MenuOpts): InputMenu {
     } catch (e) { if (mine === camAsked) o.note(cameraError(e as Error, insecure(), navigator)); }
   };
   camB.setAttribute('aria-pressed', 'false');
-  pics.append(camB);
+  pics.append(camB, ...(o.pictures ?? []));
   root.append(opts, fileRow, h, pics);
 
   const draw = () => {

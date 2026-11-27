@@ -47,6 +47,17 @@ export const plainAddress = (addr: string): string => addr.replace(/^::ffff:(?=\
 
 export const isLoopback = (addr: string): boolean => addr === '::1' || plainAddress(addr).startsWith('127.');
 
+/**
+ * A client's IP for the room stream's ICE fallback: the socket's peer, or behind a proxy on this
+ * machine (`tailscale serve`) the first X-Forwarded-For hop. Null if it doesn't look like an IP.
+ */
+export function clientAddr(req: { socket: { remoteAddress?: string }; headers: Record<string, string | string[] | undefined> }): string | null {
+  let a = plainAddress(req.socket.remoteAddress ?? '');
+  const fwd = req.headers['x-forwarded-for'];
+  if (isLoopback(a) && typeof fwd === 'string' && fwd.trim()) a = plainAddress(fwd.split(',')[0].trim());
+  return /^[\d.]+$|^[\da-f:]+$/i.test(a) && a.length <= 45 ? a : null;
+}
+
 /** RFC 1918: the addresses a home or office LAN hands out. */
 export const isPrivateLan = (addr: string): boolean => /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)\d+\.\d+(\.\d+)?$/.test(addr);
 

@@ -14,7 +14,7 @@ const TOKEN = 'e2e';
 const srv = await startServer({ port: 0, pub: resolve(import.meta.dirname, '../dist'), token: TOKEN, hosts: ['127.0.0.1'] });
 const port = (srv.servers[0].address() as { port: number }).port;
 // one browser per host: background tabs don't get animation frames
-const launch = () => puppeteer.launch({ executablePath: chrome, headless: true, args: ['--enable-unsafe-webgpu', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
+const launch = () => puppeteer.launch({ executablePath: chrome, headless: true, args: ['--enable-unsafe-webgpu', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', ...(process.env.NO_SANDBOX ? ['--no-sandbox'] : [])] });
 const browsers = await Promise.all([launch(), launch()]);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 let failed = false;
@@ -267,6 +267,38 @@ try {
   const liveB = /live features: .*/.exec(await b.$eval('#debug-text', (e) => e.textContent ?? ''))?.[0] ?? '';
   check(c.shared > 20 && c.diff === 0, `instrument mode (2-tick delay): ${c.shared} shared ticks, ${c.diff} mismatches; B ${liveB}`);
   await a.$eval('#stop', (e) => (e as HTMLButtonElement).click());
+
+  // room stream: A shares a (fake) tab with its video; B gets the video over WebRTC as its media,
+  // held to the live delay; hashes still agree (media isn't hashed); stopping takes it off B
+  await a.evaluate(() => {
+    navigator.mediaDevices.getDisplayMedia = async () => {
+      const cv = document.createElement('canvas'); cv.width = 1280; cv.height = 720;
+      const g = cv.getContext('2d')!;
+      let n = 0;
+      setInterval(() => { n++; g.fillStyle = `hsl(${(n * 7) % 360} 70% 40%)`; g.fillRect(0, 0, 1280, 720); g.fillStyle = '#fff'; g.fillRect((n * 13) % 1200, 300, 80, 80); }, 1000 / 30);
+      const ac = new AudioContext(), osc = ac.createOscillator(), dst = ac.createMediaStreamDestination();
+      osc.connect(dst); osc.start();
+      return new MediaStream([...dst.stream.getAudioTracks(), ...cv.captureStream(30).getVideoTracks()]);
+    };
+  });
+  type Rs = { role: string; state: string; lines: string[]; stats: { fps: number; w: number; latFrame: number | null; latRoom: number | null } | null };
+  const rs = (p: Page) => p.evaluate(() => (window as unknown as { __ekStream: () => unknown }).__ekStream()) as Promise<Rs>;
+  await a.$eval('#capture', (e) => (e as HTMLButtonElement).click());
+  await b.waitForFunction(() => { const s = (window as unknown as { __ekStream: () => Rs }).__ekStream(); return s.state === 'connected' && (s.stats?.fps ?? 0) > 0; }, { timeout: 20000 }).catch(() => {});
+  await sleep(4000);
+  const [ra, rb] = [await rs(a), await rs(b)];
+  const hudB = await b.$eval('#hud', (e) => e.textContent ?? '');
+  da = await dbg(a); db = await dbg(b);
+  c = compare(da, db);
+  const lat = rb.stats?.latFrame ?? rb.stats?.latRoom ?? null;
+  check(ra.role === 'send' && rb.state === 'connected' && (rb.stats?.w ?? 0) > 0 && /shared video/.test(hudB) && lat !== null && c.diff === 0,
+    `room stream: B shows A's shared video (${rb.lines[1] ?? rb.state}; ${rb.lines[2] ?? ''}); ${c.shared} shared ticks, ${c.diff} mismatches`);
+  console.log(`     A: ${ra.lines.join(' | ')}`);
+  console.log(`     B: ${rb.lines.slice(2).join(' | ')}`);
+  await a.$eval('#stop', (e) => (e as HTMLButtonElement).click());
+  await b.waitForFunction(() => (window as unknown as { __ekStream: () => Rs }).__ekStream().state === 'off', { timeout: 5000 }).catch(() => {});
+  const hudOff = await b.$eval('#hud', (e) => e.textContent ?? '');
+  check((await rs(b)).state === 'off' && !/shared video/.test(hudOff), 'room stream: ends on B when A stops');
 } catch (e) {
   console.log('FAIL', e); failed = true;
 } finally {

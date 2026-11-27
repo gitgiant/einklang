@@ -30,7 +30,8 @@ import { autoHideUi } from './idle.ts';
 import { restartControl } from './restart.ts';
 import { toggleUiOnDoubleTap } from './doubletap.ts';
 import { LiveAnalyzer, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
-import { MEDIA, lockVideo, openVideo } from './media.ts';
+import { MEDIA, lockVideo, openVideo, shareItem } from './media.ts';
+import { QUALITY, StreamReceiver, StreamSender, recvLines, sendLine, sendLines, type Quality, type RecvStats, type SendStats } from './roomstream.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
 import { TRANS_KEYS } from './transvote.ts';
 import { votePanel } from './votepanel.ts';
@@ -109,7 +110,7 @@ function connect() {
   ws = new WebSocket(withToken(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`));
   ws.binaryType = 'arraybuffer';
   ws.onopen = () => {
-    net.connects++; autoRestored = false; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected');
+    net.connects++; autoRestored = false; statLine = null; samples.length = 0; pingBurst(); send({ t: 'hello', name: hostName }); msg('connected');
     if (benchN !== null) send({ t: 'bench', n: benchN });
   };
   ws.onclose = (e) => { msg(e.code === 1006 && !token ? 'not connected: open the join URL with ?t=' : 'disconnected, retrying'); setTimeout(connect, 1000); };
@@ -156,7 +157,8 @@ function connect() {
       events.add(m.ev);
       if (window.__ek) window.__ek.events++;
       if (m.ev.tick <= lastTick) { net.lateEvents++; listeners.lateEvent.forEach((f) => f(m.ev.tick)); } // arrived late: replay
-    } else if (m.t === 'track') files.playAt(m.index);
+    } else if (m.t === 'rtc') { sender?.onSignal(m.from, m.d, m.addr); receiver.onSignal(m.from, m.d, m.addr); }
+    else if (m.t === 'track') files.playAt(m.index);
     else if (m.t === 'vote' || m.t === 'transvote') listeners.vote.forEach((f) => f(m));
   };
 }
@@ -257,9 +259,16 @@ function startLive(stream: LiveSource, label: string, delay: number) {
   const an: LiveAnalyzer = new LiveAnalyzer(stream, () => { if (leaderLive?.an === an) { send({ t: 'stop' }); stopLeaderLive(); msg('capture ended'); inMenu?.set('off'); } });
   leaderLive = { an, pending: true };
   send({ t: 'live', delay });
+  // its video (if kept) goes to the other hosts too
+  const video = stream instanceof MediaStream ? stream.getVideoTracks()[0] : undefined;
+  if (video) {
+    sender = new StreamSender(video, { signal: (to, d) => send({ t: 'rtc', to, d }), quality: () => streamQ, wall: wallOff });
+    send({ t: 'share', on: true });
+  }
   msg(label);
 }
 function stopLeaderLive() {
+  sender?.close(); sender = null; sendStats = [];
   if (!leaderLive) return;
   leaderLive.an.close(); leaderLive = null;
   // the room moved on without this host's capture
@@ -271,9 +280,80 @@ setInterval(() => {
   leaderLive.an.pull(cur, (tick, m) => { live.set(tick, m.slice(5)); sendBin(m); });
 }, 8);
 
+// ---- the room stream: the live leader's shared video, on every other host (roomstream.ts) ----
+const wallOff = () => Date.now() - sNow();
+let useRoomStream = lsGet('roomStream') !== '0';
+let streamQ: Quality = lsGet('streamQ') === '1080p30' ? '1080p30' : '720p30';
+let sender: StreamSender | null = null, sendStats: SendStats[] = [], recvStats: RecvStats | null = null;
+const receiver = new StreamReceiver({
+  signal: (to, d) => send({ t: 'rtc', to, d }),
+  show: (track) => {
+    const it = shareItem(track);
+    it.name = 'room stream';
+    return { release: MEDIA.share(it), video: it.video };
+  },
+  roomNow: sNow, wall: wallOff,
+});
+/** The host to receive from: the room's sharing leader, unless this host leads or picked its own media. */
+function syncStream() {
+  const from = room.mode === 'live' && room.share != null && room.share !== me && useRoomStream && !leaderLive ? room.share : null;
+  receiver.update(from);
+  if (from === null) recvStats = null;
+  sender?.prune(room.hosts.map((h) => h.id));
+}
+listeners.state.push(syncStream);
+let pressure: string | null = null;
+try {
+  const PO = (globalThis as unknown as { PressureObserver?: new (cb: (r: { state: string }[]) => void) => { observe(s: string): Promise<void> } }).PressureObserver;
+  if (PO) new PO((r) => { pressure = r.at(-1)?.state ?? null; }).observe('cpu').catch(() => {});
+} catch { /* not allowed here */ }
+let statLine: string | null = null, statAt = 0;
+/** This host's stream line on the room's hosts panel: on a change of state at once, a new number at most every 3 s. */
+function rtcStat(s: string | null) {
+  const now = performance.now(), shape = (x: string | null) => x?.replace(/[\d.]+/g, '#') ?? null;
+  if (s === statLine || (shape(s) === shape(statLine) && now - statAt < 3000)) return;
+  statLine = s; statAt = now;
+  send({ t: 'rtcstat', s });
+}
+setInterval(async () => {
+  receiver.tick();
+  if (sender) { sendStats = await sender.stats(); rtcStat(sendLine(streamQ, sendStats)); return; }
+  // the picture should be as late as the audio features: the room's live delay (less this host's display trim)
+  const want = room.mode === 'live' ? Math.max(0, ((room.delay ?? LIVE_DELAY) * 1000) / FPS - offsetMs) : 0;
+  recvStats = await receiver.stats(want, performance.now());
+  rtcStat(receiver.line(recvStats));
+}, 1000);
+const hostLabel = (id: number | null) => (id === null ? 'none' : room.hosts.find((h) => h.id === id)?.name ?? `#${id}`);
+/** Debug panel section. */
+function streamLines(): string[] {
+  if (sender) return sendLines(streamQ, sendStats, hostLabel, pressure);
+  const sharing = room.mode === 'live' && room.share != null && room.share !== me;
+  if (receiver.state === 'off') return [sharing ? `off: this host shows its own media (${hostLabel(room.share!)} is sharing)` : 'none: no leader is sharing video'];
+  return [
+    `from ${hostLabel(receiver.from)}: ${receiver.state}${receiver.failures ? `, failed to connect ${receiver.failures}x (this host's own media shows meanwhile)` : ''}`,
+    ...(recvStats ? recvLines(recvStats) : []),
+  ];
+}
+/** Debug/test hook (e2e): the room stream's state and debug lines, also on a host that can't render. */
+Object.assign(window, { __ekStream: () => ({ role: sender ? 'send' : receiver.state === 'off' ? 'off' : 'recv', state: receiver.state, stats: recvStats, send: sendStats, lines: streamLines() }) });
+const streamBox = document.createElement('span');
+{
+  const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'roomStream'; cb.checked = useRoomStream;
+  cb.onchange = () => { useRoomStream = cb.checked; lsSet('roomStream', cb.checked ? '1' : '0'); syncStream(); };
+  const q = document.createElement('select'); q.id = 'streamQ';
+  for (const k of Object.keys(QUALITY)) q.add(new Option(`send ${k}`, k));
+  q.value = streamQ;
+  q.title = 'the cap on the video this host sends when it leads with a shared tab / screen';
+  q.onchange = () => { streamQ = q.value as Quality; lsSet('streamQ', streamQ); sender?.setQuality(); };
+  const l = document.createElement('label');
+  l.title = 'show the live leader\'s shared tab / screen video here (streamed over the LAN / tailnet); off: this host keeps its own pictures';
+  l.append(cb, ' use the room\'s stream ');
+  streamBox.append(l, q);
+}
+
 // ---- the input menu (input ▾): off, mic, external, file; the camera ----
 inMenu = inputMenu({
-  page: 'app', kinds: ['off', 'mic', 'external', 'file'], ids: { off: 'stop', mic: 'live', external: 'capture' }, files, note: msg,
+  page: 'app', kinds: ['off', 'mic', 'external', 'file'], ids: { off: 'stop', mic: 'live', external: 'capture' }, files, note: msg, pictures: [streamBox],
   open: async (kind, video) => {
     if (kind === 'off') { send({ t: 'stop' }); stopLeaderLive(); msg(''); return true; }
     if (kind === 'mic') {
@@ -407,7 +487,7 @@ function renderHosts() {
   el.replaceChildren();
   for (const h of room.hosts) {
     const name = document.createElement('span');
-    name.textContent = h.name + (h.id === me ? ' (this)' : '');
+    name.textContent = h.name + (h.id === me ? ' (this)' : '') + (h.rtc ? ` · ${h.rtc}` : '');
     if (h.id === me) name.className = 'me';
     const sel = document.createElement('select');
     sel.add(new Option('own default', ''));
@@ -588,6 +668,7 @@ async function start() {
         `hosts: ${room.hosts.map((h) => `${h.name}#${h.id}${h.view === null ? '' : ` v${h.view}`}${h.cap === null ? '' : ` cap ${h.cap}`}`).join(', ') || 'none'}`,
         `flow N ${flowNAt(room.flow, f)}${room.flow.at > f ? ` → ${room.flow.n} at reseed ${room.flow.at}` : ''} (weakest host)  this host's cap ${benchN ?? '?'}${qs.has('cap') ? ' (forced)' : ' (benchmark)'}`,
       ]],
+      ['room stream', streamLines()],
       ['midi', [
         `this host: ${midi.enabled ? `on, inputs: ${midi.status.inputs.join(', ') || 'none'}` : 'off'}`,
         midi.enabled ? `local clock ${midi.status.bpm ? `${midi.status.bpm} bpm, beat ${midi.status.beat}` : 'none'}   last ${midi.status.lastMsg || '-'}` : '',

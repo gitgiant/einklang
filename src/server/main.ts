@@ -12,7 +12,7 @@ import type { Duplex } from 'node:stream';
 import fs from 'node:fs';
 import path from 'node:path';
 import { processRestarter, restartRoute, type Restarter } from './restart.ts';
-import { authorize, bindAddresses, isLoopback, loadToken, setCookie } from './auth.ts';
+import { authorize, bindAddresses, clientAddr, isLoopback, loadToken, setCookie } from './auth.ts';
 import { fingerprint, keepFresh, type Cert } from './certs.ts';
 import { httpPort, httpsSetup, lanEnabled, publicUrl } from './https.ts';
 import { plainRequest, redirectTarget, type RedirectTargets } from './redirect.ts';
@@ -162,7 +162,7 @@ export async function startServer(o: ServerOpts): Promise<Running> {
   const upgrade = (req: http.IncomingMessage, sock: Duplex) => {
     if (!authorize(req, o.token)) { sock.end('HTTP/1.1 401 Unauthorized\r\n\r\n'); return; }
     const ws = WsConn.accept(req, sock);
-    if (ws) room.join(ws);
+    if (ws) room.join(ws, clientAddr(req));
   };
 
   const warnings: string[] = [];
