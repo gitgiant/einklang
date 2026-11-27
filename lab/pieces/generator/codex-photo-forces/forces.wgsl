@@ -128,11 +128,18 @@ fn cs_dust(@builtin(global_invocation_id) tid: vec3u) {
   let phase = u.frame.y * 1.8;
   let sweep = vec2f(sin(uv.y * 11.0 + phase), cos(uv.x * 12.0 - phase * 0.7));
   let bend = (midpoint * (-0.105 - 0.24 * u.sound.z) + sweep * select(0.046, 0.085, gravity) + edge * 0.39) * loud;
+  let grid = select(MAGNET_GRID, WELL_GRID, gravity);
+  let tiles = uv * vec2f(grid);
+  let cell = min(vec2u(tiles), grid - 1u);
+  let center = peak[cell.y * grid.x + cell.x].body;
+  let border = abs(fract(tiles) - 0.5);
+  let focus = 1.0 - smoothstep(0.17, 0.5, max(border.x, border.y));
+  let lens = (center.xy - uv) * focus * select(0.48 * center.w, 1.6 * center.z * loud, gravity);
 
-  let picture = textureSample(photo, linear_clamp, uv + bend).rgb;
+  let picture = textureSample(photo, linear_clamp, uv + bend + lens).rgb;
   let vignette = 1.0 - smoothstep(0.23, 0.70, length(midpoint));
   let tint = u.tint.rgb * (0.012 + 0.022 * vignette + loud * 0.078);
-  let exposure = select(0.36, 0.32, gravity) + loud * select(0.75, 0.78, gravity);
+  let exposure = select(0.47, 0.44, gravity) + loud * select(0.62, 0.64, gravity);
   let pool = picture * exposure * (0.78 + 0.25 * vignette) + tint;
   let undisturbed = textureSample(photo, linear_clamp, uv).rgb * 0.9;
   return vec4f(mix(pool, undisturbed, u.mode.y), 1);

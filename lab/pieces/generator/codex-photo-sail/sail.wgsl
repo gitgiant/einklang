@@ -55,9 +55,10 @@ fn cs_spring(@builtin(global_invocation_id) tid: vec3u) {
 
 fn cloth(p: vec2u) -> vec3f {
   let uv = knot_uv(p);
-  let shape = vec3f((uv.x - 0.5) * 1.78, (uv.y - 0.5) * 1.58 + 0.04, 0.0);
+  let hanging = vec3f((uv.x - 0.5) * 1.78, (uv.y - 0.5) * 1.58 + 0.04, 0.0);
+  let flat = vec3f(uv * 2.0 - 1.0, 0.0);
   let pleats = 0.047 * sin(uv.x * 28.0) * uv.y;
-  return shape + (knots[knot_id(p)].offset.xyz + vec3f(0, 0, pleats)) * (1.0 - 0.92 * u.motion.y);
+  return mix(hanging, flat, u.motion.y) + (knots[knot_id(p)].offset.xyz + vec3f(0, 0, pleats)) * (1.0 - u.motion.y);
 }
 
 struct Fabric {

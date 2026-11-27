@@ -39,7 +39,7 @@ export default definePiece({
     let dustGroups: GPUBindGroup[] = [];
     let needleGroups: GPUBindGroup[] = [];
     let grainGroups: GPUBindGroup[] = [];
-    let surfaceGroup: GPUBindGroup;
+    let surfaceGroups: GPUBindGroup[] = [];
 
     return {
       frame({ enc, in: ins, out, width, height, tick, time, params, audio, past }) {
@@ -66,7 +66,9 @@ export default definePiece({
           grainGroups = dustStates.map((state) => group(grains, {
             0: u, 1: sampler, 4: photo, 7: b(state),
           }));
-          surfaceGroup = group(surface, { 0: u, 1: sampler, 3: edges, 4: photo });
+          surfaceGroups = peakStates.map((state) => group(surface, {
+            0: u, 1: sampler, 3: edges, 4: photo, 5: b(state),
+          }));
         }
 
         let bass = 0;
@@ -119,7 +121,7 @@ export default definePiece({
           label: 'Photo Forces surface and relief',
         });
         pass.setPipeline(surface);
-        pass.setBindGroup(0, surfaceGroup);
+        pass.setBindGroup(0, surfaceGroups[current]);
         pass.draw(3);
         pass.setPipeline(gravity ? grains : needles);
         pass.setBindGroup(0, gravity ? grainGroups[current] : needleGroups[current]);
