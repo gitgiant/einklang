@@ -3,7 +3,7 @@
   "id": "codex-evolve-media-relief-atlas",
   "name": "Relief Atlas",
   "doc": "Luma lifts the picked picture into contour ridges, a flyover, a tunnel, or stacked blocks. The relief takes a screen print or phosphor finish as the music moves between sections.",
-  "version": 1,
+  "version": 2,
   "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
   "status": "live",
   "created": "2026-11-27",
@@ -14,7 +14,7 @@
       "params": { "contrast": 1.08, "saturation": 1.06, "beat_zoom": 0.25, "pulse": 0.36, "drift": 0.48, "cycle": 0 },
       "bind": { "brightness": { "from": "level.out", "range": [0.63, 1.55] } } },
     { "id": "ink", "piece": "core-swatch", "params": { "colors": "#17102c #55309f #16d4db #fa67a6 #fbe1b8", "pads": false } },
-    { "id": "relief", "piece": "claude-ridges", "params": { "lines": 64, "height": 0.17, "bass": 0.78, "colour": 2, "fill": 0.78, "glow": 1.22 } },
+    { "id": "relief", "piece": "claude-ridges", "params": { "lines": 64, "height": 0.17, "bass": 0.78, "colour": 1, "fill": 0.78, "glow": 1.22 } },
     { "id": "screen", "piece": "agy-halftone", "params": { "cell": 13, "mix": 0.45, "paper": "#ffe3cd", "ink": "#281c55" } }
   ],
   "edges": [
