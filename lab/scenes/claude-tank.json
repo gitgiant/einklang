@@ -1,0 +1,16 @@
+{
+  "format": 1, "id": "claude-tank", "name": "Tank", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "high", "piece": "core-follow", "params": { "lo": 9, "hi": 15, "window": 8, "gain": 1.6 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#010309 #041228 #083a5e #0f7896 #2cc0c6 #9ff0e2 #fff2d6", "cycle": 0, "pads": true } },
+    { "id": "tank", "piece": "claude-sph",
+      "params": { "count": 7168, "substeps": 4, "fill": 0.5, "waves": 1.2, "tilt": 0.2, "shake": 1.2, "splash": 1.2, "sway": 0.06, "blob": 2, "thresh": 0.35, "foam": 1, "bg": 1, "cycle": 0.1 },
+      "bind": { "glow": { "from": "high.out", "range": [0.85, 1.4] } } },
+    { "id": "smear", "piece": "core-trails", "params": { "decay": 0.35, "zoom": 0, "rotate": 0 } }
+  ],
+  "edges": [ { "from": "pal.palette", "to": "tank.palette" }, { "from": "tank.out", "to": "smear.in" } ],
+  "out": "smear.out",
+  "post": { "bloom": 0.6, "threshold": 0.7 }
+}

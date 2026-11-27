@@ -18,7 +18,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] 3D Lissajous / stereo ribbons → codex-ribbons, scene codex-stereo-ribbon
 - [x] Visual input (image, video, camera; screen capture not yet) → core-media (+ claude-displace, claude-lumakey, claude-slices, claude-dots, claude-ridges), scenes core-media-stage, core-media-ridges, core-media-dots, core-media-kaleido
 - [x] Particle sim → core-flow (flow-field particles)
-- [ ] Physics: rigid bodies
+- [x] Physics: rigid bodies → claude-rigid, scene claude-knockdown
 - [x] Physics: cloth → claude-cloth, scene claude-banner
 - [ ] Physics: soft body
 - [x] Voxel shapes / .vox assets → claude-vox-ship, scene claude-vox-fleet
@@ -29,7 +29,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [x] Smoke / fluid → claude-fluid, scene claude-smoke-signals
 - [x] Boids → claude-boids, scene claude-murmuration
 - [x] N-body → claude-nbody, scene claude-galaxy
-- [ ] SPH liquid
+- [x] SPH liquid → claude-sph, scene claude-tank
 - [x] SDF raymarch → claude-raymarch, scene claude-sdf-flight
 - [x] Fractals (mandelbox, julia) → claude-julia, scene claude-julia-dive
 - [x] L-systems / trees → claude-lsystem, scene claude-grove
