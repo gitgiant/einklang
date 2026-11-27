@@ -22,7 +22,7 @@ fn wrap(x: i32, y: i32) -> u32 {
 }
 
 fn hash(a: u32, b: u32) -> f32 {
-  var x = a * 0x9e3779b1u ^ (b + 0x7f4a7c15u) * 0x85ebca6bu;
+  var x = (a * 0x9e3779b1u) ^ ((b + 0x7f4a7c15u) * 0x85ebca6bu);
   x ^= x >> 15u;
   x *= 0x2c1b3c6du;
   x ^= x >> 12u;

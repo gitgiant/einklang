@@ -156,6 +156,9 @@ export default definePiece({
             seeds.push(rand(t, 0) * W, rand(t, 1) * H, rad, 0.7 + 0.3 * (a.bands[0] + a.bands[1]) / 2);
           }
           if (t % 90 === 0) seeds.push(rand(t, 3) * W, rand(t, 4) * H, lenia ? R * 1.2 : 5, 1);
+          // each beat drops a disc sized by the loudness: quiet music without onsets still feeds the board
+          if (amt > 0 && a.rms > 0.05 && Math.floor((t * bps) / 60) !== Math.floor(((t - 1) * bps) / 60))
+            seeds.push(rand(t, 5) * W, rand(t, 6) * H, (lenia ? R * (0.8 + 1.5 * a.rms) : 4 + 16 * a.rms) * amt, 0.8);
         }
         const nseed = Math.min(MAX_SEEDS, seeds.length / 4);
 
