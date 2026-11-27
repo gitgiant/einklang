@@ -21,7 +21,6 @@ export function findChrome(): string {
 export interface Lab {
   run(o: RunOpts): Promise<RunResult>;
   profile(o: ProfileOpts): Promise<ProfileResult>;
-  bench(): Promise<string[]>;
   /** Load the page again: a new device, so pipelines and targets start cold. */
   reload(): Promise<void>;
   /** The WebGPU adapter in use, and whether it is SwiftShader. */
@@ -59,7 +58,6 @@ export async function openLab(opts: { width: number; height: number; cpu?: boole
   const { browser, page } = s;
   return {
     adapter: s.adapter, cpu: cpu || /swiftshader/i.test(s.adapter),
-    bench: () => page.evaluate('window.__shareBench()') as Promise<string[]>,
     run: (o) => page.evaluate((x) => window.__lab!.run(x), o as never) as Promise<RunResult>,
     profile: (o) => page.evaluate((x) => window.__lab!.profile!(x), o as never) as Promise<ProfileResult>,
     reload: async () => { await page.reload(); await page.waitForFunction('window.__lab && window.__lab.ready', { timeout: 120000 }); },

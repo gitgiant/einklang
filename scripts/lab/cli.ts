@@ -428,13 +428,6 @@ async function main() {
     // the switch profile goes into every gate on a GPU (numbers only, never a failure)
     const profile = async (cpu: boolean): Promise<{ name: string; classname: string; out?: string; failure?: string }[]> => {
       if (!gate || cpu || flag('no-profile')) return [];
-      // TEMP bench: reported as a failure so the numbers show up
-      try {
-        const lb = await openLab({ width: w, height: h });
-        const lines = await lb.bench();
-        await lb.close();
-        return [{ name: 'share bench', classname: 'lab.profile', failure: lines.join('\n') }];
-      } catch (e) { return [{ name: 'share bench', classname: 'lab.profile', failure: `bench failed: ${(e as Error).stack}` }]; }
       try {
         const md = await runProfile(w, h, v.transitions, v.scenes, { cpu: false, quick: false, gpuOnly: true });
         for (const l of md) say(l);
