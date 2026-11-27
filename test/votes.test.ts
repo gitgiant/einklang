@@ -277,8 +277,9 @@ test('server: the catalog is every non-retired lab scene, v1 presets first', () 
 
 test('feedback: credit flows to pieces and vendors; net -2 retires', async () => {
   const { reg } = await loadPieces();
-  const scenes = loadScenes();
   const votes = [V('core-demo', 1, ['great colors']), V('core-demo', 1), V('claude-vox-fleet', -1, ['boring']), V('claude-vox-fleet', -1), V('tunnel', 1)];
+  // statuses reset: which real scenes the owner's votes have retired must not matter here
+  const scenes = loadScenes().map((g) => ({ ...g, status: 'live' as const }));
   const d = digest(votes, scenes, reg);
   assert.equal(d.votes, 5);
   assert.equal(d.scenes['core-demo'].score, 2);
