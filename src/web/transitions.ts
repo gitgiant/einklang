@@ -13,4 +13,11 @@ for (const e of installTransitions(files)) console.error(`transition skipped: ${
 
 /** The transition shader: core-transition's prelude plus every registered mix. */
 export function transitionShader(prelude: string): Assembled { return assembleTransitions(prelude, transitions()); }
+/**
+ * One shader per transition (the same assembly with only that mix), by file name
+ * `transition/<id>.wgsl`: core-transition compiles one pipeline each.
+ */
+export function transitionShaders(prelude: string): Record<string, string> {
+  return Object.fromEntries(transitions().map((e) => [`transition/${e.id}.wgsl`, assembleTransitions(prelude, [e]).code]));
+}
 export { mixLine };

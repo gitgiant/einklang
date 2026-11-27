@@ -12,6 +12,7 @@ import { NO_FX, type Fx } from '../core/fx.ts';
 import type { PostParams } from '../core/post.ts';
 import { FLOW_N_DEFAULT, sceneAt, type SceneSched } from '../core/protocol.ts';
 import { transEntry, transHash, transitionAt, type Transition } from '../core/transitions.ts';
+import type { FrameProfiler } from './gpu/profile.ts';
 
 const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
 const mixPost = (a: PostParams, b: PostParams, p: number): PostParams => ({
@@ -47,9 +48,11 @@ export class Engine {
   readonly budget: Budget = { n: () => FLOW_N_DEFAULT, cap: null };
   /** The transition the last frame drew, if any. */
   transition: Transition | null = null;
+  /** When set, each frame records CPU (and GPU) ms per section: scene | a, b, mix | post. */
+  profiler: FrameProfiler | null = null;
   private gpu: Gpu;
   private canvas: HTMLCanvasElement;
-  private targets: { w: number; h: number; scene: GPUTexture; pair: [GPUTexture, GPUTexture] | null } | null = null;
+  private targets: { w: number; h: number; scene: GPUTexture; pair: [GPUTexture, GPUTexture] } | null = null;
 
   constructor(gpu: Gpu, canvas: HTMLCanvasElement) {
     this.gpu = gpu; this.canvas = canvas;
@@ -91,16 +94,13 @@ export class Engine {
   private hdr(w: number, h: number, label: string): GPUTexture {
     return this.gpu.device.createTexture({ size: [w, h], format: HDR, label, usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC });
   }
+  /** The scene target and the transition's two inputs, all made together so a switch never allocates. */
   private sceneTarget(w: number, h: number): GPUTexture {
     if (!this.targets || this.targets.w !== w || this.targets.h !== h) {
-      this.targets?.scene.destroy(); this.targets?.pair?.forEach((t) => t.destroy());
-      this.targets = { w, h, scene: this.hdr(w, h, 'scene'), pair: null };
+      this.targets?.scene.destroy(); this.targets?.pair.forEach((t) => t.destroy());
+      this.targets = { w, h, scene: this.hdr(w, h, 'scene'), pair: [this.hdr(w, h, 'transFrom'), this.hdr(w, h, 'transTo')] };
     }
     return this.targets.scene;
-  }
-  private pairTargets(): [GPUTexture, GPUTexture] {
-    const t = this.targets!;
-    return (t.pair ??= [this.hdr(t.w, t.h, 'transFrom'), this.hdr(t.w, t.h, 'transTo')]);
   }
 
   /**
@@ -120,21 +120,29 @@ export class Engine {
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
     if (sched) this.setScene(sceneAt(sched, st));
     const tr = (this.transition = sched ? transitionAt(sched, st, F, sub) : null);
-    const d = this.gpu.device, enc = d.createCommandEncoder();
+    const d = this.gpu.device, enc = d.createCommandEncoder(), pr = this.profiler;
+    pr?.begin(enc);
     const target = this.sceneTarget(w, h);
+    // a switch is coming: the incoming scene allocates its targets now rather than on its first frame
+    if (sched && sched.at > st) { const next = this.byId(sched.id); if (next !== this.scene) next.prepare(w, h); }
     const node = (inst: GpuInstance, t: number, s: number, params: Record<string, ParamValue>, ins: Record<string, unknown>, out: GPUTexture) =>
       inst.frame({ ...baseCtx(t, F, s), params, in: ins, out: { out }, device: d, enc, width: out.width, height: out.height, cpu: {}, pads: fx });
     let b: PostParams, hash: number;
     if (!tr) {
+      pr?.section('scene');
       const sc = this.scene, s = states(sc);
       sc.encode(enc, target, s.draw, st, F, sub, fx);
       b = sc.post; hash = hashState(s.hash);
     } else {
       // both scenes live, each into its own HDR target, mixed into the scene target
-      const from = this.byId(tr.from), to = this.byId(tr.to), [ta, tb] = this.pairTargets();
-      const sa = states(from), sb = states(to);
+      pr?.section('a');
+      const from = this.byId(tr.from), to = this.byId(tr.to), [ta, tb] = this.targets!.pair;
+      const sa = states(from);
       from.encode(enc, ta, sa.draw, st, F, sub, fx);
+      pr?.section('b');
+      const sb = states(to);
       to.encode(enc, tb, sb.draw, st, F, sub, fx);
+      pr?.section('mix');
       node(this.trans, st, sub, { type: tr.kind, p: tr.p, flash: tr.flash16 / 65536, seed: tr.seed, roll: tr.roll, pads: true }, { a: ta, b: tb }, target);
       b = mixPost(from.post, to.post, tr.p);
       // "trails" (melt): post decay pushed up around the midpoint so the old scene smears into the new
@@ -142,7 +150,9 @@ export class Engine {
       if (trails) b = { ...b, decay: Math.max(b.decay, trails * Math.min(1, 6.4 * tr.p * (1 - tr.p))) };
       hash = transHash(hashState(sa.hash), hashState(sb.hash), sub ? transitionAt(sched!, st, F)! : tr);
     }
+    pr?.section('post');
     node(this.post, tick, 0, { ...b, view: this.view }, { in: target }, this.ctx.getCurrentTexture());
+    pr?.end(enc);
     d.queue.submit([enc.finish()]);
     return hex8(hash);
   }

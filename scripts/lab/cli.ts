@@ -11,6 +11,10 @@
 //                                  (or all with --all) 8 s per fixture at 1080p on the GPU and check:
 //                                  errors, NaN, black, blown out, frozen, no audio reaction, ms/frame
 //                                  (a transition: no audio check, budget 2 ms over core-blend)
+//                                  then (GPU only, skip with --no-profile) the switch profile below, into the log and gate.md
+//   profile [--quick] [--res 1920x1080]   switch profile (scripts/lab/profile.ts): frame ms p50/p95/max over a scene
+//                                  switch, the first-frame hitch, GPU ms per pass section (timestamp queries);
+//                                  lab/out/profile.md + profile.json
 //   new <kind> <vendor-slug> [--driver]   scaffold a piece (auto-shader unless --driver)
 //   new transition <vendor-slug>   scaffold lab/transitions/<id>/ (transition.json + mix.wgsl)
 //   fixtures                       list fixtures
@@ -43,6 +47,7 @@ import { parseVotes } from '../../src/core/votes.ts';
 import '../../src/server/transitions.ts'; // installs the transition registry
 import { transitions } from '../../src/core/transitions.ts';
 import { openLab, type Lab } from './browser.ts';
+import { profileMd, profileShow } from './profile.ts';
 import { judgeCost, judgeReactive, judgeRun, junit, reactivity, LIMITS } from './checks.ts';
 import { validateScene } from '../../src/core/graph/validate.ts';
 import { harness } from '../../src/core/graph/harness.ts';
@@ -56,7 +61,7 @@ const OUT = resolve(LAB, 'out');
 const argv = process.argv.slice(2);
 const flag = (n: string) => argv.includes(`--${n}`);
 const opt = (n: string, d: string) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
-const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--cpu', '--all', '--driver', '--no-video', '--no-compile'].includes(argv[i - 1])));
+const positional = argv.filter((a, i) => !a.startsWith('--') && !(i > 0 && argv[i - 1].startsWith('--') && !['--cpu', '--all', '--driver', '--no-video', '--no-compile', '--no-profile', '--quick'].includes(argv[i - 1])));
 const say = (s: string) => process.stdout.write(s + '\n');
 /** Ticks start here so modulators have history to look back at. */
 const START = 600;
@@ -163,6 +168,20 @@ async function checkTransition(lab: Lab, id: string, fixtures: string[], seconds
   notes.push(`cost ${ms.toFixed(2)} ms/frame over core-blend (show ${mine.toFixed(2)} ms, with blend ${blend.toFixed(2)} ms)`);
   if (opts.budget) { const f = judgeCost(ms, TRANS_BUDGET_MS, 'the transition (over core-blend)'); if (f) failures.push(f); }
   return { id, failures, notes, ms, dir };
+}
+
+/** The switch profile in a browser of its own (cold: no shader cache); markdown lines, also in lab/out/profile.md. */
+async function runProfile(w: number, h: number, transitions: string[], scenes: string[], o: { cpu: boolean; quick: boolean; gpuOnly?: boolean }): Promise<string[]> {
+  const lab = await openLab({ width: w, height: h, cpu: o.cpu, cold: true, log: say });
+  try {
+    if (lab.cpu && o.gpuOnly) return ['## Switch profile', '', 'skipped: no GPU here', ''];
+    const r = await profileShow(lab, { scenes, transitions, from: TRANS_FROM, to: TRANS_TO, res: `${w}x${h}`, quick: o.quick || lab.cpu, log: say });
+    const md = profileMd(r);
+    mkdirSync(OUT, { recursive: true });
+    writeFileSync(join(OUT, 'profile.md'), md.join('\n') + '\n');
+    writeFileSync(join(OUT, 'profile.json'), JSON.stringify(r, null, 1));
+    return md;
+  } finally { await lab.close(); }
 }
 
 const report = (r: ItemResult) => {
@@ -300,6 +319,13 @@ async function main() {
     say(`created ${dir}\nnext: edit it, then \`npm run lab -- render ${id}\``);
     return;
   }
+  if (cmd === 'profile') {
+    const v = await validate();
+    const [w, h] = opt('res', '1920x1080').split('x').map(Number);
+    const md = await runProfile(w, h, v.transitions, v.scenes.map((s) => s.id), { cpu: flag('cpu'), quick: flag('quick') });
+    for (const l of md) say(l);
+    return;
+  }
   if (cmd === 'render' || cmd === 'gate') {
     const v = await validate();
     if (v.errors.length) {
@@ -336,7 +362,20 @@ async function main() {
       if (!positional[1]) throw new Error('usage: render <scene|piece|transition> [--fixture f|all] [--seconds n] [--res WxH] [--cpu] [--no-video]');
       items = [target(positional[1], v.reg, v.scenes, v.transitions)];
     }
-    if (!items.length) { writeJunit([{ name: 'nothing to gate', classname: 'lab' }]); return; }
+    // the switch profile goes into every gate on a GPU (numbers only, never a failure)
+    const profile = async (cpu: boolean): Promise<{ name: string; classname: string; out?: string; failure?: string }[]> => {
+      if (!gate || cpu || flag('no-profile')) return [];
+      try {
+        const md = await runProfile(w, h, v.transitions, v.scenes.map((s) => s.id), { cpu: false, quick: false, gpuOnly: true });
+        for (const l of md) say(l);
+        return [{ name: 'switch profile', classname: 'lab.profile', out: md.join('\n')}];
+      } catch (e) { say(`profile failed: ${(e as Error).message}`); return [{ name: 'switch profile', classname: 'lab.profile', out: `failed: ${(e as Error).message}` }]; }
+    };
+    if (!items.length) {
+      const pr = gate && !flag('cpu') ? await profile(false) : [];
+      writeJunit([{ name: 'nothing to gate', classname: 'lab' }, ...pr]);
+      return;
+    }
     const lab = await openLab({ width: w, height: h, cpu: flag('cpu'), log: say });
     say(`WebGPU: ${lab.adapter}${lab.cpu ? ' (CPU)' : ''}  ·  ${w}x${h}`);
     const fx = opt('fixture', gate ? 'all' : 'techno');
@@ -350,9 +389,11 @@ async function main() {
     } finally { await lab.close(); }
     if (gate) {
       if (lab.cpu) say('note: no GPU here, so the ms/frame budget was not enforced');
-      writeJunit(results.map((r) => ({ name: r.id, classname: 'lab.gate', failure: r.failures.length ? r.failures.join('\n') : undefined, time: r.ms / 1000 })));
+      const pr = await profile(lab.cpu);
+      writeJunit([...results.map((r) => ({ name: r.id, classname: 'lab.gate', failure: r.failures.length ? r.failures.join('\n') : undefined, time: r.ms / 1000 })), ...pr]);
       const md = ['# Lab gate', '', `WebGPU: ${lab.adapter}, ${w}x${h}, fixtures ${fixtures.join(', ')}`, '',
-        ...results.flatMap((r) => [`## ${r.failures.length ? '✗' : '✓'} ${r.id}`, '', ...r.notes.map((n) => `- ${n}`), ...r.failures.map((f) => `- **${f}**`), ''])].join('\n');
+        ...results.flatMap((r) => [`## ${r.failures.length ? '✗' : '✓'} ${r.id}`, '', ...r.notes.map((n) => `- ${n}`), ...r.failures.map((f) => `- **${f}**`), '']),
+        ...(pr[0]?.out ? [pr[0].out] : [])].join('\n');
       mkdirSync(OUT, { recursive: true });
       writeFileSync(join(OUT, 'gate.md'), md);
       process.exit(results.some((r) => r.failures.length) ? 1 : 0);

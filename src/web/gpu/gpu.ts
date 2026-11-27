@@ -4,11 +4,13 @@ import common from './shaders/common.wgsl?raw';
 export interface Gpu { device: GPUDevice; format: GPUTextureFormat; adapterInfo: string }
 
 
-export async function initGpu(): Promise<Gpu> {
+/** `timestamps`: ask for 'timestamp-query' when the adapter has it (the lab's profile mode). */
+export async function initGpu(opts: { timestamps?: boolean } = {}): Promise<Gpu> {
   if (!navigator.gpu) throw new Error('WebGPU is not available here. Open this page in desktop Chrome or Edge (113+).');
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
   if (!adapter) throw new Error('No WebGPU adapter found.');
-  const device = await adapter.requestDevice();
+  const requiredFeatures: GPUFeatureName[] = opts.timestamps && adapter.features.has('timestamp-query') ? ['timestamp-query'] : [];
+  const device = await adapter.requestDevice({ requiredFeatures });
   device.lost.then((i) => console.error('WebGPU device lost:', i.message));
   device.addEventListener('uncapturederror', (e) => console.error('WebGPU:', (e as GPUUncapturedErrorEvent).error.message));
   const info = adapter.info;

@@ -16,6 +16,7 @@ import { Engine } from './engine.ts';
 import { MidiRelay } from './midi.ts';
 import { ACCEPT, Player } from './player.ts';
 import { DebugPanel, Rate, type Counters } from './debug.ts';
+import { FrameStats } from './framestats.ts';
 import { PadRelay } from './pads.ts';
 import { fxAt, PAD_COLORS, type Fx } from '../core/fx.ts';
 import { parseLrc } from '../core/lrc.ts';
@@ -399,6 +400,7 @@ async function start() {
   listeners.lateEvent.push((t) => engine.invalidate(t));
 
   let hudOn = true, lastHash = '', lastF = 0;
+  const fstats = new FrameStats();
   const rate = new Rate();
   const nameOf = (id: number | null) => (id === null ? 'none' : (room.hosts.find((h) => h.id === id)?.name ?? `#${id}`) + (id === me ? ' (this)' : ''));
   const panel = new DebugPanel(() => {
@@ -492,6 +494,7 @@ async function start() {
     const fx = (lastFx = fxAt(events, f));
     const hash = engine.frame(f, FE, fx, room.scene, sub);
     lastHash = hash; lastF = f;
+    fstats.frame(performance.now(), engine.transition?.type ?? null);
     panel.frame(f);
     lastTick = Math.max(lastTick, f);
     const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0, wave: false, trans: '', transSeen: [] as string[] });
@@ -508,6 +511,7 @@ async function start() {
       $('hud').textContent = [
         `${label}  ·  ${tr ? names.get(tr.from) : engine.scene.def.name}${pending}`,
         `tick ${f}  hash ${hash}`,
+        fstats.line(transName),
         st,
         FE.get(f, K_BPM) ? `midi ${FE.get(f, K_BPM)} bpm  beat ${FE.get(f, K_BAR) + 1}/4` : null,
         ccLine(f),

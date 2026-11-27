@@ -4,7 +4,7 @@ import { assetFile, type PieceDef, type Registry, type SceneGraph } from '../../
 import assetFiles from 'virtual:lab-assets';
 import { validatePiece } from '../../core/graph/validate.ts';
 import { applyStyle, type StylePack } from '../../core/graph/style.ts';
-import { transitionShader } from '../transitions.ts';
+import { transitionShader, transitionShaders } from '../transitions.ts';
 
 const manifests = import.meta.glob<PieceManifest>('../../../lab/pieces/*/*/piece.json', { eager: true, import: 'default' });
 const drivers = import.meta.glob<PieceDriver>('../../../lab/pieces/*/*/driver.ts', { eager: true, import: 'default' });
@@ -34,7 +34,10 @@ function build(): Registry {
     const dir = dirOf(path), wgsl: Record<string, string> = {};
     for (const [sp, src] of Object.entries(shaders)) if (dirOf(sp) === dir) wgsl[sp.slice(dir.length + 1)] = src;
     // core-transition's shader is generated from lab/transitions/ (src/core/transwgsl.ts)
-    if (manifest.id === 'core-transition' && wgsl['prelude.wgsl']) wgsl['transition.wgsl'] = transitionShader(wgsl['prelude.wgsl']).code;
+    if (manifest.id === 'core-transition' && wgsl['prelude.wgsl']) {
+      wgsl['transition.wgsl'] = transitionShader(wgsl['prelude.wgsl']).code;
+      Object.assign(wgsl, transitionShaders(wgsl['prelude.wgsl']));
+    }
     const def: PieceDef = { manifest, driver: drivers[`${dir}/driver.ts`], wgsl, assets: assetsOf(manifest) };
     const errs = validatePiece(def, dir.slice(dir.lastIndexOf('/') + 1));
     if (errs.length) { console.error(`lab piece skipped:\n${errs.join('\n')}`); continue; }

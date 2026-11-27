@@ -14,6 +14,7 @@ import { NO_FX } from '../core/fx.ts';
 import { TICKS_PER_BEAT } from '../core/constants.ts';
 import { transEntry } from '../core/transitions.ts';
 import type { SceneSched } from '../core/protocol.ts';
+import { FrameProfiler } from './gpu/profile.ts';
 
 export interface RunOpts {
   scene: SceneGraph | string;
@@ -33,6 +34,30 @@ export interface RunOpts {
   transition?: { id: string; from: string; to: string; at: number; ticks: number; seed?: number };
 }
 
+/**
+ * Profile one switch: `from` alone for `before` ticks, the transition `trans` for `ticks`, then `to`
+ * alone for `after`. Every frame is timed on its own (encode, submit, wait for the GPU), so a
+ * hitch lands on the frame that caused it. Keep `start` increasing across runs so sims step on.
+ */
+export interface ProfileOpts {
+  fixture: string; start: number;
+  from: string; to: string; trans: string; seed?: number;
+  before: number; ticks: number; after: number;
+  /** Display sub-tick (0..255) every frame is drawn at, like the app's interpolation. */
+  sub?: number;
+}
+export interface ProfileFrame {
+  /** Ticks from the switch (negative: before it). */
+  at: number;
+  /** Frame ms: encode + submit + GPU done, serialized. */
+  wall: number;
+  /** JS ms for engine.frame (state + encode + submit). */
+  js: number;
+  cpu: Record<string, number>;
+  gpu: Record<string, number> | null;
+}
+export interface ProfileResult { ok: boolean; error?: string; frames: ProfileFrame[]; timestamps: boolean; errors: string[] }
+
 export interface FrameStat { tick: number; luma: number; black: number; white: number; nan: number; thumb: number[] }
 export interface RunResult {
   ok: boolean; error?: string; hashes: string[];
@@ -43,7 +68,7 @@ export interface RunResult {
   errors: string[];
 }
 
-declare global { interface Window { __lab?: { run(o: RunOpts): Promise<RunResult>; ready: boolean; adapter: string } } }
+declare global { interface Window { __lab?: { run(o: RunOpts): Promise<RunResult>; profile?(o: ProfileOpts): Promise<ProfileResult>; ready: boolean; adapter: string } } }
 
 const TW = 64, TH = 36;
 const errors: string[] = [];
@@ -72,7 +97,7 @@ async function readTexture(device: GPUDevice, tex: GPUTexture, bpp: number): Pro
 }
 
 async function main() {
-  const gpu = await initGpu();
+  const gpu = await initGpu({ timestamps: true });
   const canvas = document.getElementById('c') as HTMLCanvasElement;
   const engine = new Engine(gpu, canvas);
   const d = gpu.device, bgra = gpu.format === 'bgra8unorm';
@@ -186,7 +211,37 @@ async function main() {
     }
     return res;
   }
-  window.__lab = { run, ready: true, adapter: gpu.adapterInfo };
+  const prof = new FrameProfiler(d);
+  const sources = new Map<string, FeatureSource>();
+  async function profile(o: ProfileOpts): Promise<ProfileResult> {
+    errors.length = 0;
+    const res: ProfileResult = { ok: false, frames: [], timestamps: prof.timestamps, errors };
+    try {
+      if (!transEntry(o.trans)) throw new Error(`unknown transition ${o.trans}`);
+      for (const s of [o.from, o.to]) if (!engine.scenes.some((x) => x.def.id === s)) throw new Error(`unknown scene ${s}`);
+      if (!sources.has(o.fixture)) sources.set(o.fixture, await source(o.fixture));
+      const F = sources.get(o.fixture)!, at = o.start + o.before;
+      const sched: SceneSched = { id: o.to, prev: o.from, at, trans: { type: o.trans, ticks: o.ticks, seed: o.seed ?? 0x5eed1234, tpb: TICKS_PER_BEAT }, earlier: [] };
+      engine.setScene(o.from);
+      await d.queue.onSubmittedWorkDone();
+      engine.profiler = prof;
+      try {
+        for (let t = o.start; t < at + o.ticks + o.after; t++) {
+          const t0 = performance.now();
+          engine.frame(t, F, NO_FX, sched, o.sub ?? 0);
+          const t1 = performance.now();
+          const p = await prof.read();
+          await d.queue.onSubmittedWorkDone();
+          res.frames.push({ at: t - at, wall: performance.now() - t0, js: t1 - t0, cpu: p.cpu, gpu: p.gpu });
+        }
+      } finally { engine.profiler = null; }
+      res.ok = true;
+    } catch (e) {
+      res.error = (e as Error).message;
+    }
+    return res;
+  }
+  window.__lab = { run, profile, ready: true, adapter: gpu.adapterInfo };
 }
 
 main().catch((e: Error) => { window.__lab = { ready: true, adapter: '', run: async () => ({ ok: false, error: e.message, hashes: [], stats: [], msPerFrame: 0, adapter: '', errors }) }; });
