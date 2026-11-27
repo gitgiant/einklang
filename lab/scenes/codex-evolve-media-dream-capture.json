@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "id": "codex-evolve-media-dream-capture",
+  "name": "Dream Capture",
+  "doc": "Dream Desktop remixed as a violet media workstation. The tape player, contact sheet and screensaver take the main window in turn, with a floating preview that slides forward on hits.",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "evolve",
+    "desktop",
+    "retro"
+  ],
+  "parent": "codex-dream-desktop",
+  "nodes": [
+    {
+      "id": "source",
+      "piece": "core-media",
+      "params": {
+        "fit": 0,
+        "beat_zoom": 0.35,
+        "pulse": 0.16,
+        "drift": 0.3,
+        "cycle": 2
+      }
+    },
+    {
+      "id": "desktop",
+      "piece": "codex-window-station",
+      "params": {
+        "desk": 0,
+        "layout": 0,
+        "drive": 0.83
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "source.out",
+      "to": "desktop.in"
+    }
+  ],
+  "out": "desktop.out",
+  "post": {
+    "bloom": 0.11,
+    "threshold": 0.86
+  },
+  "evolve": {
+    "every": "phrase",
+    "transition": "codex-scanline-roll",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "desktop",
+        "jitter": 0,
+        "pool": [
+          {
+            "piece": "codex-window-station",
+            "params": {
+              "desk": 0,
+              "layout": 1,
+              "drive": 0.83
+            }
+          },
+          {
+            "piece": "codex-window-station",
+            "params": {
+              "desk": 0,
+              "layout": 2,
+              "drive": 0.83
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "codex-window-station",
+  "kind": "effect",
+  "name": "Window Station",
+  "doc": "Frames the same source as a tracking tape, a contact sheet and a looping kaleidoscope; bass drags the windows, beats light the cabinet, and onsets raise the floating panel.",
+  "ports": { "in": { "in": { "type": "tex" } }, "out": { "out": { "type": "tex" } } },
+  "params": {
+    "desk": { "type": "enum", "default": 0, "options": ["Violet desktop", "Amber lightbox", "Blue phosphor"] },
+    "layout": { "type": "enum", "default": 0, "options": ["Tape lead", "Contact lead", "Saver lead"] },
+    "drive": { "type": "float", "default": 0.80, "min": 0.5, "max": 1.2, "doc": "How far the desk changes color and the windows move with the audio." }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 1.4, "scales": "res" },
+  "tags": ["media", "desktop", "retro"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}
