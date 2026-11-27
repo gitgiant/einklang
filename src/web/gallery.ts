@@ -29,6 +29,7 @@
 import { initGpu } from './gpu/gpu.ts';
 import { Engine } from './engine.ts';
 import { FrameStats } from './framestats.ts';
+import { PerfView } from './perfpanel.ts';
 import { restartControl } from './restart.ts';
 import { FPS } from '../core/constants.ts';
 import { ranTransition, type SceneSched } from '../core/protocol.ts';
@@ -199,7 +200,7 @@ function inputPanel(change: (i: Input) => void, say: (text: string) => void) {
 }
 
 async function main() {
-  const gpu = await initGpu();
+  const gpu = await initGpu({ timestamps: true }); // for the debug view's GPU frame times
   const stage = $('stage');
   const cells = Array.from({ length: 4 }, () => {
     const cell = document.createElement('div'); cell.className = 'cell';
@@ -303,6 +304,15 @@ async function main() {
     const zone = tapZone(x, innerWidth);
     if (zone) stepScene(zone);
   });
+  // ---- the debug view: frame-time histogram (key `d`, the picker's display tab, debug=1) ----
+  let debug = false;
+  const perf = new PerfView({
+    gpu, transName, close: () => setDebug(false),
+    sceneName: (id) => (id === 'grid' ? 'grid of four' : cells[0].engine.scenes.find((s) => s.def.id === id)?.def.name ?? id),
+  });
+  const debugEl = document.createElement('div'); debugEl.id = 'perf'; debugEl.className = 'hide';
+  debugEl.append(perf.el); document.body.append(debugEl);
+  const setDebug = (on: boolean) => { debug = on; debugEl.classList.toggle('hide', !on); perf.show(on); };
   /** The picker and the scene voted on follow what's showing (the cycle moves it). */
   let marked = '';
   const mark = () => {
@@ -363,6 +373,8 @@ async function main() {
     release,
     info: () => info,
     setInfo: (on) => { info = on; layout(); },
+    debug: () => debug,
+    setDebug,
     grid: () => grid,
     toggleGrid: () => go('grid'),
     link: () => {
@@ -380,6 +392,7 @@ async function main() {
     else if (e.key === 'h') { hud = !hud; layout(); }
     else if (e.key === 'i') { info = !info; layout(); }
     else if (e.key === 'g') go('grid');
+    else if (e.key === 'd' && !e.ctrlKey && !e.metaKey && !e.altKey) setDebug(!debug);
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       // a focused selector keeps its arrows; Alt / Cmd + arrow stays the browser's back / forward
       if (!(e.target instanceof HTMLSelectElement) && !e.altKey && !e.ctrlKey && !e.metaKey) stepScene(e.key === 'ArrowLeft' ? -1 : 1);
@@ -394,7 +407,8 @@ async function main() {
   showNext();
 
   const fstats = new FrameStats();
-  const loop = () => {
+  if (qs.get('debug') === '1') setDebug(true);
+  const loop = (rafNow: number) => {
     const now = performance.now();
     const tF = input.tick(now);
     let tick = Math.min(Math.floor(tF), stopTick), sub = interp && tick < stopTick ? Math.floor((tF - Math.floor(tF)) * 256) : 0;
@@ -403,9 +417,11 @@ async function main() {
     tickNow = tick;
     const active = grid ? cells : cells.slice(0, 1);
     const sched = schedAt(tick);
+    if (!grid) perf.before(cells[0].engine);
     const hashes = active.map((c, i) => c.engine.frame(tick, input.F, undefined, i === 0 ? sched : undefined, sub));
     fstats.frame(performance.now(), grid ? null : cells[0].engine.transition?.type ?? null);
     const shownTrans = cells[0].engine.transition;
+    perf.frame(cells[0].engine, rafNow, grid ? 'grid' : shownId(), grid ? null : shownTrans);
     if (held !== null && held !== shownId() && held !== shownTrans?.from && held !== shownTrans?.to) release();
     if (marked !== shownId()) mark();
     if (sched) votes.trans.ran(ranTransition(sched, tick));
@@ -420,7 +436,7 @@ async function main() {
         })()}` : null,
         !grid && sc.status ? sc.status() : null,
         MEDIA.shareLine(),
-        `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  o picker  ·  t transition  ·  g grid  ·  h UI  ·  i info`,
+        `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  o picker  ·  t transition  ·  g grid  ·  h UI  ·  i info  ·  d debug`,
         `${fstats.line(transName)}  ·  WebGPU ${gpu.adapterInfo}`,
       ].filter(Boolean).join('\n');
     }

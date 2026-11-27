@@ -1,6 +1,8 @@
-// Debug panel (key `d`): frame-time graph with hitch markers, fps, tick continuity, and whatever
-// text sections the page hands it (network, room, MIDI, ...). Costs nothing while hidden except
-// the per-frame bookkeeping.
+// Debug panel (key `d`): the frame-time view (perfpanel.ts: histogram, per-scene table), a frame-time
+// graph with hitch markers, fps, tick continuity, and whatever text sections the page hands it
+// (network, room, MIDI, ...). Costs nothing while hidden except the per-frame bookkeeping.
+import type { PerfView } from './perfpanel.ts';
+
 const HIST = 300;
 
 export interface Counters { msgsIn: number; bytesIn: number; msgsOut: number; bytesOut: number }
@@ -22,8 +24,12 @@ export class DebugPanel {
   private nextText = 0;
   private sections: () => [string, string[]][];
 
+  /** The histogram and per-scene table; the page feeds it frames itself. */
+  private perf: PerfView;
+
   /** `controls` sit above the readouts. */
-  constructor(sections: () => [string, string[]][], ...controls: HTMLElement[]) {
+  constructor(sections: () => [string, string[]][], perf: PerfView, ...controls: HTMLElement[]) {
+    this.perf = perf;
     this.sections = sections;
     this.el = document.createElement('div');
     this.el.id = 'debug';
@@ -32,7 +38,7 @@ export class DebugPanel {
     this.cv.width = HIST * 2; this.cv.height = 90;
     this.txt = document.createElement('pre');
     this.txt.id = 'debug-text';
-    this.el.append(...controls, this.cv, this.txt);
+    this.el.append(perf.el, ...controls, this.cv, this.txt);
     document.body.append(this.el);
     try {
       new PerformanceObserver((l) => { this.longTasks += l.getEntries().length; }).observe({ type: 'longtask', buffered: false });
@@ -40,7 +46,9 @@ export class DebugPanel {
   }
 
   get shown(): boolean { return this.visible; }
-  toggle(on = !this.visible): void { this.visible = on; this.el.classList.toggle('hide', !on); }
+  toggle(on = !this.visible): void {
+    this.visible = on; this.nextText = 0; this.el.classList.toggle('hide', !on); this.perf.show(on);
+  }
 
   /** Call once per rendered frame with the tick it showed. */
   frame(tick: number): void {
@@ -58,7 +66,7 @@ export class DebugPanel {
     if (tick > this.lastTick + 1) this.tickSkips += tick - this.lastTick - 1;
     else if (tick === this.lastTick) this.tickRepeats++;
     this.lastTick = tick;
-    if (this.visible) { this.draw(); if (now >= this.nextText) { this.nextText = now + 250; this.write(now); } }
+    if (this.visible && now >= this.nextText) { this.nextText = now + 250; this.draw(); this.write(now); }
   }
 
   private recent(): Float32Array { const k = Math.min(this.n, HIST); return this.dts.slice(0, k); }
