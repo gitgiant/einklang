@@ -38,8 +38,9 @@ import { galleryBeats, galleryHold, galleryTrans, type GalleryTrans } from './de
 import { TRANS_KEYS, transRow } from './transvote.ts';
 import { ZERO, cycleSched, holdAt, retime, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
 import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
-import { canShare, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
+import { canShare, insecure, micError, openMic, openShare, shareVideoBox, type LiveSource } from './capture.ts';
 import { mediaPicker } from './mediapicker.ts';
+import { MEDIA } from './media.ts';
 import { ACCEPT, Player } from './player.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
@@ -172,15 +173,17 @@ function inputPanel(change: (i: Input) => void) {
       return input;
     }, 'file failed');
   };
+  const shareVideo = shareVideoBox();
   for (const [kind, text, run] of [
     ['demo', 'demo track', demo],
     ['mic', 'mic', () => live('mic', 'mic', openMic)],
-    ['share', 'tab / system audio', () => live('share', 'shared audio', openShare)],
+    ['share', 'tab / system audio', () => live('share', 'shared audio', () => openShare(shareVideo.box.checked))],
     ['file', 'audio file', () => file.click()],
   ] as const) {
     if (kind === 'share' && !canShare()) continue;
     const b = document.createElement('button'); b.textContent = text; b.onclick = () => { run(); };
     buttons.set(kind, b); el.append(b);
+    if (kind === 'share') el.append(shareVideo.el);
   }
   // pictures: image / video files or the camera; a video's sound can take over as the input
   const media = mediaPicker({ sound: (v) => { live('video', 'video sound', async () => v); }, note: (t) => { note.textContent = t; } });
@@ -354,6 +357,7 @@ async function main() {
           return tr ? `${transName(tr.type)} ${tr.from}→${tr.to} ${((tr.p16 / 65536) * 100) | 0}%` : 'between';
         })()}` : null,
         !grid && sc.status ? sc.status() : null,
+        MEDIA.shareLine(),
         `keys: + - vote scene  ·  ${TRANS_KEYS.up} ${TRANS_KEYS.down} vote transition  ·  ← → scene  ·  t transition  ·  g grid  ·  h UI  ·  i info`,
         `${fstats.line(transName)}  ·  WebGPU ${gpu.adapterInfo}`,
       ].filter(Boolean).join('\n');
