@@ -3,17 +3,18 @@
 // and one weaker than N (it joined mid-period) shows dust only until N drops at the next reseed.
 import { definePiece } from '../../../api/index.ts';
 import { letterbox } from '../../../api/prims.ts';
-import { flow, FlowSim, epochOf, seedOf, stepParams } from '../../../../src/core/scenes/flow.ts';
+import { flow, epochOf, seedOf, stepParams } from '../../../../src/core/scenes/flow.ts';
 import { v1Cpu } from '../../../../src/core/graph/v1.ts';
 import { RESEED_TICKS } from '../../../../src/core/constants.ts';
 import { FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN } from '../../../../src/core/protocol.ts';
 import { hex8 } from '../../../../src/core/math.ts';
+import { FlowCheck } from './check.ts';
 
 /** Most dust a strong host adds on top of the sim. */
 const DUST_MAX = 1 << 18;
 /** Benchmark: particles per probe, and the share of a 60 Hz frame one step + draw may take. */
 const BENCH_N = 1 << 16, BENCH_BUDGET_MS = 4;
-const MAX_STEPS = 50, CHECK_N = 1024, SLOT = 256;
+const MAX_STEPS = 50, CHECK_N = 1024, CHECK_MS = 2000, SLOT = 256;
 const HDR: GPUTextureFormat = 'rgba16float';
 const ADD: GPUBlendState = { color: { srcFactor: 'one', dstFactor: 'one' }, alpha: { srcFactor: 'one', dstFactor: 'one' } };
 
@@ -51,9 +52,10 @@ export default definePiece({
     const dbuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const dustBg = device.createBindGroup({ layout: dustPipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: dbuf } }] });
 
-    // CPU reference over the first CHECK_N particles, compared against the GPU every ~2 s.
-    const cpu = new FlowSim(CHECK_N);
-    let simTick = -Infinity, simN = 0, checking = false, lastCheck = 0, check = 'pending', shown = '-';
+    // CPU reference over the first CHECK_N particles, compared against the GPU every ~2 s. It follows the
+    // GPU a time-boxed slice per frame (check.ts), so a check never replays a long gap in one frame.
+    const cpu = new FlowCheck(CHECK_N);
+    let simTick = -Infinity, simN = 0, lastCheck = 0, mapAt: number | null = null, check = 'pending', shown = '-';
 
     // particle storage grows to the largest N seen (a regrow drops the sim: it reseeds + replays)
     let capacity = 0, particles: GPUBuffer | null = null, csBg!: GPUBindGroup, drawBg!: GPUBindGroup;
@@ -85,6 +87,16 @@ export default definePiece({
       status: () => `sim ${simTick === -Infinity ? '-' : simTick}  N ${shown}  gpu≡cpu ${check}`,
       frame({ enc, out, cpu: c, tick, sub, raw: F }) {
         const target = out.out, u = c.u as Int32Array;
+        if (mapAt !== null) {
+          // the hash copy was submitted with the last frame: map it now
+          const at = mapAt;
+          mapAt = null;
+          readback.mapAsync(GPUMapMode.READ).then(() => {
+            const h = new Uint32Array(readback.getMappedRange().slice(0))[0];
+            readback.unmap();
+            cpu.gpuHash(at, h);
+          });
+        }
         const n = budget.n(tick), cap = budget.cap;
         const simulate = cap === null || n <= cap;
         const dust = cap === null ? 0 : simulate ? Math.min(DUST_MAX, cap - n) : cap;
@@ -108,9 +120,9 @@ export default definePiece({
         };
         const e0 = epochOf(tick) * RESEED_TICKS;
         const reseed = simTick < e0 || simTick > tick;
-        const willReach = (reseed ? e0 : simTick) + MAX_STEPS >= tick;
         const now = performance.now();
-        const doCheck = !checking && willReach && now - lastCheck > 2000;
+        // any tick works, also one mid fast-forward: right after a reseed the CPU is then only <= MAX_STEPS behind
+        const doCheck = !cpu.busy && mapAt === null && now - lastCheck > CHECK_MS;
         if (doCheck) enc.clearBuffer(hashBuf);
         const cpass = enc.beginComputePass();
         if (reseed) {
@@ -133,18 +145,14 @@ export default definePiece({
         device.queue.writeBuffer(params, 0, slots, 0, used * SLOT);
         if (doCheck) {
           enc.copyBufferToBuffer(hashBuf, 0, readback, 0, 4);
-          checking = true; lastCheck = now;
-          const at = simTick;
-          // map after this frame's submit (frame returns before the engine submits)
-          setTimeout(async () => {
-            await readback.mapAsync(GPUMapMode.READ);
-            const gpuHash = new Uint32Array(readback.getMappedRange().slice(0))[0];
-            readback.unmap();
-            cpu.seekTo(at, F);
-            const cpuHash = cpu.hash();
-            check = gpuHash === cpuHash ? `✓ ${hex8(gpuHash)}` : `✗ gpu ${hex8(gpuHash)} cpu ${hex8(cpuHash)}`;
-            checking = false;
-          }, 0);
+          lastCheck = now;
+          cpu.start(simTick);
+          mapAt = simTick; // mapped next frame (frame returns before the engine submits)
+        }
+        const r = cpu.step(simTick, F);
+        if (r) {
+          const ms = `cpu ≤${r.worst.toFixed(1)} ms/frame`;
+          check = r.gpu === r.cpu ? `✓ ${hex8(r.gpu)} (${ms})` : `✗ gpu ${hex8(r.gpu)} cpu ${hex8(r.cpu)} (${ms})`;
         }
         const rp = clearPass(enc, target);
         rp.setPipeline(drawPipe); rp.setBindGroup(0, drawBg); rp.draw(6, n);
