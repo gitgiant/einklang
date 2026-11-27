@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "codex-ripple-tank",
+  "name": "Ripple tank",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [{ "id": "tank", "piece": "codex-cymatics", "params": { "swell": 1.12, "spacing": 1.12 } }],
+  "edges": [],
+  "out": "tank.out",
+  "post": { "bloom": 0.24, "threshold": 0.74, "exposure": 1.04 }
+}

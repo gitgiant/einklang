@@ -1,0 +1,14 @@
+{
+  "id": "codex-chladni",
+  "kind": "generator",
+  "name": "Chladni plate",
+  "doc": "MIDI pitch or the dominant spectral band selects a square plate mode, with brass grains scattering into new nodal lines and jolting on transients.",
+  "ports": { "out": { "out": { "type": "tex" } } },
+  "params": {
+    "drive": { "type": "float", "default": 1, "min": 0, "max": 1.5, "doc": "Strength of the audio-driven jolt and plate lighting." },
+    "grain": { "type": "float", "default": 1, "min": 0.6, "max": 1.4, "doc": "Grain radius multiplier." }
+  },
+  "budget": { "ms": 1.5, "scales": "res" },
+  "tags": ["particles", "spectrum", "physics"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}

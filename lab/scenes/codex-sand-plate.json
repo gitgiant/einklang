@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "codex-sand-plate",
+  "name": "Sand plate",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [{ "id": "plate", "piece": "codex-chladni", "params": { "drive": 1.08, "grain": 1.08 } }],
+  "edges": [],
+  "out": "plate.out",
+  "post": { "bloom": 0.2, "threshold": 0.84, "exposure": 1.05 }
+}
