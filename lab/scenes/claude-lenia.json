@@ -1,0 +1,16 @@
+{
+  "format": 1, "id": "claude-lenia", "name": "Lenia", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 5, "hi": 10, "window": 20, "gain": 1.6 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#02060d #0b2a3c #146c7a #39b8a5 #b8f2c8 #ffd27a #fff6e8", "cycle": 0, "pads": true } },
+    { "id": "ca", "piece": "claude-life",
+      "params": { "mode": 1, "cells": 180, "radius": 9, "steps": 1, "dt": 0.1, "drive": 1, "seeds": 1.2, "drift": 0.0012, "glow": 1.3, "relief": 5, "age": 1, "trail": 1, "cycle": 0.2 },
+      "bind": { "swirl": { "from": "mid.out", "range": [0.0005, 0.006] } } },
+    { "id": "fx", "piece": "core-trails", "params": { "decay": 0.7, "zoom": 0.004, "rotate": 0.001 } }
+  ],
+  "edges": [ { "from": "pal.palette", "to": "ca.palette" }, { "from": "ca.out", "to": "fx.in" } ],
+  "out": "fx.out",
+  "post": { "bloom": 0.55, "threshold": 0.75 }
+}
