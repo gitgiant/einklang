@@ -14,47 +14,68 @@
   .cell { position: relative; background: #000; min-width: 0; min-height: 0; }
   .cell canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .tag { position: absolute; left: 10px; top: 8px; color: var(--dim); pointer-events: none; text-shadow: 0 0 4px #000; }
-  #bar { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; background: #000b; border: 1px solid var(--line); border-radius: 6px; backdrop-filter: blur(6px); }
-  #bar button { font: inherit; color: var(--dim); background: none; border: 0; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-  #bar button:hover { color: var(--fg); }
-  #bar button[aria-pressed=true] { color: #000; background: var(--fg); }
-  #bar select { font: inherit; color: var(--dim); background: #000; border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; }
-  #hud { position: fixed; left: 10px; bottom: 52px; padding: 6px 8px; background: #000a; white-space: pre; pointer-events: none; border-radius: 4px; }
+  #hud { position: fixed; left: 10px; top: 62px; max-width: calc(100vw - 36px); padding: 6px 8px; background: #000a; white-space: pre-wrap; pointer-events: none; border-radius: 4px; }
   #err { user-select: text; -webkit-user-select: text; position: fixed; inset: 0; display: none; place-items: center; text-align: center; color: #f88; padding: 2em; }
-  #vote { position: fixed; right: 10px; bottom: 10px; max-width: 340px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 8px; background: #000b; border: 1px solid var(--line); border-radius: 6px; }
-  #vote > button, #vote .trow > button { font-size: 18px; background: none; border: 0; cursor: pointer; padding: 2px 6px; }
-  #vote > button:disabled, #vote .trow > button:disabled { opacity: .3; cursor: default; }
-  #vote .note, #vote .tnote { color: var(--dim); }
-  #vote .trow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
-  #vote .tags, #vote .ttags { display: flex; flex-wrap: wrap; gap: 3px; width: 100%; }
-  #vote .tags button, #vote .ttags button { font: inherit; font-size: 11px; color: var(--dim); background: none; border: 1px solid var(--line); border-radius: 10px; padding: 2px 7px; cursor: pointer; }
-  #vote .tags button[aria-pressed=true], #vote .ttags button[aria-pressed=true] { color: #000; background: var(--fg); }
-  #input { position: fixed; left: 10px; bottom: 10px; max-width: calc(100vw - 20px); display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 3px; background: #000b; border: 1px solid var(--line); border-radius: 6px; }
-  #input button { font: inherit; color: var(--dim); background: none; border: 0; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-  #input button:hover { color: var(--fg); }
-  #input button[aria-pressed=true] { color: #000; background: var(--fg); }
-  #input .note:not(:empty) { color: var(--dim); padding: 0 6px; }
-  #input .sharevideo { color: var(--dim); padding: 0 6px; cursor: pointer; }
+  button, input, select { font: inherit; touch-action: manipulation; }
+  #tools { position: fixed; left: 10px; top: 10px; max-width: calc(100vw - 20px); display: flex; align-items: center; gap: 8px; }
+  #tools button { min-height: 40px; padding: 6px 14px; color: var(--fg); background: #000b; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; backdrop-filter: blur(6px); }
+  #status { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); text-shadow: 0 0 4px #000; }
+  #vote { position: fixed; right: 10px; bottom: 10px; max-width: min(360px, calc(100vw - 36px)); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding: 6px 8px; background: #000b; border: 1px solid var(--line); border-radius: 6px; }
+  #vote .srow, #vote .tvoted, #vote .tpick { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; }
+  #vote .trow { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; width: 100%; padding-top: 4px; border-top: 1px solid var(--line); }
+  #vote button { font-size: 18px; color: var(--fg); background: none; border: 0; cursor: pointer; min-width: 40px; min-height: 40px; padding: 2px 6px; }
+  #vote button:disabled { opacity: .3; cursor: default; }
+  #vote :is(button.prev, button.next) { border: 1px solid var(--line); border-radius: 6px; }
+  #vote .tpick span { min-width: 12em; text-align: center; }
+  #vote :is(.note, .tnote) { color: var(--dim); }
+  #sheet { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: #0008; cursor: pointer; }
+  #sheet .box { cursor: auto; display: flex; flex-direction: column; width: min(620px, 100%); height: min(720px, 86vh); height: min(720px, 86dvh); background: #0d0d0df2; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; outline: none; }
+  #sheet .tabs { display: flex; gap: 2px; padding: 6px; border-bottom: 1px solid var(--line); }
+  #sheet .tabs button { flex: 1 1 auto; min-width: 0; padding: 4px 2px; border-color: transparent; font-size: 12px; }
+  #sheet .tabs .close { flex: 0 0 40px; }
+  #sheet .body { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 8px 10px max(10px, env(safe-area-inset-bottom)); }
+  #sheet button { min-height: 40px; padding: 6px 10px; color: var(--fg); background: none; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+  #sheet button[aria-pressed=true] { color: #000; background: var(--fg); }
+  #sheet button[aria-pressed=true] .dim { color: #333; }
+  #sheet button:disabled { opacity: .35; cursor: default; }
+  /* 16px: iOS zooms into smaller fields */
+  #sheet :is(input[type=search], input[readonly], select) { font-size: 16px; min-height: 40px; color: var(--fg); background: #000; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; user-select: text; -webkit-user-select: text; }
+  #sheet .search { display: flex; gap: 6px; }
+  #sheet .search input { flex: 1; min-width: 0; }
+  #sheet .chips { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; padding: 8px 0; }
+  #sheet .chip { flex: none; border-radius: 20px; }
+  #sheet .chip.vendor { border-style: dashed; }
+  #sheet .list { display: flex; flex-direction: column; gap: 3px; }
+  #sheet .row { display: grid; grid-template-columns: 1fr auto; column-gap: 10px; align-items: center; text-align: left; }
+  #sheet .row .name { overflow-wrap: anywhere; }
+  #sheet .options { display: flex; flex-wrap: wrap; gap: 6px; }
+  #sheet .field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  #sheet h3 { margin: 12px 0 6px; font-size: 13px; }
+  #sheet h3:first-child { margin-top: 0; }
+  #sheet .dim { color: var(--dim); }
+  #sheet .key { overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; }
+  #sheet .said:empty { display: none; }
+  #sheet .said { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; }
+  #input { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  #input .note { width: 100%; color: var(--dim); }
+  #input :is(.sharevideo, .media label) { display: flex; align-items: center; gap: 6px; min-height: 40px; color: var(--dim); cursor: pointer; }
   #input .media { display: contents; }
-  #input .media > button:first-child { margin-left: 8px; }
-  #input .media label { color: var(--dim); padding: 0 6px; cursor: pointer; }
   #input .media [hidden] { display: none; }
-  @media (max-width: 800px) {
-    #input { bottom: 130px; } #hud { bottom: 200px !important; }
-    /* the transition row makes the vote panel taller */
-    body:has(#vote .trow:not(.hide)) #input { bottom: 250px; } body:has(#vote .trow:not(.hide)) #hud { bottom: 320px !important; }
+  @media (max-width: 640px) {
+    /* a phone: the picker is a bottom sheet */
+    #sheet { align-items: flex-end; }
+    #sheet .box { border-radius: 12px 12px 0 0; border-width: 1px 0 0; }
   }
-  #bar, #vote, #input { transition: opacity .4s; }
-  body.idle :is(#bar, #vote, #input) { opacity: 0; pointer-events: none; }
+  #tools, #vote { transition: opacity .4s; }
+  body.idle :is(#tools, #vote) { opacity: 0; pointer-events: none; }
   /* hidden by double-tap: stays hidden until the next one */
-  body.ui-off :is(#bar, #vote, #input, #hud, .tag) { opacity: 0; visibility: hidden; pointer-events: none; }
-  body.idle { cursor: none; }
+  body.ui-off :is(#tools, #vote, #hud, .tag) { opacity: 0; visibility: hidden; pointer-events: none; }
+  body.idle:not(.sheet-open) { cursor: none; }
   .hide { display: none !important; }
 </style>
 </head>
 <body>
 <div id="stage"></div>
-<nav id="bar"></nav>
 <div id="hud"></div>
 <div id="err"></div>
 <script type="module" src="/src/web/gallery.ts"></script>

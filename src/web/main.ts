@@ -27,6 +27,7 @@ import { mediaPicker } from './mediapicker.ts';
 import { MEDIA } from './media.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
 import { TRANS_KEYS, transRow } from './transvote.ts';
+import { stepChoice } from './pickerlist.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global {
@@ -283,6 +284,11 @@ lenSel.value = String(remembered.beats); if (!lenSel.value) lenSel.value = Strin
 /** A running auto-rotation takes the new transition settings too. */
 const transChanged = () => { if (room.auto) send({ t: 'auto', bars: room.auto.bars, trans: transReq() }); };
 transSel.onchange = () => { lsSet('trans', transSel.value); transChanged(); };
+/** The vote panel's ‹ ›: this host's transition for the next switch. */
+const stepTrans = (by: -1 | 1) => {
+  transSel.value = stepChoice([...transSel.options].map((o) => o.value), transSel.value, by);
+  transSel.onchange!(new Event('change'));
+};
 lenSel.onchange = () => { lsSet('tlen', lenSel.value); transChanged(); };
 const transReq = () => ({ type: transSel.value as TransType | 'random', beats: +lenSel.value });
 /** `next` picks a random other scene weighted by votes (👍 doubles, 👎 halves); `prev` steps back in list order. */
@@ -396,7 +402,9 @@ async function start() {
   benchN = engine.budget.cap = qs.has('cap') ? Math.max(1, +qs.get('cap')! | 0) : await engine.bench();
   send({ t: 'bench', n: benchN });
   const names = new Map(engine.scenes.map((s) => [s.def.id, s.def.name]));
-  const tvote = transRow((t, v, tags) => send({ t: 'transvote', transition: t.type, from: t.from, to: t.to, beats: t.beats, vote: v, tags }));
+  const tvote = transRow((t, v) => send({ t: 'transvote', transition: t.type, from: t.from, to: t.to, beats: t.beats, vote: v, tags: [] }), stepTrans);
+  const showNext = () => tvote.next(transSel.value === 'random' ? 'random' : transName(transSel.value as TransType));
+  transSel.addEventListener('change', showNext); showNext();
   $('tvote').append(tvote.el);
   // transScores is absent in states from an older server, which also ignores the votes
   const showTrans = () => tvote.show(room.transScores ?? {}, room.transScores !== undefined);
@@ -405,7 +413,7 @@ async function start() {
   listeners.vote.push((v) => {
     const what = v.t === 'vote' ? names.get(v.scene) ?? v.scene : `transition ${transName(v.transition)}`;
     toast(`${v.vote > 0 ? '👍' : '👎'} ${what}  ${v.score > 0 ? '+' : ''}${v.score}${v.retired ? '  · retired' : ''}${v.host ? `  · ${v.host}` : '  · gallery'}`);
-    // the picked tags went with this host's own vote
+    // this host's own vote arrived
     if (v.t === 'transvote' && v.host === hostName) tvote.saved('saved');
   });
   /** Vote on the scene showing now (during a transition: the one coming in). A 👎 also skips. */
