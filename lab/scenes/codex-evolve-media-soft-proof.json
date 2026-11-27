@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "codex-evolve-media-soft-proof",
+  "name": "Soft Proof",
+  "doc": "The picked picture becomes colored glass or a screened nodal print. The next pass redraws it as fractured plates, a tracking-damaged tape, or a waterfront lightbox. Bass opens up the print and brings its colors forward.",
+  "version": 2,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "print", "vaporwave"],
+  "nodes": [
+    { "id": "level", "piece": "core-follow", "params": { "lo": 0, "hi": 5, "window": 18, "gain": 2.8 } },
+    { "id": "media", "piece": "core-media",
+      "params": { "contrast": 1.02, "saturation": 1.15, "beat_zoom": 0.45, "pulse": 0.31, "drift": 0.35, "cycle": 0 },
+      "bind": { "brightness": { "from": "level.out", "range": [0.64, 1.26] } } },
+    { "id": "print", "piece": "codex-leadlight", "params": { "cells": 12 } },
+    { "id": "plate", "piece": "codex-fracture-plate", "params": { "tiles": 17, "breakup": 0.24 } },
+    { "id": "light", "piece": "codex-neon-phosphor", "params": { "cool": "#472cbf", "warm": "#ff65bc", "drive": 0.8 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "print.picture" },
+    { "from": "media.luma", "to": "print.light" },
+    { "from": "print.out", "to": "plate.picture" },
+    { "from": "plate.out", "to": "light.in" }
+  ],
+  "out": "light.out",
+  "post": { "bloom": 0.19, "threshold": 0.87, "exposure": 0.9 },
+  "evolve": {
+    "every": "phrase", "transition": "core-blend", "beats": 2,
+    "slots": [
+      { "node": "print", "jitter": 0, "pool": [
+        { "piece": "codex-nodal-print", "params": { "nodal": 0.17 }, "ranges": { "lines": [90, 115] } }
+      ] },
+      { "node": "plate", "jitter": 0, "pool": [
+        { "piece": "codex-tracking", "params": { "tracking": 0.39, "phosphor": 0.35 } },
+        "codex-tideline"
+      ] }
+    ]
+  }
+}
