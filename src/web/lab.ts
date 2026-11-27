@@ -16,6 +16,7 @@ import { transEntry } from '../core/transitions.ts';
 import type { SceneSched } from '../core/protocol.ts';
 import { FrameProfiler } from './gpu/profile.ts';
 import { MEDIA, canvasItem } from './media.ts';
+import { forceAll, type ForcePlan } from '../core/graph/sections.ts';
 
 export interface RunOpts {
   scene: SceneGraph | string;
@@ -39,6 +40,11 @@ export interface RunOpts {
    * (the fallback). Default `test`.
    */
   media?: 'test' | 'image' | 'video' | 'none';
+  /**
+   * A scene with sections: `all` (default) forces base and then every variant in turn over the run
+   * (equal parts, switching with the scene's transitions), `auto` lets `when` pick, or one section id.
+   */
+  sections?: 'all' | 'auto' | string;
 }
 
 /**
@@ -52,6 +58,12 @@ export interface ProfileOpts {
   before: number; ticks: number; after: number;
   /** Display sub-tick (0..255) every frame is drawn at, like the app's interpolation. */
   sub?: number;
+  /**
+   * Profile a section change inside scene `from` instead of a show switch: section `section.from`
+   * (an id, `base` for the base graph) alone for `before`, then `section.to` comes in with the
+   * scene's transition for it (`ticks` is ignored: the transition's own length), then `after`.
+   */
+  section?: { from: string; to: string };
 }
 export interface ProfileFrame {
   /** Ticks from the switch (negative: before it). */
@@ -65,7 +77,7 @@ export interface ProfileFrame {
 }
 export interface ProfileResult { ok: boolean; error?: string; frames: ProfileFrame[]; timestamps: boolean; errors: string[] }
 
-export interface FrameStat { tick: number; luma: number; black: number; white: number; nan: number; thumb: number[] }
+export interface FrameStat { tick: number; luma: number; black: number; white: number; nan: number; thumb: number[]; /** A scene with sections: the one showing. */ section?: string }
 export interface RunResult {
   ok: boolean; error?: string; hashes: string[];
   stats: FrameStat[];
@@ -154,6 +166,15 @@ async function main() {
       }
       if (!engine.scenes.some((s) => s.def.id === id)) throw new Error(`unknown scene ${id}`);
       engine.setScene(id);
+      const sc = engine.scene, secMode = o.sections ?? 'all';
+      if (sc.sections.length && !sched) {
+        if (secMode === 'all') sc.force(forceAll(sc.graph, o.start, o.ticks));
+        else if (secMode !== 'auto') {
+          const i = sc.sections.indexOf(secMode);
+          if (i < 0) throw new Error(`${id} has no section ${secMode} (${sc.sections.join(', ')})`);
+          sc.force([{ at: 0, idx: i - 1 }]);
+        } else sc.force(null);
+      }
       // generated test media for core-media (per host, not hashed)
       const mode = o.media ?? 'test', vc = new OffscreenCanvas(640, 360), vg = vc.getContext('2d')!, video = canvasItem(vc, 'video', 'test video');
       MEDIA.set([...(mode === 'test' || mode === 'image' ? [canvasItem(testImage(), 'image', 'test image')] : []), ...(mode === 'test' || mode === 'video' ? [video] : [])]);
@@ -218,12 +239,16 @@ async function main() {
         tctx.drawImage(frame, 0, 0, TW, TH);
         const td = tctx.getImageData(0, 0, TW, TH).data, tl: number[] = [];
         for (let p = 0; p < TW * TH; p++) tl.push(Math.round((0.2126 * td[p * 4] + 0.7152 * td[p * 4 + 1] + 0.0722 * td[p * 4 + 2])));
-        res.stats.push({ tick, luma: luma / n, black: black / n, white: white / n, nan, thumb: tl });
+        const sec = engine.scene.section();
+        res.stats.push({ tick, luma: luma / n, black: black / n, white: white / n, nan, thumb: tl, ...(sec ? { section: sec.id } : {}) });
         if (i % sheetEvery === 0 && sheetN < o.sheet) {
           sctx.drawImage(frame, (sheetN % cols) * tw, Math.floor(sheetN / cols) * th, tw, th);
-          sctx.fillStyle = '#000a'; sctx.fillRect((sheetN % cols) * tw, Math.floor(sheetN / cols) * th, 70, 16);
-          sctx.fillStyle = '#ddd'; sctx.font = '11px monospace';
-          sctx.fillText(sched ? `p ${(engine.transition?.p ?? (tick < sched.at ? 0 : 1)).toFixed(2)}` : `${(tick / 60).toFixed(2)}s`, (sheetN % cols) * tw + 4, Math.floor(sheetN / cols) * th + 12);
+          const label = (sched ? `p ${(engine.transition?.p ?? (tick < sched.at ? 0 : 1)).toFixed(2)}` : `${(tick / 60).toFixed(2)}s`)
+            + (sec ? ` ${sec.from ? `${sec.from}→` : ''}${sec.id}` : '');
+          sctx.font = '11px monospace';
+          sctx.fillStyle = '#000a'; sctx.fillRect((sheetN % cols) * tw, Math.floor(sheetN / cols) * th, Math.max(70, sctx.measureText(label).width + 8), 16);
+          sctx.fillStyle = '#ddd';
+          sctx.fillText(label, (sheetN % cols) * tw + 4, Math.floor(sheetN / cols) * th + 12);
           sheetN++;
         }
       }
@@ -255,12 +280,19 @@ async function main() {
     errors.length = 0;
     const res: ProfileResult = { ok: false, frames: [], timestamps: prof.timestamps, errors };
     try {
-      if (!transEntry(o.trans)) throw new Error(`unknown transition ${o.trans}`);
+      if (!o.section && !transEntry(o.trans)) throw new Error(`unknown transition ${o.trans}`);
       for (const s of [o.from, o.to]) if (!engine.scenes.some((x) => x.def.id === s)) throw new Error(`unknown scene ${s}`);
       if (!sources.has(o.fixture)) sources.set(o.fixture, await source(o.fixture));
       const F = sources.get(o.fixture)!, at = o.start + o.before;
-      const sched: SceneSched = { id: o.to, prev: o.from, at, trans: { type: o.trans, ticks: o.ticks, seed: o.seed ?? 0x5eed1234, tpb: TICKS_PER_BEAT }, earlier: [] };
+      let sched: SceneSched | undefined = { id: o.to, prev: o.from, at, trans: { type: o.trans, ticks: o.ticks, seed: o.seed ?? 0x5eed1234, tpb: TICKS_PER_BEAT }, earlier: [] };
       engine.setScene(o.from);
+      if (o.section) {
+        // a section change inside one scene: no show switch, the scene's own blend
+        const sc = engine.scene, idx = (id: string) => { const i = sc.sections.indexOf(id); if (i < 0) throw new Error(`${o.from} has no section ${id}`); return i - 1; };
+        const plan: ForcePlan = [{ at: o.start, idx: idx(o.section.from) }, { at, idx: idx(o.section.to) }];
+        sc.force(plan);
+        sched = undefined;
+      }
       await d.queue.onSubmittedWorkDone();
       engine.profiler = prof;
       try {
@@ -272,7 +304,7 @@ async function main() {
           await d.queue.onSubmittedWorkDone();
           res.frames.push({ at: t - at, wall: performance.now() - t0, js: t1 - t0, cpu: p.cpu, gpu: p.gpu });
         }
-      } finally { engine.profiler = null; }
+      } finally { engine.profiler = null; if (o.section) engine.scene.force(null); }
       res.ok = true;
     } catch (e) {
       res.error = (e as Error).message;

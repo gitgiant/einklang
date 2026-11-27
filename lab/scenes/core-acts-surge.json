@@ -1,0 +1,38 @@
+{
+  "format": 1, "id": "core-acts-surge", "name": "Acts: surge", "version": 1,
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#06122b #0f3a5f #1d7a8c #6fd3c4 #e8f7f2", "cycle": 0, "pads": true } },
+    { "id": "blobs", "piece": "claude-metaballs", "params": { "count": 10, "size": 0.09, "react": 0.9, "speed": 0.5, "pulse": 0.6, "edge": 0.1, "depth": 1.1 },
+      "bind": { "glow": { "from": "audio.rms", "range": [0.7, 1.6] } } },
+    { "id": "goo", "piece": "core-trails", "params": { "decay": 0.8, "zoom": -0.002, "rotate": 0.001 } }
+  ],
+  "edges": [ { "from": "pal.palette", "to": "blobs.palette" }, { "from": "blobs.out", "to": "goo.in" } ],
+  "out": "goo.out",
+  "post": { "bloom": 0.45, "threshold": 0.75 },
+  "sections": {
+    "on": "bar", "transition": "core-blend", "beats": 2,
+    "variants": [
+      { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+        "remove": ["blobs"],
+        "nodes": [
+          { "id": "pal", "piece": "core-swatch", "params": { "colors": "#120004 #5c0a12 #c41f1a #ff6b1a #ffc23d #fff4c2", "cycle": 0, "pads": true } },
+          { "id": "fire", "piece": "claude-fire", "params": { "cells": 270, "fuel": 1.3, "bass": 1.2, "flare": 1.4, "cooling": 3.2, "wind": 0.6 },
+            "bind": { "glow": { "from": "audio.bass", "range": [1.1, 2.4] } } },
+          { "id": "tear", "piece": "agy-glitch", "params": { "amount": 0.55, "displace": 0.45, "smear": 0.4, "rgb": 0.6, "burst": 0.9, "blocks": 22 } }
+        ],
+        "edges": [ { "from": "pal.palette", "to": "fire.palette" }, { "from": "fire.out", "to": "tear.in" }, { "from": "tear.out", "to": "goo.in" } ],
+        "params": { "goo": { "decay": 0.55, "zoom": 0.006 } },
+        "post": { "bloom": 0.85, "threshold": 0.6 } },
+      { "id": "build", "when": { "section": "build" }, "transition": "core-zoom", "beats": 2,
+        "nodes": [ { "id": "pull", "piece": "claude-zoomfeed", "params": { "decay": 0.9, "zoom": 0.03, "bass": 0.06, "pulse": 0.05, "rotate": 0.01, "hue": 0.06 } } ],
+        "edges": [ { "from": "blobs.out", "to": "pull.in" }, { "from": "pull.out", "to": "goo.in" } ],
+        "params": { "blobs": { "speed": 1.6, "pulse": 1.5, "react": 1.6 } },
+        "post": { "bloom": 0.6 } },
+      { "id": "breakdown", "when": { "section": "breakdown" }, "transition": "core-melt", "beats": 4,
+        "params": { "pal": { "colors": "#0b0618 #2a1450 #5b2a86 #b05fd1 #f2d7ff" }, "blobs": { "count": 8, "size": 0.12, "speed": 0.3, "pulse": 0.3 }, "goo": { "decay": 0.9 } },
+        "post": { "bloom": 0.35 } }
+    ]
+  }
+}

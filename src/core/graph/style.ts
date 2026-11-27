@@ -5,6 +5,7 @@ import type { PieceManifest } from '../../../lab/api/index.ts';
 import { hexToOklab } from '../../../lab/api/index.ts';
 import { POST_KEYS, type PostParams } from '../post.ts';
 import { splitRef, type Registry, type SceneGraph } from './types.ts';
+import { sectionGraphs } from './sections.ts';
 
 export interface StylePack {
   format: 1;
@@ -54,7 +55,16 @@ export function validateStyle(s: StylePack, reg: Registry): string[] {
  */
 export function applyStyle(g: SceneGraph, styles: Styles, reg: Registry): SceneGraph {
   if (!g.style) return g;
-  const s = styles.get(g.style);
+  if (g.sections) {
+    // every variant is expanded first, then styled, so its own nodes and out get the look too
+    const graphs = sectionGraphs({ ...g, expanded: undefined }).map((x) => styleOne({ ...x, style: g.style }, styles, reg));
+    return { ...graphs[0], sections: g.sections, expanded: graphs };
+  }
+  return styleOne(g, styles, reg);
+}
+
+function styleOne(g: SceneGraph, styles: Styles, reg: Registry): SceneGraph {
+  const s = styles.get(g.style!);
   if (!s) throw new Error(`${g.id}: unknown style ${g.style}`);
   const nodes = g.nodes.map((n) => ({ ...n, params: { ...n.params } }));
   const pal = 'style_palette';

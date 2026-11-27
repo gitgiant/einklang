@@ -1,0 +1,16 @@
+{
+  "id": "core-step", "kind": "modulator", "name": "Step sequencer",
+  "doc": "Beat-synced step sequencer: walks `pattern` (values 0..1, one per step) on the grid, with optional glide; gate fires on every step whose value is above 0.",
+  "ports": { "out": {
+    "out": { "type": "signal", "doc": "the current step's value" },
+    "index": { "type": "signal", "doc": "step / (steps - 1)" },
+    "gate": { "type": "trigger", "doc": "1 on the first tick of a step with a value > 0" }
+  } },
+  "params": {
+    "pattern": { "type": "text", "default": "0 0.33 0.66 1", "doc": "step values 0..1, space separated; the step count is its length" },
+    "rate": { "type": "enum", "default": 3, "options": ["1/4 beat", "1/2 beat", "beat", "bar", "2 bars", "4 bars"], "doc": "step length" },
+    "glide": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "fraction of a step spent sliding from the previous value" },
+    "offset": { "type": "int", "default": 0, "min": 0, "max": 63, "doc": "start this many steps in" }
+  },
+  "tags": ["sequencer", "rhythm", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

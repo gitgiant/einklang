@@ -2,6 +2,7 @@
 import { CPU_PORTS, PIECE_KINDS, PORT_TYPES, isTexPort, type ParamSpec, type PieceManifest, type PortSpec } from '../../../lab/api/index.ts';
 import { splitRef, type PieceDef, type Registry, type SceneGraph } from './types.ts';
 import { POST_KEYS } from '../post.ts';
+import { sampledSignals, sectionGraphs, validateSections } from './sections.ts';
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)+$/;
 const NAME = /^[a-z_][a-z0-9_]*$/;
@@ -139,6 +140,18 @@ export function validateScene(g: SceneGraph, reg: Registry): string[] {
   if (!o) err(`out ${g.out} is not an output`);
   else if (o.type !== 'tex') err(`out ${g.out} must be tex, is ${o.type}`);
   if (!errs.length && order(g) === null) err('graph has a cycle');
+  if (g.sections !== undefined) {
+    const before = errs.length;
+    errs.push(...validateSections(g));
+    for (const ref of sampledSignals(g.sections)) { const o = outPort(ref); if (o && o.type !== 'signal') err(`sections: ${ref} is ${o.type}, not a signal`); else if (!o) err(`sections: ${ref} is not an output`); }
+    if (errs.length === before) {
+      const graphs = sectionGraphs(g);
+      g.sections.variants.forEach((v, i) => {
+        const vg = graphs[i + 1];
+        if (vg) for (const e of validateScene(vg, reg)) errs.push(e.replace(`${g.id}: `, `${g.id}: section ${v.id}: `));
+      });
+    }
+  }
   return errs;
 }
 

@@ -2,6 +2,18 @@
 
 Status: agreed 2026-11-26 (grill-me interview). **#20–#24 and #26 built 2026-11-26; #25 contract, backlog and skill built** (its first batch is running via Hauptling). Tickets: #20–#26. Stills: `docs/mockups/lab-*.png` (`ONLY=lab-demo,lab-retro npm run mockups`).
 
+### Build notes: dynamic scenes (decided while building)
+
+- **Two layers.** (1) Utility pieces that pick or mix branches inside one graph (`core-switch`, `core-crossfade`) driven by modulators (`core-section`, `core-step`, `core-random-walk`, plus the cheap PRD ones: `core-envelope`, `core-slew`, `core-math`, `core-midi`). (2) Scene `sections`: variants of the base graph keyed to song structure, a signal, a MIDI note / CC or the room's cue, switched on a bar / phrase / N-bar boundary with a registered transition (id or `random`). Format: `lab/AGENTS.md` "Sections".
+- **Skipping branches:** a driver's `cpu()` may return `use` (the GPU inputs it reads this tick); the runner walks back from the outputs it must draw and runs only those nodes. A skipped sim or feedback node pauses.
+- **Quantized picks are pure:** `CpuCtx.paramAt(name, tick)` / `inputAt(port, tick)` evaluate the graph upstream at another tick (memoized per evaluation), so core-switch samples `select` at the boundary and the one before (for the fade) instead of keeping state.
+- **Song structure** (`src/core/songform.ts`): per bar, onsets (>= 3 = drums) and the top bands; rising highs bar on bar or an onset jump = build, drums = drop, no drums after drums in the last 8 bars = breakdown, else intro. Decided from the bar before the boundary (a change shows one bar late; anticipation is #15). On the demo track drop and breakdown match bar for bar, ~77% overall; the steady fixtures read techno/dense = drop, quiet = intro with some build.
+- **Grid:** boundaries are on the fixed 28-tick beat from tick 0 (as sim reseeds), not the room's tapped / MIDI grid, which scenes don't see; follows beat tracking (#14) later.
+- **Determinism:** the variant shown is a pure function of tick + features + inputs; the scene hash appends [section, previous, boundary, blend kind / ticks / seed / p / flash / roll] and the outgoing plan's hash while blending. Scenes without sections hash exactly as before (unit-tested against `evalCpu`).
+- **No stalls:** all variants' nodes are built at load in one runner (identical nodes shared, so unchanged feedback/sims continue through a change); auto-shader pipelines are cached per piece and compiled with `createRenderPipelineAsync`; the scene's own `core-transition` instance warms every transition. Measured with the profile's "Section changes" table.
+- **Cue input:** event `cue` `{ v }` / `{ step }` (state, latest wins), feature key `K_CUE` = 29; keys 0-9 (main page), pad Select + D-pad left/right. Not in `HASH_KEYS`: it acts only through sections and pieces, whose results are hashed.
+- **Open (option 3, next):** evolving scenes that swap pieces every N bars, vote-steered. Sections already give the plumbing (a variant list switched on a grid with transitions, all precompiled); a generated variant list or a `when: { every }` would slot in.
+
 ### Build notes: pluggable transitions (decided while building)
 
 - **Folders, not lists:** a transition is `lab/transitions/<id>/` (`transition.json` + `mix.wgsl`, contract in `lab/AGENTS.md` "Transitions"), so vendors add them in parallel without touching `src/`, `core-*` pieces or a shared switch. The 14 v1 transitions are `core-<name>` folders.
@@ -188,7 +200,7 @@ An edge must join equal port types. Conversions are explicit utility nodes (for 
   - **Voxel / 3D-ish:** voxel extrude (luma→height), isometric cubes, depth-from-luma parallax, 2.5D layer split, SSAO, depth fog, tilt-shift.
   - **Glitch / signal:** RGB shift per band, scanline jitter, block displacement, bit crush, JPEG artifacts, VSync roll/tearing, interlace, NTSC bleed, broken LCD, dead pixels.
   - **Analysis-driven:** optical-flow trails, edge→particles emitter, luma→field, motion-masked FX, band-masked FX (each band drives a region).
-- **Modulators:** band follower, envelope/ADSR, LFO, beat-synced step sequencer, random walk, MIDI CC/note, pad axis, slew, math (map, clamp, mix).
+- **Modulators:** band follower, envelope/ADSR, LFO, beat-synced step sequencer, random walk, MIDI CC/note, pad axis, slew, math (map, clamp, mix), song section (all but pad axis built: `core-*`).
 - **Composite / utility:** blend (add, screen, multiply, difference), mask ops, crossfade, transform, camera rigs (orbit, dolly, shake), particles→tex splat, geo→tex render, field ops.
 - **Retro / aesthetic** (pieces and ready-made scene packs):
   - **Vaporwave:** slatted sunset sun, neon grid floor, marble bust (.vox/.glb), palm silhouettes, pink/cyan palettes, Win95 windows, kanji overlays, slowed "chopped" time-stretch.

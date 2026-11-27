@@ -10,10 +10,11 @@
 //   pad        { s: slot, b: buttons, a: [lx, ly, rx, ry] -100..100, t: [l2, r2] 0..100, gone? }
 //   palette    { v }    absolute palette index (server counts the steps)
 //   freeze     { on }   scene time stops at this event's tick while on
+//   cue        { v }    section cue 0..9 (0 = auto; the server counts pad steps)
 //
-// cc / pad / palette / freeze are *state*: what matters is the latest value at a tick, so the
+// cc / pad / palette / freeze / cue are *state*: what matters is the latest value at a tick, so the
 // latest one per key survives pruning (and the server carries it into new timelines).
-import { BEAT_HOLD, CC_PARAMS, FPS, K_BAR, K_BEAT, K_BPM, K_NOTE, K_ONSET, K_P0, K_PAL, K_PHASE, K_VEL, N_PARAMS, STRIDE } from './constants.ts';
+import { BEAT_HOLD, CC_PARAMS, FPS, K_BAR, K_BEAT, K_BPM, K_CUE, K_NOTE, K_ONSET, K_P0, K_PAL, K_PHASE, K_VEL, N_PARAMS, STRIDE } from './constants.ts';
 import type { FeatureSource } from './features.ts';
 import type { TickEvent } from './protocol.ts';
 
@@ -25,7 +26,7 @@ export function stateKey(e: { type: string; payload?: unknown }): string | null 
   const p = (e.payload ?? {}) as Num;
   if (e.type === 'cc') return `cc:${p.c}`;
   if (e.type === 'pad') return `pad:${p.s}`;
-  if (e.type === 'palette' || e.type === 'freeze') return e.type;
+  if (e.type === 'palette' || e.type === 'freeze' || e.type === 'cue') return e.type;
   return null;
 }
 
@@ -120,6 +121,7 @@ export class EventLog {
     }
     if (k >= K_P0 && k < K_P0 + N_PARAMS) return Math.max(0, this.cc(tick, CC_PARAMS[k - K_P0]) * 2);
     if (k === K_PAL) { const e = this.latest('palette', tick); return e ? pay(e).v & 255 : 0; }
+    if (k === K_CUE) { const e = this.latest('cue', tick); return e ? pay(e).v & 15 : 0; }
     return 0;
   }
 }

@@ -1,0 +1,19 @@
+{
+  "id": "core-envelope", "kind": "modulator", "name": "Envelope",
+  "doc": "Attack / decay / sustain envelope fired by onsets, MIDI notes or a trigger input: rises over `attack`, falls over `decay` to `sustain` and holds it for `hold`, then releases to 0. Closed form over the last 10 s.",
+  "ports": {
+    "in": { "trigger": { "type": "trigger", "optional": true, "doc": "fires it when source is input" } },
+    "out": { "out": { "type": "signal" } }
+  },
+  "params": {
+    "source": { "type": "enum", "default": 0, "options": ["onset", "note", "input"], "doc": "what fires it" },
+    "attack": { "type": "float", "default": 0.01, "min": 0, "max": 2, "doc": "seconds" },
+    "decay": { "type": "float", "default": 0.4, "min": 0.01, "max": 8, "doc": "seconds to fall to sustain" },
+    "sustain": { "type": "float", "default": 0, "min": 0, "max": 1 },
+    "hold": { "type": "float", "default": 0, "min": 0, "max": 4, "doc": "seconds sustain holds before the release" },
+    "release": { "type": "float", "default": 0.3, "min": 0.01, "max": 4, "doc": "seconds from sustain to 0" },
+    "curve": { "type": "float", "default": 2, "min": 1, "max": 8, "doc": "falling shape: 1 linear, higher = faster at first" },
+    "velocity": { "type": "bool", "default": true, "doc": "scale notes by their velocity" }
+  },
+  "tags": ["envelope", "adsr", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

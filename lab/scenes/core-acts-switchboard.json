@@ -1,0 +1,40 @@
+{
+  "format": 1, "id": "core-acts-switchboard", "name": "Acts: switchboard", "version": 1,
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "sec", "piece": "core-section" },
+    { "id": "seq", "piece": "core-step", "params": { "pattern": "0 0.5 1 0.5", "rate": 3 } },
+    { "id": "walk", "piece": "core-random-walk", "params": { "rate": 3, "size": 0.3, "glide": 0.6, "seed": 7 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 4 } },
+    { "id": "stars", "piece": "codex-starfield", "bind": { "warp": { "from": "audio.bass", "range": [0.1, 0.7] } } },
+    { "id": "peaks", "piece": "codex-wire-mountains" },
+    { "id": "road", "piece": "codex-grid-floor" },
+    { "id": "pick", "piece": "core-switch", "params": { "quant": 4, "fade": 1, "mode": 0 }, "bind": { "select": { "from": "seq.out", "range": [0, 2] } } },
+    { "id": "kal", "piece": "core-kaleido", "params": { "segments": 6, "spin": 0.08 } },
+    { "id": "xf", "piece": "core-crossfade", "params": { "mode": 2, "snap": 0.08 }, "bind": { "amount": { "from": "walk.out" } } },
+    { "id": "tail", "piece": "core-trails", "params": { "decay": 0.7, "zoom": 0.004 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "stars.palette" }, { "from": "pal.palette", "to": "peaks.palette" }, { "from": "pal.palette", "to": "road.palette" },
+    { "from": "stars.out", "to": "pick.in0" }, { "from": "peaks.out", "to": "pick.in1" }, { "from": "road.out", "to": "pick.in2" },
+    { "from": "pick.out", "to": "kal.in" }, { "from": "pick.out", "to": "xf.in0" }, { "from": "kal.out", "to": "xf.in1" },
+    { "from": "xf.out", "to": "tail.in" }
+  ],
+  "out": "tail.out",
+  "post": { "bloom": 0.5, "threshold": 0.72 },
+  "sections": {
+    "on": "phrase", "transition": "random", "beats": 2,
+    "variants": [
+      { "id": "cue_glitch", "when": { "cue": 1 },
+        "nodes": [ { "id": "tear", "piece": "agy-glitch", "params": { "amount": 0.8, "burst": 1, "blocks": 30 } } ],
+        "edges": [ { "from": "xf.out", "to": "tear.in" }, { "from": "tear.out", "to": "tail.in" } ] },
+      { "id": "drummer", "when": { "note": [36, 51], "hold": 1 }, "transition": "core-stutter",
+        "params": { "pick": { "quant": 3, "fade": 0.25 }, "seq": { "pattern": "0 1 0.5 1 0 0.5", "rate": 2 }, "kal": { "segments": 12, "spin": 0.4 } } },
+      { "id": "loud", "when": { "signal": "sec.energy", "above": 0.62 },
+        "params": { "kal": { "segments": 10, "spin": 0.25 }, "tail": { "decay": 0.82 }, "xf": { "amount": 0.75 } },
+        "bind": { "xf": { "amount": null } },
+        "post": { "bloom": 0.75, "threshold": 0.65 } }
+    ]
+  }
+}

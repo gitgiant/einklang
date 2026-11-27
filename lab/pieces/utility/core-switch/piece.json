@@ -1,0 +1,20 @@
+{
+  "id": "core-switch", "kind": "utility", "name": "Switch",
+  "doc": "Shows one of up to 6 image inputs, picked by `select` (bind it to core-step, core-section, core-random-walk...). The pick holds for a grid unit and changes on its boundary with a short crossfade; only the shown input (both while fading) renders.",
+  "ports": {
+    "in": {
+      "in0": { "type": "tex", "optional": true }, "in1": { "type": "tex", "optional": true }, "in2": { "type": "tex", "optional": true },
+      "in3": { "type": "tex", "optional": true }, "in4": { "type": "tex", "optional": true }, "in5": { "type": "tex", "optional": true }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "select": { "type": "int", "default": 0, "min": 0, "max": 5, "doc": "which connected input (in port order; wraps past the last one). Bound signals 0..1 map onto 0..5 unless the binding gives a range" },
+    "quant": { "type": "enum", "default": 4, "options": ["tick", "1/4 beat", "1/2 beat", "beat", "bar", "2 bars", "4 bars", "8 bars"], "doc": "the pick is sampled on this grid and holds until the next boundary (tick = every tick, no fade)" },
+    "fade": { "type": "float", "default": 1, "min": 0, "max": 16, "doc": "crossfade on a change, in beats (clamped to the unit; 0 = cut)" },
+    "mode": { "type": "enum", "default": 0, "options": ["mix", "add", "screen", "multiply", "difference", "lighten", "darken", "over"], "doc": "how the new input comes in during the fade" }
+  },
+  "budget": { "ms": 0.05, "scales": "res" },
+  "tags": ["composite", "switch", "core"],
+  "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

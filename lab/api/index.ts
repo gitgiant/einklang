@@ -79,6 +79,8 @@ export interface Audio {
   cc: [number, number, number, number];
   /** Pads' palette step 0..1 (wraps). */
   pal: number;
+  /** The room's section cue (keyboard 1-9, pad Select + D-pad left/right): 0 = none / auto. */
+  cue: number;
 }
 
 /** Raw per-tick feature frames (the room's FeatureSource). */
@@ -118,13 +120,26 @@ export interface CpuCtx {
   rand(a: number, b?: number): number;
   /** The lyric line showing now (`.lrc` next to the playing track), or null. Not part of the sync hash. */
   lyric(): LyricLine | null;
+  /**
+   * This node's resolved param `name` (bindings applied) at another integer tick: the graph upstream of
+   * its binding is evaluated there. Pure, so hosts agree. Sample sparingly (boundaries, a short window).
+   */
+  paramAt(name: string, tick: number): ParamValue;
+  /** This node's CPU input `port` at another integer tick (undefined when unconnected), like paramAt. */
+  inputAt(port: string, tick: number): unknown;
+  /** Names of this node's connected input ports (any type). */
+  wired: readonly string[];
 }
 
 /** A timed lyric line: text, index, start and end (s into the track; end null on the last line), progress 0..1. */
 export interface LyricLine { text: string; index: number; start: number; end: number | null; progress: number }
 
-/** What cpu() returns: a value per CPU output port, plus `state` for synced pieces. */
-export type CpuOut = Record<string, unknown> & { state?: Int32Array };
+/**
+ * What cpu() returns: a value per CPU output port, plus `state` for synced pieces. `use` (optional):
+ * the GPU inputs this node reads this tick; the others are passed undefined and whatever only feeds
+ * them is not rendered (switches and crossfades skip their unselected branches this way).
+ */
+export type CpuOut = Record<string, unknown> & { state?: Int32Array; use?: string[] };
 
 // ---------------------------------------------------------------- GPU side
 
@@ -191,6 +206,8 @@ export const definePiece = (d: PieceDriver): PieceDriver => d;
 
 export { NO_MEDIA, FIT_MODES, CYCLE_OPTIONS, CYCLE_BARS, BarCounter, fitScale, fitUv, pickItem, type MediaInput, type MediaFrame, type MediaKind, type FitMode } from './media.ts';
 import type { MediaInput } from './media.ts';
+export { mixPass, MIX_MODES, type MixPass } from './mixpass.ts';
+export { TICKS_PER_BEAT, BAR_TICKS, GRID_UNITS, gridStart, smooth01, type GridUnit } from './grid.ts';
 export { parseVox, voxSurface, voxWorld, type VoxFile, type VoxModel, type VoxInstance, type VoxWorld } from './vox.ts';
 export { parseSheet, encodeSheet, sheetRgba, sheetTexture, frameAt, type Sheet, type SpriteTag } from './sprite.ts';
 export { parseFont, encodeFont, fontTexture, layoutText, MSDF_WGSL, type Font, type FontInfo, type Glyph, type Quad, type Layout } from './font.ts';
