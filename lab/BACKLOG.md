@@ -220,6 +220,7 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 - [ ] Scenes with sections by vendors: remix a liked scene into acts (calm verse branch, heavy drop branch)
 - [x] Evolving scenes: swap pieces every N bars, steered by votes → core `evolve` block, core-evolve-garden, core-evolve-circuit, agy-evolve-spectra, agy-evolve-harmony, agy-evolve-glitch
 - [x] Codex evolving scenes for geometry and light → codex-evolve-phosphor, codex-evolve-afterglow, codex-evolve-prism
+- [x] Evolving scenes by vendors, nature and simulation (growing, flowing, living systems) → claude-evolve-tidepool, claude-evolve-mycelium, claude-evolve-weather
 - [ ] Evolving remixes by vendors: give a liked scene an `evolve` slot (its generator or an effect) with a hand-picked pool and ranges (format: `lab/AGENTS.md` "Evolving scenes")
 - [ ] Freeze liked mutations: after a feedback run, `lab evolve freeze` the top states of "Evolving scenes" in FEEDBACK.md into scenes
 
