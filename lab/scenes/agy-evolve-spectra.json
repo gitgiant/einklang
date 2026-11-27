@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "id": "agy-evolve-spectra",
+  "name": "Evolve: spectra",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "pal", "piece": "core-harmony", "params": { "hue": 0.56, "scheme": 2, "chroma": 0.21, "light": 0.74, "contrast": 0.55 } },
+    {
+      "id": "gen",
+      "piece": "agy-spectrogram",
+      "params": { "direction": 0, "speed": 1.8, "gain": 1.5, "gamma": 1.3, "onset_mark": 0.7, "tilt": 0.2, "glow": 1.55 },
+      "bind": { "glow": { "from": "audio.rms", "range": [1.0, 2.2] } }
+    },
+    {
+      "id": "fx",
+      "piece": "claude-copper",
+      "params": { "bars": 10, "center": 0.45, "amp": 0.22, "thickness": 0.016, "react": 1.8, "front": 0.5, "glow": 1.2 }
+    },
+    { "id": "trail", "piece": "core-trails", "params": { "decay": 0.52, "zoom": 0.004, "rotate": 0.001 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "gen.palette" },
+    { "from": "pal.palette", "to": "fx.palette" },
+    { "from": "gen.out", "to": "fx.in" },
+    { "from": "fx.out", "to": "trail.in" }
+  ],
+  "out": "trail.out",
+  "post": { "bloom": 0.5, "threshold": 0.72 },
+  "evolve": {
+    "every": "phrase",
+    "transition": "codex-spectrum-wipe",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "gen",
+        "pool": [
+          { "piece": "agy-ridgeline", "params": { "rows": 48, "fill": 0.35 }, "ranges": { "height": [0.9, 1.8], "perspective": [0.3, 0.75], "glow": [1.2, 2.4] } },
+          { "piece": "core-bars", "params": { "gap": 0.18 }, "ranges": { "height": [0.65, 0.95], "glow": [1.3, 2.8] } },
+          "core-radial",
+          { "piece": "codex-cymatics", "ranges": { "swell": [0.7, 1.4], "spacing": [0.8, 1.3] } },
+          { "piece": "codex-wire-mountains", "ranges": { "speed": [0.65, 1.5], "lift": [0.25, 0.7], "glow": [1.1, 2.0] } }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          { "piece": "agy-pixelsort", "params": { "direction": 1, "length": 56, "onset_boost": 0.95, "mix": 0.85 }, "ranges": { "threshold": [0.18, 0.42], "energy": [0.4, 0.8] } },
+          { "piece": "core-kaleido", "params": { "zoom": 1.05 }, "ranges": { "segments": [4, 10], "spin": [-0.2, 0.2] } },
+          { "piece": "claude-zoomfeed", "params": { "bass": 0.035, "pulse": 0.03 }, "ranges": { "decay": [0.72, 0.88], "zoom": [-0.015, 0.025] } },
+          { "piece": "claude-slices", "params": { "settle": 0.55, "glitch": 0.35 }, "ranges": { "count": [8, 22], "shift": [0.1, 0.28] } }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#06091a #1b2868 #00d4ff #38ff9c #ffe14d #ff3877", "cycle": 0.25 } },
+          { "piece": "agy-blackbody", "params": { "min_k": 1400, "max_k": 9000, "heat": 6500 }, "ranges": { "offset": [0.0, 0.25], "gamma": [0.9, 1.6] } },
+          { "piece": "claude-cycle", "params": { "mode": 0, "every": 1, "stride": 2, "flash": 0.12 } }
+        ]
+      }
+    ]
+  }
+}

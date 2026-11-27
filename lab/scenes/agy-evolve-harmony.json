@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "id": "agy-evolve-harmony",
+  "name": "Evolve: harmony",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0b091c #3a1c71 #d76d77 #ffaf7b #5ce1e6", "cycle": 0.18 } },
+    {
+      "id": "gen",
+      "piece": "agy-pianoroll",
+      "params": { "speed": 1.7, "gain": 1.55, "threshold": 0.2, "perspective": 0.32, "keyboard_h": 0.2, "glow": 1.6, "grid": 0.45 },
+      "bind": { "glow": { "from": "audio.rms", "range": [1.1, 2.3] } }
+    },
+    {
+      "id": "fx",
+      "piece": "core-trails",
+      "params": { "decay": 0.7, "zoom": 0.007, "rotate": 0.002 }
+    }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "gen.palette" },
+    { "from": "gen.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.52, "threshold": 0.72 },
+  "evolve": {
+    "every": "phrase",
+    "transition": "core-blend",
+    "beats": 4,
+    "slots": [
+      {
+        "node": "gen",
+        "pool": [
+          { "piece": "agy-fifths", "params": { "gain": 1.55, "labels": true }, "ranges": { "rot_speed": [0.06, 0.24], "web": [0.55, 1.2], "pulse": [0.9, 1.7] } },
+          { "piece": "agy-fireworks", "params": { "trails": 0.85, "gain": 1.4 }, "ranges": { "burst_scale": [0.85, 1.7], "gravity": [0.3, 0.75], "sparkle": [0.8, 1.5] } },
+          { "piece": "codex-harmonograph", "ranges": { "spread": [0.75, 1.15], "ink": [0.85, 1.35] } },
+          { "piece": "codex-ribbons", "ranges": { "width": [0.75, 1.25], "orbit": [0.08, 0.28] } },
+          { "piece": "codex-chladni", "ranges": { "drive": [0.75, 1.4], "grain": [0.75, 1.25] } }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          { "piece": "claude-dots", "params": { "size": 1.05, "under": 0.25, "glow": 1.45 }, "ranges": { "cell": [10, 24], "burst": [0.4, 0.85] } },
+          { "piece": "agy-halftone", "params": { "mode": 0, "bass": 0.7, "contrast": 1.25, "mix": 0.85 }, "ranges": { "cell": [10, 22], "angle": [-45, 45] } },
+          { "piece": "claude-rotozoom", "params": { "bass": 0.75, "checker": 0.2 }, "ranges": { "tiles": [1.4, 3.0], "spin": [-0.22, 0.22] } },
+          { "piece": "core-kaleido", "params": { "zoom": 1.0 }, "ranges": { "segments": [4, 12], "spin": [-0.18, 0.18] } }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.2, "light": 0.75 }, "ranges": { "hue": [0.0, 1.0] } },
+          { "piece": "claude-cycle", "params": { "mode": 1, "every": 1, "stride": 1, "flash": 0.1 } },
+          { "piece": "agy-blackbody", "params": { "min_k": 1200, "max_k": 7500, "heat": 5500 }, "ranges": { "offset": [0.0, 0.2], "bright": [0.85, 1.2] } }
+        ]
+      }
+    ]
+  }
+}
