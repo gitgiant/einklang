@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "id": "codex-evolve-media-proof-drawer",
+  "name": "Proof Drawer",
+  "doc": "An amber lightbox prints tinted crops from the picture as an advancing contact sheet. Evolving layouts put the prints, the mirrored loupe and the tape preview in the lead.",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": [
+    "media",
+    "evolve",
+    "desktop",
+    "retro"
+  ],
+  "nodes": [
+    {
+      "id": "source",
+      "piece": "core-media",
+      "params": {
+        "fit": 0,
+        "beat_zoom": 0.35,
+        "pulse": 0.16,
+        "drift": 0.3,
+        "cycle": 0
+      }
+    },
+    {
+      "id": "desktop",
+      "piece": "codex-window-station",
+      "params": {
+        "desk": 1,
+        "layout": 1,
+        "drive": 0.79
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "source.out",
+      "to": "desktop.in"
+    }
+  ],
+  "out": "desktop.out",
+  "post": {
+    "bloom": 0.06,
+    "threshold": 0.86
+  },
+  "evolve": {
+    "every": "phrase",
+    "transition": "core-wipe",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "desktop",
+        "jitter": 0,
+        "pool": [
+          {
+            "piece": "codex-window-station",
+            "params": {
+              "desk": 1,
+              "layout": 2,
+              "drive": 0.79
+            }
+          },
+          {
+            "piece": "codex-window-station",
+            "params": {
+              "desk": 1,
+              "layout": 0,
+              "drive": 0.79
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
