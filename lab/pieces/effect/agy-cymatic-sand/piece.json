@@ -1,0 +1,37 @@
+{
+  "id": "agy-cymatic-sand",
+  "kind": "effect",
+  "name": "Cymatic Chladni sand",
+  "doc": "GPU particle simulation of vibrating Chladni and cymatic sand grains driven by the picked media and musical pitch: grains inherit the picture's colours, bounce out of acoustic antinodes, gather along both the picture's edge contours and pitch-selected standing-wave nodal lines, jolt on onsets, and re-form the live picture at phrase turns.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video whose colours tint the sand grains and vibrating plate" },
+      "luma": { "type": "mask", "optional": true, "doc": "media brightness (e.g. core-media.luma) warping plate thickness and nodal curvature" },
+      "edges": { "type": "field", "optional": true, "doc": "media edge gradient (e.g. core-media.edges) forming acoustic valleys where sand gathers" },
+      "palette": { "type": "palette", "optional": true, "doc": "accent palette for vibrating grain sparkles, nodal highlights and plate sheen" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["chladni", "dish", "dunes"], "doc": "standing-wave plate geometry: square Chladni plate, circular cymatic dish, or travelling acoustic edge dunes" },
+    "count": { "type": "int", "default": 96, "min": 24, "max": 160, "doc": "sand grain count in thousands" },
+    "chladni": { "type": "float", "default": 1.15, "min": 0.1, "max": 2.5, "doc": "strength of pitch-driven Chladni nodal line attraction and antinode vibration" },
+    "edge_pull": { "type": "float", "default": 1.25, "min": 0, "max": 2.5, "doc": "how strongly sand grains gather into the picture's edge contours" },
+    "luma_warp": { "type": "float", "default": 0.35, "min": 0, "max": 1, "doc": "how much picture brightness bends the standing-wave pattern around the subject" },
+    "vibrate": { "type": "float", "default": 1.1, "min": 0.1, "max": 2.5, "doc": "antinode acoustic bounce and bass-driven grain agitation" },
+    "jolt": { "type": "float", "default": 1.25, "min": 0, "max": 2.5, "doc": "onset scatter impulse that launches grains into sparkling arcs" },
+    "reform": { "type": "float", "default": 0.72, "min": 0, "max": 1, "doc": "how cleanly sand grains re-gather into the live picture at phrase boundaries" },
+    "size": { "type": "float", "default": 2.1, "min": 1, "max": 4.5, "doc": "sand grain radius in pixels at 1080p" },
+    "streak": { "type": "float", "default": 1.4, "min": 0, "max": 3.5, "doc": "velocity motion streak on fast-bouncing grains" },
+    "under": { "type": "float", "default": 0.28, "min": 0, "max": 0.75, "doc": "embossed vibrating picture plate visible beneath the sand" },
+    "pal_mix": { "type": "float", "default": 0.38, "min": 0, "max": 1, "doc": "palette metallic/neon accent on agitated grains and nodal sheen" },
+    "glow": { "type": "float", "default": 1.25, "min": 0.5, "max": 2.4, "doc": "overall sand luminosity" },
+    "react": { "type": "float", "default": 1.35, "min": 0.2, "max": 2.5, "doc": "audio reactivity multiplier" }
+  },
+  "budget": { "ms": 1.4, "scales": "n" },
+  "tags": ["media", "chladni", "cymatics", "sand", "particles", "physics", "simulation", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-27", "by": "agy/gemini-4-neon-high", "note": "first version: GPU particle Chladni & cymatic sand simulation coupling pitch-driven standing waves with media edge contours" }]
+}

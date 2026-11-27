@@ -1,0 +1,38 @@
+{
+  "id": "agy-ripple-optics",
+  "kind": "effect",
+  "name": "Ripple tank & prism optics",
+  "doc": "GPU 2D wave-tank and optical refraction simulation driven by the picked media: luma sets wave speed and lens depth, edges act as reflective coastlines and prism ridges, onsets drop pebbles that refract the picture with glowing caustics, highs split the light through chromatic prisms, and the picture momentarily re-forms at phrase turns.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video refracted by waves and prisms" },
+      "luma": { "type": "mask", "optional": true, "doc": "media brightness (e.g. core-media.luma) setting water depth and lens thickness" },
+      "edges": { "type": "field", "optional": true, "doc": "media edge gradient (e.g. core-media.edges) acting as reflective coastlines and prism facets" },
+      "palette": { "type": "palette", "optional": true, "doc": "accent palette for caustic highlights, specular glints and thin-film iridescence" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["caustics", "prism", "interferometer"], "doc": "optical simulation regime: ripple-tank caustics, chromatic prism lenses, or standing-wave thin-film interferometer" },
+    "cells": { "type": "int", "default": 180, "min": 96, "max": 260, "doc": "wave tank grid height in cells (width follows aspect)" },
+    "speed": { "type": "float", "default": 0.9, "min": 0.25, "max": 1.6, "doc": "wave propagation speed across the tank" },
+    "damp": { "type": "float", "default": 0.022, "min": 0.005, "max": 0.09, "doc": "wave damping (lower keeps ripples ringing longer)" },
+    "pebble": { "type": "float", "default": 1.15, "min": 0, "max": 2.5, "doc": "strength of pebble drops spawned by onsets and beats" },
+    "swell": { "type": "float", "default": 0.9, "min": 0, "max": 2, "doc": "bass-driven standing tank swell and rhythmic wave forcing" },
+    "edge_wall": { "type": "float", "default": 0.65, "min": 0, "max": 1, "doc": "how strongly media edges reflect waves and emit contour ripples" },
+    "refract": { "type": "float", "default": 1.1, "min": 0.1, "max": 2.5, "doc": "optical refraction bend of the picture through wave slopes and lenses" },
+    "caustic": { "type": "float", "default": 1.25, "min": 0, "max": 2.5, "doc": "brightness of focused caustic light webs and specular glints" },
+    "dispersion": { "type": "float", "default": 1.0, "min": 0, "max": 2.5, "doc": "spectral RGB / 7-band chromatic prism splitting driven by highs" },
+    "facets": { "type": "float", "default": 6.5, "min": 2, "max": 16, "doc": "crystal prism / liquid lens facet density in prism mode" },
+    "reform": { "type": "float", "default": 0.72, "min": 0, "max": 1, "doc": "how cleanly the picture settles and re-forms at phrase boundaries" },
+    "pal_mix": { "type": "float", "default": 0.42, "min": 0, "max": 1, "doc": "palette colour accent in caustics, bevels and thin-film glints" },
+    "glow": { "type": "float", "default": 1.15, "min": 0.5, "max": 2.2, "doc": "overall optical exposure" },
+    "react": { "type": "float", "default": 1.35, "min": 0.2, "max": 2.5, "doc": "audio reactivity multiplier" }
+  },
+  "budget": { "ms": 1.1, "scales": "res" },
+  "tags": ["media", "waves", "caustics", "prism", "lens", "optics", "simulation", "compute"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "changelog": [{ "date": "2026-11-27", "by": "agy/gemini-4-neon-high", "note": "first version: GPU 2D wave-tank caustic refraction, chromatic prism lenses, and thin-film interferometer driven by media and audio" }]
+}
