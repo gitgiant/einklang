@@ -210,7 +210,7 @@ fn palm_silhouette(lp: vec2f, sway: f32) -> f32 {
     let cycle = fract(beats * 0.5 + fi / f32(n_dolphins));
     // Active leap window 0.05..0.92
     let u_arc = clamp((cycle - 0.05) / 0.87, 0.0, 1.0);
-    let active = step(0.05, cycle) * step(cycle, 0.92);
+    let is_leaping = step(0.05, cycle) * step(cycle, 0.92);
     let dir = select(-1.0, 1.0, (i & 1) == 0);
 
     // Parabolic jump trajectory across the ocean
@@ -237,7 +237,7 @@ fn palm_silhouette(lp: vec2f, sway: f32) -> f32 {
       }
     }
 
-    if (active > 0.5) {
+    if (is_leaping > 0.5) {
       // Map screen pixel grid directly onto integer sprite pixels (crisp nearest-neighbor)
       let spr_pix_pos = (pix - d_pos * grid) / d_scale + spr_sz * 0.5;
       var sp = vec2i(floor(spr_pix_pos));
