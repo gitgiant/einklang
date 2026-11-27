@@ -2,7 +2,7 @@
   "id": "claude-life",
   "kind": "generator",
   "name": "Cellular automata",
-  "doc": "Life-like cellular automata (Conway, HighLife, Morley, 2x2, Day & Night, Amoeba) or continuous Lenia on a toroidal grid: onsets stamp discs of random soup, the band that rose most in the last bar (a coarse pitch class) picks the rule for the next bar (Lenia: its growth centre and width), Life steps on the beat grid, Lenia streams outward with the bass; cells are coloured by age, newborns hot, old cells cooling, dead ones leaving an afterglow.",
+  "doc": "Life-like cellular automata (Conway, HighLife, Morley, 2x2, Day & Night, Amoeba) or continuous Lenia on a toroidal grid: onsets stamp discs of random soup, the band that rose most in the last bar (a coarse pitch class) picks the rule for the next bar (Lenia: its growth centre and width), Life steps on the beat grid; Lenia steers its population toward a territory set by the loudness and streams outward with the bass; cells are coloured by age, newborns hot, old cells cooling, dead ones leaving an afterglow.",
   "ports": {
     "in": { "palette": { "type": "palette", "optional": true, "doc": "the last stop for newborns, low stops for old cells and afterglow" } },
     "out": { "out": { "type": "tex" } }
@@ -15,7 +15,7 @@
     "steps": { "type": "int", "default": 1, "min": 1, "max": 4, "doc": "Lenia steps per tick" },
     "radius": { "type": "int", "default": 8, "min": 3, "max": 12, "doc": "Lenia kernel radius in cells" },
     "dt": { "type": "float", "default": 0.1, "min": 0.02, "max": 0.3, "doc": "Lenia time step (loudness raises it)" },
-    "drive": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "how far bass and loudness push Lenia's growth" },
+    "drive": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "Lenia: how far the loudness of the last 2 s widens the territory and speeds the growth" },
     "seeds": { "type": "float", "default": 1, "min": 0, "max": 2, "doc": "size of the soup discs each onset stamps (0 = none)" },
     "drift": { "type": "float", "default": 0.0015, "min": 0, "max": 0.01, "doc": "Lenia: outward stream per tick (bass speeds it up)" },
     "swirl": { "type": "float", "default": 0.002, "min": -0.02, "max": 0.02, "doc": "Lenia: turn per tick, strongest at the centre" },

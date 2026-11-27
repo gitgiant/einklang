@@ -18,10 +18,10 @@ const RULES: [number[], number[]][] = [
   [[3, 5, 7], [1, 3, 5, 8]], // Amoeba
 ];
 const mask = (ns: number[]) => ns.reduce((m, n) => m | (1 << n), 0);
-/** Lenia growth centre / width per class (single-ring bump kernel). */
-const LENIA: [number, number][] = [[0.15, 0.017], [0.15, 0.02], [0.13, 0.02], [0.17, 0.022], [0.12, 0.018], [0.18, 0.027]];
+/** Lenia growth centre per class (single-ring bump kernel); the width is SIGMA x the centre, then steered by the population. */
+const LENIA_MU = [0.15, 0.14, 0.16, 0.13, 0.17, 0.15], SIGMA = 0.092;
 
-const SIM_BYTES = 64 + 8 * 16, DRAW_BYTES = 48 + 8 * 16, MAX_SEEDS = 8, MAX_CATCHUP = 4, RMAX = 12, TPB = 28;
+const SIM_BYTES = 80 + 8 * 16, DRAW_BYTES = 48 + 8 * 16, MAX_SEEDS = 8, MAX_CATCHUP = 4, RMAX = 12, TPB = 28;
 
 export default definePiece({
   gpu: ({ device, shader }) => {
@@ -33,11 +33,12 @@ export default definePiece({
         { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
         { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
         { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'read-only-storage' } },
+        { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: 'storage' } },
       ],
     });
     const layout = device.createPipelineLayout({ bindGroupLayouts: [bgl] });
     const cp = (entryPoint: string) => device.createComputePipeline({ label: `claude-life ${entryPoint}`, layout, compute: { module: simMod, entryPoint } });
-    const seedP = cp('cs_seed'), lifeP = cp('cs_life'), leniaP = cp('cs_lenia');
+    const seedP = cp('cs_seed'), lifeP = cp('cs_life'), leniaP = cp('cs_lenia'), massP = cp('cs_mass');
     const draw = device.createRenderPipeline({
       label: 'claude-life draw', layout: 'auto',
       vertex: { module: drawMod, entryPoint: 'vs_full' },
@@ -46,6 +47,7 @@ export default definePiece({
     const simU = device.createBuffer({ label: 'claude-life sim u', size: SIM_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const drawU = device.createBuffer({ label: 'claude-life draw u', size: DRAW_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const kernB = device.createBuffer({ label: 'claude-life kernel', size: (2 * RMAX + 1) ** 2 * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+    const massB = device.createBuffer({ label: 'claude-life mass', size: 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
     const simData = new ArrayBuffer(SIM_BYTES), su = new Uint32Array(simData), sf = new Float32Array(simData);
     const df = new Float32Array(DRAW_BYTES / 4);
 
@@ -59,7 +61,7 @@ export default definePiece({
       bufs = [0, 1].map((i) => device.createBuffer({ label: `claude-life cells ${i}`, size: w * h * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST }));
       simBg = [0, 1].map((i) => device.createBindGroup({
         layout: bgl,
-        entries: [{ binding: 0, resource: { buffer: simU } }, { binding: 1, resource: { buffer: bufs[i] } }, { binding: 2, resource: { buffer: bufs[1 - i] } }, { binding: 3, resource: { buffer: kernB } }],
+        entries: [{ binding: 0, resource: { buffer: simU } }, { binding: 1, resource: { buffer: bufs[i] } }, { binding: 2, resource: { buffer: bufs[1 - i] } }, { binding: 3, resource: { buffer: kernB } }, { binding: 4, resource: { buffer: massB } }],
       }));
       drawBg = [0, 1].map((i) => device.createBindGroup({
         layout: draw.getBindGroupLayout(0),
@@ -140,7 +142,10 @@ export default definePiece({
             for (let b = 2; b < 14; b++) { const s = now[b] / (long[b] / 4 + 1e-3); if (s > best) { best = s; cls = b - 2; } }
           }
         }
-        const rule = RULES[cls % RULES.length], [mu0, sigma] = LENIA[cls % LENIA.length];
+        const rule = RULES[cls % RULES.length], mu = LENIA_MU[cls % LENIA_MU.length];
+        // Lenia's wanted population follows the loudness of the last 2 s: a small colony on silence, wide territory when loud
+        let energy = 0;
+        for (let ago = 0; ago < 120; ago += 4) energy += past(ago).rms / 30;
 
         const bass = (audio.bands[0] + audio.bands[1] + audio.bands[2]) / 3;
         let kick = 0;
@@ -169,15 +174,18 @@ export default definePiece({
         const drive = params.drive as number;
         su.set([W, H, nseed, taps, mask(rule[0]), mask(rule[1]), Math.imul(tick, 2654435761) >>> 0, 0], 0);
         sf.set([
-          mu0 + drive * 0.012 * (bass - 0.35), sigma, (params.dt as number) * (0.8 + 0.8 * audio.rms * drive), lenia ? 0.96 : 0.7,
+          mu, mu * SIGMA, (params.dt as number) * (0.8 + 0.8 * audio.rms * drive), lenia ? 0.96 : 0.7,
           lenia ? (params.drift as number) * (0.4 + 1.6 * bass) * ticks : 0, lenia ? (params.swirl as number) * ticks : 0, 0.5, lenia ? 1 : 0,
+          0.04 + 0.25 * energy * drive, 4, 0, 0,
         ], 8);
-        sf.fill(0, 16);
-        sf.set(seeds.slice(0, nseed * 4), 16);
+        sf.fill(0, 20);
+        sf.set(seeds.slice(0, nseed * 4), 20);
         device.queue.writeBuffer(simU, 0, simData);
 
         const gx = Math.ceil(W / 16), gy = Math.ceil(H / 16);
+        if (lenia) enc.clearBuffer(massB);
         const pass = enc.beginComputePass({ label: 'claude-life' });
+        if (lenia) { pass.setPipeline(massP); pass.setBindGroup(0, simBg[cur]); pass.dispatchWorkgroups(gx, gy); }
         if (nseed > 0 || lenia) { pass.setPipeline(seedP); pass.setBindGroup(0, simBg[cur]); pass.dispatchWorkgroups(gx, gy); cur = 1 - cur; }
         pass.setPipeline(lenia ? leniaP : lifeP);
         for (let i = 0; i < steps; i++) { pass.setBindGroup(0, simBg[cur]); pass.dispatchWorkgroups(gx, gy); cur = 1 - cur; }
@@ -192,7 +200,7 @@ export default definePiece({
         const rp = enc.beginRenderPass({ colorAttachments: [{ view: out.out.createView(), loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 1] }] });
         rp.setPipeline(draw); rp.setBindGroup(0, drawBg[cur]); rp.draw(3); rp.end();
       },
-      dispose: () => { for (const b of bufs) b.destroy(); simU.destroy(); drawU.destroy(); kernB.destroy(); },
+      dispose: () => { for (const b of bufs) b.destroy(); simU.destroy(); drawU.destroy(); kernB.destroy(); massB.destroy(); },
       status: () => `${W}x${H} ${wasLenia ? `lenia R${R}` : 'life'}, class ${cls}`,
     };
   },
