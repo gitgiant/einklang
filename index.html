@@ -10,28 +10,24 @@
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 12px ui-monospace, Consolas, monospace; color: #ddd; touch-action: manipulation; }
   canvas { display: block; width: 100vw; height: 100vh; }
   #c { touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-  #hud { position: fixed; left: 8px; bottom: 8px; background: #000a; padding: 6px 8px; white-space: pre; pointer-events: none; border-radius: 4px; }
-  #panel { position: fixed; top: 8px; left: 8px; background: #000c; padding: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; max-width: 95vw; border-radius: 6px; }
+  #hud { position: fixed; left: 10px; top: 62px; max-width: calc(100vw - 36px); background: #000a; padding: 6px 8px; white-space: pre-wrap; pointer-events: none; border-radius: 4px; }
   button, input, select { font: inherit; background: #222; color: #ddd; border: 1px solid #555; padding: 4px 6px; border-radius: 3px; }
   #err { position: fixed; inset: 0; display: none; place-items: center; color: #f88; text-align: center; padding: 2em; }
-  #hosts { position: fixed; top: 64px; left: 8px; background: #000c; padding: 8px; border-radius: 6px; display: grid; grid-template-columns: auto auto; gap: 4px 10px; align-items: center; }
+  /* the menu's room tab (menusheet.ts styles the rest of the sheet) */
+  #room { display: flex; flex-direction: column; gap: 10px; }
+  #room .options { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  #room label { display: flex; align-items: center; gap: 6px; min-height: 40px; }
+  #room input[type=number] { width: 5em; font-size: 16px; min-height: 32px; background: #000; color: #ddd; border: 1px solid #ffffff1f; border-radius: 6px; }
+  #room a { color: #8a8a8a; }
+  #hosts { display: grid; grid-template-columns: auto auto; gap: 4px 10px; align-items: center; justify-content: start; }
   #hosts .me { color: #7fe3ff; }
-  #inputs { position: fixed; top: 64px; left: 8px; width: min(460px, calc(100vw - 16px)); max-height: calc(100vh - 140px); max-height: calc(100dvh - 140px); overflow: auto; overscroll-behavior: contain; background: #000d; padding: 10px; border-radius: 6px; box-sizing: border-box; z-index: 5; }
-  #inputs button { min-height: 32px; }
-  #inputs button[aria-pressed=true] { color: #000; background: #ddd; }
-  #inputs button:disabled { opacity: .35; }
-  /* a phone: no zoom on focus */
-  @media (max-width: 640px) { #inputs select { font-size: 16px; } #inputs button { min-height: 40px; } }
-  .row { display: contents; }
-  #debug { position: fixed; top: 8px; right: 8px; background: #000d; padding: 8px; border-radius: 6px; max-width: min(640px, 60vw); max-height: 92vh; overflow: auto; }
-  #debug .restart { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
-  #debug .restart .out { width: 100%; max-height: 30vh; overflow: auto; margin: 6px 0 0; color: #f88; white-space: pre-wrap; font: 11px/1.35 monospace; }
+  #debug { position: fixed; top: 8px; right: 8px; z-index: 5; background: #000d; padding: 8px; border-radius: 6px; max-width: min(640px, 60vw); max-height: 92vh; overflow: auto; }
   #debug > canvas { width: 600px; max-width: 100%; height: 90px; }
   #debug .perf { width: 600px; max-width: 100%; margin-bottom: 6px; }
-  /* a phone: the panel spans the screen */
-  @media (max-width: 640px) { #debug { left: 8px; max-width: none; max-height: 80vh; max-height: 80dvh; overscroll-behavior: contain; } }
+  /* a phone: the panel spans the screen, below the menu button */
+  @media (max-width: 640px) { #debug { left: 8px; top: calc(60px + env(safe-area-inset-top)); max-width: none; max-height: calc(100dvh - 200px); overscroll-behavior: contain; } }
   #debug pre { margin: 6px 0 0; white-space: pre-wrap; font-size: 11px; line-height: 1.35; }
-  #bar { position: fixed; left: 8px; right: 8px; bottom: 8px; background: #000c; padding: 6px 8px; border-radius: 6px; display: flex; gap: 8px; align-items: center; }
+  #bar { position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); background: #000c; padding: 6px 8px; border-radius: 6px; display: flex; gap: 8px; align-items: center; }
   #bar button { min-width: 2.4em; }
   #tName { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #bbb; }
   #prog { flex: 1; height: 10px; background: #333; border-radius: 5px; cursor: pointer; position: relative; overflow: hidden; touch-action: none; }
@@ -41,42 +37,42 @@
   .hide { display: none !important; }
   #toast { position: fixed; left: 50%; bottom: 72px; transform: translate(-50%, 12px); background: #000d; color: #fff; padding: 8px 16px; border-radius: 18px; font: 15px system-ui, sans-serif; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
   #toast.on { opacity: 1; transform: translate(-50%, 0); }
-  #tvote { position: fixed; right: 8px; bottom: 52px; max-width: 340px; background: #000c; padding: 6px 8px; border-radius: 6px; }
-  #tvote .trow { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-  #tvote .tvoted, #tvote .tpick { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; }
-  #tvote .trow button { font-size: 18px; background: none; border: 0; cursor: pointer; min-width: 36px; min-height: 36px; padding: 2px 6px; }
-  #tvote .trow button:disabled { opacity: .3; cursor: default; }
-  #tvote .tpick button { border: 1px solid #555; border-radius: 4px; }
-  #tvote .tpick span { min-width: 10em; text-align: center; }
-  #tvote .tnote { color: #999; }
-  #panel, #bar, #hosts, #tvote, #inputs { transition: opacity .4s; }
-  body.idle #panel, body.idle #bar, body.idle #hosts, body.idle #tvote, body.idle #inputs { opacity: 0; pointer-events: none; }
-  body.idle { cursor: none; }
+  /* the vote panel (votepanel.ts) sits above the transport bar */
+  #vote { right: 8px; bottom: calc(52px + env(safe-area-inset-bottom)); }
+  #bar { transition: opacity .4s; }
+  body.idle #bar { opacity: 0; pointer-events: none; }
   /* hidden by double-tap: stays hidden until the next one */
-  body.ui-off :is(#panel, #bar, #hosts, #hud, #debug, #tvote, #inputs) { opacity: 0; visibility: hidden; pointer-events: none; }
+  body.ui-off :is(#bar, #hud, #debug) { opacity: 0; visibility: hidden; pointer-events: none; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="panel">
-  <button id="inputBtn" title="music input: off, mic, external (tab / system audio), file playlist; the camera">input ▾</button>
-  <label title="play the room's track on this device too"><input type="checkbox" id="aud"> audio here</label>
-  <label>offset ms <input type="number" id="off" step="5" style="width:5em"></label>
-  <span>scene <button id="prev" title="previous scene ([)">&lt;</button> <select id="scene"></select> <button id="next" title="next scene (])">&gt;</button></span>
-  <label>on <select id="quant"><option value="beat">beat</option><option value="bar" selected>bar</option><option value="now">now</option></select></label>
-  <label title="transition for every scene switch (random: the server picks, never the same twice)">transition <select id="trans"></select></label>
-  <label title="transition length in beats, following the room's tempo">length <select id="tlen"></select></label>
-  <label title="the server switches to a scene picked by vote weight (👍 doubles, 👎 halves), with this transition">auto <select id="auto"></select></label>
-  <button id="hit" title="manual hit (space)">hit</button>
-  <button id="midi" title="relay this host's MIDI inputs (clock, notes, CCs)">midi</button>
-  <button id="hostsBtn">hosts</button>
-  <button id="dbgBtn" title="debug panel (d)">debug</button>
-  <button id="fs">fullscreen</button>
-  <a href="/gallery.html" style="color:#8a8a8a">gallery</a>
-  <span id="msg"></span>
+<!-- The ☰ menu (menusheet.ts) holds the controls. These fields keep what they set (scripts such as the e2e set them too). -->
+<div id="ctl" hidden>
+  <select id="scene" title="scene"></select>
+  <select id="quant" title="switch on"><option value="beat">beat</option><option value="bar" selected>bar</option><option value="now">now</option></select>
+  <select id="trans" title="transition for every scene switch (random: the server picks, never the same twice)"></select>
+  <select id="tlen" title="transition length in beats, following the room's tempo"></select>
+  <select id="auto" title="the server switches to a scene picked by vote weight (👍 doubles, 👎 halves), with this transition"></select>
 </div>
-<div id="hosts" class="hide"></div>
-<div id="inputs" class="hide"><input type="file" id="file" multiple hidden><input type="file" id="folder" webkitdirectory multiple hidden></div>
+<input type="file" id="file" multiple hidden><input type="file" id="folder" webkitdirectory multiple hidden>
+<!-- the menu's room tab: this host and the room -->
+<div id="room">
+  <div id="roomLine" class="dim"></div>
+  <div class="options">
+    <label title="play the room's track on this device too"><input type="checkbox" id="aud"> audio here</label>
+    <label title="display latency trim for this screen">offset ms <input type="number" id="off" step="5"></label>
+  </div>
+  <div class="options">
+    <button id="hit" type="button" title="manual hit (space)">hit</button>
+    <button id="midi" type="button" title="relay this host's MIDI inputs (clock, notes, CCs)">midi</button>
+    <span id="padsLine" class="dim"></span>
+  </div>
+  <h3>hosts (the view each screen shows)</h3>
+  <div id="hosts"></div>
+  <p class="dim">keys: + - vote scene · . , vote transition · [ ] scene · space hit · 0-9 section cue · p play · ← → seek · o menu · h UI · i HUD · d debug</p>
+  <a href="/gallery.html">gallery</a>
+</div>
 <div id="hud" class="hide"></div>
 <div id="bar">
   <button id="tPrev" title="previous / restart">⏮</button>
@@ -86,7 +82,6 @@
   <div id="prog" title="click or drag to seek (← → ±10 s)"><div id="progFill"></div></div>
   <span id="tTime"></span>
 </div>
-<div id="tvote"></div>
 <div id="err"></div>
 <div id="toast" title="scene votes: + / - keys, or Select+△ / Select+✕ on a pad; transition votes: . / , keys"></div>
 <audio id="au" preload="auto"></audio>

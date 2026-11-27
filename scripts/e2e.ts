@@ -91,15 +91,13 @@ try {
   check(note.includes('saved') && (await toast(a)).includes('gallery'), `gallery vote saved ("${note}") and toasted live ("${await toast(a)}")`);
   await gal.close();
 
-  // controller overrides B's view from A's host list
-  await a.click('#hostsBtn');
+  // controller overrides B's view from A's host list (the menu's room tab; set while the menu is closed)
   const sel = await a.$$('#hosts select');
   await sel[1].select('5');
   await sleep(400);
   check((await dbg(b)).view === 5, 'view override from another host applied');
 
   // transitions: one of each effect, 1 beat long on the beat, stepped from A; equal hashes throughout
-  await a.click('#hostsBtn'); // close the host list again (it covers the panel's second row)
   const next = () => a.$eval('#next', (e) => (e as HTMLButtonElement).click());
   await a.select('#quant', 'beat');
   await a.select('#tlen', '1');
@@ -120,7 +118,7 @@ try {
   await a.keyboard.press('.');
   await sleep(300);
   const tv = await toast(b);
-  check(tv.includes('👍 transition ') && (await a.$eval('#tvote .trow', (e) => e.textContent ?? '')).includes('saved'), `transition vote toast on the other host ("${tv}")`);
+  check(tv.includes('👍 transition ') && (await a.$eval('#vote .trow', (e) => e.textContent ?? '')).includes('saved'), `transition vote toast on the other host ("${tv}")`);
   if (process.env.SHOT5) {
     await a.select('#trans', 'core-iris'); await a.select('#tlen', '4'); await next();
     await a.waitForFunction(() => window.__ek!.trans === 'core-iris', { timeout: 5000 });
@@ -194,9 +192,9 @@ try {
     await sleep(80);
   }
   if (process.env.SHOT3) {
-    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar']) document.getElementById(id)!.classList.add('hide'); });
+    await a.evaluate(() => { for (const id of ['debug', 'tools', 'bar', 'vote']) document.getElementById(id)!.classList.add('hide'); });
     await a.screenshot({ path: process.env.SHOT3 });
-    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar']) document.getElementById(id)!.classList.remove('hide'); });
+    await a.evaluate(() => { for (const id of ['debug', 'tools', 'bar', 'vote']) document.getElementById(id)!.classList.remove('hide'); });
   }
   msend({ t: 'ev', type: 'pad', payload: { l: 1, b: 0b10, a: [-80, 60, 0, 0], t: [0, 0] } }); // second pad strobes
   await sleep(300);
@@ -237,9 +235,9 @@ try {
   const hasWave = await a.evaluate(() => (window.__ek as unknown as { wave?: boolean }).wave);
   check(c.diff === 0 && c.shared > 20 && hasWave === true, `scope on the track waveform: ${c.shared} shared ticks, ${c.diff} mismatches, wave ${hasWave}`);
   if (process.env.SHOT4) {
-    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar', 'hosts']) document.getElementById(id)!.classList.add('hide'); });
+    await a.evaluate(() => { for (const id of ['debug', 'tools', 'bar', 'vote']) document.getElementById(id)!.classList.add('hide'); });
     await a.screenshot({ path: process.env.SHOT4 });
-    await a.evaluate(() => { for (const id of ['debug', 'panel', 'bar']) document.getElementById(id)!.classList.remove('hide'); });
+    await a.evaluate(() => { for (const id of ['debug', 'tools', 'bar', 'vote']) document.getElementById(id)!.classList.remove('hide'); });
   }
   await b.click('#tPlay'); // pause from the other host
   await sleep(400);
