@@ -194,24 +194,31 @@ What agents build next. The delegator's `lab` skill reads this and `lab/FEEDBACK
 
 ### Modulators
 - [x] Band follower → core-follow
-- [ ] Envelope / ADSR
+- [x] Envelope / ADSR → core-envelope
 - [x] LFO → core-lfo
-- [ ] Beat-synced step sequencer
-- [ ] Random walk
-- [ ] MIDI CC / note
-- [ ] Pad axis
-- [ ] Slew
-- [ ] Math (map, clamp, mix)
+- [x] Beat-synced step sequencer → core-step
+- [x] Random walk → core-random-walk
+- [x] MIDI CC / note → core-midi
+- [ ] Pad axis (pads are not in the hashed features yet: needs a core change first)
+- [x] Slew → core-slew
+- [x] Math (map, clamp, mix) → core-math
+- [x] Song section (intro / build / drop / breakdown) → core-section
 
 ### Composite / utility
 - [x] Blend (add, screen, multiply, difference, over) → core-blend
 - [ ] Mask ops
-- [x] Crossfade → core-transition
+- [x] Crossfade → core-transition, core-crossfade
+- [x] Switch (one branch of several, the rest not rendered) → core-switch
 - [ ] Transform
 - [ ] Camera rigs (orbit, dolly, shake)
 - [ ] Particles → tex splat
 - [ ] Geo → tex render
 - [ ] Field ops
+
+### Scene structure
+- [x] Sections (acts): variants keyed to song structure, a signal or an input → core-acts-surge, core-acts-switchboard (format: `lab/AGENTS.md` "Sections")
+- [ ] Scenes with sections by vendors: remix a liked scene into acts (calm verse branch, heavy drop branch)
+- [ ] Evolving scenes: swap pieces every N bars, steered by votes (needs a core brief)
 
 ### Transitions
 How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug>/` (contract: "Transitions" in `lab/AGENTS.md`). Core ones: cut, blend, flash, wipe, iris, dissolve, luma, zoom, glitch, stutter, swirl, melt, audio mask, pixelate.

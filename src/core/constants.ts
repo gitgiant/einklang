@@ -21,6 +21,14 @@ export const TICKS_PER_BEAT = 28, RESEED_TICKS = TICKS_PER_BEAT * 4 * 8;
 export const K_NOTE = 18, K_VEL = 19, K_BEAT = 20, K_PHASE = 21, K_BAR = 22, K_BPM = 23, K_P0 = 24, N_PARAMS = 4;
 /** Palette step from the pads' D-pad (0..255, wraps); every scene rotates its hues by it. */
 export const K_PAL = 28;
+/**
+ * The room's section cue (keyboard 0-9, pad Select + D-pad left/right; 0 = auto), latest value at a
+ * tick. Not in a scene's hash on its own: it only acts through scene sections and pieces, whose
+ * results are hashed.
+ */
+export const K_CUE = 29;
+/** Cue values: 0 (auto) and 1..CUE_MAX. Pad steps cycle 0..CUE_PAD. */
+export const CUE_MAX = 9, CUE_PAD = 4;
 /** Which CC number drives each param (any channel): mod wheel, cutoff, resonance, pan. */
 export const CC_PARAMS = [1, 74, 71, 10] as const;
 /** A clock beat is "current" for this many ticks; longer gaps read as no clock. */

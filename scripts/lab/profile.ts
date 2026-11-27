@@ -5,6 +5,8 @@
 //   warm    the same switch again
 //   scenes  radial -> each scene, first time that scene draws (its own cold start) + A+B steady cost
 //   trans   radial -> tunnel with each transition: first frame + the mix's own cost
+//   acts    each scene with sections: base -> each variant, the first time it shows (cold for its nodes),
+//           and the same change again (warm)
 // Numbers only; nothing here fails the gate (a switch that can't run is listed as not profiled).
 import type { Lab } from './browser.ts';
 import type { ProfileFrame, ProfileOpts } from '../../src/web/lab.ts';
@@ -63,13 +65,13 @@ export function statTable(rows: SwitchStat[]): string[] {
   ];
 }
 
-export interface ProfileReport { adapter: string; res: string; timestamps: boolean; cold: SwitchStat[]; scenes: SwitchStat[]; transitions: SwitchStat[]; skipped: string[] }
+export interface ProfileReport { adapter: string; res: string; timestamps: boolean; cold: SwitchStat[]; scenes: SwitchStat[]; transitions: SwitchStat[]; acts?: SwitchStat[]; skipped: string[] }
 
 /**
  * Run the profile in `lab` (a page of its own: it reloads it for the cold start). `quick` (no GPU):
  * the cold and warm switch and two transitions only.
  */
-export async function profileShow(lab: Lab, o: { scenes: string[]; transitions: string[]; from: string; to: string; fixture?: string; quick?: boolean; res: string; log: (s: string) => void }): Promise<ProfileReport> {
+export async function profileShow(lab: Lab, o: { scenes: string[]; acts?: { scene: string; sections: string[] }[]; transitions: string[]; from: string; to: string; fixture?: string; quick?: boolean; res: string; log: (s: string) => void }): Promise<ProfileReport> {
   await lab.reload();
   const fixture = o.fixture ?? 'techno', beat = TICKS_PER_BEAT;
   let tick = 600, timestamps = false;
@@ -95,7 +97,15 @@ export async function profileShow(lab: Lab, o: { scenes: string[]; transitions: 
   for (const t of o.quick ? effects.slice(0, 2) : effects) {
     transitions.push(...await one(t, { from: o.from, to: o.to, trans: t, before: 20, ticks: 4 * beat, after: 5 }));
   }
-  return { adapter: lab.adapter, res: o.res, timestamps, cold, scenes, transitions, skipped };
+  const acts: SwitchStat[] = [];
+  for (const a of o.acts ?? []) {
+    for (const to of a.sections.slice(1)) {
+      for (const pass of ['first', 'again']) {
+        acts.push(...await one(`${a.scene}: base → ${to} (${pass})`, { from: a.scene, to: a.scene, trans: 'core-blend', section: { from: a.sections[0], to }, before: 30, ticks: 4 * beat, after: 10 }));
+      }
+    }
+  }
+  return { adapter: lab.adapter, res: o.res, timestamps, cold, scenes, transitions, acts, skipped };
 }
 
 export function profileMd(r: ProfileReport): string[] {
@@ -106,6 +116,9 @@ export function profileMd(r: ProfileReport): string[] {
     '### First switch', '', ...statTable(r.cold), '',
     ...(r.scenes.length ? ['### Into each scene (its first time on screen, core-blend 4 beats)', '', ...statTable(r.scenes), ''] : []),
     '### Each transition (radial → tunnel, 4 beats, warm)', '', ...statTable(r.transitions), '',
+    ...(r.acts?.length ? ['### Section changes (inside one scene, its own transition; columns: scene / post)', '',
+      '| change | before p50 | first frame | p50 | p95 | max (at tick) | after p50 | GPU scene / post | CPU scene / post |', '|---|---:|---:|---:|---:|---:|---:|---|---|',
+      ...r.acts.map((x) => `| ${x.label} | ${ms(x.before)} | ${ms(x.first)} | ${ms(x.p50)} | ${ms(x.p95)} | ${ms(x.max)} (${x.maxAt}) | ${ms(x.after)} | ${sections(x.gpu, ['scene', 'post'])} | ${sections(x.cpu, ['scene', 'post'])} |`), ''] : []),
     ...(r.skipped.length ? ['Not profiled:', '', ...r.skipped.map((x) => `- ${x}`), ''] : []),
   ];
 }

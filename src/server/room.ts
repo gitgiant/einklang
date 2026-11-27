@@ -1,6 +1,6 @@
 // Room: the server-authoritative state (mode, scene schedule, presets, beat grid, host views),
 // the tick-stamped event stream, and the replay logs late joiners need to catch up.
-import { FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
+import { CUE_MAX, CUE_PAD, FPS, LIVE_DELAY, RESEED_TICKS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import {
   CUT, DEFAULT_GRID, FLOW_N_DEFAULT, FLOW_N_MAX, FLOW_N_MIN, flowNAt, DEFAULT_PRESETS, INPUT_DELAY, fixedScene, modeTick, modeTickF, nextBoundary, sceneAt,
   type ClientMsg, type ClockMsg, type HostInfo, type Mode, type Quant, type RoomState, type SceneStep, type ServerMsg,
@@ -72,6 +72,14 @@ export class Room {
   /** Pad slots: `${host}:${local index}` -> slot 0..MAX_PADS-1. */
   private padSlots = new Map<string, number>();
   private palette = 0;
+  /** Section cue (0 = auto): `{ v }` sets it, `{ step }` (pads) cycles 0..CUE_PAD. */
+  private cue = 0;
+  private cueStep(p: unknown): number {
+    const o = (typeof p === 'object' && p ? p : {}) as { v?: unknown; step?: unknown };
+    if (typeof o.step === 'number') this.cue = (((this.cue + clampInt(o.step, -1, 1)) % (CUE_PAD + 1)) + CUE_PAD + 1) % (CUE_PAD + 1);
+    else this.cue = clampInt(Number(o.v) || 0, 0, CUE_MAX);
+    return this.cue;
+  }
   private frozen = false;
   private taps: number[] = [];
   private clock: { id: number; last: number; beatTick: number } | null = null;
@@ -201,6 +209,7 @@ export class Room {
         let { ok, payload } = sanitize(m.type, m.payload);
         if (m.type === 'pad') payload = this.padPayload(c, m.payload);
         else if (m.type === 'palette') { this.palette = (this.palette + clampInt((m.payload as { step?: number })?.step ?? 1, -8, 8) + 256) % 256; payload = { v: this.palette }; }
+        else if (m.type === 'cue') payload = { v: this.cueStep(m.payload) };
         else if (m.type === 'freeze') { this.frozen = !this.frozen; payload = { on: this.frozen ? 1 : 0 }; }
         if (!ok || payload === null) return;
         return this.emit({ tick: this.tickNow() + INPUT_DELAY, src: c.id, type: m.type, payload });

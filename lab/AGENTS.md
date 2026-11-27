@@ -104,7 +104,7 @@ export default definePiece({
 });
 ```
 
-- `cpu(ctx)` is called every tick and must be **pure**: no state between calls. Use `ctx.time` for closed-form motion, `ctx.past(ago)` for history (up to 600 ticks), `ctx.rand(a, b)` for seeded noise.
+- `cpu(ctx)` is called every tick and must be **pure**: no state between calls. Use `ctx.time` for closed-form motion, `ctx.past(ago)` for history (up to 600 ticks), `ctx.rand(a, b)` for seeded noise, `ctx.paramAt` / `ctx.inputAt` for a param or input at another tick (see "Switching and mixing branches").
 - `gpu(init)` returns an instance; GPU-side state (sims, buffers) is fine there.
 - **Picked media** (the image, video or camera the viewer chose on that screen): use the `core-media` node in your scene rather than reading it yourself. Its outputs are `out` (tex, the picture fitted and pulsed), `luma` (mask, perceptual brightness: height maps, keys) and `edges` (field, the luma gradient: displacement). A driver that really needs the raw texture has `init.media` (`count()`, `frame(i)`; `lab/api/media.ts`). Media is per host and never hashed; with nothing picked `core-media` draws a soft fallback, so your scene must look fine on it too. In a bare-piece harness, mask and field inputs are fed from `core-media` (the lab renders a generated test image, then a moving test video).
 - Banned (lint fails): imports from anywhere but `lab/api` and your own folder; `document`, `window`, `fetch`, `localStorage`, `setTimeout`, `setInterval`, `navigator`, `eval` and friends.
@@ -127,10 +127,56 @@ export default definePiece({
 }
 ```
 
-- `bind` drives any numeric param from a `signal` (`core-follow.out` band follower, `core-lfo.out`, `core-audio.bass|mid|high|rms|phase`, or your own modulator); the signal's 0..1 maps onto `range` (default the param's min..max).
+- `bind` drives any numeric param from a `signal`; the signal's 0..1 maps onto `range` (default the param's min..max). Core modulators: `core-audio` (bass, mid, high, rms, phase, onset), `core-follow` (band follower), `core-lfo`, `core-section` (song structure: `intro`/`build`/`drop`/`breakdown` 0/1 signals, `section`, `energy`), `core-step` (step sequencer over a `pattern`), `core-random-walk`, `core-envelope` (AD/ADSR on onsets, notes or a trigger), `core-slew` (smooth / peak hold a signal), `core-math` (map, clamp, mix, threshold, quantize...), `core-midi` (CC params, notes, the cue), or your own.
 - `post` keys: `decay`, `zoom`, `rotate`, `bloom`, `threshold`, `exposure`. Optional `"style": "<style id>"`.
 - Bump `version` whenever you edit a scene.
 - Every non-retired scene goes into the live rotation as soon as it merges. Make it look good on its own for minutes, react visibly to the music, and stay readable on quiet tracks too.
+
+### Switching and mixing branches
+
+- `core-switch`: up to 6 optional tex inputs `in0..in5`; `select` (int, bind it: `{ "from": "seq.out", "range": [0, 2] }`) picks a connected input (in port order, wrapping). The pick is sampled on a grid (`quant`: tick .. 8 bars, default bar) and holds until the next boundary, crossfading over `fade` beats with a blend `mode`.
+- `core-crossfade`: 2 to 4 tex inputs, `amount` 0..1 walks across them (between two neighbours they blend with `mode`: mix, add, screen, multiply, difference, lighten, darken, over); within `snap` of one input it shows alone.
+- Only the branches on screen render: the others are skipped (sims and feedback pieces there pause). Put expensive generators behind a switch rather than mixing them all at 0.
+- Your own driver can do the same: return `use: ["in0"]` from `cpu()` to name the GPU inputs it reads this tick. `ctx.paramAt(name, tick)` and `ctx.inputAt(port, tick)` give this node's bound param or CPU input at another tick (the graph upstream is evaluated there: pure, so hosts agree; sample a boundary or a short window, not hundreds of ticks). `ctx.wired` lists the connected inputs. `lab/api` has `mixPass` (the two-texture blend those pieces use) and the beat grid (`TICKS_PER_BEAT`, `BAR_TICKS`, `GRID_UNITS`, `gridStart`).
+
+## Sections ("acts")
+
+A scene can change its graph with the music: `sections` lists variants of the base graph, each with a `when`. At every boundary the first variant whose `when` holds is shown; none = the base graph. A change blends in with a transition over the first beats of the unit.
+
+```json
+"sections": {
+  "on": "bar",
+  "transition": "random", "beats": 2,
+  "variants": [
+    { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+      "remove": ["blobs"],
+      "nodes": [ { "id": "fire", "piece": "claude-fire" }, { "id": "pal", "piece": "core-swatch", "params": { "colors": "#120004 #c41f1a #ffc23d" } } ],
+      "edges": [ { "from": "pal.palette", "to": "fire.palette" }, { "from": "fire.out", "to": "goo.in" } ],
+      "params": { "goo": { "decay": 0.55 } },
+      "post": { "bloom": 0.85 } },
+    { "id": "build", "when": { "section": "build" }, "params": { "blobs": { "speed": 1.6 } } },
+    { "id": "cued", "when": { "cue": 1 }, "bind": { "kal": { "spin": { "from": "audio.bass" }, "zoom": null } } }
+  ]
+}
+```
+
+- `on`: `"bar"`, `"phrase"` (4 bars, the default) or a number of bars (1..16). Boundaries are on the fixed beat grid from tick 0 (28 ticks a beat, the one sims reseed on; a MIDI clock at another tempo is not followed yet).
+- `transition`: a registered transition id or `"random"` (seeded by the scene and the boundary), default `core-blend`; `beats` its length (default 4, clamped to the unit). A variant's own `transition` / `beats` apply when it comes in.
+- A variant patches the base, in this order: `remove` (nodes and their edges), `nodes` (added; an existing id is replaced and keeps its edges), `params` / `bind` (`{ node: { param: value } }`, merged; a bind of `null` drops it), `unwire` (`["node.port"]`), `edges` (added; one into an already-fed input replaces that edge), `out`, `post` (merged). A style pack styles every variant.
+- `when` (every key given must hold, checked at the boundary):
+
+  | key | holds when |
+  |---|---|
+  | `section`: `"drop"` or a list | the song section, from the bar before the boundary (`core-section`'s classifier: onsets per bar, highs rising; one bar late on a change, no look-ahead) |
+  | `signal`: `"node.port"`, `above` / `below` | a signal of a base-graph node at the boundary |
+  | `cc`: 0..3, `above` / `below` | a MIDI CC param (mod wheel, cutoff, resonance, pan; 0..1) |
+  | `note`: pitch or `[lo, hi]`, `hold` (units, default 1) | a note-on in the last `hold` units |
+  | `cue`: 1..9 | the room's cue: keys 1-9 on the main page (0 = back to auto), pad Select + D-pad left / right |
+
+- Order the variants: inputs (cue, note) first if they should win over the music.
+- Every variant's nodes are built and compiled when the scene loads; nodes identical in two variants (same piece, params, bindings and inputs, all the way up) are one instance, so a feedback or sim node keeps running across a change where nothing upstream of it changed. The others start fresh when their variant comes in (the transition covers that).
+- The active section is part of the sync hash. Keep each variant good on its own: the gate shows every one.
+- `lab render` and the gate force base and then each variant in turn (equal parts of the run, with your transitions); the sheet labels each frame with its section, and each section is judged on its own frames too. `render --sections auto` lets `when` pick instead (the fixtures are steady: techno reads as a drop throughout), `--sections <id>` shows one.
 
 ## Transitions (`lab/transitions/<id>/`)
 

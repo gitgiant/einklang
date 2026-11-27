@@ -54,12 +54,16 @@ export class PadRelay {
       if ((b >> BTN.SHARE) & 1) {
         if (hit(BTN.TRIANGLE)) this.actions.vote(1);
         if (hit(BTN.CROSS)) this.actions.vote(-1);
+        // ... and D-pad left / right step the section cue (scenes with sections; 0 = auto) instead of the palette
+        if (hit(BTN.LEFT)) this.send({ t: 'ev', type: 'cue', payload: { step: -1 } });
+        if (hit(BTN.RIGHT)) this.send({ t: 'ev', type: 'cue', payload: { step: 1 } });
         b &= ~((1 << BTN.TRIANGLE) | (1 << BTN.CROSS));
       }
+      const chord = (b >> BTN.SHARE) & 1;
       if (hit(BTN.L1)) this.actions.scene(-1);
       if (hit(BTN.R1)) this.actions.scene(1);
-      if (hit(BTN.LEFT)) this.send({ t: 'ev', type: 'palette', payload: { step: -1 } });
-      if (hit(BTN.RIGHT)) this.send({ t: 'ev', type: 'palette', payload: { step: 1 } });
+      if (hit(BTN.LEFT) && !chord) this.send({ t: 'ev', type: 'palette', payload: { step: -1 } });
+      if (hit(BTN.RIGHT) && !chord) this.send({ t: 'ev', type: 'palette', payload: { step: 1 } });
       if (hit(BTN.UP)) this.actions.view(-1);
       if (hit(BTN.DOWN)) this.actions.view(1);
       if (hit(BTN.L3)) this.send({ t: 'ev', type: 'hit' });

@@ -6,19 +6,14 @@ import { instantiate, type Budget } from './graph/runner.ts';
 import { REGISTRY } from './graph/registry.ts';
 import type { FeatureSource } from '../core/features.ts';
 import { hashState } from '../core/scene.ts';
-import { baseCtx } from '../core/graph/eval.ts';
+import { baseCtx, noHelpers } from '../core/graph/eval.ts';
 import { hex8 } from '../core/math.ts';
 import { NO_FX, type Fx } from '../core/fx.ts';
-import type { PostParams } from '../core/post.ts';
+import { mixPost, type PostParams } from '../core/post.ts';
 import { FLOW_N_DEFAULT, sceneAt, type SceneSched } from '../core/protocol.ts';
 import { transEntry, transHash, transitionAt, type Transition } from '../core/transitions.ts';
 import type { FrameProfiler } from './gpu/profile.ts';
 
-const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
-const mixPost = (a: PostParams, b: PostParams, p: number): PostParams => ({
-  decay: lerp(a.decay, b.decay, p), zoom: lerp(a.zoom, b.zoom, p), rotate: lerp(a.rotate, b.rotate, p),
-  bloom: lerp(a.bloom, b.bloom, p), threshold: lerp(a.threshold, b.threshold, p), exposure: lerp(a.exposure, b.exposure, p),
-});
 const HDR: GPUTextureFormat = 'rgba16float';
 
 /** A piece run directly by the show graph (transition, post), outside any scene. */
@@ -126,7 +121,7 @@ export class Engine {
     // a switch is coming: the incoming scene allocates its targets now rather than on its first frame
     if (sched && sched.at > st) { const next = this.byId(sched.id); if (next !== this.scene) next.prepare(w, h); }
     const node = (inst: GpuInstance, t: number, s: number, params: Record<string, ParamValue>, ins: Record<string, unknown>, out: GPUTexture) =>
-      inst.frame({ ...baseCtx(t, F, s), params, in: ins, out: { out }, device: d, enc, width: out.width, height: out.height, cpu: {}, pads: fx });
+      inst.frame({ ...baseCtx(t, F, s), ...noHelpers(params, ins), params, in: ins, out: { out }, device: d, enc, width: out.width, height: out.height, cpu: {}, pads: fx });
     let b: PostParams, hash: number;
     if (!tr) {
       pr?.section('scene');

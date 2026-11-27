@@ -1,0 +1,13 @@
+{
+  "id": "core-slew", "kind": "modulator", "name": "Slew",
+  "doc": "Smooths a signal over time: `smooth` averages the last `time` seconds (exponential weights), `release` jumps up at once and falls at most 1 per `time` seconds (peak hold). The input is sampled up to 32 times back.",
+  "ports": {
+    "in": { "in": { "type": "signal" } },
+    "out": { "out": { "type": "signal" } }
+  },
+  "params": {
+    "mode": { "type": "enum", "default": 0, "options": ["smooth", "release"] },
+    "time": { "type": "float", "default": 0.5, "min": 0.02, "max": 8, "doc": "seconds" }
+  },
+  "tags": ["slew", "smoothing", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

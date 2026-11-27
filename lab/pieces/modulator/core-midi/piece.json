@@ -1,0 +1,18 @@
+{
+  "id": "core-midi", "kind": "modulator", "name": "MIDI",
+  "doc": "The room's MIDI and cue inputs as ports: the 4 CC params (mod wheel, cutoff, resonance, pan), note-ons in a pitch range (trigger, last pitch and velocity held for `hold` s), and the section cue.",
+  "ports": { "out": {
+    "cc0": { "type": "signal", "doc": "mod wheel" }, "cc1": { "type": "signal", "doc": "cutoff (CC 74)" },
+    "cc2": { "type": "signal", "doc": "resonance (CC 71)" }, "cc3": { "type": "signal", "doc": "pan (CC 10)" },
+    "note": { "type": "trigger", "doc": "note-ons in lo..hi this tick" },
+    "pitch": { "type": "signal", "doc": "the last note in range, (pitch - lo) / (hi - lo), held" },
+    "vel": { "type": "signal", "doc": "its velocity 0..1, held" },
+    "cue": { "type": "signal", "doc": "the section cue / 9 (0 = auto)" }
+  } },
+  "params": {
+    "lo": { "type": "int", "default": 0, "min": 0, "max": 127 },
+    "hi": { "type": "int", "default": 127, "min": 0, "max": 127 },
+    "hold": { "type": "float", "default": 2, "min": 0, "max": 10, "doc": "seconds pitch and velocity stay after a note (0 = only on its tick)" }
+  },
+  "tags": ["midi", "input", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}

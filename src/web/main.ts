@@ -475,6 +475,7 @@ async function start() {
     }
     else if (e.key === 'd') panel.toggle();
     else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
+    else if (/^[0-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) send({ t: 'ev', type: 'cue', payload: { v: +e.key } }); // section cue (0 = auto)
     else if (e.key === '[') switchScene({ step: -1 });
     else if (e.key === ']') switchScene({ weighted: true });
     else if (e.key === '+' || e.key === '=') vote(1);

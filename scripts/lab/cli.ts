@@ -8,13 +8,18 @@
 //     --fixture quiet|techno|dense|silence|<lab/fixtures/x.feat>|all   (default techno)
 //     --seconds 4  --res 640x360  --cpu (force SwiftShader)  --no-video
 //     --media test|image|video|none   what core-media shows (generated in the page; default test = image, then video)
+//     --sections all|auto|<id>   a scene with sections: all (default) forces base then each variant in turn,
+//                                  auto lets `when` pick (the fixtures have no song structure), <id> shows one
 //   gate [--all] [--junit file]    the merge gate: validate, then render every changed scene/piece/transition
 //                                  (or all with --all) 8 s per fixture at 1080p on the GPU and check:
 //                                  errors, NaN, black, blown out, frozen, no audio reaction, ms/frame
 //                                  (a transition: no audio check, budget 2 ms over core-blend)
+//                                  a scene with sections renders base and then each variant in turn (forced) and
+//                                  each one is also judged on its own frames
 //                                  then (GPU only, skip with --no-profile) the switch profile below, into the log and gate.md
 //   profile [--quick] [--res 1920x1080]   switch profile (scripts/lab/profile.ts): frame ms p50/p95/max over a scene
-//                                  switch, the first-frame hitch, GPU ms per pass section (timestamp queries);
+//                                  switch, the first-frame hitch, GPU ms per pass section (timestamp queries), and every
+//                                  section change of the scenes with sections;
 //                                  lab/out/profile.md + profile.json
 //   new <kind> <vendor-slug> [--driver]   scaffold a piece (auto-shader unless --driver)
 //   new transition <vendor-slug>   scaffold lab/transitions/<id>/ (transition.json + mix.wgsl)
@@ -51,6 +56,7 @@ import { openLab, type Lab } from './browser.ts';
 import { profileMd, profileShow } from './profile.ts';
 import { judgeCost, judgeReactive, judgeRun, junit, reactivity, LIMITS } from './checks.ts';
 import { validateScene } from '../../src/core/graph/validate.ts';
+import { sectionIds } from '../../src/core/graph/sections.ts';
 import { harness } from '../../src/core/graph/harness.ts';
 import { FIXTURES } from '../../src/core/fixtures.ts';
 import type { Registry, SceneGraph } from '../../src/core/graph/types.ts';
@@ -111,11 +117,11 @@ const save = (dir: string, r: RunResult, video: boolean) => {
 interface ItemResult { id: string; failures: string[]; notes: string[]; ms: number; dir: string }
 
 /** Render one scene/piece over fixtures with the checks; artifacts go to lab/out/<id>/. */
-async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean; media?: RunOpts['media'] }): Promise<ItemResult> {
+async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean; media?: RunOpts['media']; sections?: string }): Promise<ItemResult> {
   if (t.transition) return checkTransition(lab, t.id, fixtures, seconds, opts);
   const ticks = Math.round(seconds * 60), dir = join(OUT, t.id), perf = lab.cpu ? 30 : 120;
   // SwiftShader is ~50x slower: fewer video frames there
-  const base: Omit<RunOpts, 'scene' | 'fixture'> = { start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0, media: opts.media };
+  const base: Omit<RunOpts, 'scene' | 'fixture'> = { start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0, media: opts.media, sections: opts.sections };
   const failures: string[] = [], notes: string[] = [], react: { fixture: string; reactivity: number }[] = [];
   let ms = 0;
   for (const [i, fx] of fixtures.entries()) {
@@ -123,6 +129,12 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
     save(join(dir, fx), r, opts.video);
     const c = judgeRun(fx, r);
     failures.push(...c.failures.map((f) => `[${fx}] ${f}`)); notes.push(`[${fx}] ${c.notes.join(', ')}`);
+    // a scene with sections: the run forced each in turn; judge each one's frames on its own too
+    for (const [sec, stats] of sectionStats(r)) {
+      const sc = judgeRun(fx, { ...r, ok: true, errors: [], stats });
+      failures.push(...sc.failures.map((f) => `[${fx}] section ${sec}: ${f}`));
+      notes.push(`[${fx}] section ${sec}: ${sc.notes.join(', ')}`);
+    }
     if (i === 0) ms = r.msPerFrame;
     if (r.ok && fx !== 'silence') {
       const quiet = await lab.run({ ...base, scene: t.scene, fixture: 'silence', fps: 0, sheet: 0 });
@@ -145,6 +157,13 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
     if (f) failures.push(f);
   }
   return { id: t.id, failures, notes, ms, dir };
+}
+
+/** A run's checked frames grouped by the section showing (empty for a scene without sections). */
+function sectionStats(r: RunResult): Map<string, RunResult['stats']> {
+  const m = new Map<string, RunResult['stats']>();
+  for (const s of r.stats) if (s.section) { const l = m.get(s.section) ?? []; l.push(s); m.set(s.section, l); }
+  return m.size > 1 ? m : new Map();
 }
 
 /**
@@ -172,11 +191,12 @@ async function checkTransition(lab: Lab, id: string, fixtures: string[], seconds
 }
 
 /** The switch profile in a browser of its own (cold: no shader cache); markdown lines, also in lab/out/profile.md. */
-async function runProfile(w: number, h: number, transitions: string[], scenes: string[], o: { cpu: boolean; quick: boolean; gpuOnly?: boolean }): Promise<string[]> {
+async function runProfile(w: number, h: number, transitions: string[], all: SceneGraph[], o: { cpu: boolean; quick: boolean; gpuOnly?: boolean }): Promise<string[]> {
+  const scenes = all.map((s) => s.id), acts = all.filter((s) => s.sections).map((s) => ({ scene: s.id, sections: sectionIds(s) }));
   const lab = await openLab({ width: w, height: h, cpu: o.cpu, cold: true, log: say });
   try {
     if (lab.cpu && o.gpuOnly) return ['## Switch profile', '', 'skipped: no GPU here', ''];
-    const r = await profileShow(lab, { scenes, transitions, from: TRANS_FROM, to: TRANS_TO, res: `${w}x${h}`, quick: o.quick || lab.cpu, log: say });
+    const r = await profileShow(lab, { scenes, acts, transitions, from: TRANS_FROM, to: TRANS_TO, res: `${w}x${h}`, quick: o.quick || lab.cpu, log: say });
     const md = profileMd(r);
     mkdirSync(OUT, { recursive: true });
     writeFileSync(join(OUT, 'profile.md'), md.join('\n') + '\n');
@@ -323,7 +343,7 @@ async function main() {
   if (cmd === 'profile') {
     const v = await validate();
     const [w, h] = opt('res', '1920x1080').split('x').map(Number);
-    const md = await runProfile(w, h, v.transitions, v.scenes.map((s) => s.id), { cpu: flag('cpu'), quick: flag('quick') });
+    const md = await runProfile(w, h, v.transitions, v.scenes, { cpu: flag('cpu'), quick: flag('quick') });
     for (const l of md) say(l);
     return;
   }
@@ -367,7 +387,7 @@ async function main() {
     const profile = async (cpu: boolean): Promise<{ name: string; classname: string; out?: string; failure?: string }[]> => {
       if (!gate || cpu || flag('no-profile')) return [];
       try {
-        const md = await runProfile(w, h, v.transitions, v.scenes.map((s) => s.id), { cpu: false, quick: false, gpuOnly: true });
+        const md = await runProfile(w, h, v.transitions, v.scenes, { cpu: false, quick: false, gpuOnly: true });
         for (const l of md) say(l);
         return [{ name: 'switch profile', classname: 'lab.profile', out: md.join('\n')}];
       } catch (e) { say(`profile failed: ${(e as Error).message}`); return [{ name: 'switch profile', classname: 'lab.profile', out: `failed: ${(e as Error).message}` }]; }
@@ -384,7 +404,7 @@ async function main() {
     const results: ItemResult[] = [];
     try {
       for (const it of items) {
-        const r = await check(lab, it, fixtures, gate ? 8 : +opt('seconds', '4'), { video: !flag('no-video'), budget: gate && !lab.cpu, media: opt('media', 'test') as RunOpts['media'] });
+        const r = await check(lab, it, fixtures, gate ? 8 : +opt('seconds', '4'), { video: !flag('no-video'), budget: gate && !lab.cpu, media: opt('media', 'test') as RunOpts['media'], sections: gate ? 'all' : opt('sections', 'all') });
         report(r); results.push(r);
       }
     } finally { await lab.close(); }

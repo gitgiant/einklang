@@ -1,0 +1,15 @@
+{
+  "id": "core-section", "kind": "modulator", "name": "Song section",
+  "doc": "Where the song is, from the features: intro / build / drop / breakdown (decided each `bars` bars from the bar before; src/core/songform.ts), as 0/1 signals that ramp over `fade` beats, plus the index and the loudness. Drive switches, crossfades and params from the song's structure.",
+  "ports": { "out": {
+    "section": { "type": "signal", "doc": "0 intro, 1/3 build, 2/3 drop, 1 breakdown (ramped)" },
+    "intro": { "type": "signal" }, "build": { "type": "signal" }, "drop": { "type": "signal" }, "breakdown": { "type": "signal" },
+    "energy": { "type": "signal", "doc": "loudness over the last bar, 0..1" },
+    "change": { "type": "trigger", "doc": "1 on the boundary tick where the section changed" }
+  } },
+  "params": {
+    "bars": { "type": "int", "default": 1, "min": 1, "max": 16, "doc": "decide every N bars (on the fixed beat grid from tick 0)" },
+    "fade": { "type": "float", "default": 1, "min": 0, "max": 8, "doc": "beats the 0/1 signals take to ramp after a change" }
+  },
+  "tags": ["structure", "section", "core"], "author": { "vendor": "core", "model": "claude-opus-5-5" }
+}
