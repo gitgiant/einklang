@@ -1,0 +1,39 @@
+{
+  "format": 1, "id": "claude-evolve-tidepool", "name": "Evolve: tide pool", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-27",
+  "doc": "Water in motion that keeps changing its body: SPH liquid sloshing in a tank, rising smoke, interfering wave trains, Chladni sand and drifting ice cells take turns, seen through a slow feedback echo, a kaleidoscope or a pointillist screen, under ocean palettes that drift from deep blue to lagoon to dusk.",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "pal", "piece": "core-harmony", "params": { "hue": 0.58, "scheme": 1, "chroma": 0.14, "light": 0.7, "contrast": 0.6 } },
+    { "id": "gen", "piece": "claude-sph", "params": { "count": 6144, "fill": 0.5, "waves": 1.2, "splash": 1.2, "sway": 0.08 } },
+    { "id": "fx", "piece": "claude-zoomfeed", "params": { "decay": 0.8, "zoom": 0.004, "bass": 0.015, "pulse": 0.01, "rotate": 0.0, "swing": 0.006, "hue": 0.01 } }
+  ],
+  "edges": [
+    { "from": "pal.palette", "to": "gen.palette" },
+    { "from": "gen.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.4, "threshold": 0.8 },
+  "evolve": {
+    "every": 2, "transition": "core-blend", "beats": 4,
+    "slots": [
+      { "node": "gen", "pool": [
+        { "piece": "claude-fluid", "params": { "sources": 3, "sway": 0.8 }, "ranges": { "buoyancy": [0.6, 1.6], "vorticity": [0.6, 2] } },
+        { "piece": "codex-cymatics", "ranges": { "spacing": [0.8, 1.3] } },
+        { "piece": "codex-chladni", "ranges": { "grain": [0.8, 1.2] } },
+        { "piece": "agy-voronoi", "params": { "ice": 0.9, "shatter": 0.6 }, "ranges": { "cells": [5, 10], "drift": [0.5, 1.4] } },
+        { "piece": "claude-sph", "params": { "visc": 0.5, "count": 8192 }, "ranges": { "gravity": [2.5, 6], "fill": [0.35, 0.6] } }
+      ] },
+      { "node": "fx", "pool": [
+        { "piece": "core-kaleido", "params": { "zoom": 1.2 }, "ranges": { "segments": [4, 8], "spin": [-0.06, 0.06] } },
+        { "piece": "claude-dots", "params": { "under": 0.15 }, "ranges": { "cell": [10, 22], "wander": [0.2, 0.6] } },
+        { "piece": "claude-zoomfeed", "params": { "decay": 0.86, "zoom": -0.006, "rotate": 0.003, "hue": -0.02 } }
+      ] },
+      { "node": "pal", "pool": [
+        { "piece": "core-swatch", "params": { "colors": "#02101f #053b5e #0f7f8a #6fd3c1 #e9f7ef" } },
+        { "piece": "core-swatch", "params": { "colors": "#0a0620 #2b1d5c #6a3e8f #e07a5f #f9d8a7" } },
+        { "piece": "core-harmony", "params": { "scheme": 2, "chroma": 0.15, "light": 0.72, "contrast": 0.55 }, "ranges": { "hue": [0.45, 0.62] } }
+      ] }
+    ]
+  }
+}
