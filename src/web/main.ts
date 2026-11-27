@@ -1,10 +1,12 @@
 // Synced app page. The server owns the room state (mode, scene schedule, presets, views); this
 // page renders it through WebGPU on the shared tick and relays this host's inputs as events.
+// Controls: the ☰ menu top left (menusheet.ts, the gallery's: scenes, playback, input, room, display;
+// key `o`), the vote panel bottom right (votepanel.ts) and the transport bar along the bottom.
 import { CC_PARAMS, FPS, INSTRUMENT_DELAY, LIVE_DELAY, K_BAR, K_BPM, K_PHASE, N_PARAMS } from '../core/constants.ts';
 import { fileSource, mapSource, silence, type FeatureSource } from '../core/features.ts';
 import { EventLog, withEvents } from '../core/events.ts';
 import {
-  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS,
+  modeTick, modeTickF, fixedScene, flowNAt, sceneAt, FLOW_N_DEFAULT, DEFAULT_PRESETS, DEFAULT_GRID, TRANS_BEATS, AUTO_BARS, DEFAULT_TRANS_BEATS, DEFAULT_AUTO_BARS,
   type ClientMsg, type MediaRef, type Quant, type RoomState, type SceneStep, type ServerMsg, type TransType,
   ranTransition,
 } from '../core/protocol.ts';
@@ -30,8 +32,11 @@ import { toggleUiOnDoubleTap } from './doubletap.ts';
 import { LiveAnalyzer, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
 import { MEDIA, lockVideo, openVideo } from './media.ts';
 import { mainTrans, restoreAuto } from './defaults.ts';
-import { TRANS_KEYS, transRow } from './transvote.ts';
-import { stepChoice } from './pickerlist.ts';
+import { TRANS_KEYS } from './transvote.ts';
+import { votePanel } from './votepanel.ts';
+import { menuButton, pickerSheet } from './menusheet.ts';
+import { sceneTags, stepChoice, type SceneItem } from './pickerlist.ts';
+import { REGISTRY } from './graph/registry.ts';
 
 /** Debug/test hook: recent tick -> scene-state hash, so tools can compare hosts at equal ticks. */
 declare global {
@@ -47,7 +52,10 @@ declare global {
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
-const msg = (s: string) => { $('msg').textContent = s; };
+// the ☰ menu's status line, mirrored in its input tab (the menu covers the status line on a phone)
+const tools = menuButton(() => sheet.open(), 'msg');
+const inputNote = document.createElement('span'); inputNote.className = 'note';
+const msg = (s: string) => { tools.status.textContent = s; inputNote.textContent = s; };
 
 const qs = new URLSearchParams(location.search);
 // Room token: from the join URL (?t=), remembered for reloads. Prod also gets a cookie; the Vite
@@ -285,12 +293,8 @@ inMenu = inputMenu({
     return false;
   },
 });
-$('inputs').prepend(inMenu.el);
-const inputBtn = $('inputBtn');
-const showKind = () => { inputBtn.textContent = `input: ${files.on && files.pl.hasTracks ? 'file' : inMenu!.kind} ▾`; };
-inputBtn.onclick = () => { $('inputs').classList.toggle('hide'); showKind(); };
-setInterval(showKind, 500);
-showKind();
+const inputEl = document.createElement('div'); inputEl.id = 'input';
+inputEl.append(inMenu.el, inputNote);
 
 // ---- audio follow (file mode) ----
 const au = $<HTMLAudioElement>('au');
@@ -310,8 +314,9 @@ setInterval(() => {
   else au.playbackRate = Math.max(0.97, Math.min(1.03, 1 - drift * 0.5));
 }, 250);
 
-// ---- controls ----
-const quant = () => $<HTMLSelectElement>('quant').value as Quant;
+// ---- controls: hidden fields (#ctl) the menu sets ----
+const quantSel = $<HTMLSelectElement>('quant');
+const quant = () => quantSel.value as Quant;
 // transition + length: remembered per device, sent with every switch (picker, < >, [ ], pad L1/R1)
 const transSel = $<HTMLSelectElement>('trans'), lenSel = $<HTMLSelectElement>('tlen');
 transSel.add(new Option('random', 'random'));
@@ -323,23 +328,22 @@ lenSel.value = String(remembered.beats); if (!lenSel.value) lenSel.value = Strin
 /** A running auto-rotation takes the new transition settings too. */
 const transChanged = () => { if (room.auto) send({ t: 'auto', bars: room.auto.bars, trans: transReq() }); };
 transSel.onchange = () => { lsSet('trans', transSel.value); transChanged(); };
+const setTrans = (v: string) => { transSel.value = v; transSel.onchange!(new Event('change')); };
 /** The vote panel's ‹ ›: this host's transition for the next switch. */
-const stepTrans = (by: -1 | 1) => {
-  transSel.value = stepChoice([...transSel.options].map((o) => o.value), transSel.value, by);
-  transSel.onchange!(new Event('change'));
-};
+const stepTrans = (by: -1 | 1) => setTrans(stepChoice([...transSel.options].map((o) => o.value), transSel.value, by));
 lenSel.onchange = () => { lsSet('tlen', lenSel.value); transChanged(); };
 const transReq = () => ({ type: transSel.value as TransType | 'random', beats: +lenSel.value });
 /** `next` picks a random other scene weighted by votes (👍 doubles, 👎 halves); `prev` steps back in list order. */
 const switchScene = (to: { id?: string; step?: number; weighted?: boolean }) => send({ t: 'scene', ...to, quant: quant(), trans: transReq() });
 const pick = $<HTMLSelectElement>('scene');
 pick.onchange = () => switchScene({ id: pick.value });
-$('prev').onclick = () => switchScene({ step: -1 });
-$('next').onclick = () => switchScene({ weighted: true });
 // auto-rotation (server-side, by vote weight), with this host's transition settings
 const autoSel = $<HTMLSelectElement>('auto');
 for (const b of AUTO_BARS) autoSel.add(new Option(b ? `every ${b} bars` : 'off', String(b)));
 autoSel.onchange = () => { lsSet('auto', autoSel.value); send({ t: 'auto', bars: +autoSel.value, trans: transReq() }); };
+const setAuto = (bars: number) => { autoSel.value = String(bars); autoSel.onchange!(new Event('change')); };
+/** The menu's "every N bars" while rotation is off: the last one chosen. */
+let autoBars = +(lsGet('auto') ?? DEFAULT_AUTO_BARS) || DEFAULT_AUTO_BARS;
 $('hit').onclick = () => send({ t: 'ev', type: 'hit' });
 
 // ---- transport bar (any host drives it; the server keeps everyone on the same position) ----
@@ -398,9 +402,7 @@ async function setMidi(on: boolean) {
 midiBtn.onclick = () => setMidi(!midi.enabled);
 if (lsGet('midi') === '1') setMidi(true);
 
-$('hostsBtn').onclick = () => $('hosts').classList.toggle('hide');
-
-function renderHosts(names: Map<string, string>) {
+function renderHosts() {
   const el = $('hosts');
   el.replaceChildren();
   for (const h of room.hosts) {
@@ -415,13 +417,14 @@ function renderHosts(names: Map<string, string>) {
     el.append(name, sel);
   }
   if (!room.hosts.length) el.textContent = 'no hosts';
+  const pl = room.playlist;
+  $('roomLine').textContent = `room: ${room.mode}${room.mode === 'file' ? ` · ${room.name || 'track'}` : ''}${pl ? ` · track ${pl.index + 1}/${pl.names.length}` : ''} · ${room.hosts.length} host${room.hosts.length === 1 ? '' : 's'}`;
   // scores is absent in states from a server older than #24
   const sc = (id: string) => { const s = room.scores?.[id]; return s ? `  ${s > 0 ? '+' : ''}${s}` : ''; };
   pick.replaceChildren(...room.presets.map((id) => new Option((names.get(id) ?? id) + sc(id), id)));
   autoSel.value = String(room.auto?.bars ?? 0);
 }
 
-autoHideUi(() => [$('panel'), $('bar'), $('hosts'), $('tvote'), $('inputs')]);
 toggleUiOnDoubleTap((el) => el.id === 'c');
 
 // ---- votes (owner only: anyone with the room token) ----
@@ -432,42 +435,134 @@ function toast(text: string) {
   clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el.classList.remove('on'), 2200);
 }
 
+// ---- what start() fills in once the engine has loaded the scenes ----
+let eng: Engine | null = null, panel: DebugPanel | null = null;
+let names = new Map<string, string>(), sceneMeta = new Map<string, Omit<SceneItem, 'score'>>();
+/** The controls (key h) and the HUD (key i, the menu's display tab). */
+let hudOn = true, info = false, lastF = 0;
+const sceneName = (id: string) => names.get(id) ?? id;
+
+/** Vote on the scene showing now (during a transition: the one coming in). A 👎 also skips. */
+function vote(v: 1 | -1) {
+  const id = sceneAt(room.scene, lastF), evolve = eng?.scenes.find((s) => s.def.id === id)?.evolve() ?? undefined;
+  send({ t: 'vote', scene: id, vote: v, quant: quant(), trans: transReq(), ...(evolve ? { evolve } : {}) });
+}
+// transScores is absent in states from an older server, which also ignores the votes
+const votes = votePanel({
+  scene: () => { if (!hudOn) return null; const id = sceneAt(room.scene, lastF); return { id, name: sceneName(id) }; },
+  scores: () => ({ scenes: room.scores ?? {}, trans: room.transScores ?? {}, online: room.transScores !== undefined }),
+  retired: (id) => !room.presets.includes(id),
+  vote: (_, v) => vote(v),
+  voteTrans: (t, v) => send({ t: 'transvote', transition: t.type, from: t.from, to: t.to, beats: t.beats, vote: v, tags: [] }),
+  stepScene: (by) => switchScene(by > 0 ? { weighted: true } : { step: -1 }),
+  stepTrans, stepKeys: ['[', ']'],
+});
+const showNext = () => votes.trans.next(transSel.value === 'random' ? 'random' : transName(transSel.value as TransType));
+transSel.addEventListener('change', showNext); showNext();
+listeners.vote.push((v) => {
+  const what = v.t === 'vote' ? sceneName(v.scene) : `transition ${transName(v.transition)}`;
+  toast(`${v.vote > 0 ? '👍' : '👎'} ${what}  ${v.score > 0 ? '+' : ''}${v.score}${v.retired ? '  · retired' : ''}${v.host ? `  · ${v.host}` : '  · gallery'}`);
+  // this host's own vote arrived
+  if (v.host === hostName) {
+    const saved = `${v.vote > 0 ? '👍' : '👎'} saved ${v.t === 'vote' ? sceneName(v.scene) : transName(v.transition)}`;
+    if (v.t === 'vote') votes.said(saved); else votes.trans.saved(saved);
+  }
+});
+
+const showHud = () => $('hud').classList.toggle('hide', !info || !hudOn);
+/** Key h: the controls. */
+function toggleControls() {
+  hudOn = !hudOn;
+  for (const e of [tools.el, $('bar')]) e.classList.toggle('hide', !hudOn);
+  if (!hudOn) sheet.close();
+  votes.show(); showHud();
+}
+autoHideUi(() => [tools.el, $('bar'), votes.el]);
+
+// ---- the menu (☰, key o): the gallery's sheet, with the room's choices ----
+const onState = () => { renderHosts(); pick.value = room.scene.id; votes.show(); sheet.refresh(); };
+listeners.state.push(onState);
+let padsLine = () => 'pads: none';
+setInterval(() => { $('padsLine').textContent = padsLine(); }, 1000);
+const sheet = pickerSheet({
+  // the room's live scenes, in its order (retired ones can't be switched to)
+  scenes: () => room.presets.map((id) => ({ ...(sceneMeta.get(id) ?? { id, name: id, vendor: '', tags: [], created: '' }), score: room.scores?.[id] ?? 0 })),
+  online: () => room.transScores !== undefined,
+  transScore: (id) => room.transScores?.[id] ?? 0,
+  shown: () => room.scene.id,
+  // the room's switch: every screen changes
+  go: (id) => { pick.value = id; switchScene({ id }); },
+  settings: () => ({ rot: room.auto ? 'weighted' : 'stay', trans: transSel.value as TransType | 'random', beats: +lenSel.value, hold: room.auto?.bars ?? autoBars }),
+  change: (p) => {
+    if (p.trans !== undefined) setTrans(p.trans);
+    if (p.beats !== undefined) { lenSel.value = String(p.beats); lenSel.onchange!(new Event('change')); }
+    if (p.hold !== undefined) { autoBars = p.hold; if (room.auto) setAuto(p.hold); }
+    if (p.rot !== undefined) setAuto(p.rot === 'stay' ? 0 : autoBars);
+  },
+  playback: {
+    rots: ['weighted', 'stay'],
+    rotNames: { weighted: 'auto-rotate: random, weighted by votes (the server picks)', stay: 'stay on this scene (auto-rotation off)' },
+    beats: TRANS_BEATS, all: false,
+    hold: { title: 'auto-rotate every (bars)', values: AUTO_BARS.filter((b) => b > 0) },
+    transTitle: 'transition for every switch (this host\'s)',
+    quant: { values: ['beat', 'bar', 'now'], value: () => quantSel.value, set: (v) => { quantSel.value = v; } },
+  },
+  input: inputEl,
+  restart: restartControl(withToken),
+  extra: [{ name: 'room', el: $('room') }],
+  info: () => info,
+  setInfo: (on) => { info = on; showHud(); },
+  debug: () => panel?.shown ?? false,
+  setDebug: (on) => panel?.toggle(on),
+  // the join link: another screen joins this room with it
+  link: () => (token ? withToken(`${location.origin}/`) : `${location.origin}/`),
+  linkLabel: 'copy join link (with the room token)',
+  hint: 'double-tap the picture hides the controls (h on a keyboard)',
+});
+
+// ---- keys ----
+addEventListener('keydown', (e) => {
+  if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
+  if ((e.key === 'o' || e.key === '/') && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); sheet.open(); }
+  else if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
+  else if (e.key === 'h') toggleControls();
+  else if (e.key === 'i') { info = !info; showHud(); sheet.refresh(); }
+  else if (e.key === 'p') playPause();
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    if (room.mode === 'file') send({ t: 'seek', frame: Math.max(0, Math.min(room.frames, modeTick(room, sNow())) + (e.key === 'ArrowLeft' ? -10 : 10) * FPS) });
+  }
+  else if (e.key === 'd' && !e.ctrlKey && !e.metaKey && !e.altKey) { panel?.toggle(); sheet.refresh(); }
+  else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
+  else if (/^[0-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) send({ t: 'ev', type: 'cue', payload: { v: +e.key } }); // section cue (0 = auto)
+  else if (e.key === '[') switchScene({ step: -1 });
+  else if (e.key === ']') switchScene({ weighted: true });
+  else if (e.key === '+' || e.key === '=') vote(1);
+  else if (e.key === '-' || e.key === '_') vote(-1);
+  else if ((e.key === TRANS_KEYS.up || e.key === TRANS_KEYS.down) && !e.repeat && !e.ctrlKey && !e.metaKey) votes.trans.vote(e.key === TRANS_KEYS.up ? 1 : -1);
+});
+
 // ---- render ----
 async function start() {
   const gpu = await initGpu({ timestamps: true }); // for the debug panel's GPU frame times
   const engine = new Engine(gpu, $<HTMLCanvasElement>('c'));
+  eng = engine;
   // particle budget: benchmark before the first frame, report it; the room's N comes back in the state
   engine.budget.n = (t) => flowNAt(room.flow, t);
   benchN = engine.budget.cap = qs.has('cap') ? Math.max(1, +qs.get('cap')! | 0) : await engine.bench();
   send({ t: 'bench', n: benchN });
-  const names = new Map(engine.scenes.map((s) => [s.def.id, s.def.name]));
-  const tvote = transRow((t, v) => send({ t: 'transvote', transition: t.type, from: t.from, to: t.to, beats: t.beats, vote: v, tags: [] }), stepTrans);
-  const showNext = () => tvote.next(transSel.value === 'random' ? 'random' : transName(transSel.value as TransType));
-  transSel.addEventListener('change', showNext); showNext();
-  $('tvote').append(tvote.el);
-  // transScores is absent in states from an older server, which also ignores the votes
-  const showTrans = () => tvote.show(room.transScores ?? {}, room.transScores !== undefined);
-  const onState = () => { renderHosts(names); pick.value = room.scene.id; showTrans(); };
-  listeners.state.push(onState); onState();
-  listeners.vote.push((v) => {
-    const what = v.t === 'vote' ? names.get(v.scene) ?? v.scene : `transition ${transName(v.transition)}`;
-    toast(`${v.vote > 0 ? '👍' : '👎'} ${what}  ${v.score > 0 ? '+' : ''}${v.score}${v.retired ? '  · retired' : ''}${v.host ? `  · ${v.host}` : '  · gallery'}`);
-    // this host's own vote arrived
-    if (v.t === 'transvote' && v.host === hostName) tvote.saved('saved');
-  });
-  /** Vote on the scene showing now (during a transition: the one coming in). A 👎 also skips. */
-  const vote = (v: 1 | -1) => {
-    const id = sceneAt(room.scene, lastF), evolve = engine.scenes.find((s) => s.def.id === id)?.evolve() ?? undefined;
-    send({ t: 'vote', scene: id, vote: v, quant: quant(), trans: transReq(), ...(evolve ? { evolve } : {}) });
-  };
+  names = new Map(engine.scenes.map((s) => [s.def.id, s.def.name]));
+  sceneMeta = new Map(engine.scenes.map(({ graph: g }) => [g.id, {
+    id: g.id, name: g.name, vendor: g.author.vendor, tags: sceneTags(g, (p) => REGISTRY.get(p)?.manifest.tags ?? []), created: g.created ?? '',
+  }]));
+  onState();
   listeners.lateEvent.push((t) => engine.invalidate(t));
 
-  let hudOn = true, lastHash = '', lastF = 0;
+  let lastHash = '', votedOn = '';
   const fstats = new FrameStats();
   const rate = new Rate();
   const nameOf = (id: number | null) => (id === null ? 'none' : (room.hosts.find((h) => h.id === id)?.name ?? `#${id}`) + (id === me ? ' (this)' : ''));
-  const perf = new PerfView({ gpu, sceneName: (id) => names.get(id) ?? id, transName, close: () => panel.toggle(false) });
-  const panel: DebugPanel = new DebugPanel(() => {
+  const perf = new PerfView({ gpu, sceneName, transName, close: () => debug.toggle(false) });
+  const debug: DebugPanel = panel = new DebugPanel(() => {
     const r = rate.sample(net), f = lastF;
     const hasWave = window.__ek?.wave ? 'streamed' : 'none (scope synthesizes)';
     const ageS = net.lastPong ? ((performance.now() - net.lastPong) / 1000).toFixed(1) : '-';
@@ -509,8 +604,7 @@ async function start() {
         `secure ${isSecureContext}  visibility ${document.visibilityState}  offset ${offsetMs}ms`,
       ]],
     ];
-  }, perf, restartControl(withToken));
-  $('dbgBtn').onclick = () => panel.toggle();
+  }, perf);
   // D-pad up/down cycles this host's own view (an override, like the hosts panel)
   const pads = new PadRelay(send, {
     scene: (step) => switchScene(step > 0 ? { weighted: true } : { step }),
@@ -518,25 +612,8 @@ async function start() {
     view: (step) => send({ t: 'view', host: me, view: (((engine.view + step) % VIEWS.length) + VIEWS.length) % VIEWS.length }),
   });
   let lastFx: Fx = fxAt(events, 0);
-  if (qs.get('debug') === '1') panel.toggle(true);
-  addEventListener('keydown', (e) => {
-    if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
-    if (e.key === 'h' && document.body.classList.contains('ui-off')) document.body.classList.remove('ui-off'); // hidden by double-tap: h brings it back
-    else if (e.key === 'h') { hudOn = !hudOn; for (const id of ['panel', 'bar', 'tvote']) $(id).classList.toggle('hide', !hudOn); if (!hudOn) { $('hosts').classList.add('hide'); $('inputs').classList.add('hide'); } }
-    else if (e.key === 'p') playPause();
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      if (room.mode === 'file') send({ t: 'seek', frame: Math.max(0, Math.min(room.frames, modeTick(room, sNow())) + (e.key === 'ArrowLeft' ? -10 : 10) * FPS) });
-    }
-    else if (e.key === 'd') panel.toggle();
-    else if (e.key === ' ') { e.preventDefault(); send({ t: 'ev', type: 'hit' }); }
-    else if (/^[0-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) send({ t: 'ev', type: 'cue', payload: { v: +e.key } }); // section cue (0 = auto)
-    else if (e.key === '[') switchScene({ step: -1 });
-    else if (e.key === ']') switchScene({ weighted: true });
-    else if (e.key === '+' || e.key === '=') vote(1);
-    else if (e.key === '-' || e.key === '_') vote(-1);
-    else if ((e.key === TRANS_KEYS.up || e.key === TRANS_KEYS.down) && !e.repeat && !e.ctrlKey && !e.metaKey) tvote.vote(e.key === TRANS_KEYS.up ? 1 : -1);
-  });
-  $('fs').onclick = () => document.documentElement.requestFullscreen?.();
+  padsLine = () => `pads: ${[...pads.connected].map(([i, id]) => `#${i} ${id.slice(0, 32)}`).join(', ') || 'none'}`;
+  if (qs.get('debug') === '1') debug.toggle(true);
 
   const loop = (rafNow?: number) => {
     requestAnimationFrame(loop);
@@ -561,16 +638,19 @@ async function start() {
     const hash = engine.frame(f, FE, fx, room.scene, sub);
     lastHash = hash; lastF = f;
     fstats.frame(performance.now(), engine.transition?.type ?? null);
-    panel.frame(f);
+    debug.frame(f);
     if (rafNow !== undefined) perf.frame(engine, rafNow, engine.scene.def.id, engine.transition);
     lastTick = Math.max(lastTick, f);
     const dbg = (window.__ek ??= { hashes: new Map(), scene: '', view: 0, events: 0, wave: false, trans: '', transSeen: [] as string[] });
     dbg.trans = engine.transition?.type ?? '';
     if (dbg.trans && !dbg.transSeen.includes(dbg.trans)) dbg.transSeen.push(dbg.trans);
     dbg.hashes.set(f, hash); if (dbg.hashes.size > 240) dbg.hashes.delete(dbg.hashes.keys().next().value!); dbg.scene = engine.scene.def.id; dbg.view = engine.view; dbg.wave = F.wave(f) !== null;
-    tvote.ran(ranTransition(room.scene, f));
+    votes.trans.ran(ranTransition(room.scene, f));
+    // the vote panel follows the scene coming in
+    const voted = sceneAt(room.scene, f);
+    if (voted !== votedOn) { votedOn = voted; votes.show(); }
     if (hudOn) updateBar(f);
-    if (panel.shown) {
+    if (debug.shown || info) {
       const st = engine.scene.status?.();
       const tr = engine.transition;
       const pending = tr ? `  →  ${names.get(tr.to)}  (${transName(tr.type)} ${((tr.p16 / 65536) * 100) | 0}%)`

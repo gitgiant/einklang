@@ -1,6 +1,6 @@
 // Scene gallery: every scene driven by the synthetic demo track, or by an input (mic, external tab / system
 // audio, a playlist of files; analyzed in the page), no server needed. The ☰ button (key `o`) opens the menu
-// (gallerysheet.ts): scenes, rotation and transitions, input, the scene's variants, display. Double-tap or
+// (menusheet.ts, shared with the app): scenes, rotation and transitions, input, the scene's variants, display. Double-tap or
 // double-click the picture to hide / show the UI. A single tap or click on its right / left third (also
 // with the UI hidden), or the right / left arrow key, goes to the next / previous scene.
 // URL params:
@@ -37,8 +37,10 @@ import './transitions.ts'; // installs the transition registry (lab/transitions/
 import { transIds, transName } from '../core/transitions.ts';
 import { autoHideUi } from './idle.ts';
 import { tapZone, toggleUiOnDoubleTap } from './doubletap.ts';
+import { TRANS_BEATS } from '../core/protocol.ts';
 import { galleryBeats, galleryHold, galleryRot, galleryTrans } from './defaults.ts';
-import { TRANS_KEYS, stepButton, transRow } from './transvote.ts';
+import { TRANS_KEYS } from './transvote.ts';
+import { votePanel as sharedVotes, type VotePanel } from './votepanel.ts';
 import { ZERO, change, cycleSched, holdAt, pickScene, step, switchAt, type Cycle, type Run, type Settings } from './cycle.ts';
 import { demoInput, liveInput, trackInput, type Input } from './inputs.ts';
 import { insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
@@ -47,7 +49,7 @@ import { title } from './player.ts';
 import { FilePlaylist, type Deck } from './playlistui.ts';
 import { inputMenu, type InputMenu } from './inputmenu.ts';
 import { sceneTags, stepChoice, type SceneItem } from './pickerlist.ts';
-import { pickerSheet } from './gallerysheet.ts';
+import { menuButton, pickerSheet } from './menusheet.ts';
 import { REGISTRY } from './graph/registry.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
@@ -75,69 +77,53 @@ if (qs.get('t')) try { localStorage.setItem('token', qs.get('t')!); } catch { /*
 const withToken = (p: string) => (token ? `${p}?t=${encodeURIComponent(token)}` : p);
 
 /**
- * The vote panel: 👍/👎 and prev / next for the scene shown, and under it the transition row, votes posted
- * to the server. `scored`: the scene and transition scores, whenever they arrive or change.
+ * The vote panel (votepanel.ts), votes posted to the server's /vote. `scored`: the scene and transition
+ * scores, whenever they arrive or change.
  */
 function votePanel(
   sceneOf: () => { id: string; name: string; evolve?: unknown } | null, stepScene: (by: -1 | 1) => void,
   stepTrans: (by: -1 | 1) => void, scored: (scenes: Record<string, number>, trans: Record<string, number>) => void,
 ) {
-  const el = document.createElement('div'); el.id = 'vote';
-  const row = document.createElement('div'); row.className = 'srow';
-  const label = document.createElement('span'), up = document.createElement('button'), down = document.createElement('button');
-  const note = document.createElement('span'); note.className = 'note';
-  up.className = 'up'; up.textContent = '👍'; up.title = 'vote up (+)'; down.textContent = '👎'; down.title = 'vote down (-)';
   const post = async (body: object) => {
     const r = await fetch(withToken('/vote'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json() as { score?: number; retired?: boolean; error?: string };
     if (!r.ok || j.score === undefined) throw new Error(j.error ?? String(r.status));
     return { score: j.score, retired: j.retired };
   };
-  const trans = transRow(async (t, vote) => {
-    try {
-      const j = await post({ transition: t.type, from: t.from, to: t.to, beats: t.beats, vote, tags: [] });
-      transScores = { ...transScores, [t.type]: j.score };
-      trans.saved(`${vote > 0 ? '👍' : '👎'} saved ${transName(t.type)}`);
-      scored(scores, transScores);
-    } catch (e) { trans.note(`vote failed: ${(e as Error).message}`); }
-    show();
-  }, stepTrans);
-  row.append(label, up, down, stepButton(-1, 'previous scene (←)', stepScene), stepButton(1, 'next scene (→)', stepScene), note);
-  el.append(row, trans.el);
-  document.body.append(el);
   let scores: Record<string, number> = {}, transScores: Record<string, number> = {}, live: string[] = [], online = false;
-  const show = () => {
-    trans.show(transScores, online);
-    const sc = sceneOf();
-    el.classList.toggle('hide', sc === null);
-    if (sc === null) return;
-    const s = scores[sc.id] ?? 0;
-    label.textContent = sc.name + (online ? `  ${s > 0 ? '+' : ''}${s}${live.includes(sc.id) ? '' : ' · retired'}` : '');
-    label.title = online ? '' : 'voting needs the server (npm run server)';
-    up.disabled = down.disabled = !online;
-  };
+  const panel: VotePanel = sharedVotes({
+    scene: sceneOf,
+    scores: () => ({ scenes: scores, trans: transScores, online }),
+    retired: (id) => !live.includes(id),
+    stepScene, stepTrans, stepKeys: ['←', '→'],
+    async vote(sc, vote) {
+      const evolve = sceneOf()?.evolve;
+      try {
+        // an evolving scene: the state on screen goes with the vote (the digest learns which mutations are liked)
+        const j = await post({ scene: sc.id, vote, tags: [], ...(evolve ? { evolve } : {}) });
+        scores = { ...scores, [sc.id]: j.score };
+        if (j.retired) live = live.filter((x) => x !== sc.id); else if (!live.includes(sc.id)) live.push(sc.id);
+        panel.said(`${vote > 0 ? '👍' : '👎'} saved ${sc.name}`);
+        scored(scores, transScores);
+      } catch (e) { panel.said(`vote failed: ${(e as Error).message}`); }
+      panel.show();
+    },
+    async voteTrans(t, vote) {
+      try {
+        const j = await post({ transition: t.type, from: t.from, to: t.to, beats: t.beats, vote, tags: [] });
+        transScores = { ...transScores, [t.type]: j.score };
+        panel.trans.saved(`${vote > 0 ? '👍' : '👎'} saved ${transName(t.type)}`);
+        scored(scores, transScores);
+      } catch (e) { panel.trans.note(`vote failed: ${(e as Error).message}`); }
+      panel.show();
+    },
+  });
   /** Scores from the server: on load, and again once a restarted server is back. */
   const load = () => fetch(withToken('/scores')).then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-    .then((j: { scores: Record<string, number>; live: string[]; transScores?: Record<string, number> }) => { scores = j.scores; live = j.live; transScores = j.transScores ?? {}; online = true; scored(scores, transScores); show(); })
-    .catch(() => { online = false; show(); });
+    .then((j: { scores: Record<string, number>; live: string[]; transScores?: Record<string, number> }) => { scores = j.scores; live = j.live; transScores = j.transScores ?? {}; online = true; scored(scores, transScores); panel.show(); })
+    .catch(() => { online = false; panel.show(); });
   load();
-  const send = async (vote: 1 | -1) => {
-    const sc = sceneOf(), id = sc?.id;
-    if (!id || !online) return;
-    try {
-      // an evolving scene: the state on screen goes with the vote (the digest learns which mutations are liked)
-      const j = await post({ scene: id, vote, tags: [], ...(sc.evolve ? { evolve: sc.evolve } : {}) });
-      scores = { ...scores, [id]: j.score };
-      if (j.retired) live = live.filter((x) => x !== id); else if (!live.includes(id)) live.push(id);
-      note.textContent = `${vote > 0 ? '👍' : '👎'} saved ${sc.name}`;
-      scored(scores, transScores);
-    } catch (e) { note.textContent = `vote failed: ${(e as Error).message}`; }
-    show();
-  };
-  up.onclick = () => send(1); down.onclick = () => send(-1);
-  /** Key votes count only while the panel is on screen. */
-  const voteTrans = (v: 1 | -1) => { if (sceneOf()) trans.vote(v); };
-  return { el, show, send, voteTrans, trans, load, online: () => online };
+  return { el: panel.el, show: panel.show, send: panel.vote, voteTrans: panel.voteTrans, trans: panel.trans, load, online: () => online };
 }
 
 /** A tiny silent WAV: played on the first tap so iOS lets the audio element play later tracks by itself. */
@@ -309,12 +295,7 @@ async function main() {
     for (const c of cells) c.engine.invalidate(-Infinity);
   };
   // ---- controls: the menu button and its status line top left, the vote panel bottom right ----
-  const tools = document.createElement('div'); tools.id = 'tools';
-  const menu = document.createElement('button'); menu.id = 'menu'; menu.textContent = '☰'; menu.title = 'menu: scenes, transitions, input, display (o)'; menu.setAttribute('aria-label', 'menu');
-  const status = document.createElement('span'); status.id = 'status';
-  menu.onclick = () => sheet.open();
-  tools.append(menu, status);
-  document.body.append(tools);
+  const { el: tools, status } = menuButton(() => sheet.open());
   const inputEl = inputPanel((next) => {
     input.stop(); input = next;
     restart(Math.floor(input.tick(performance.now())));
@@ -378,27 +359,35 @@ async function main() {
     go,
     settings: chosen,
     change: set,
+    playback: {
+      rots: ['weighted', 'order', 'liked', 'stay'], beats: TRANS_BEATS.filter((b) => b > 0), all: true,
+      hold: { title: 'hold (bars a scene shows alone)', values: [undefined, 0, 1, 2, 4, 8, 16, 32] },
+      transTitle: 'transition for the next switch',
+    },
     input: inputEl,
     restart: restartControl(withToken, () => votes.load()),
-    now: () => {
-      const sc = cells[0].engine.scene;
-      return { id: sc.def.id, name: sc.def.name, sections: sc.graph.sections ? [...sc.sections] : [], section: sc.section(), evolve: sc.evolve(), held: held === sc.def.id };
+    variants: {
+      now: () => {
+        const sc = cells[0].engine.scene;
+        return { id: sc.def.id, name: sc.def.name, sections: sc.graph.sections ? [...sc.sections] : [], section: sc.section(), evolve: sc.evolve(), held: held === sc.def.id };
+      },
+      nextStep: () => {
+        const k = cells[0].engine.scene.evolve()?.step;
+        if (k !== undefined) holdVariant(k - 1, k); // force index k = step k + 1
+      },
+      forceSection: (id) => {
+        const sc = cells[0].engine.scene, at = (s: string) => sc.sections.indexOf(s) - 1; // -1 = base
+        holdVariant(at(sc.section()?.id ?? id), at(id));
+      },
+      release,
     },
-    nextStep: () => {
-      const k = cells[0].engine.scene.evolve()?.step;
-      if (k !== undefined) holdVariant(k - 1, k); // force index k = step k + 1
-    },
-    forceSection: (id) => {
-      const sc = cells[0].engine.scene, at = (s: string) => sc.sections.indexOf(s) - 1; // -1 = base
-      holdVariant(at(sc.section()?.id ?? id), at(id));
-    },
-    release,
     info: () => info,
     setInfo: (on) => { info = on; layout(); },
     debug: () => debug,
     setDebug,
-    grid: () => grid,
-    toggleGrid: () => go('grid'),
+    grid: { on: () => grid, toggle: () => go('grid') },
+    linkLabel: 'copy link to this scene + transition',
+    hint: 'double-tap the picture hides the controls; tap its left / right third for the previous / next scene',
     link: () => {
       const u = settingsUrl(new URL(location.href));
       for (const k of ['t', 'start', 'stop', 'at', 'hud', 'grid']) u.searchParams.delete(k); // never the room token

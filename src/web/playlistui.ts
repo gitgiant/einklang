@@ -414,6 +414,7 @@ export const PLAYLIST_CSS = `
 .playlist .item button:not(.name) { flex: none; min-width: 36px; }
 body.dropping::after { content: 'drop to add to the playlist'; position: fixed; inset: 12px; z-index: 50; display: grid; place-items: center; border: 2px dashed #7fe3ff; border-radius: 12px; background: #000a; color: #7fe3ff; font: 18px system-ui, sans-serif; pointer-events: none; }
 #resume { position: fixed; left: 50%; bottom: max(84px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 20; display: flex; gap: 4px; align-items: stretch; }
+#resume[hidden] { display: none; }
 #resume button { font: 15px system-ui, sans-serif; min-height: 44px; padding: 8px 16px; color: #000; background: #7fe3ff; border: 0; border-radius: 22px; cursor: pointer; }
 #resume button.x { color: #ddd; background: #000c; padding: 8px 12px; }
 `;
