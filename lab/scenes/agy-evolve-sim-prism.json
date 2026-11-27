@@ -50,7 +50,7 @@
     {
       "id": "fx",
       "piece": "core-trails",
-      "params": { "decay": 0.54, "zoom": 0.008, "rotate": 0.003 },
+      "params": { "decay": 0.44, "zoom": 0.008, "rotate": 0.003 },
       "bind": {
         "zoom": { "from": "bass.out", "range": [0.002, 0.026] }
       }
@@ -64,7 +64,7 @@
     { "from": "sim.out", "to": "fx.in" }
   ],
   "out": "fx.out",
-  "post": { "bloom": 0.4, "threshold": 0.74 },
+  "post": { "bloom": 0.28, "threshold": 0.82 },
   "evolve": {
     "every": "phrase",
     "transition": "core-iris",

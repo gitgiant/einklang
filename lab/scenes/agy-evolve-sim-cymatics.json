@@ -11,7 +11,6 @@
   "nodes": [
     { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.75 } },
     { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.9 } },
-    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
     {
       "id": "pal",
       "piece": "core-swatch",
@@ -63,7 +62,7 @@
     { "from": "sim.out", "to": "fx.in" }
   ],
   "out": "fx.out",
-  "post": { "bloom": 0.36, "threshold": 0.76 },
+  "post": { "bloom": 0.24, "threshold": 0.82 },
   "evolve": {
     "every": "phrase",
     "transition": "core-dissolve",

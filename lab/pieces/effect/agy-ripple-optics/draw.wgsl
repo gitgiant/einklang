@@ -148,8 +148,19 @@ fn prism_field(uv: vec2f, scale: f32, rot: f32, wobble: f32) -> vec4f {
   // Combine radial lens vector with per-facet prism tilt
   let tilt_ang = best_h * 6.28318 + rot * 1.5;
   let prism_dir = vec2f(cos(tilt_ang), sin(tilt_ang)) * 0.65 - best_v * 0.75;
-  let bevel = smoothstep(0.16, 0.0, edge_dist);
+  // Razor-thin crystal facet bevel (not a thick white grid)
+  let bevel = smoothstep(0.048, 0.0, edge_dist);
   return vec4f(prism_dir, bevel, best_h);
+}
+
+// Hue-preserving soft HDR compression so darks stay deep, colours stay saturated,
+// and only true caustic / specular peaks trigger bloom without washing out to white.
+fn filmic_soft(c: vec3f) -> vec3f {
+  let x = max(c, vec3f(0.0));
+  let l = dot(x, vec3f(0.2126, 0.7152, 0.0722));
+  let mapped = l / (1.0 + l * 0.92);
+  let scale = select(1.0, mapped / l, l > 1e-4);
+  return x * scale;
 }
 
 @fragment fn fs_draw(@builtin(position) pos: vec4f, @location(0) uv: vec2f) -> @location(0) vec4f {
@@ -169,12 +180,12 @@ fn prism_field(uv: vec2f, scale: f32, rot: f32, wobble: f32) -> vec4f {
                    textureSampleLevel(tluma, smp, uv, 0.0).r,
                    dr.has_luma > 0.5);
   let ed = select(vec2f(0.0), textureSampleLevel(tedges, smp, uv, 0.0).rg, dr.has_edges > 0.5);
-  let em = clamp(length(ed) * 1.4, 0.0, 1.5);
+  let em = clamp(length(ed) * 1.4, 0.0, 1.4);
 
   // Audio activity envelope: calm & clear on quiet, vivid & dramatic on techno/dense
   let audio_lvl = clamp(dr.rms * 1.5 + dr.bass * 1.1 + dr.hi * 0.9 + dr.kick * 1.1, 0.0, 2.5);
-  let calm_scale = (1.0 - 0.78 * dr.reform_env);
-  let react_gain = (0.14 + 0.86 * smoothstep(0.03, 0.32, audio_lvl) * dr.react) * calm_scale;
+  let calm_scale = (1.0 - 0.80 * dr.reform_env);
+  let react_gain = (0.10 + 0.90 * smoothstep(0.03, 0.34, audio_lvl) * dr.react) * calm_scale;
 
   let mode = i32(dr.mode + 0.5);
   var col = vec3f(0.0);
@@ -182,112 +193,115 @@ fn prism_field(uv: vec2f, scale: f32, rot: f32, wobble: f32) -> vec4f {
   if (mode == 0) {
     // === MODE 0: RIPPLE TANK & CAUSTICS ===
     let slope_vec = dh * vec2f(1.0 / dr.aspect, 1.0);
-    let bend = dr.refract * (0.045 + 0.11 * react_gain * (0.4 + dr.bass + 0.9 * dr.kick));
-    // Subtle refraction from picture's own edges as submerged glass relief
-    let relief = ed * (0.005 + 0.018 * dr.bass * react_gain);
+    let bend = dr.refract * (0.035 + 0.125 * react_gain * (0.35 + dr.bass + 0.95 * dr.kick));
+    let relief = ed * (0.004 + 0.016 * dr.bass * react_gain);
     let refract_uv = uv + slope_vec * bend + relief;
 
     // Chromatic dispersion widened by highs and wave steepness
     let disp_dir = select(normalize(slope_vec + vec2f(1e-4, 0.0)), vec2f(1.0, 0.0), length(slope_vec) < 1e-4);
-    let disp_amt = dr.dispersion * (0.002 + (0.018 * dr.hi + 0.014 * dr.kick + 0.008 * dr.bass) * react_gain)
-                 * (0.35 + 4.0 * length(dh));
+    let disp_amt = dr.dispersion * (0.0015 + (0.022 * dr.hi + 0.016 * dr.kick + 0.007 * dr.bass) * react_gain)
+                 * (0.3 + 4.2 * length(dh));
     let refracted = sample_rgb(refract_uv, disp_dir, disp_amt);
 
-    // True optical caustic focusing: bright webs where rays converge (-lap > 0)
-    let focus_now = max(0.0, -lap) * 11.0;
-    let focus_sharp = pow(clamp(focus_now + cC.z * 0.42, 0.0, 2.2), 1.65);
-    let spec_normal = normalize(vec3f(-dh.x * 5.2, -dh.y * 5.2, 1.0));
+    // Deep water trough shading & rich underwater contrast
+    let trough_shade = mix(0.88, clamp(0.56 + 0.55 * cC.x, 0.32, 1.18), clamp(react_gain * 0.85, 0.0, 0.92));
+    let base_water = refracted * trough_shade;
+
+    // Razor-sharp optical caustic filaments where rays focus (-lap > 0)
+    let focus_now = max(0.0, -lap) * 10.5;
+    let caustic_web = pow(clamp(focus_now + max(0.0, cC.z - 0.18) * 0.32, 0.0, 2.0), 2.35);
+
+    // Crisp specular water glint on wave crests
+    let spec_normal = normalize(vec3f(-dh.x * 6.0, -dh.y * 6.0, 1.0));
     let light_dir = normalize(vec3f(0.35 * cos(dr.time * 0.4), 0.35 * sin(dr.time * 0.35), 1.0));
-    let spec = pow(max(dot(spec_normal, light_dir), 0.0), 18.0) * (0.35 + 1.6 * length(dh));
+    let spec = pow(max(dot(spec_normal, light_dir), 0.0), 32.0) * (0.2 + 2.0 * length(dh));
 
-    // Spectral caustic tint blending picture brightness + palette
-    let pal_c = pal(fract(cC.x * 0.8 + lum * 0.45 + dr.pitch_norm * 0.35));
-    let caustic_tint = mix(refracted * 1.45 + vec3f(0.18, 0.24, 0.28), pal_c * 1.35 + spectral(cC.x * 1.6 + dr.hi) * 0.35, dr.pal_mix);
-    let caustic_pwr = dr.caustic * (0.18 + 0.95 * react_gain * (0.55 + 0.8 * dr.bass + 0.85 * dr.kick + 0.55 * dr.hi));
+    // Jewel-toned caustic filaments: saturated refracted colour + palette glints (never milky gray!)
+    let pal_c = pal(fract(cC.x * 0.9 + lum * 0.45 + dr.pitch_norm * 0.35));
+    let caustic_tint = mix(refracted * 1.65 + pal_c * 0.25, pal_c * 1.25 + spectral(cC.x * 1.8 + dr.hi) * 0.28, dr.pal_mix);
+    let caustic_pwr = dr.caustic * (0.10 + 0.68 * react_gain * (0.45 + 0.75 * dr.bass + 0.85 * dr.kick + 0.55 * dr.hi));
 
-    // Shoreline shimmer where waves meet picture edges
-    let shore = em * clamp(abs(cC.x) * 2.4 + cC.z * 0.7, 0.0, 1.4) * (0.2 + 0.9 * dr.hi + 0.6 * dr.kick) * react_gain;
+    // Subtle shimmering shoreline refraction on strong media edges
+    let shore = smoothstep(0.25, 1.1, em) * clamp(abs(cC.x) * 1.8, 0.0, 1.0) * (0.15 + 0.75 * dr.hi + 0.5 * dr.kick) * react_gain;
 
-    // Gentle deep-water contrast on active troughs, luminous caustic crests
-    let trough_shade = mix(1.0, clamp(0.76 + 0.35 * cC.x, 0.55, 1.25), clamp(react_gain * 0.7, 0.0, 0.85));
-    col = refracted * trough_shade
-        + caustic_tint * focus_sharp * caustic_pwr * 0.62
-        + mix(vec3f(0.95, 0.98, 1.0), pal_c, 0.45) * spec * caustic_pwr * 0.55
-        + pal_c * shore * 0.45;
+    col = base_water
+        + caustic_tint * caustic_web * caustic_pwr * 0.42
+        + mix(vec3f(0.85, 0.95, 1.0), pal_c, 0.5) * spec * caustic_pwr * 0.45
+        + pal_c * shore * 0.28;
   } else if (mode == 1) {
     // === MODE 1: CHROMATIC PRISM & LIQUID LENS SIM ===
     let facets = dr.facets * (1.0 - 0.18 * dr.bass * react_gain);
-    let rot = dr.time * 0.14 + dr.bass * 0.45 * react_gain + dr.pitch_norm * 0.8;
+    let rot = dr.time * 0.14 + dr.bass * 0.48 * react_gain + dr.pitch_norm * 0.8;
     let pf = prism_field(uv, facets, rot, dr.mid + dr.bass);
     let pdir = pf.xy;
     let bevel = pf.z;
     let cell_h = pf.w;
 
-    // Combine crystal prism facet refraction + live wave ripples + media luma lens curvature
+    // Combine crystal prism facet refraction + live wave ripples + media edge tilt
     let wave_n = dh * vec2f(1.0 / dr.aspect, 1.0);
-    let lens_bend = dr.refract * (0.012 + 0.068 * react_gain * (0.45 + 0.95 * dr.bass + 0.85 * dr.kick));
-    let prism_uv = uv + pdir * lens_bend + wave_n * (lens_bend * 1.4) + ed * (0.012 * react_gain);
+    let lens_bend = dr.refract * (0.01 + 0.075 * react_gain * (0.4 + 0.95 * dr.bass + 0.85 * dr.kick));
+    let prism_uv = uv + pdir * lens_bend + wave_n * (lens_bend * 1.5) + ed * (0.012 * react_gain);
 
-    // 7-band full-spectrum rainbow splitting exploded by highs and onsets!
-    let disp_dir = normalize(pdir + wave_n * 3.5 + ed * 1.2 + vec2f(0.001, 0.001));
-    let hi_drive = dr.hi * 1.55 + dr.kick * 1.15 + dr.mid * 0.35;
-    let spread = dr.dispersion * (0.004 + 0.085 * react_gain * hi_drive) * (0.45 + 0.9 * bevel + 1.8 * length(dh) + 0.4 * em);
+    // 7-band full-spectrum rainbow splitting driven cleanly by highs & onsets!
+    let disp_dir = normalize(pdir + wave_n * 3.2 + ed * 1.1 + vec2f(0.001, 0.001));
+    let hi_drive = dr.hi * 1.6 + dr.kick * 1.1 + dr.mid * 0.3;
+    let spread = dr.dispersion * (0.003 + 0.095 * react_gain * hi_drive) * (0.45 + 0.95 * bevel + 1.8 * length(dh) + 0.35 * em);
     let dispersed = sample_spectrum7(prism_uv, disp_dir, spread);
 
-    // Internal prism caustic beams & bevel Fresnel reflections
-    let caustic_ray = pow(clamp(max(0.0, -lap) * 8.0 + bevel * (0.55 + 0.85 * dr.hi + 0.65 * dr.kick), 0.0, 2.0), 1.55);
-    let spec_col = spectral(cell_h + dr.time * 0.18 + dr.hi * 0.6 + lum * 0.5);
+    // Jewel-toned per-facet shading + razor-thin prismatic bevel gleam (no thick white net!)
+    let spec_col = spectral(cell_h + dr.time * 0.18 + dr.hi * 0.65 + lum * 0.5);
     let pal_c = pal(fract(cell_h * 0.7 + dr.pitch_norm * 0.4 + dr.hi * 0.3));
     let facet_tint = mix(spec_col, pal_c, dr.pal_mix);
 
-    // Slight per-facet glass sheen
-    let glass_tint = mix(vec3f(1.0), 0.84 + 0.32 * facet_tint, 0.35 * react_gain);
-    let rim = bevel * (0.14 + 0.85 * react_gain * (0.4 + dr.hi * 1.2 + dr.kick * 0.9)) * dr.caustic;
+    // Deep optical glass contrast per facet
+    let facet_shade = mix(0.92, 0.62 + 0.42 * cell_h, clamp(react_gain * 0.7, 0.0, 0.8));
+    let glass_tint = mix(vec3f(1.0), 0.75 + 0.45 * facet_tint, 0.38 * react_gain);
+    let rim = bevel * (0.08 + 0.55 * react_gain * (0.35 + dr.hi * 1.1 + dr.kick * 0.8)) * dr.caustic;
+    let caustic_ray = pow(clamp(max(0.0, -lap) * 8.5, 0.0, 2.0), 2.2) * react_gain * dr.caustic;
 
-    col = dispersed * glass_tint
-        + facet_tint * rim * 0.55
-        + mix(dispersed, spec_col, 0.55) * caustic_ray * dr.caustic * react_gain * 0.42;
+    col = dispersed * facet_shade * glass_tint
+        + (facet_tint * 0.7 + dispersed * 0.5) * rim * 0.38
+        + spec_col * caustic_ray * 0.35;
   } else {
     // === MODE 2: STANDING-WAVE INTERFEROMETER & THIN-FILM LENS ===
     let p = vec2f((uv.x - 0.5) * dr.aspect, uv.y - 0.5);
     let r = length(p);
     let radial_dir = select(p / r, vec2f(1.0, 0.0), r > 1e-4);
 
-    // Fresnel wave-lens rings + live tank interference
     let ring_freq = 16.0 + 20.0 * dr.pitch_norm;
     let fresnel_slope = sin(r * ring_freq - dr.time * 3.8 - dr.bass * 2.5) * exp(-r * 1.3);
     let wave_n = dh * vec2f(1.0 / dr.aspect, 1.0);
-    let total_n = wave_n * 1.45 + radial_dir * (fresnel_slope * 0.14 * (0.25 + dr.bass + dr.kick));
+    let total_n = wave_n * 1.45 + radial_dir * (fresnel_slope * 0.15 * (0.25 + dr.bass + dr.kick));
 
-    let bend = dr.refract * (0.025 + 0.095 * react_gain * (0.45 + 0.85 * dr.bass + 0.9 * dr.kick));
+    let bend = dr.refract * (0.02 + 0.105 * react_gain * (0.4 + 0.9 * dr.bass + 0.9 * dr.kick));
     let refr_uv = uv + total_n * bend + ed * (0.01 * react_gain);
 
     let disp_dir = normalize(total_n + vec2f(1e-4, 0.0));
-    let spread = dr.dispersion * (0.003 + 0.055 * react_gain * (dr.hi * 1.35 + dr.kick * 0.95 + dr.mid * 0.3)) * (0.4 + 2.8 * length(total_n));
+    let spread = dr.dispersion * (0.002 + 0.062 * react_gain * (dr.hi * 1.4 + dr.kick * 1.0 + dr.mid * 0.3)) * (0.4 + 2.8 * length(total_n));
     let refr = sample_spectrum7(refr_uv, disp_dir, spread);
 
-    // Thin-film interference iridescence along wave crests & media contours
+    // Thin-film interference iridescence over deep glass
     let opd = cC.x * 2.6 + fresnel_slope * 0.9 + lum * 1.2 + dr.hi * 1.4 + dr.time * 0.25;
     let irid = spectral(opd);
     let pal_c = pal(fract(opd * 0.35 + dr.pitch_norm * 0.5));
     let film = mix(irid, pal_c, dr.pal_mix);
 
-    let caustic_web = pow(clamp(max(0.0, -lap) * 10.0 + cC.z * 0.55 + abs(fresnel_slope) * 0.38, 0.0, 2.2), 1.6);
-    let film_amt = (0.14 + 0.72 * react_gain * (0.35 + dr.hi * 0.85 + dr.bass * 0.65 + dr.kick * 0.75)) * dr.caustic;
+    let caustic_web = pow(clamp(max(0.0, -lap) * 10.5 + abs(fresnel_slope) * 0.35, 0.0, 2.0), 2.2);
+    let film_amt = (0.08 + 0.52 * react_gain * (0.35 + dr.hi * 0.85 + dr.bass * 0.65 + dr.kick * 0.75)) * dr.caustic;
+    let depth_shade = mix(0.9, clamp(0.58 + 0.45 * cC.x, 0.35, 1.15), clamp(react_gain * 0.75, 0.0, 0.85));
 
-    col = refr * (0.86 + 0.24 * clamp(cC.x * 0.8 + 0.5, 0.0, 1.2))
-        + film * caustic_web * film_amt * 0.48
-        + film * em * (0.12 + 0.55 * dr.hi * react_gain) * 0.45;
+    col = refr * depth_shade
+        + film * caustic_web * film_amt * 0.42
+        + film * smoothstep(0.25, 1.0, em) * (0.08 + 0.42 * dr.hi * react_gain) * 0.32;
   }
 
   // Phrase re-formation snap: cleanly re-clarifies the live picture at phrase turns
-  let clear_mix = clamp(dr.reform_env * 0.55, 0.0, 0.65);
-  col = mix(col, raw_pic * (0.95 + 0.2 * dr.beat), clear_mix);
+  let clear_mix = clamp(dr.reform_env * 0.62, 0.0, 0.72);
+  col = mix(col, raw_pic * (0.86 + 0.16 * dr.beat), clear_mix);
 
-  // Beat / onset optical bloom breath & soft HDR shoulder so dense never blows out
-  let exp_gain = dr.glow * (0.88 + 0.24 * dr.bass * react_gain + 0.22 * dr.kick * react_gain);
-  col = max(col * exp_gain, vec3f(0.0));
-  col = col / (vec3f(1.0) + col * 0.24);
+  // Balanced exposure + hue-preserving filmic rolloff (rich contrast, selective bloom, zero washout)
+  let exp_gain = dr.glow * (0.72 + 0.22 * dr.bass * react_gain + 0.18 * dr.kick * react_gain);
+  col = filmic_soft(col * exp_gain);
 
   return vec4f(col, 1.0);
 }

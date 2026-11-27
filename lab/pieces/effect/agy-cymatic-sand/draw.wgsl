@@ -73,24 +73,23 @@ struct GOut {
 
   let px = 1.0 / dr.res.y;
   let energy = g.col.w;
-  let rad = dr.size * px * (0.85 + 0.45 * dr.kick * act + 0.22 * dr.bass * act + 0.18 * clamp(energy, 0.0, 1.5));
-  let len = rad * (1.0 + dr.streak * clamp(sp * 85.0, 0.0, 3.2));
+  let rad = dr.size * px * (0.72 + 0.38 * dr.kick * act + 0.18 * dr.bass * act + 0.14 * clamp(energy, 0.0, 1.4));
+  let len = rad * (1.0 + dr.streak * clamp(sp * 72.0, 0.0, 2.8));
 
   let off = dir * (corner.x * len) + perp * (corner.y * rad);
   let p = g.pv.xy + vec2f(off.x / max(dr.aspect, 0.5), off.y);
 
-  // Vivid sand colour: lifted media hue + palette metallic/neon highlight on vibrating grains
+  // Rich mineral sand colour: saturated inherited media RGB + metallic/neon palette glints
   var c = max(g.col.rgb, vec3f(0.0));
   let lum = dot(c, vec3f(0.2126, 0.7152, 0.0722));
-  // Boost saturation & keep dark regions readable as fine mineral sand
-  let sat_c = max(mix(vec3f(lum), c, 1.28), vec3f(0.0));
+  let sat_c = max(mix(vec3f(lum), c, 1.38), vec3f(0.0));
   let hue_norm = sat_c / max(max(sat_c.r, max(sat_c.g, sat_c.b)), 0.08);
-  let sand_pic = hue_norm * (0.24 + 0.78 * sqrt(clamp(lum * 1.55, 0.0, 1.0)));
+  let sand_pic = hue_norm * (0.14 + 0.76 * sqrt(clamp(lum * 1.35, 0.0, 1.0)));
 
   let pal_c = pal(fract(lum * 0.65 + energy * 0.35 + f32(ii & 255u) / 256.0 * 0.12));
-  let pal_w = clamp(dr.pal_mix * (0.35 + 0.65 * clamp(energy, 0.0, 1.2) + 0.35 * dr.hi * act), 0.0, 0.88);
-  var out_col = mix(sand_pic, pal_c * 1.15, pal_w);
-  out_col = out_col * (0.85 + 0.55 * clamp(energy, 0.0, 1.4) + 0.45 * dr.kick * act);
+  let pal_w = clamp(dr.pal_mix * (0.28 + 0.58 * clamp(energy, 0.0, 1.2) + 0.32 * dr.hi * act), 0.0, 0.82);
+  var out_col = mix(sand_pic, pal_c, pal_w);
+  out_col = out_col * (0.68 + 0.42 * clamp(energy, 0.0, 1.3) + 0.35 * dr.kick * act);
 
   var o: GOut;
   o.pos = vec4f(p.x * 2.0 - 1.0, 1.0 - p.y * 2.0, 0.0, 1.0);
@@ -102,8 +101,8 @@ struct GOut {
 @fragment fn fs_grain(in: GOut) -> @location(0) vec4f {
   let r2 = dot(in.q, in.q);
   if (r2 > 1.0) { discard; }
-  // Sharp mineral-grain core with soft halo
-  let w = exp(-r2 * 3.4) * (1.0 - r2);
+  // Crisp sparkling mineral-grain core
+  let w = exp(-r2 * 5.2) * (1.0 - r2);
   return vec4f(in.col * w, w);
 }
 
@@ -148,31 +147,36 @@ fn plate_wave(uv: vec2f) -> f32 {
                    * (0.0028 * antinode_buzz * (dr.bass + 0.8 * dr.kick) * act * (1.0 - 0.8 * dr.reform_env));
   let pic = max(textureSampleLevel(tpic, smp, clamp(buzz_uv, vec2f(0.001), vec2f(0.999)), 0.0).rgb, vec3f(0.0));
 
-  // Plate underlay: darkens slightly in vibrating antinodes on dense audio so bright sand dunes pop!
-  let under_amt = mix(dr.under * (0.95 - 0.35 * antinode_buzz * act), 0.82, dr.reform_env * 0.72);
-  let plate_tint = mix(vec3f(0.10, 0.11, 0.14), pal(0.15) * 0.28, dr.pal_mix);
-  let plate_col = pic * under_amt + plate_tint * (0.14 + 0.14 * (1.0 - under_amt));
+  // Plate underlay: velvety dark slate plate tinted by the picture so glowing sand dunes pop!
+  let under_amt = mix(dr.under * (0.68 - 0.34 * antinode_buzz * act), 0.78, dr.reform_env * 0.72);
+  let plate_tint = mix(vec3f(0.015, 0.02, 0.03), pal(0.08) * 0.08, dr.pal_mix);
+  let plate_col = pic * under_amt + plate_tint;
 
-  // Softly compress accumulated sand density so dense nodal ridges are luminous & rich, not clipped
+  // Hue-preserving density tone-map on accumulated sand: dense ridges shine like gold/jewels, never white-out!
   let density = max(acc.a, 0.0);
-  let sand_rgb = acc.rgb / (vec3f(1.0) + acc.rgb * 0.52);
-  let ridge_boost = 1.0 + 0.55 * smoothstep(0.4, 2.4, density) * (0.35 + 0.85 * act);
+  let acc_lum = dot(acc.rgb, vec3f(0.2126, 0.7152, 0.0722));
+  let sand_mapped = acc_lum / (1.0 + acc_lum * 1.95);
+  let sand_rgb = acc.rgb * select(1.0, sand_mapped / acc_lum, acc_lum > 1e-4);
+  // Extra relief contrast: sparse dust stays subtle, dense nodal ridges gleam cleanly
+  let ridge_sculpt = smoothstep(0.04, 0.55, density) * (0.62 + 0.48 * smoothstep(0.55, 2.2, density));
 
   // Crisp glowing nodal-line & media-edge metallic sheen
   let pal_hi = pal(fract(0.65 + dr.hi * 0.35 + abs(wv) * 0.3));
-  let nodal_glint = nodal_line * (0.04 + 0.36 * act * (0.4 + dr.hi + 0.8 * dr.kick)) * (1.0 - 0.6 * dr.reform_env);
-  let edge_glint = em * (0.05 + 0.42 * act * (0.5 + dr.bass + 0.8 * dr.kick));
+  let nodal_glint = pow(nodal_line, 2.0) * (0.02 + 0.22 * act * (0.35 + dr.hi + 0.7 * dr.kick)) * (1.0 - 0.65 * dr.reform_env);
+  let edge_glint = smoothstep(0.25, 1.1, em) * (0.03 + 0.26 * act * (0.4 + dr.bass + 0.7 * dr.kick));
 
   var col = plate_col
-          + sand_rgb * ridge_boost * dr.glow * (0.82 + 0.36 * act * (0.5 + dr.bass + 0.7 * dr.kick))
-          + pal_hi * (nodal_glint + edge_glint * 0.55);
+          + sand_rgb * ridge_sculpt * dr.glow * (0.62 + 0.38 * act * (0.45 + dr.bass + 0.65 * dr.kick))
+          + pal_hi * (nodal_glint + edge_glint * 0.45);
 
   // Phrase re-formation snap: smoothly clarifies the picture between phrase swaps
-  col = mix(col, raw_pic * (0.94 + 0.18 * dr.beat), dr.reform_env * 0.48);
+  col = mix(col, raw_pic * (0.84 + 0.14 * dr.beat), dr.reform_env * 0.55);
 
-  // Safe soft HDR rolloff
+  // Hue-preserving soft HDR shoulder so highlights trigger crisp bloom without washing out to white
   col = max(col, vec3f(0.0));
-  col = col / (vec3f(1.0) + col * 0.22);
+  let cl = dot(col, vec3f(0.2126, 0.7152, 0.0722));
+  let cm = cl / (1.0 + cl * 0.85);
+  col = col * select(1.0, cm / cl, cl > 1e-4);
 
   return vec4f(col, 1.0);
 }

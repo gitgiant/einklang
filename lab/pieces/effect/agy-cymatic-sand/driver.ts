@@ -291,7 +291,8 @@ export default definePiece({
           cp.dispatchWorkgroups(groups);
         }
         cp.setPipeline(stepP);
-        for (let t = 0; t < ticks; t++) {
+        const simSteps = fresh ? ticks + 6 : ticks;
+        for (let t = 0; t < simSteps; t++) {
           cp.dispatchWorkgroups(groups);
         }
         cp.end();
@@ -302,11 +303,12 @@ export default definePiece({
           Array.from({ length: 6 }, (_, i) => oklch(0.32 + i * 0.12, 0.15, audio.pal + 0.12 + i * 0.08));
 
         const size = (params.size as number) * (height / 1080);
-        const area = Math.max(1, size * size * 2.8);
-        const gain = Math.min(1.6, ((width * height) / (N * area)) * 0.72);
+        const effSize = Math.max(0.65, size);
+        const area = Math.max(1, effSize * effSize * 2.6);
+        const gain = Math.min(0.65, ((width * height) / (N * area)) * 0.28);
 
         df.fill(0);
-        df.set([width, height, aspect, Math.max(0.8, size)], 0);
+        df.set([width, height, aspect, effSize], 0);
         df.set([params.streak as number, gain, kick, beatEnv], 4);
         df.set([bass, mid, hi, audio.rms], 8);
         df.set([params.under as number, params.pal_mix as number, Math.min(8, pal.length), (time * 0.05) % 1], 12);

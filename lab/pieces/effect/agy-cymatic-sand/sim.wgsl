@@ -156,10 +156,10 @@ fn cs_step(@builtin(global_invocation_id) id: vec3u) {
   let grad_edge = vec2f(emR - emL, emD - emU) / (2.0 * eEps);
 
   // During phrase re-formation, boost picture edge + luma settling and quiet the Chladni bounce
-  let chladni_w = sim.chladni * (0.28 + 0.95 * act) * (1.0 - 0.72 * reform);
-  let edge_w = sim.edge_pull * (0.45 + 0.65 * act + 1.25 * reform);
+  let chladni_w = sim.chladni * (0.35 + 1.05 * act) * (1.0 - 0.72 * reform);
+  let edge_w = sim.edge_pull * (0.65 + 0.75 * act + 1.35 * reform);
 
-  var force = -grad_a * (0.042 * chladni_w) + grad_edge * (0.016 * edge_w);
+  var force = -grad_a * (0.068 * chladni_w) + grad_edge * (0.028 * edge_w);
 
   // Subtle pull toward bright image features during re-formation so the photo crystallizes cleanly
   if (reform > 0.05) {
