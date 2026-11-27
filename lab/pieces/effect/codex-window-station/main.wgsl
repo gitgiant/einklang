@@ -148,7 +148,7 @@ fn panel(p: vec2f, size: vec2f, role: i32, focus: bool, heat: f32, hit: f32, d: 
 fn shade(uv: vec2f) -> vec4f {
   let desk = i32(p_desk());
   let d = deskColors(desk);
-  let layout = i32(p_layout());
+  let lead = i32(p_layout());
   let scale = min(aspect() / 640.0, 1.0 / 360.0);
   let p = (uv - 0.5) * vec2f(aspect(), 1.0) / scale + vec2f(320.0, 180.0);
   let beat = exp(-phase() * 6.0);
@@ -177,7 +177,7 @@ fn shade(uv: vec2f) -> vec4f {
   var sideSize = vec2f(174.0, 137.0);
   var floating = vec2f(407.0, 193.0) + drift * 0.64 - vec2f(34.0, 19.0) * hit;
   var popSize = vec2f(184.0, mix(69.0, 138.0, opening));
-  if (layout == 1) {
+  if (lead == 1) {
     primary = vec2f(222.0, 37.0) - drift * 0.53 + vec2f(8.0, -12.0) * heat;
     mainSize = vec2f(378.0, 270.0);
     secondary = vec2f(36.0, 52.0) + drift * 0.42;
@@ -185,7 +185,7 @@ fn shade(uv: vec2f) -> vec4f {
     floating = vec2f(62.0, 203.0) - drift + vec2f(24.0, -25.0) * hit;
     popSize = vec2f(177.0, mix(69.0, 125.0, opening));
   }
-  if (layout == 2) {
+  if (lead == 2) {
     primary = vec2f(100.0, 25.0) + drift * 0.52 + vec2f(-13.0, -6.0) * heat;
     mainSize = vec2f(444.0, 251.0);
     secondary = vec2f(39.0, 193.0) + drift * 0.55 - vec2f(6.0, 12.0) * heat;
@@ -202,11 +202,11 @@ fn shade(uv: vec2f) -> vec4f {
   let bShadow = inside(b - vec2f(6.0, 8.0), sideSize);
   let aShadow = inside(a - vec2f(6.0, 8.0), mainSize);
   if (inside(c, popSize)) {
-    rgb = panel(c, popSize, (layout + 2) % 3, hit > 0.24, heat, hit, d);
+    rgb = panel(c, popSize, (lead + 2) % 3, hit > 0.24, heat, hit, d);
   } else if (inside(b, sideSize)) {
-    rgb = panel(b, sideSize, (layout + 1) % 3, false, heat, hit, d);
+    rgb = panel(b, sideSize, (lead + 1) % 3, false, heat, hit, d);
   } else if (inside(a, mainSize)) {
-    rgb = panel(a, mainSize, layout, true, heat, hit, d) * select(1.0, 0.58, cShadow || bShadow);
+    rgb = panel(a, mainSize, lead, true, heat, hit, d) * select(1.0, 0.58, cShadow || bShadow);
   } else if (aShadow || bShadow || cShadow) {
     rgb *= 0.48;
   }
@@ -222,7 +222,7 @@ fn shade(uv: vec2f) -> vec4f {
       if (button.x < 16.0) {
         rgb = d.shadow * 0.74;
         if (inside(button - vec2f(3.0), vec2f(10.0, 7.0))) {
-          rgb = select(d.accent * 0.39, d.signal * (0.79 + hit * 0.21), i32(cell) == layout);
+          rgb = select(d.accent * 0.39, d.signal * (0.79 + hit * 0.21), i32(cell) == lead);
         }
       }
     }
