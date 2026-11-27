@@ -15,6 +15,7 @@ import { TICKS_PER_BEAT } from '../core/constants.ts';
 import { transEntry } from '../core/transitions.ts';
 import type { SceneSched } from '../core/protocol.ts';
 import { FrameProfiler } from './gpu/profile.ts';
+import { MEDIA, canvasItem } from './media.ts';
 
 export interface RunOpts {
   scene: SceneGraph | string;
@@ -32,6 +33,12 @@ export interface RunOpts {
    * `ticks` long (seed fixed). The contact sheet is labelled with the progress.
    */
   transition?: { id: string; from: string; to: string; at: number; ticks: number; seed?: number };
+  /**
+   * What core-media shows (generated here, no network): `test` = a still image then a moving
+   * "video" (a canvas redrawn every tick, so runs stay deterministic), `image`, `video`, or `none`
+   * (the fallback). Default `test`.
+   */
+  media?: 'test' | 'image' | 'video' | 'none';
 }
 
 /**
@@ -96,6 +103,32 @@ async function readTexture(device: GPUDevice, tex: GPUTexture, bpp: number): Pro
   return { data, row };
 }
 
+/** A 3:2 still: sky, sun, mountains, a checker, big letters: shapes a viewer (and luma / edges) can recognise. */
+function testImage(): OffscreenCanvas {
+  const c = new OffscreenCanvas(1200, 800), g = c.getContext('2d')!;
+  const sky = g.createLinearGradient(0, 0, 0, 800);
+  sky.addColorStop(0, '#1b2a6b'); sky.addColorStop(0.55, '#e0607e'); sky.addColorStop(1, '#ffc46b');
+  g.fillStyle = sky; g.fillRect(0, 0, 1200, 800);
+  g.fillStyle = '#fff1b0'; g.beginPath(); g.arc(820, 330, 120, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#2a1840'; g.beginPath(); g.moveTo(0, 800);
+  for (let x = 0; x <= 1200; x += 40) g.lineTo(x, 560 - 140 * Math.abs(Math.sin(x * 0.006)) - 60 * Math.abs(Math.sin(x * 0.021)));
+  g.lineTo(1200, 800); g.fill();
+  for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { g.fillStyle = (x + y) & 1 ? '#fff' : '#000'; g.fillRect(40 + x * 30, 40 + y * 30, 30, 30); }
+  g.fillStyle = '#fff'; g.font = 'bold 220px sans-serif'; g.fillText('EK', 90, 760);
+  return c;
+}
+/** A 16:9 "video": a ball bouncing over turning stripes and a frame counter, drawn for tick `t`. */
+function drawTestVideo(g: OffscreenCanvasRenderingContext2D, t: number): void {
+  const w = 640, h = 360;
+  g.fillStyle = '#0d1424'; g.fillRect(0, 0, w, h);
+  g.save(); g.translate(w / 2, h / 2); g.rotate(t * 0.01);
+  for (let i = -8; i < 8; i++) { g.fillStyle = i & 1 ? '#1f6f8b' : '#99d5c9'; g.fillRect(i * 50, -400, 25, 800); }
+  g.restore();
+  const x = 60 + Math.abs(((t * 4) % (2 * (w - 120))) - (w - 120)), y = h - 60 - Math.abs(Math.sin(t * 0.06)) * 220;
+  g.fillStyle = '#ff5a36'; g.beginPath(); g.arc(x, y, 46, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#fff'; g.font = 'bold 40px monospace'; g.fillText(String(t).padStart(5, '0'), 20, 50);
+}
+
 async function main() {
   const gpu = await initGpu({ timestamps: true });
   const canvas = document.getElementById('c') as HTMLCanvasElement;
@@ -121,6 +154,10 @@ async function main() {
       }
       if (!engine.scenes.some((s) => s.def.id === id)) throw new Error(`unknown scene ${id}`);
       engine.setScene(id);
+      // generated test media for core-media (per host, not hashed)
+      const mode = o.media ?? 'test', vc = new OffscreenCanvas(640, 360), vg = vc.getContext('2d')!, video = canvasItem(vc, 'video', 'test video');
+      MEDIA.set([...(mode === 'test' || mode === 'image' ? [canvasItem(testImage(), 'image', 'test image')] : []), ...(mode === 'test' || mode === 'video' ? [video] : [])]);
+      const drawMedia = (t: number) => { if (mode === 'test' || mode === 'video') { drawTestVideo(vg, t); video.touch(); } };
       const F = await source(o.fixture);
       await engine.bench();
 
@@ -156,6 +193,7 @@ async function main() {
 
       for (let i = 0; i < o.ticks; i++) {
         const tick = o.start + i, check = i % o.every === 0, vid = videoEvery && i % videoEvery === 0;
+        drawMedia(tick);
         res.hashes.push(engine.frame(tick, F, NO_FX, sched));
         if (!check && !vid) continue;
         // the canvas texture is only valid within this task: read it back before yielding
@@ -202,7 +240,7 @@ async function main() {
       // cost per frame: keep going from where the run stopped, no readback
       await d.queue.onSubmittedWorkDone();
       const t0 = performance.now(), end = o.start + o.ticks + o.perfFrames;
-      for (let t = o.start + o.ticks; t < end; t++) engine.frame(t, F, NO_FX, sched);
+      for (let t = o.start + o.ticks; t < end; t++) { drawMedia(t); engine.frame(t, F, NO_FX, sched); }
       await d.queue.onSubmittedWorkDone();
       res.msPerFrame = o.perfFrames ? (performance.now() - t0) / o.perfFrames : 0;
       res.ok = true;

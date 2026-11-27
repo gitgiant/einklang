@@ -1,0 +1,91 @@
+{
+  "format": 1,
+  "id": "core-media-ridges",
+  "name": "Media: ridgelines",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 10,
+        "gain": 1.4
+      }
+    },
+    {
+      "id": "pal",
+      "piece": "core-harmony",
+      "params": {
+        "scheme": 2
+      }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "beat_zoom": 0.15,
+        "pulse": 0,
+        "drift": 0.5,
+        "contrast": 1.2
+      }
+    },
+    {
+      "id": "ridges",
+      "piece": "claude-ridges",
+      "params": {
+        "lines": 60,
+        "height": 0.16,
+        "tilt": 0.6
+      },
+      "bind": {
+        "height": {
+          "from": "bass.out",
+          "range": [
+            0.1,
+            0.24
+          ]
+        }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.45,
+        "zoom": 0.0,
+        "rotate": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.luma",
+      "to": "ridges.height"
+    },
+    {
+      "from": "media.out",
+      "to": "ridges.in"
+    },
+    {
+      "from": "pal.palette",
+      "to": "ridges.palette"
+    },
+    {
+      "from": "ridges.out",
+      "to": "fx.in"
+    }
+  ],
+  "out": "fx.out",
+  "post": {
+    "bloom": 0.6,
+    "threshold": 0.6
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "claude-ridges", "kind": "effect", "name": "Luma ridgelines",
+  "doc": "The picture's brightness as a height map: stacked ridgelines, back to front, each a scanline of the image raised by its luma and coloured by the image (or the palette); the bass lifts the peaks and the beat runs a glow down the lines.",
+  "ports": {
+    "in": {
+      "height": { "type": "mask", "doc": "heights 0..1, e.g. core-media.luma" },
+      "in": { "type": "tex", "optional": true, "doc": "line colours (colour mode: picture)" },
+      "palette": { "type": "palette", "optional": true }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "lines": { "type": "int", "default": 56, "min": 12, "max": 120 },
+    "height": { "type": "float", "default": 0.12, "min": 0, "max": 0.5, "doc": "peak height in screen heights" },
+    "bass": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "the bass lifts the peaks" },
+    "thickness": { "type": "float", "default": 1.6, "min": 0.5, "max": 6, "doc": "line width in pixels at 1080p" },
+    "tilt": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "perspective: back lines narrower" },
+    "colour": { "type": "enum", "default": 0, "options": ["picture", "palette", "white"] },
+    "fill": { "type": "float", "default": 0.92, "min": 0, "max": 1, "doc": "how much a ridge hides the ones behind it" },
+    "glow": { "type": "float", "default": 1.4, "min": 0, "max": 4 }
+  },
+  "shader": "ridges.wgsl", "budget": { "ms": 1.0, "scales": "res" },
+  "tags": ["heightmap", "ridgeline", "lines", "media"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

@@ -144,6 +144,8 @@ export interface GpuInit {
   budget: { n(tick: number): number; cap: number | null };
   /** Bytes of a file declared in piece.json `assets` (throws for anything undeclared). Parse .vox with `parseVox`. */
   asset(path: string): Uint8Array;
+  /** The visual media picked on this host (image / video / camera): per host, not hashed. See lab/api/media.ts. */
+  media: MediaInput;
 }
 
 /** A GPU input: textures for tex/mask/field, `Particles` for particles, `Geo` for geo. */
@@ -187,6 +189,8 @@ export const definePiece = (d: PieceDriver): PieceDriver => d;
 
 // ---------------------------------------------------------------- helpers
 
+export { NO_MEDIA, FIT_MODES, CYCLE_OPTIONS, CYCLE_BARS, BarCounter, fitScale, fitUv, pickItem, type MediaInput, type MediaFrame, type MediaKind, type FitMode } from './media.ts';
+import type { MediaInput } from './media.ts';
 export { parseVox, voxSurface, voxWorld, type VoxFile, type VoxModel, type VoxInstance, type VoxWorld } from './vox.ts';
 export { parseSheet, encodeSheet, sheetRgba, sheetTexture, frameAt, type Sheet, type SpriteTag } from './sprite.ts';
 export { parseFont, encodeFont, fontTexture, layoutText, MSDF_WGSL, type Font, type FontInfo, type Glyph, type Quad, type Layout } from './font.ts';

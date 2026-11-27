@@ -7,6 +7,7 @@
 //                                  contact sheet, webm and stats in lab/out/<id>/<fixture>/, plus the checks
 //     --fixture quiet|techno|dense|silence|<lab/fixtures/x.feat>|all   (default techno)
 //     --seconds 4  --res 640x360  --cpu (force SwiftShader)  --no-video
+//     --media test|image|video|none   what core-media shows (generated in the page; default test = image, then video)
 //   gate [--all] [--junit file]    the merge gate: validate, then render every changed scene/piece/transition
 //                                  (or all with --all) 8 s per fixture at 1080p on the GPU and check:
 //                                  errors, NaN, black, blown out, frozen, no audio reaction, ms/frame
@@ -110,11 +111,11 @@ const save = (dir: string, r: RunResult, video: boolean) => {
 interface ItemResult { id: string; failures: string[]; notes: string[]; ms: number; dir: string }
 
 /** Render one scene/piece over fixtures with the checks; artifacts go to lab/out/<id>/. */
-async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean }): Promise<ItemResult> {
+async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean; media?: RunOpts['media'] }): Promise<ItemResult> {
   if (t.transition) return checkTransition(lab, t.id, fixtures, seconds, opts);
   const ticks = Math.round(seconds * 60), dir = join(OUT, t.id), perf = lab.cpu ? 30 : 120;
   // SwiftShader is ~50x slower: fewer video frames there
-  const base: Omit<RunOpts, 'scene' | 'fixture'> = { start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0 };
+  const base: Omit<RunOpts, 'scene' | 'fixture'> = { start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0, media: opts.media };
   const failures: string[] = [], notes: string[] = [], react: { fixture: string; reactivity: number }[] = [];
   let ms = 0;
   for (const [i, fx] of fixtures.entries()) {
@@ -383,7 +384,7 @@ async function main() {
     const results: ItemResult[] = [];
     try {
       for (const it of items) {
-        const r = await check(lab, it, fixtures, gate ? 8 : +opt('seconds', '4'), { video: !flag('no-video'), budget: gate && !lab.cpu });
+        const r = await check(lab, it, fixtures, gate ? 8 : +opt('seconds', '4'), { video: !flag('no-video'), budget: gate && !lab.cpu, media: opt('media', 'test') as RunOpts['media'] });
         report(r); results.push(r);
       }
     } finally { await lab.close(); }

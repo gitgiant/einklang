@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "id": "core-media-stage",
+  "name": "Media: stage",
+  "version": 1,
+  "author": {
+    "vendor": "core",
+    "model": "claude-opus-5-5"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "nodes": [
+    {
+      "id": "bass",
+      "piece": "core-follow",
+      "params": {
+        "lo": 0,
+        "hi": 2,
+        "window": 10,
+        "gain": 1.4
+      }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": {
+        "beat_zoom": 0.5,
+        "pulse": 0.35,
+        "drift": 0.4
+      }
+    },
+    {
+      "id": "cut",
+      "piece": "claude-slices",
+      "params": {
+        "count": 10,
+        "shift": 0.1,
+        "settle": 0.6,
+        "glitch": 0.25
+      },
+      "bind": {
+        "shift": {
+          "from": "bass.out",
+          "range": [
+            0.03,
+            0.18
+          ]
+        }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "core-trails",
+      "params": {
+        "decay": 0.55,
+        "zoom": 0.004,
+        "rotate": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "media.out",
+      "to": "cut.in"
+    },
+    {
+      "from": "cut.out",
+      "to": "fx.in"
+    }
+  ],
+  "out": "fx.out",
+  "post": {
+    "bloom": 0.35,
+    "threshold": 0.8
+  }
+}

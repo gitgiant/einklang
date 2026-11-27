@@ -106,6 +106,7 @@ export default definePiece({
 
 - `cpu(ctx)` is called every tick and must be **pure**: no state between calls. Use `ctx.time` for closed-form motion, `ctx.past(ago)` for history (up to 600 ticks), `ctx.rand(a, b)` for seeded noise.
 - `gpu(init)` returns an instance; GPU-side state (sims, buffers) is fine there.
+- **Picked media** (the image, video or camera the viewer chose on that screen): use the `core-media` node in your scene rather than reading it yourself. Its outputs are `out` (tex, the picture fitted and pulsed), `luma` (mask, perceptual brightness: height maps, keys) and `edges` (field, the luma gradient: displacement). A driver that really needs the raw texture has `init.media` (`count()`, `frame(i)`; `lab/api/media.ts`). Media is per host and never hashed; with nothing picked `core-media` draws a soft fallback, so your scene must look fine on it too. In a bare-piece harness, mask and field inputs are fed from `core-media` (the lab renders a generated test image, then a moving test video).
 - Banned (lint fails): imports from anywhere but `lab/api` and your own folder; `document`, `window`, `fetch`, `localStorage`, `setTimeout`, `setInterval`, `navigator`, `eval` and friends.
 
 ## Scenes (`lab/scenes/<id>.json`)

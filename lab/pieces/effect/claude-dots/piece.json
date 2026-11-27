@@ -1,0 +1,17 @@
+{
+  "id": "claude-dots", "kind": "effect", "name": "Colour dots",
+  "doc": "Re-draws the picture as a field of soft dots, each one coloured by the picture under its home and sized by its brightness; the dots wander on noise, swell with the bass and burst outward on onsets.",
+  "ports": { "in": { "in": { "type": "tex" } }, "out": { "out": { "type": "tex" } } },
+  "params": {
+    "cell": { "type": "float", "default": 18, "min": 4, "max": 80, "doc": "dot spacing in pixels at 1080p" },
+    "size": { "type": "float", "default": 1, "min": 0.2, "max": 2, "doc": "dot size" },
+    "jitter": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "scatter off the grid" },
+    "wander": { "type": "float", "default": 0.35, "min": 0, "max": 1, "doc": "noise motion, in cells" },
+    "burst": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "push outward on onsets and the beat" },
+    "glow": { "type": "float", "default": 1.3, "min": 0, "max": 4 },
+    "under": { "type": "float", "default": 0.06, "min": 0, "max": 1, "doc": "the picture faintly behind the dots" }
+  },
+  "shader": "dots.wgsl", "budget": { "ms": 0.4, "scales": "res" },
+  "tags": ["particles", "dots", "pointillism", "media"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }
+}

@@ -38,7 +38,8 @@ import { galleryBeats, galleryHold, galleryTrans, type GalleryTrans } from './de
 import { TRANS_KEYS, transRow } from './transvote.ts';
 import { ZERO, cycleSched, holdAt, retime, step, switchAt, type Anchor, type Cycle } from './cycle.ts';
 import { demoInput, fileInput, liveInput, type Input } from './inputs.ts';
-import { canShare, insecure, micError, openMic, openShare } from './capture.ts';
+import { canShare, insecure, micError, openMic, openShare, type LiveSource } from './capture.ts';
+import { mediaPicker } from './mediapicker.ts';
 import { ACCEPT, Player } from './player.ts';
 
 declare global { interface Window { __done?: boolean; __error?: string } }
@@ -153,7 +154,7 @@ function inputPanel(change: (i: Input) => void) {
     }
   };
   const demo = () => pick('demo', async () => demoInput(startTick), 'demo failed');
-  const live = (kind: string, name: string, open: () => Promise<MediaStream>) => pick(kind, async () => {
+  const live = (kind: string, name: string, open: () => Promise<LiveSource>) => pick(kind, async () => {
     const input: Input = liveInput(await open(), name, () => { if (active === input) demo().then(() => { note.textContent = `${name} ended`; }); });
     return input;
   }, `${name} failed`);
@@ -180,7 +181,9 @@ function inputPanel(change: (i: Input) => void) {
     const b = document.createElement('button'); b.textContent = text; b.onclick = () => { run(); };
     buttons.set(kind, b); el.append(b);
   }
-  el.append(note, file);
+  // pictures: image / video files or the camera; a video's sound can take over as the input
+  const media = mediaPicker({ sound: (v) => { live('video', 'video sound', async () => v); }, note: (t) => { note.textContent = t; } });
+  el.append(media, note, file);
   document.body.append(el);
   press('demo');
   return el;

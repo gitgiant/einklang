@@ -1,6 +1,7 @@
 // Piece harness: a small scene that shows one piece on its own, so the lab can render and gate a
-// piece before any scene uses it. Image inputs are fed a plasma, palette inputs a harmony palette,
-// signals drive spectrum bars.
+// piece before any scene uses it. Image inputs are fed a plasma, mask and field inputs the luma and
+// edges of core-media (the lab's generated test media), palette inputs a harmony palette, signals
+// drive spectrum bars.
 import type { PieceManifest } from '../../../lab/api/index.ts';
 import type { GraphNode, Registry, SceneGraph } from './types.ts';
 
@@ -21,18 +22,24 @@ export function harness(pieceId: string, reg: Registry, base = false): SceneGrap
     }
     return 'src.out';
   };
+  const media = (port: 'luma' | 'edges') => {
+    if (!nodes.some((n) => n.id === 'media')) nodes.push({ id: 'media', piece: 'core-media' });
+    return `media.${port}`;
+  };
   const outs = Object.entries(m.ports.out);
   const texOut = outs.find(([, p]) => p.type === 'tex');
   if (texOut) {
     if (base) {
       // the inputs alone: what the harness costs without the piece
-      for (const p of Object.values(m.ports.in ?? {})) if (p.type === 'tex') src();
+      for (const p of Object.values(m.ports.in ?? {})) if (p.type === 'tex') src(); else if (p.type === 'mask' || p.type === 'field') media('luma');
       if (!nodes.some((n) => n.id === 'src')) nodes.push({ id: 'src', piece: 'core-bars', params: { glow: 0 } }), edges.push({ from: 'pal.palette', to: 'src.palette' });
       out = 'src.out';
     } else {
       nodes.push({ id: 'p', piece: pieceId });
       for (const [name, p] of Object.entries(m.ports.in ?? {})) {
         if (p.type === 'tex') edges.push({ from: src(), to: `p.${name}` });
+        else if (p.type === 'mask') edges.push({ from: media('luma'), to: `p.${name}` });
+        else if (p.type === 'field') edges.push({ from: media('edges'), to: `p.${name}` });
         else if (p.type === 'palette') edges.push({ from: 'pal.palette', to: `p.${name}` });
         else if (!p.optional) return `the harness can't feed ${p.type} input ${name}: render it in a scene`;
       }

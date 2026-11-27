@@ -19,13 +19,17 @@ export async function openMic(): Promise<MediaStream> {
 export const canShare = () => !!navigator.mediaDevices?.getDisplayMedia;
 
 /** What to show when opening the mic failed. `hint` is insecure()'s; `nav` is the navigator. */
-export function micError(e: { name: string; message: string }, hint: string, nav: { userAgent: string; maxTouchPoints: number }): string {
-  if (hint || e.name !== 'NotAllowedError') return `mic failed: ${e.message}${hint}`;
-  const ua = nav.userAgent;
+export const micError = (e: { name: string; message: string }, hint: string, nav: { userAgent: string; maxTouchPoints: number }): string => permError('mic', e, hint, nav);
+/** The same for the camera (image input). */
+export const cameraError = (e: { name: string; message: string }, hint: string, nav: { userAgent: string; maxTouchPoints: number }): string => permError('camera', e, hint, nav);
+
+function permError(dev: 'mic' | 'camera', e: { name: string; message: string }, hint: string, nav: { userAgent: string; maxTouchPoints: number }): string {
+  if (hint || e.name !== 'NotAllowedError') return `${dev} failed: ${e.message}${hint}`;
+  const what = dev === 'mic' ? 'microphone' : 'camera', What = dev === 'mic' ? 'Microphone' : 'Camera', ua = nav.userAgent;
   // iPadOS reports as a Mac: only the touch screen gives it away
-  if (!(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1))) return 'mic blocked: allow the microphone for this site in the browser\'s site settings';
+  if (!(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && nav.maxTouchPoints > 1))) return `${dev} blocked: allow the ${what} for this site in the browser's site settings`;
   const browser = /CriOS/.test(ua) ? 'Chrome' : /FxiOS/.test(ua) ? 'Firefox' : /EdgiOS/.test(ua) ? 'Edge' : /Version\/.*Safari/.test(ua) ? 'Safari' : 'your browser';
-  return `mic blocked: allow Microphone for this browser in iOS Settings → Apps → ${browser}, and for this site in the browser's site settings, then tap mic again`;
+  return `${dev} blocked: allow ${What} for this browser in iOS Settings → Apps → ${browser}, and for this site in the browser's site settings, then tap ${dev} again`;
 }
 
 
@@ -45,8 +49,11 @@ export async function openShare(): Promise<MediaStream> {
   return new MediaStream(audio);
 }
 
+/** Live audio to analyze: a capture stream, or a playing media element (a video's sound). */
+export type LiveSource = MediaStream | HTMLMediaElement;
+
 export class LiveAnalyzer {
-  readonly stream: MediaStream;
+  readonly source: LiveSource;
   /** The newest tick produced. */
   private last = -1;
   private ac = new AudioContext();
@@ -59,21 +66,32 @@ export class LiveAnalyzer {
   private bl = new Float32Array(2048);
   private br = new Float32Array(2048);
 
-  /** `ended`: the user pressed "Stop sharing" in Chrome's bar, or the device went away. */
-  constructor(stream: MediaStream, ended: () => void) {
-    this.stream = stream;
+  /**
+   * `ended`: the user pressed "Stop sharing" in Chrome's bar, the device went away, or the media
+   * element was emptied. An element's sound is routed through here to the speakers, so closing the
+   * analyzer silences it (its picture plays on).
+   */
+  constructor(source: LiveSource, ended: () => void) {
+    this.source = source;
     const ac = this.ac;
     this.an = new Analyzer(ac.sampleRate);
     this.analyser = ac.createAnalyser(); this.analyser.fftSize = N;
-    const src = ac.createMediaStreamSource(stream);
-    src.connect(this.analyser); // analysis only: not routed to the speakers
+    const el = source instanceof MediaStream ? null : source;
+    const src = el ? ac.createMediaElementSource(el) : ac.createMediaStreamSource(source as MediaStream);
+    src.connect(this.analyser); // analysis only: a stream is not routed to the speakers
+    if (el) {
+      src.connect(ac.destination);
+      el.addEventListener('emptied', ended, { once: true });
+      // the pick's user gesture may have run out while the file loaded: resume on the next tap
+      addEventListener('pointerup', () => { ac.resume().catch(() => {}); }, { once: true });
+    }
     // stereo taps for the scope; a mono source feeds the same signal to both (splitter upmixes)
     const split = ac.createChannelSplitter(2);
     this.wl = ac.createAnalyser(); this.wr = ac.createAnalyser();
     this.wl.fftSize = this.wr.fftSize = 2048;
     src.connect(split); split.connect(this.wl, 0); split.connect(this.wr, 1);
     ac.resume().catch(() => {}); // Safari starts contexts suspended
-    for (const t of stream.getAudioTracks()) t.onended = ended;
+    if (!el) for (const t of (source as MediaStream).getAudioTracks()) t.onended = ended;
   }
 
   /**
@@ -95,5 +113,5 @@ export class LiveAnalyzer {
     }
   }
 
-  close(): void { this.stream.getTracks().forEach((t) => t.stop()); this.ac.close(); }
+  close(): void { if (this.source instanceof MediaStream) this.source.getTracks().forEach((t) => t.stop()); this.ac.close(); }
 }
