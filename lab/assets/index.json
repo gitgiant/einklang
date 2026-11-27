@@ -19,6 +19,12 @@
    "bytes": 10676,
    "sha256": "d8184f855ad77baec9ade154ed68745bd9b57452ae43824091f561841c7d3efa"
   },
+  "assets/sprites/agy-dolphin.spr": {
+   "license": "own",
+   "source": "code-drawn: lab/assets/sprites/src/agy-dolphin.sprite.json",
+   "bytes": 1584,
+   "sha256": "2d4a4203b053700c05746ec5d1b6a7bee965fe012872dee8720d8889c8fc4d5f"
+  },
   "assets/sprites/dancer.spr": {
    "license": "own",
    "source": "code-drawn: lab/assets/sprites/src/dancer.sprite.json",

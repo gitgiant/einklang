@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "id": "agy-aesthetic-beach",
+  "name": "Aesthetic Beach",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "style": "agy-pixelwave",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "gain": 1.4 } },
+    {
+      "id": "beach",
+      "piece": "agy-dolphin-beach",
+      "params": { "cells": 180, "dolphins": 4, "jump": 0.85, "waves": 0.95, "dither": 0.85, "glow": 1.25 },
+      "bind": {
+        "jump": { "from": "bass.out", "range": [0.55, 1.45] },
+        "glow": { "from": "audio.rms", "range": [0.95, 1.85] }
+      }
+    },
+    {
+      "id": "spray",
+      "piece": "core-sprite-emitter",
+      "params": {
+        "sheet": 1,
+        "burst": 9,
+        "trickle": 2.5,
+        "speed": 0.5,
+        "gravity": 0.55,
+        "spread": 0.75,
+        "life": 1.5,
+        "size": 0.04,
+        "x": 0.5,
+        "y": 0.56,
+        "tint": 0.5,
+        "glow": 1.35
+      }
+    },
+    {
+      "id": "title",
+      "piece": "core-text",
+      "params": {
+        "source": 2,
+        "text": "A E S T H E T I C   9 4",
+        "mode": 1,
+        "size": 0.075,
+        "y": 0.14,
+        "upper": true
+      }
+    },
+    { "id": "m1", "piece": "core-blend", "params": { "mode": 1 } },
+    { "id": "m2", "piece": "core-blend", "params": { "mode": 5 } }
+  ],
+  "edges": [
+    { "from": "beach.out", "to": "m1.a" },
+    { "from": "spray.out", "to": "m1.b" },
+    { "from": "m1.out", "to": "m2.a" },
+    { "from": "title.out", "to": "m2.b" }
+  ],
+  "out": "m2.out"
+}

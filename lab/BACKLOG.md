@@ -253,11 +253,11 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 - [ ] Spiral (a spiral arm sweeps B in)
 
 ### Retro / aesthetic
-- [x] Vaporwave: slatted sunset sun → codex-chrome-aura
+- [x] Vaporwave: slatted sunset sun → codex-chrome-aura, agy-pixel-outrun, agy-dolphin-beach, scenes agy-outrun-dusk, agy-aesthetic-beach
 - [x] Vaporwave: neon grid floor → codex-grid-floor, codex-outrun, codex-chrome-aura
-- [x] Vaporwave: marble bust → codex-sunset-atrium
-- [x] Vaporwave: palm silhouettes → codex-sunset-atrium
-- [x] Vaporwave: pink/cyan palettes → styles core-vaporwave, codex-late-checkout
+- [x] Vaporwave: marble bust → codex-sunset-atrium, agy-pixel-bust, scene agy-pixelwave-evolve
+- [x] Vaporwave: palm silhouettes → codex-sunset-atrium, agy-pixel-outrun, agy-dolphin-beach, scenes agy-outrun-dusk, agy-aesthetic-beach
+- [x] Vaporwave: pink/cyan palettes → styles core-vaporwave, codex-late-checkout, agy-pixelwave
 - [x] Vaporwave: Win95 windows → codex-dream-desktop
 - [ ] Vaporwave: kanji overlays
 - [x] Synthwave: chrome text → codex-chrome-aura

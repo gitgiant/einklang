@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "id": "agy-pixelwave-evolve",
+  "name": "Evolve: Pixelwave",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "style": "agy-pixelwave",
+  "nodes": [
+    { "id": "audio", "piece": "core-audio" },
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "gain": 1.4 } },
+    {
+      "id": "gen",
+      "piece": "agy-pixel-bust",
+      "params": { "cells": 168, "spin": 0.5, "dither": 0.9, "holo": 0.8, "glow": 1.25 },
+      "bind": {
+        "glow": { "from": "bass.out", "range": [0.95, 2.0] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "agy-bayer-dither",
+      "params": { "cells": 168, "levels": 5, "dither": 0.85, "pal_mix": 0.45, "chroma": 0.55, "mix": 0.85 }
+    }
+  ],
+  "edges": [
+    { "from": "gen.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "evolve": {
+    "every": "phrase",
+    "transition": "random",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "gen",
+        "pool": [
+          {
+            "piece": "agy-pixel-outrun",
+            "params": { "cells": 180, "dither": 0.85, "palms": 1.0 },
+            "ranges": { "speed": [0.8, 1.8], "horizon": [0.46, 0.58] }
+          },
+          {
+            "piece": "agy-dolphin-beach",
+            "params": { "cells": 180, "dolphins": 4, "dither": 0.85 },
+            "ranges": { "jump": [0.65, 1.35], "waves": [0.7, 1.5] }
+          },
+          {
+            "piece": "codex-grid-floor",
+            "params": { "glow": 1.35 },
+            "ranges": { "pace": [0.7, 1.5], "horizon": [0.48, 0.6] }
+          },
+          {
+            "piece": "codex-wire-mountains",
+            "params": { "glow": 1.4 },
+            "ranges": { "speed": [0.75, 1.5], "lift": [0.25, 0.7] }
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "core-pixelate",
+            "ranges": { "cells": [96, 200], "levels": [5, 12] }
+          },
+          {
+            "piece": "core-trails",
+            "params": { "rotate": 0 },
+            "ranges": { "decay": [0.68, 0.86], "zoom": [0.002, 0.012] }
+          },
+          {
+            "piece": "agy-glitch",
+            "params": { "displace": 0.4, "smear": 0.45, "rgb": 0.6, "burst": 0.85 },
+            "ranges": { "amount": [0.35, 0.65], "blocks": [14, 32] }
+          },
+          {
+            "piece": "agy-pixelsort",
+            "params": { "direction": 1, "threshold": 0.3, "ceiling": 0.95, "onset_boost": 0.9, "mix": 0.8 },
+            "ranges": { "energy": [0.4, 0.75], "length": [40, 80] }
+          }
+        ]
+      }
+    ]
+  }
+}

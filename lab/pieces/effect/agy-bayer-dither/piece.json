@@ -1,0 +1,25 @@
+{
+  "id": "agy-bayer-dither",
+  "kind": "effect",
+  "name": "Bayer pixel dither",
+  "doc": "Downsamples to a crisp low-res pixel grid, applies 4x4 ordered Bayer dithering into the vaporwave palette, and pops chroma on bass and onsets.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex" },
+      "palette": { "type": "palette", "optional": true }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "cells": { "type": "float", "default": 160, "min": 48, "max": 360, "doc": "Vertical pixel grid resolution" },
+    "levels": { "type": "int", "default": 5, "min": 2, "max": 12, "doc": "Quantized color levels per channel" },
+    "dither": { "type": "float", "default": 0.9, "min": 0.0, "max": 1.0, "doc": "4x4 Bayer ordered dither strength" },
+    "pal_mix": { "type": "float", "default": 0.65, "min": 0.0, "max": 1.0, "doc": "Blend toward vaporwave palette-mapped colors" },
+    "chroma": { "type": "float", "default": 0.5, "min": 0.0, "max": 1.5, "doc": "Bass and onset pixel-snapped RGB split" },
+    "mix": { "type": "float", "default": 1.0, "min": 0.0, "max": 1.0, "doc": "Wet/dry effect blend" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.25, "scales": "res" },
+  "tags": ["pixel", "dither", "vaporwave", "retro", "color"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" }
+}
