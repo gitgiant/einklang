@@ -1,0 +1,50 @@
+{
+  "id": "codex-tape-desktop",
+  "kind": "generator",
+  "name": "Dream Desktop",
+  "doc": "A fictional 1990s desktop plays an audio spectrum and opens overlapping windows on onsets. The drop opens a second player with a striped sunset.",
+  "ports": {
+    "in": {
+      "palette": {
+        "type": "palette",
+        "optional": true
+      }
+    },
+    "out": {
+      "out": {
+        "type": "tex"
+      }
+    }
+  },
+  "params": {
+    "mode": {
+      "type": "enum",
+      "default": 0,
+      "options": [
+        "idle",
+        "online"
+      ]
+    },
+    "arrival": {
+      "type": "float",
+      "default": 0,
+      "min": 0,
+      "max": 1,
+      "doc": "Envelope from the most recent onset. Opens popups with a fast attack and slower release."
+    }
+  },
+  "shader": "main.wgsl",
+  "budget": {
+    "ms": 1.2,
+    "scales": "res"
+  },
+  "tags": [
+    "vaporwave",
+    "desktop",
+    "spectrum"
+  ],
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  }
+}

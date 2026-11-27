@@ -253,14 +253,14 @@ How the show switches scenes: one folder each in `lab/transitions/<vendor>-<slug
 - [ ] Spiral (a spiral arm sweeps B in)
 
 ### Retro / aesthetic
-- [ ] Vaporwave: slatted sunset sun
-- [x] Vaporwave: neon grid floor → codex-grid-floor, codex-outrun
-- [ ] Vaporwave: marble bust
-- [ ] Vaporwave: palm silhouettes
-- [x] Vaporwave: pink/cyan palettes → style core-vaporwave
-- [ ] Vaporwave: Win95 windows
+- [x] Vaporwave: slatted sunset sun → codex-chrome-aura
+- [x] Vaporwave: neon grid floor → codex-grid-floor, codex-outrun, codex-chrome-aura
+- [x] Vaporwave: marble bust → codex-sunset-atrium
+- [x] Vaporwave: palm silhouettes → codex-sunset-atrium
+- [x] Vaporwave: pink/cyan palettes → styles core-vaporwave, codex-late-checkout
+- [x] Vaporwave: Win95 windows → codex-dream-desktop
 - [ ] Vaporwave: kanji overlays
-- [ ] Synthwave: chrome text
+- [x] Synthwave: chrome text → codex-chrome-aura
 - [x] Synthwave: wireframe mountains → codex-wire-mountains, codex-night-drive
 - [ ] Synthwave: scrolling road
 - [x] Synthwave: starfield → codex-starfield, codex-hyperspace

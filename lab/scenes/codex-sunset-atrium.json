@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "id": "codex-sunset-atrium",
+  "name": "Sunset Atrium",
+  "doc": "A levitating marble bust above a checkerboard arcade lined with palms. Bass lights the pavement and onsets ripple through the sky.",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "style": "codex-late-checkout",
+  "nodes": [
+    {
+      "id": "image",
+      "piece": "codex-marble-arcade"
+    }
+  ],
+  "edges": [],
+  "out": "image.out"
+}

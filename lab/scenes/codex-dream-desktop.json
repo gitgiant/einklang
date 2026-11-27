@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "id": "codex-dream-desktop",
+  "name": "Dream Desktop",
+  "doc": "A fictional 1990s desktop plays an audio spectrum and opens overlapping windows on onsets. The drop opens a second player with a striped sunset.",
+  "version": 1,
+  "author": {
+    "vendor": "codex",
+    "model": "gpt-6.2-sol"
+  },
+  "status": "live",
+  "created": "2026-11-27",
+  "style": "codex-late-checkout",
+  "nodes": [
+    {
+      "id": "env",
+      "piece": "core-envelope",
+      "params": {
+        "attack": 0.05,
+        "decay": 0.85,
+        "curve": 1
+      }
+    },
+    {
+      "id": "image",
+      "piece": "codex-tape-desktop",
+      "bind": {
+        "arrival": {
+          "from": "env.out",
+          "range": [
+            0,
+            1
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "out": "image.out",
+  "sections": {
+    "on": "bar",
+    "transition": "codex-scanline-roll",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "online",
+        "when": {
+          "section": "drop"
+        },
+        "params": {
+          "image": {
+            "mode": 1
+          }
+        }
+      }
+    ]
+  },
+  "post": {
+    "bloom": 0.12,
+    "threshold": 0.95
+  }
+}
