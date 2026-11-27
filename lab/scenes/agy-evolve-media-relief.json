@@ -1,0 +1,128 @@
+{
+  "format": 1,
+  "id": "agy-evolve-media-relief",
+  "name": "Evolve media: Glitch Relief",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "glitch", "3d", "relief", "kaleido"],
+  "doc": "Your picture (image, video or camera) split across two evolving media layers: bright highlights stamped as nodal line-screen print or stained leadlight over a 3D luma-driven tunnel, cube field, ridgeline or terrain flyover, punched on drops and phrases by evolving beat slices, pixel sorting, Bayer dither, pixel art, kaleidoscope and block glitch.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.6 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#080614 #2b1354 #ff2a85 #00e5ff #fff0a6", "cycle": 0.25 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.26, "pulse": 0.26, "drift": 0.35, "contrast": 1.18, "saturation": 1.15, "edge_width": 2.5 }
+    },
+    {
+      "id": "relief",
+      "piece": "claude-media-tunnel",
+      "params": { "sides": 4, "repeat": 2, "relief": 0.42, "bass": 0.85, "speed": 1.8, "surge": 1.0, "twist": 0.12, "roll": 0.35, "colour": 0, "rings": 1.3, "fog": 0.12 }
+    },
+    {
+      "id": "print",
+      "piece": "codex-nodal-print",
+      "params": { "nodal": 0.11, "lines": 108 }
+    },
+    {
+      "id": "mix",
+      "piece": "claude-lumakey",
+      "params": { "threshold": 0.52, "soft": 0.09, "bass": 0.38, "rim": 1.45 }
+    },
+    {
+      "id": "fx",
+      "piece": "claude-slices",
+      "params": { "count": 16, "dir": 0, "shift": 0.22, "settle": 0.46, "glitch": 0.52 }
+    }
+  ],
+  "edges": [
+    { "from": "media.luma", "to": "relief.height" },
+    { "from": "media.out", "to": "relief.in" },
+    { "from": "pal.palette", "to": "relief.palette" },
+    { "from": "media.out", "to": "print.picture" },
+    { "from": "media.luma", "to": "print.light" },
+    { "from": "print.out", "to": "mix.fg" },
+    { "from": "relief.out", "to": "mix.bg" },
+    { "from": "media.luma", "to": "mix.key" },
+    { "from": "pal.palette", "to": "mix.palette" },
+    { "from": "mix.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.48, "threshold": 0.7 },
+  "evolve": {
+    "every": "section",
+    "most": 2,
+    "transition": "codex-bass-punch",
+    "beats": 1,
+    "slots": [
+      {
+        "node": "relief",
+        "pool": [
+          {
+            "piece": "claude-media-cubes",
+            "params": { "colour": 0, "bass": 0.9, "edges": 1.1 },
+            "ranges": { "cells": [28, 52], "height": [3.5, 6.5], "tilt": [0.65, 1.05], "spin": [-0.08, 0.08] }
+          },
+          {
+            "piece": "claude-ridges",
+            "params": { "colour": 0, "bass": 0.75, "fill": 0.92 },
+            "ranges": { "lines": [48, 86], "height": [0.12, 0.24], "tilt": [0.38, 0.65], "glow": [1.1, 2.0] }
+          },
+          {
+            "piece": "claude-luma-terrain",
+            "params": { "colour": 0, "bass": 0.9, "surge": 0.85, "grid": 0.6, "fog": 0.06 },
+            "ranges": { "speed": [1.3, 2.5], "height": [0.95, 1.6], "pitch": [0.18, 0.3], "scale": [5, 9] },
+            "bind": { "contour": { "from": "hi.out", "range": [0.55, 1.7] } }
+          }
+        ]
+      },
+      {
+        "node": "print",
+        "pool": [
+          {
+            "piece": "codex-leadlight",
+            "ranges": { "cells": [8, 16] }
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "agy-pixelsort",
+            "params": { "direction": 1, "threshold": 0.3, "ceiling": 0.95, "energy": 0.62, "onset_boost": 0.95, "mix": 0.78 },
+            "ranges": { "length": [40, 90] }
+          },
+          {
+            "piece": "agy-bayer-dither",
+            "params": { "mix": 0.9 },
+            "ranges": { "cells": [96, 190], "levels": [4, 7], "dither": [0.75, 1.0], "pal_mix": [0.4, 0.72] },
+            "bind": { "chroma": { "from": "hi.out", "range": [0.28, 1.2] } }
+          },
+          {
+            "piece": "core-kaleido",
+            "ranges": { "segments": [4, 8], "spin": [-0.12, 0.12] },
+            "bind": { "zoom": { "from": "bass.out", "range": [1.0, 1.35] } }
+          },
+          {
+            "piece": "claude-pixel-art",
+            "params": { "dither": 0.8, "matrix": 1, "gain": 1.15, "shake": 0.45 },
+            "ranges": { "pixels": [110, 220], "grid": [0.0, 0.35] }
+          },
+          {
+            "piece": "agy-glitch",
+            "params": { "smear": 0.45, "burst": 0.88, "blocks": 20 },
+            "ranges": { "amount": [0.3, 0.6], "displace": [0.25, 0.6], "rgb": [0.35, 0.85] }
+          }
+        ]
+      }
+    ]
+  }
+}

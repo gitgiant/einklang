@@ -1,0 +1,118 @@
+{
+  "format": 1,
+  "id": "agy-evolve-media-mosh",
+  "name": "Evolve media: Glitch Mosh",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-medium" },
+  "status": "live",
+  "created": "2026-11-27",
+  "tags": ["media", "evolve", "glitch", "slitscan", "pixelsort", "matrix"],
+  "doc": "Your picture (image, video or camera) pushed through evolving glitch treatments that hard-swap on song sections and every couple of phrases: slit-scan time smears, matrix glyph rain and edge-guided fluid melt feed into pixel sorting, ordered Bayer dither, kaleidoscope shards, beat slices, pixelation and block glitch, under shifting cyber-neon palettes.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.6 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
+    {
+      "id": "pal",
+      "piece": "core-swatch",
+      "params": { "colors": "#080a18 #00f5d4 #ff006e #fee440 #9b5de5", "cycle": 0.3 }
+    },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.36, "pulse": 0.32, "drift": 0.45, "contrast": 1.18, "saturation": 1.15, "edge_width": 2.5 }
+    },
+    {
+      "id": "mosh",
+      "piece": "agy-slitscan",
+      "params": { "axis": 0, "drift": 0.48, "slit": 0.14, "live_mix": 0.36, "edge_warp": 0.55, "rgb": 0.55, "tear": 0.58, "decay": 0.93 },
+      "bind": {
+        "drift": { "from": "bass.out", "range": [0.22, 0.86] },
+        "rgb": { "from": "hi.out", "range": [0.25, 1.05] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "agy-pixelsort",
+      "params": { "direction": 1, "threshold": 0.3, "ceiling": 0.95, "energy": 0.62, "length": 52, "onset_boost": 0.95, "mix": 0.78 }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "mosh.in" },
+    { "from": "media.luma", "to": "mosh.luma" },
+    { "from": "media.edges", "to": "mosh.edges" },
+    { "from": "pal.palette", "to": "mosh.palette" },
+    { "from": "mosh.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.46, "threshold": 0.72 },
+  "evolve": {
+    "every": "section",
+    "most": 2,
+    "transition": "core-glitch",
+    "beats": 1,
+    "slots": [
+      {
+        "node": "mosh",
+        "pool": [
+          {
+            "piece": "agy-media-rain",
+            "params": { "color_mix": 0.56, "edge_boost": 1.1, "scanlines": 0.16 },
+            "ranges": { "columns": [62, 108], "speed": [0.85, 1.75], "trail": [0.64, 0.86] },
+            "bind": {
+              "glow": { "from": "bass.out", "range": [0.95, 1.9] },
+              "glitch": { "from": "hi.out", "range": [0.22, 0.95] }
+            }
+          },
+          {
+            "piece": "claude-media-melt",
+            "params": { "beat": 0.65, "bass": 0.9, "tint": 0.35 },
+            "ranges": { "flow": [1.1, 2.2], "scale": [2.0, 5.5], "along": [-0.8, 0.9], "edge": [1.0, 2.0], "react": [0.15, 0.65], "resurface": [0.28, 0.48] }
+          },
+          {
+            "piece": "agy-slitscan",
+            "params": { "axis": 1, "live_mix": 0.32, "decay": 0.94 },
+            "ranges": { "slit": [0.1, 0.22], "edge_warp": [0.45, 0.9], "tear": [0.5, 1.0] }
+          }
+        ]
+      },
+      {
+        "node": "fx",
+        "pool": [
+          {
+            "piece": "agy-bayer-dither",
+            "params": { "mix": 0.92 },
+            "ranges": { "cells": [84, 180], "levels": [4, 7], "dither": [0.75, 1.0], "pal_mix": [0.45, 0.8] },
+            "bind": { "chroma": { "from": "hi.out", "range": [0.3, 1.25] } }
+          },
+          {
+            "piece": "core-kaleido",
+            "ranges": { "segments": [4, 8], "spin": [-0.12, 0.12] },
+            "bind": { "zoom": { "from": "bass.out", "range": [1.0, 1.38] } }
+          },
+          {
+            "piece": "claude-slices",
+            "params": { "settle": 0.45 },
+            "ranges": { "count": [10, 28], "shift": [0.14, 0.36], "glitch": [0.35, 0.75] }
+          },
+          {
+            "piece": "core-pixelate",
+            "ranges": { "cells": [52, 128], "levels": [6, 14] }
+          },
+          {
+            "piece": "agy-glitch",
+            "params": { "smear": 0.48, "burst": 0.88, "blocks": 22 },
+            "ranges": { "amount": [0.32, 0.62], "displace": [0.28, 0.64], "rgb": [0.35, 0.85] }
+          }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#030d06 #0b4a24 #00f58c #38ffaa #e0fff2", "cycle": 0.2 } },
+          { "piece": "claude-cycle", "params": { "mode": 0, "every": 0, "stride": 2, "flash": 0.12 } },
+          { "piece": "core-harmony", "params": { "scheme": 4, "chroma": 0.21, "light": 0.72 }, "ranges": { "hue": [0.0, 1.0] } }
+        ]
+      }
+    ]
+  }
+}
