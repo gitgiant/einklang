@@ -162,6 +162,18 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
     const f = judgeCost(ms, t.piece ? LIMITS.pieceMs : LIMITS.sceneMs, t.piece ? 'the piece' : 'the scene');
     if (f) failures.push(f);
   }
+  if (t.id.includes('comic')) { // DEBUG: numbers and a rough look, reverted after the run
+    const ramp = ' .:-=+*#%@';
+    const art = (st: { thumb: number[]; section?: string }[]) => {
+      const pick = Array.from({ length: 6 }, (_, i) => st[Math.min(st.length - 1, Math.floor((i + 0.5) * st.length / 6))]).filter(Boolean);
+      const rows: string[] = [pick.map((f) => (f.section ?? '-').padEnd(32)).join(' ')];
+      for (let y = 0; y < 8; y++) rows.push(pick.map((f) => { let l = ''; for (let x = 0; x < 32; x++) { let a = 0, n = 0; for (let yy = Math.floor(y * 4.5); yy < Math.floor((y + 1) * 4.5); yy++) for (let xx = 0; xx < 2; xx++) { a += f.thumb[yy * 64 + x * 2 + xx]; n++; } l += ramp[Math.min(9, Math.floor(a / n / 256 * 10))]; } return l; }).join(' '));
+      return rows.join('\n');
+    };
+    const tech = await lab.run({ ...base, scene: t.scene, fixture: 'techno', fps: 0, sheet: 0 });
+    const none = await lab.run({ ...base, scene: t.scene, fixture: 'techno', fps: 0, sheet: 0, media: 'none' });
+    failures.unshift(`DEBUG ${t.id} ms ${ms.toFixed(2)} :: ${notes.join(' | ')}\n${art(tech.stats)}\n${none.ok ? art(none.stats) : 'none failed ' + none.error}`);
+  }
   return { id: t.id, failures, notes, ms, dir };
 }
 
