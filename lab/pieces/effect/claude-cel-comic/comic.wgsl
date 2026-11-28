@@ -234,7 +234,7 @@ fn cc_bursts(uv: vec2f) -> vec4f {
     for (var j = 0; j < 4; j++) {
       if (f32(j) >= U.n_burst || U.impact <= 0.0) { break; }
       let bj = U.burst[2 * j];
-      if (bj.z < U.life * 0.6 && bj.w > 0.0 && cc_panel(bj.xy).leaf == pg.leaf) {
+      if (bj.z < min(U.life * 0.6, 0.38) && bj.w > 0.0 && cc_panel(bj.xy).leaf == pg.leaf) {
         let s = 0.75 + 0.25 * U.burst[2 * j + 1].w;
         if (s > imp) { imp = s; ic = bj.xy; }
       }

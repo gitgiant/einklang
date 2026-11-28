@@ -92,7 +92,8 @@ export default definePiece({
           const fromSl = p[0] === c[0] ? p[2] : 0;
           return [c[0], from + (c[1] - from) * e, fromSl + (c[2] - fromSl) * e];
         });
-        // hits: an onset with none in the `space` beats before it; the newest few that still show
+        // hits: the first onset in each `space`-beat slot of the fixed grid (steady kicks all count,
+        // a roll of hats counts once a slot); the newest few that still show
         const space = Math.max(1, Math.round((P.space as number) * TICKS_PER_BEAT));
         const life = P.life as number, reach = Math.min(600 - space - 1, Math.ceil(life * 60) + 1);
         const on: boolean[] = [];
@@ -101,9 +102,10 @@ export default definePiece({
         let hit = 0;
         for (let ago = 0; ago <= reach && bursts.length < MAX_BURST; ago++) {
           if (!on[ago]) continue;
-          let lone = true;
-          for (let j = 1; j <= space; j++) if (on[ago + j]) { lone = false; break; }
-          if (!lone) continue;
+          const t0 = tick - ago, slot0 = Math.floor(t0 / space) * space;
+          let first = true;
+          for (let j = 1; t0 - j >= slot0; j++) if (on[ago + j]) { first = false; break; }
+          if (!first) continue;
           const born = tick - ago, age = (ago + fs) / 60;
           const loud = Math.min(1, past(ago).rms * 3);
           if (!bursts.length) hit = Math.exp(-age * 7) * (0.5 + 0.5 * loud);
