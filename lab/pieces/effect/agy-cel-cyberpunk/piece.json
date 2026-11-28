@@ -1,0 +1,31 @@
+{
+  "id": "agy-cel-cyberpunk",
+  "kind": "effect",
+  "name": "Cyberpunk cel shader",
+  "doc": "Cel-shades media or a fallback generator into hard magenta, cyan, and acid-yellow neon tone bands with glowing bass-driven ink outlines, angled city-night rain streaks, holographic scanlines, and onset chromatic glitch tears.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video (e.g. core-media.out)" },
+      "fallback": { "type": "tex", "optional": true, "doc": "optional generator subject used automatically when no host media is picked" },
+      "luma": { "type": "mask", "optional": true, "doc": "optional brightness mask (core-media.luma)" },
+      "edges": { "type": "field", "optional": true, "doc": "optional edge gradient field (core-media.edges)" },
+      "palette": { "type": "palette", "optional": true, "doc": "city-night neon palette (deep indigo, magenta, cyan, acid yellow)" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "bands": { "type": "int", "default": 4, "min": 2, "max": 8, "doc": "number of hard cel-shading tone bands" },
+    "neon_mix": { "type": "float", "default": 0.62, "min": 0.0, "max": 1.0, "doc": "blend from posterized source hues to cyberpunk neon tone bands" },
+    "ink": { "type": "float", "default": 0.92, "min": 0.0, "max": 2.0, "doc": "dark ink outline weight along subject and cel edges" },
+    "ink_glow": { "type": "float", "default": 1.15, "min": 0.0, "max": 2.5, "doc": "bass-driven glowing neon halo around ink outlines" },
+    "rain": { "type": "float", "default": 0.72, "min": 0.0, "max": 1.5, "doc": "angled neon city-night rain streak intensity" },
+    "scanlines": { "type": "float", "default": 0.58, "min": 0.0, "max": 1.5, "doc": "holographic scanlines and beat-synced visor sweep" },
+    "glitch": { "type": "float", "default": 0.75, "min": 0.0, "max": 1.5, "doc": "onset-triggered chromatic tear and slice displacement" },
+    "glow": { "type": "float", "default": 1.25, "min": 0.4, "max": 2.4, "doc": "overall neon emission and bass-driven glow" }
+  },
+  "budget": { "ms": 0.7, "scales": "res" },
+  "tags": ["cel", "toon", "cyberpunk", "neon", "ink", "rain", "glitch", "scanlines", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" }
+}
