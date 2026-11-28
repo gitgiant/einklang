@@ -46,9 +46,9 @@ fn is_solid_tile(tx: i32, ty: i32, b: f32) -> bool {
   if (ty >= 12) {
     return true; // continuous ground bedrock
   }
-  // Audio-reactive equalizer terrain bumps on row 11
+  // Audio-reactive equalizer terrain bumps on rows 10..11
   let bval = band(((tx % 16) + 16) % 16);
-  if (ty == 11 && bval > 0.42) {
+  if ((ty == 11 && bval > 0.28) || (ty == 10 && bval > 0.58)) {
     return true;
   }
 
@@ -269,9 +269,9 @@ fn shade(uv: vec2f) -> vec4f {
   let px = vec2i(floor(lcd_pos));
   let sub_uv = fract(lcd_pos);
 
-  // Beat-synced continuous horizontal scroll (accelerates slightly on high energy)
+  // Beat-synced horizontal scroll surged forward by bass, RMS, and onsets so the music drives the level
   let beat_t = t * max(bpm(), 60.0) / 60.0;
-  let scroll_px = floor(beat_t * 26.0 * p_speed());
+  let scroll_px = floor(beat_t * 24.0 * p_speed() + b * 44.0 + r * 36.0 + on * 22.0);
 
   var shade_i = 3; // lightest LCD backlight default
 
@@ -327,8 +327,8 @@ fn shade(uv: vec2f) -> vec4f {
     let dval = (bayer4(vec2i(i32(floor(wx)), px.y)) - 0.5) * p_dither();
 
     // Map picture into crisp bright-biased handheld shades (1..3) so solid tiles (0..2) pop clearly
-    let media_tone = clamp(pow(bg_luma, 0.9) * (0.95 + b * 0.25 + on * 0.22) - bg_edge * 0.22, 0.0, 1.0);
-    let q_bg = i32(clamp(floor((media_tone * 0.72 + 0.28 + dval * 0.28) * 3.99), 1.0, 3.0));
+    let media_tone = clamp(pow(bg_luma, 0.9) * (0.78 + r * 0.35 + b * 0.42 + on * 0.35) - bg_edge * 0.24, 0.0, 1.0);
+    let q_bg = i32(clamp(floor((media_tone * 0.74 + 0.24 + dval * 0.28) * 3.99), 1.0, 3.0));
     shade_i = q_bg;
 
     // Drifting parallax sky clouds in upper rows (y = 12..30)
@@ -420,7 +420,7 @@ fn shade(uv: vec2f) -> vec4f {
 
   // Soft LCD corner vignette & musical backlight pulse
   let vig = 1.0 - 0.18 * dot(luv - 0.5, luv - 0.5) * 2.2;
-  let lcd_pulse = 0.92 + r * 0.22 + beat_kick * 0.22 + on * 0.18;
+  let lcd_pulse = 0.74 + r * 0.44 + beat_kick * 0.40 + on * 0.30;
   col *= vig * lcd_pulse;
 
   return vec4f(soft_clip(col), 1.0);

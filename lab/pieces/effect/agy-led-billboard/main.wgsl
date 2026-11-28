@@ -54,7 +54,7 @@ fn shade(uv: vec2f) -> vec4f {
     let edge_d = length((buv - clamped_b) * vec2f(asp, 1.0));
 
     // Night arena backdrop + volumetric billboard glow halo
-    var bg = vec3f(0.014, 0.018, 0.028) + spill_col * exp(-edge_d * 10.5) * 0.65;
+    var bg = vec3f(0.010, 0.013, 0.022) + spill_col * exp(-edge_d * 11.5) * 0.42;
 
     // Steel cross-braced truss lattice along frame borders
     let tp = vec2f(cuv.x * asp, cuv.y) * 26.0;
@@ -62,13 +62,13 @@ fn shade(uv: vec2f) -> vec4f {
     let diag_a = abs(tf.x + tf.y);
     let diag_b = abs(tf.x - tf.y);
     let strut = 1.0 - smoothstep(0.06, 0.12, min(min(diag_a, diag_b), min(abs(tf.x), abs(tf.y))));
-    let truss_shade = (0.045 + 0.14 * exp(-edge_d * 14.0)) * (vec3f(0.65, 0.72, 0.85) + spill_col * 0.9);
-    bg = mix(bg, truss_shade, strut * 0.78);
+    let truss_shade = (0.032 + 0.085 * exp(-edge_d * 14.0)) * (vec3f(0.55, 0.64, 0.80) + spill_col * 0.55);
+    bg = mix(bg, truss_shade, strut * 0.82);
 
     // Metallic billboard bezel rim
     if (edge_d < 0.018) {
       let bevel = smoothstep(0.018, 0.002, edge_d);
-      bg = mix(bg, vec3f(0.08, 0.09, 0.11) + spill_col * 0.42, bevel);
+      bg = mix(bg, vec3f(0.055, 0.062, 0.080) + spill_col * 0.28, bevel);
     }
 
     // Top & bottom gantry 16-band LED indicator lamps
@@ -197,7 +197,7 @@ fn shade(uv: vec2f) -> vec4f {
   led_col += palette(0.78) * scan2_band * 0.45;
 
   // Overall musical luminance pulse
-  led_col *= p_glow() * (0.86 + r * 0.28 + beat_kick * 0.34 + on * 0.24);
+  led_col *= p_glow() * (0.70 + r * 0.46 + beat_kick * 0.52 + on * 0.36);
 
   // --- DISCRETE RGB SUBPIXEL LED DIODE GEOMETRY ---
   // Three vertical micro-LED phosphors (R, G, B) inside each circular diode dome

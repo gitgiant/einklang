@@ -22,7 +22,7 @@
       "piece": "agy-led-billboard",
       "params": { "rows": 84, "cabinets": 10, "frame": 0.075, "scan": 0.65, "dropout": 0.65, "edge_glow": 0.85, "glow": 1.2 },
       "bind": {
-        "dropout": { "from": "env.out", "range": [0.18, 1.35] },
+        "dropout": { "from": "env.out", "range": [0.24, 1.42] },
         "scan": { "from": "hi.out", "range": [0.25, 1.35] },
         "edge_glow": { "from": "bass.out", "range": [0.35, 1.75] }
       }
@@ -54,7 +54,7 @@
       {
         "id": "drop",
         "when": { "section": "drop" },
-        "transition": "core-flash",
+        "transition": "core-glitch",
         "beats": 1,
         "params": {
           "pal": { "colors": "#0e0414 #ff006e #ffbe0b #00f5d4 #ffffff", "cycle": 0.35 },

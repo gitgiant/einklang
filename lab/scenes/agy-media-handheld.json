@@ -44,7 +44,7 @@
       {
         "id": "drop",
         "when": { "section": "drop" },
-        "transition": "core-flash",
+        "transition": "core-pixelate",
         "beats": 1,
         "params": {
           "pal": { "colors": "#1b0816 #7a1c3b #e86a33 #ffd670", "cycle": 0, "pads": false },
@@ -56,7 +56,7 @@
         "id": "breakdown",
         "when": { "section": "breakdown" },
         "transition": "core-pixelate",
-        "beats": 2,
+        "beats": 1,
         "params": {
           "pal": { "colors": "#061a24 #165163 #48b2b0 #b8f7e4", "cycle": 0, "pads": false },
           "game": { "speed": 0.65, "bezel": 0.095, "grid": 0.62 }
