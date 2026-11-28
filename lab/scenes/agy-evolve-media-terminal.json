@@ -7,7 +7,7 @@
   "status": "live",
   "created": "2026-11-27",
   "tags": ["media", "evolve", "ascii", "terminal", "glitch", "phosphor"],
-  "doc": "Your photo, video or camera rendered live on a phosphor terminal that swaps every phrase across ASCII wireframe, pure ASCII ramp, 2x4 Braille dot-matrix, hex telemetry, hybrid Bayer-ASCII and ANSI shade blocks, fed through evolving onset glitch, beat slices, pixel sort and VHS tape distortion.",
+  "doc": "Your photo, video or camera rendered live on a phosphor terminal that swaps every phrase across ASCII wireframe, pure ASCII ramp, 2x4 Braille dot-matrix, hex telemetry and ANSI shade blocks, fed through evolving onset glitch, beat slices, pixel sort and VHS tape distortion.",
   "nodes": [
     { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
     { "id": "hi", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 5, "gain": 1.85 } },
