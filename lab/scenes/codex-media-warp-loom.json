@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "codex-media-warp-loom",
+  "name": "Warp Loom",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-28",
+  "tags": ["media", "textile"],
+  "doc": "The picture is woven into a warm tapestry with a bound edge and loose fringe. Bass tugs the warp and the highs catch individual fibers.",
+  "nodes": [
+    { "id": "media", "piece": "core-media", "params": { "brightness": 1.12, "saturation": 1.04, "drift": 0.25, "beat_zoom": 0.26, "pulse": 0.32 } },
+    { "id": "loom", "piece": "codex-warp-loom" }
+  ],
+  "edges": [{ "from": "media.out", "to": "loom.picture" }],
+  "out": "loom.out",
+  "post": { "bloom": 0.11, "threshold": 0.86 }
+}

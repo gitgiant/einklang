@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "codex-media-kiln-set",
+  "name": "Kiln Set",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-28",
+  "tags": ["media", "mosaic", "ceramic"],
+  "doc": "The picture is fired into a ceramic mosaic. Each onset lifts a different set of glazed tiles out of the mortar, with brighter areas catching the strike first.",
+  "nodes": [
+    { "id": "media", "piece": "core-media", "params": { "brightness": 1.13, "saturation": 1.18, "contrast": 1.08, "drift": 0.24, "beat_zoom": 0.14, "pulse": 0.16 } },
+    { "id": "tap", "piece": "core-envelope", "params": { "attack": 0, "decay": 0.39, "sustain": 0.02, "release": 0.12, "curve": 1.5 } },
+    { "id": "tiles", "piece": "codex-kiln-set", "bind": { "strike": { "from": "tap.out" } } }
+  ],
+  "edges": [{ "from": "media.out", "to": "tiles.picture" }],
+  "out": "tiles.out",
+  "post": { "bloom": 0.1, "threshold": 0.94 }
+}

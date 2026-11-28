@@ -1,0 +1,15 @@
+{
+  "id": "codex-warp-loom",
+  "kind": "effect",
+  "name": "Warp Loom",
+  "doc": "Dyes alternating warp and weft with the picture, then pulls the woven image into folds on bass hits.",
+  "ports": { "in": { "picture": { "type": "tex" } }, "out": { "out": { "type": "tex" } } },
+  "params": {
+    "count": { "type": "int", "default": 116, "min": 48, "max": 160, "doc": "Yarn crossings per picture height." },
+    "tension": { "type": "float", "default": 0.92, "min": 0, "max": 1, "doc": "How far the bass pulls on the warp." }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.6, "scales": "res" },
+  "tags": ["media", "textile"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}
