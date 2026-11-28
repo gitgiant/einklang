@@ -129,11 +129,13 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
   // SwiftShader is ~50x slower: fewer video frames there
   const base: Omit<RunOpts, 'scene' | 'fixture'> = { start: START, ticks, every: 10, sheet: 12, fps: opts.video ? (lab.cpu ? 15 : 30) : 0, videoWidth: 640, perfFrames: 0, media: opts.media, sections: opts.sections };
   const failures: string[] = [], notes: string[] = [], react: { fixture: string; reactivity: number }[] = [];
+  let dbgKeep: { thumb: number[]; section?: string }[] = [];
   let ms = 0;
   for (const [i, fx] of fixtures.entries()) {
     const r = await lab.run({ ...base, scene: t.scene, fixture: fx, perfFrames: i === 0 ? perf : 0 });
     save(join(dir, fx), r, opts.video);
     const c = judgeRun(fx, r);
+    if (fx === 'dense' || !dbgKeep.length) dbgKeep = r.stats;
     failures.push(...c.failures.map((f) => `[${fx}] ${f}`)); notes.push(`[${fx}] ${c.notes.join(', ')}`);
     // a scene with sections: the run forced each in turn; judge each one's frames on its own too
     for (const [sec, stats] of sectionStats(r)) {
@@ -161,6 +163,12 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
   if (opts.budget) {
     const f = judgeCost(ms, t.piece ? LIMITS.pieceMs : LIMITS.sceneMs, t.piece ? 'the piece' : 'the scene');
     if (f) failures.push(f);
+  }
+  {
+    const R = ' .:-=+*#%@', W = 32, H = 12, n = dbgKeep.length, pick = [0, 1, 2, 3, 4, 5].map((i) => dbgKeep[Math.min(n - 1, Math.floor((i + 0.5) * n / 6))]).filter(Boolean);
+    const rows: string[] = [pick.map((f) => (f.section ?? '-').padEnd(W).slice(0, W)).join('|')];
+    for (let y = 0; y < H; y++) rows.push(pick.map((f) => { let l = ''; for (let x = 0; x < W; x++) { let s = 0; for (let dy = 0; dy < 3; dy++) for (let dx = 0; dx < 2; dx++) s += f.thumb[(y * 3 + dy) * 64 + x * 2 + dx] ?? 0; l += R[Math.min(9, Math.floor(s / 6 / 25.6))]; } return l; }).join('|'));
+    failures.unshift(`DEBUG ${t.id} ms ${ms.toFixed(2)} :: ${notes.filter((x) => /reaction|cost|\[dense\] section|\[dense\] luma/.test(x)).join(' | ')}\n${rows.join('\n')}`);
   }
   return { id: t.id, failures, notes, ms, dir };
 }
