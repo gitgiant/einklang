@@ -417,4 +417,7 @@ body.dropping::after { content: 'drop to add to the playlist'; position: fixed; 
 #resume[hidden] { display: none; }
 #resume button { font: 15px system-ui, sans-serif; min-height: 44px; padding: 8px 16px; color: #000; background: #7fe3ff; border: 0; border-radius: 22px; cursor: pointer; }
 #resume button.x { color: #ddd; background: #000c; padding: 8px 12px; }
+#resume.big { bottom: max(96px, env(safe-area-inset-bottom)); }
+#resume.big button:not(.x) { font-size: 18px; font-weight: 600; padding: 12px 24px; border-radius: 28px; box-shadow: 0 0 0 3px #7fe3ff55, 0 6px 24px #000a; max-width: min(640px, calc(100vw - 80px)); }
+#resume button small { display: block; font-size: 12px; font-weight: 400; opacity: .75; margin-top: 2px; }
 `;

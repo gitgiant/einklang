@@ -6,6 +6,7 @@
 import { canShare, cameraError, insecure } from './capture.ts';
 import { MEDIA, openCamera, type MediaItem } from './media.ts';
 import { PLAYLIST_CSS, type FilePlaylist } from './playlistui.ts';
+import { readLast, restorePlan, resumeText } from './lastshare.ts';
 
 export type InputKind = 'demo' | 'off' | 'mic' | 'external' | 'file';
 
@@ -39,11 +40,14 @@ const TITLE: Record<InputKind, string> = {
   external: 'music already playing elsewhere: a browser tab ("Share tab audio") or the whole system ("Entire screen" + "Share system audio")',
   file: 'audio, video and image files from this device, as a playlist',
 };
-const RESUME: Record<string, string> = { mic: 'resume the mic', external: 'resume external audio (pick the tab / screen again)' };
 const VIDEO_KEY = 'share.video';
 
 const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
-const lsSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+const lsSet = (k: string, v: string) => { if (!leaving) try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+/** The page is going away (a refresh): a capture ending now must not overwrite the remembered choice. */
+let leaving = false;
+addEventListener('pagehide', () => { leaving = true; });
+addEventListener('pageshow', () => { leaving = false; });
 
 let styled = false;
 
@@ -67,7 +71,7 @@ export function inputMenu(o: MenuOpts): InputMenu {
   const opts = document.createElement('div'); opts.className = 'opts';
   const video = document.createElement('input'); video.type = 'checkbox';
   video.checked = lsGet(VIDEO_KEY) !== '0';
-  video.onchange = () => lsSet(VIDEO_KEY, video.checked ? '1' : '0');
+  video.onchange = () => { lsSet(VIDEO_KEY, video.checked ? '1' : '0'); if (!resume.hidden && resumeKind === 'external') offerExternal(); };
   const videoL = document.createElement('label');
   videoL.title = 'also show the shared tab\'s / screen\'s picture in media scenes, in place of the playlist\'s pictures while sharing (this device only, never uploaded; applies to the next share)';
   videoL.append(video, ' use its video too');
@@ -118,16 +122,26 @@ export function inputMenu(o: MenuOpts): InputMenu {
   // ---- the one tap-to-resume button ----
   const resume = document.createElement('div'); resume.id = 'resume'; resume.hidden = true;
   const go = document.createElement('button'), x = document.createElement('button');
+  let resumeKind: InputKind | null = null;
   x.className = 'x'; x.textContent = '✕'; x.title = 'not now'; x.setAttribute('aria-label', 'dismiss');
   resume.append(go, x);
   document.body.append(resume);
-  function hideResume() { resume.hidden = true; }
-  const offer = (text: string, run: () => void) => {
+  function hideResume() { resume.hidden = true; resumeKind = null; }
+  const offer = (text: string, run: () => void, sub = '') => {
     go.textContent = `▶ ${text}`;
+    if (sub) { const s = document.createElement('small'); s.textContent = sub; go.append(s); }
+    resume.classList.toggle('big', !!sub);
     go.onclick = () => { hideResume(); run(); };
     x.onclick = () => { hideResume(); if (kind !== 'file' && kind !== kinds[0]) set(kinds[0]); };
     resume.hidden = false;
   };
+
+  /** One tap brings the last external pick back: sound, and its picture when "use its video too" is on. */
+  function offerExternal() {
+    const t = resumeText(readLast(lsGet), video.checked);
+    offer(t.text, () => { menu.choose('external'); }, t.sub);
+    resumeKind = 'external';
+  }
 
   const menu: InputMenu = {
     el: root,
@@ -155,20 +169,19 @@ export function inputMenu(o: MenuOpts): InputMenu {
   const missing = o.files.pl.missing;
   const reAdd = () => offer(`re-add ${missing} file${missing > 1 ? 's' : ''} to resume the playlist`, () => o.files.pick());
   const back = async () => {
-    if (kind === 'mic' || kind === 'external') {
-      let granted = false;
-      if (kind === 'mic' && o.autoMic) {
-        try { granted = (await navigator.permissions.query({ name: 'microphone' as PermissionName })).state === 'granted'; } catch { /* Safari: no such query */ }
-      }
-      if (granted) { await menu.choose('mic'); if (menu.kind === 'mic') return; }
-      const k = kind;
-      offer(RESUME[k], () => { menu.choose(k); });
-      return;
+    let micGranted = false;
+    if (kind === 'mic' && o.autoMic) {
+      try { micGranted = (await navigator.permissions.query({ name: 'microphone' as PermissionName })).state === 'granted'; } catch { /* Safari: no such query */ }
     }
-    if (kind === 'file' || o.files.on) {
-      if (missing && o.files.pl.items.length) { reAdd(); return; }
+    const plan = restorePlan(kind, kinds[0], { micGranted, filesOn: o.files.on, missing, items: o.files.pl.items.length });
+    if (plan.do === 'open') {
+      await menu.choose(plan.kind as InputKind);
+      if (plan.kind === 'mic' && menu.kind !== 'mic') offer('resume the mic', () => { menu.choose('mic'); });
+    } else if (plan.do === 'offer') {
+      if (plan.kind === 'mic') offer('resume the mic', () => { menu.choose('mic'); });
+      else if (plan.kind === 'external') offerExternal();
+      else reAdd();
     }
-    if (kind !== 'file' && kind !== kinds[0]) await menu.choose(kind);
   };
   // the playlist restored "on" only plays again once its files are back
   if (o.files.on && o.files.pl.missing) o.files.on = false;
