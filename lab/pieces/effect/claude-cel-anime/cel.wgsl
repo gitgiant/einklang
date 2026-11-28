@@ -64,12 +64,12 @@ fn ca_scene(q: vec2f) -> vec3f {
   let t = U.time;
   // sky: deep blue overhead, cyan, warm haze at the horizon
   let ht = clamp(p.y * 1.25 + 0.35, 0.0, 1.0);
-  var col = mix(srgb2lin(vec3f(1.0, 0.82, 0.7)), srgb2lin(vec3f(0.48, 0.78, 0.95)), smoothstep(0.0, 0.4, ht));
-  col = mix(col, srgb2lin(vec3f(0.13, 0.33, 0.78)), smoothstep(0.4, 1.0, ht));
+  var col = mix(srgb2lin(vec3f(1.0, 0.76, 0.6)), srgb2lin(vec3f(0.28, 0.6, 0.92)), smoothstep(0.0, 0.35, ht));
+  col = mix(col, srgb2lin(vec3f(0.06, 0.18, 0.58)), smoothstep(0.35, 1.0, ht));
   // sun, upper left, breathing with the bass
   let sp = vec2f(-0.38 * a, 0.25);
   let sd = length(p - sp);
-  col += srgb2lin(vec3f(1.0, 0.93, 0.75)) * (exp(-sd * 9.0) * (0.5 + 0.6 * U.bass) + smoothstep(0.062, 0.055, sd) * 2.5);
+  col += srgb2lin(vec3f(1.0, 0.93, 0.75)) * (exp(-sd * 12.0) * (0.25 + 0.5 * U.bass) + smoothstep(0.062, 0.055, sd) * 2.5);
   // a towering cumulus, right of centre: circles with a flat base, puffed by noise
   let cc = vec2f(0.22 * a + 0.02 * sin(t * 0.05), -0.02);
   var cd = 1e3;
@@ -84,18 +84,18 @@ fn ca_scene(q: vec2f) -> vec3f {
   if (cd < 0.0) {
     // lit from the sun's side, shadowed underneath
     let lit = clamp(0.55 + (p.y - cc.y) * 2.2 - (p.x - cc.x) * 0.9 + (ca_fbm(p * 14.0) - 0.5) * 0.5, 0.0, 1.0);
-    col = mix(srgb2lin(vec3f(0.58, 0.62, 0.86)), srgb2lin(vec3f(1.0, 0.98, 0.95)) * 1.1, lit);
+    col = mix(srgb2lin(vec3f(0.45, 0.5, 0.78)), srgb2lin(vec3f(1.0, 0.98, 0.95)) * 1.05, lit);
   }
   // a drifting strip of small clouds
   let band = smoothstep(0.05, 0.1, p.y) * smoothstep(0.3, 0.2, p.y);
   let small = smoothstep(0.6, 0.63, ca_fbm(vec2f(p.x * 2.2 + t * 0.025, p.y * 6.0)) * band + 0.2 * band);
-  if (cd >= 0.0) { col = mix(col, srgb2lin(vec3f(0.97, 0.95, 0.98)), small); }
+  if (cd >= 0.0) { col = mix(col, srgb2lin(vec3f(0.9, 0.9, 0.97)), small); }
   // far ridge in haze, near hill in grass
-  if (p.y < ca_ridge(p.x)) { col = mix(srgb2lin(vec3f(0.36, 0.45, 0.72)), col, 0.25); }
+  if (p.y < ca_ridge(p.x)) { col = mix(srgb2lin(vec3f(0.24, 0.3, 0.58)), col, 0.2); }
   let hy = ca_hill(p.x);
   if (p.y < hy) {
     let g = clamp((p.y - hy) * -4.0, 0.0, 1.0);
-    col = mix(srgb2lin(vec3f(0.42, 0.72, 0.3)), srgb2lin(vec3f(0.12, 0.33, 0.2)), g);
+    col = mix(srgb2lin(vec3f(0.36, 0.64, 0.26)), srgb2lin(vec3f(0.08, 0.26, 0.16)), g);
   }
   // power pole and its wires, right
   let px = 0.36 * a;
@@ -202,7 +202,7 @@ fn ca_petals(uv: vec2f, cs: f32, speed: f32, dens: f32, seed: f32, far: f32) -> 
   let qi = floor(x);
   let qq = qi + smoothstep(1.0 - U.soft, 1.0, fract(x));
   let k = clamp(qq / (n - 1.0), 0.0, 1.0);  // 0 = deepest shadow band, 1 = the lit band
-  let lq = mix(0.34, 0.9, k);
+  let lq = mix(0.3, 0.86, k);
   let chroma = length(lab.yz);
   let ab = lab.yz * U.sat * (1.0 + 0.4 * (1.0 - k)) / max(1.0, chroma * U.sat * 4.0);  // cap: no neon clipping
   var col = max(ca_lin(vec3f(lq, ab)), vec3f(0.0));
