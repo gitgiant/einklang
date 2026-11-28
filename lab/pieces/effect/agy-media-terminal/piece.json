@@ -1,0 +1,31 @@
+{
+  "id": "agy-media-terminal",
+  "kind": "effect",
+  "name": "Media phosphor terminal",
+  "doc": "Renders the input photo, video or camera as a live phosphor terminal in ASCII, sub-sampled 2x4 Braille, hex telemetry or ANSI shade blocks, locking directional wireframe glyphs onto subject edges with a beat-synced scan beam and onset line glitches.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "luma": { "type": "mask", "optional": true, "doc": "optional brightness mask (core-media.luma); falls back to source luma" },
+      "edges": { "type": "field", "optional": true, "doc": "optional edge gradient field (core-media.edges); falls back to source Sobel" },
+      "palette": { "type": "palette", "optional": true, "doc": "phosphor color ramp blended with the source media" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "charset": { "type": "enum", "default": 0, "options": ["ascii", "braille", "hex", "blocks"], "doc": "glyph set: ASCII ramp, 2x4 sub-sampled Braille, hex telemetry, or ANSI shade blocks" },
+    "cell": { "type": "float", "default": 14, "min": 6, "max": 32, "doc": "character cell height in pixels at 1080p" },
+    "color_mix": { "type": "float", "default": 0.35, "min": 0.0, "max": 1.0, "doc": "0 = pure phosphor palette, 1 = source media color" },
+    "edge_lock": { "type": "float", "default": 1.15, "min": 0.0, "max": 2.5, "doc": "directional wireframe glyph lock along subject edges" },
+    "scan_beam": { "type": "float", "default": 0.75, "min": 0.0, "max": 1.5, "doc": "beat-locked CRT phosphor raster sweep intensity" },
+    "glitch": { "type": "float", "default": 0.65, "min": 0.0, "max": 1.5, "doc": "onset horizontal line tear, byte scramble and RGB convergence split" },
+    "glow": { "type": "float", "default": 1.3, "min": 0.4, "max": 2.4, "doc": "phosphor glyph emission intensity" },
+    "scanlines": { "type": "float", "default": 0.22, "min": 0.0, "max": 0.6, "doc": "CRT scanline shading depth" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.45, "scales": "res" },
+  "tags": ["ascii", "terminal", "braille", "glyphs", "glitch", "phosphor", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" }
+}
