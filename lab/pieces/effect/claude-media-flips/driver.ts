@@ -73,7 +73,7 @@ export default definePiece({
           sec(inBar + fs), sec(BAR_TICKS), baseFace(b, every, faces, rand), baseFace(b - 1, every, faces, rand),
           Math.floor(rand(b, 12) * 4), Math.floor(rand(b - 1, 12) * 4), sec(TICKS_PER_BEAT) * 0.9, ev.length,
           bass * (P.bass as number), audio.phase, P.depth as number, P.glow as number,
-          PAL, P.density as number, 0, 0,
+          PAL, P.density as number, P.wobble as number, 0,
         ]);
         palColours(stops.slice(0, PAL)).forEach((c, i) => data.set(c, HEAD + i * 4));
         ev.forEach((e, i) => data.set(e, HEAD + PAL * 4 + i * 4));

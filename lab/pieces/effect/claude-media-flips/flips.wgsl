@@ -4,7 +4,7 @@ struct Fl {
   bar_age: f32, bar_len: f32, base_cur: f32, base_prev: f32,  // seconds into this bar; the wipes' faces
   dir_cur: f32, dir_prev: f32, span: f32, n_ev: f32,           // the wipes' directions, how long one sweeps
   bass: f32, phase: f32, depth: f32, glow: f32,
-  pal_n: f32, density: f32, _a: f32, _b: f32,
+  pal_n: f32, density: f32, wobble: f32, _b: f32,
   pal: array<vec4f, 8>,   // linear rgb
   ev: array<vec4f, 32>,   // hits, oldest first: age (s), seed, face + 8 * pattern, size 0..1
 };
@@ -142,8 +142,12 @@ fn fl_face(f: i32, uv: vec2f, t: vec2f, ij: vec2i, dims: vec2f) -> vec3f {
   var ang = phi;
   var shown = prev;
   if (phi > 0.5 * FL_PI) { ang = phi - FL_PI; shown = face; }
+  // at rest the tiles still rock: a wave over the wall on every beat, and the bass tilts each one
+  let sb = clamp((fract(U.phase) - (q.x + q.y) * 0.22) / 0.5, 0.0, 1.0);
+  let checker = select(1.0, -1.0, ((ij.x + ij.y) & 1) == 1);
+  ang += U.wobble * 0.3 * sin(FL_PI * sb) * checker + U.bass * 0.22 * (fl_h(ij, 0.77) - 0.5) * 2.0;
   let hs = 1.0 - U.gap;
-  let lift = min(1.0 + 0.04 * U.bass + 0.16 * sin(phi), 1.0 / hs);
+  let lift = min(1.0 + 0.07 * U.bass + 0.16 * sin(phi), 1.0 / hs);
   var s = loc;
   if (horiz) { s = loc.yx; }
   let D = U.depth;
