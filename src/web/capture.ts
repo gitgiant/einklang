@@ -5,8 +5,10 @@ import { Analyzer, N } from '../core/analysis.ts';
 import { FPS, STRIDE, WAVE_BYTES } from '../core/constants.ts';
 import { decimateWave } from '../core/features.ts';
 import { bindStream } from './sharevideo.ts';
+import { RAW_AUDIO, noAudioText, pickOf, readLast, saveLast, shareOptions } from './lastshare.ts';
 
-const RAW_AUDIO = { echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+const lsGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
 /** Hint to append to a capture error (capture needs a secure context: localhost or https). */
 export const insecure = () => (isSecureContext ? '' : ' (capture needs localhost or https: open the 127.0.0.1 link, or use `tailscale serve`)');
 
@@ -35,20 +37,19 @@ function permError(dev: 'mic' | 'camera', e: { name: string; message: string }, 
 
 
 /**
- * Music already playing elsewhere: a Chrome tab ("Share tab audio") or any app via "Entire screen" +
- * "Share system audio" (Windows/ChromeOS). The source keeps playing normally. Call from a user gesture.
+ * Music already playing elsewhere: a Chrome tab ("Share tab audio"), a window (Chrome 141+: the
+ * system's sound comes with it), or any app via "Entire screen" + "Share system audio"
+ * (Windows/ChromeOS). The source keeps playing normally. Call from a user gesture. The picker opens
+ * on the surface picked last, with its audio box on; a pick with sound is remembered (lastshare.ts).
  * With `video` its picture comes along (LiveAnalyzer shows it as this host's media).
  */
 export async function openShare(video = false): Promise<MediaStream> {
-  const stream = await navigator.mediaDevices.getDisplayMedia({
-    video: true, // required by Chrome; dropped below unless wanted
-    audio: { ...RAW_AUDIO, suppressLocalAudioPlayback: false },
-    systemAudio: 'include', selfBrowserSurface: 'exclude', surfaceSwitching: 'include', preferCurrentTab: false,
-  } as DisplayMediaStreamOptions);
-  const audio = stream.getAudioTracks();
+  const stream = await navigator.mediaDevices.getDisplayMedia(shareOptions(readLast(lsGet)));
+  const audio = stream.getAudioTracks(), pick = pickOf(stream.getVideoTracks()[0]);
   const keep = video && audio.length ? stream.getVideoTracks().slice(0, 1) : [];
   for (const t of stream.getVideoTracks()) if (!keep.includes(t)) t.stop();
-  if (!audio.length) throw new Error('no audio was shared: pick a tab with "Share tab audio" on, or Entire screen with "Share system audio"');
+  if (!audio.length) throw new Error(noAudioText(pick.surface));
+  saveLast(lsSet, pick);
   return new MediaStream([...audio, ...keep]);
 }
 
