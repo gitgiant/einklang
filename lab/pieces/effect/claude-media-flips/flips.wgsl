@@ -145,7 +145,7 @@ fn fl_face(f: i32, uv: vec2f, t: vec2f, ij: vec2i, dims: vec2f) -> vec3f {
   // at rest the tiles still rock: a wave over the wall on every beat, and the bass tilts each one
   let sb = clamp((fract(U.phase) - (q.x + q.y) * 0.22) / 0.5, 0.0, 1.0);
   let checker = select(1.0, -1.0, ((ij.x + ij.y) & 1) == 1);
-  ang += U.wobble * 0.3 * sin(FL_PI * sb) * checker + U.bass * 0.22 * (fl_h(ij, 0.77) - 0.5) * 2.0;
+  ang += U.wobble * 0.3 * sin(FL_PI * sb) * checker + U.bass * 0.3 * (fl_h(ij, 0.77) - 0.5) * 2.0;
   let hs = 1.0 - U.gap;
   let lift = min(1.0 + 0.07 * U.bass + 0.16 * sin(phi), 1.0 / hs);
   var s = loc;

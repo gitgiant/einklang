@@ -7,7 +7,7 @@
     { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0a0414 #241047 #00d9f5 #ff2a85 #fff275", "cycle": 0.12 } },
     { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.1, "pulse": 0.15, "drift": 0.35, "contrast": 1.1, "saturation": 1.2 } },
     { "id": "wall", "piece": "claude-media-flips",
-      "params": { "tiles": 12, "gap": 0.06, "flip": 0.4, "space": 0.5, "density": 0.8, "wipe": 0, "faces": 0, "bass": 1.3, "wobble": 0.5, "depth": 4, "glow": 1.1 } }
+      "params": { "tiles": 12, "gap": 0.06, "flip": 0.4, "space": 0.5, "density": 0.8, "wipe": 0, "faces": 0, "bass": 1.6, "wobble": 0.5, "depth": 4, "glow": 1.6 } }
   ],
   "edges": [
     { "from": "media.out", "to": "wall.in" },
@@ -22,7 +22,7 @@
         "params": { "wall": { "tiles": 20, "gap": 0.08, "flip": 0.28, "space": 0.25, "density": 0.8, "wipe": 1, "depth": 3 },
                     "pal": { "colors": "#100802 #4a2304 #ff8c00 #ffd166 #fff7db" } } },
       { "id": "breakdown", "when": { "section": ["breakdown", "intro"] },
-        "params": { "wall": { "tiles": 6, "gap": 0.05, "flip": 0.8, "space": 1, "density": 0.5, "faces": 1, "depth": 5 } } }
+        "params": { "wall": { "tiles": 6, "gap": 0.05, "flip": 0.7, "space": 0.5, "density": 0.75, "faces": 1, "depth": 5 } } }
     ]
   }
 }
