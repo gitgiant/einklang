@@ -111,6 +111,8 @@ export class Room {
   private transTallies: Map<string, Tally>;
   /** Tick the auto-rotation was (re)started or last switched at. */
   private autoFrom = 0;
+  /** The schedule tickAuto made with its last pick (an owner's pick or auto off takes it back while pending). */
+  private autoSched: RoomState['scene'] | null = null;
 
   constructor(now: () => number = () => performance.now(), rand: () => number = Math.random, opts: RoomOpts = {}) {
     this.now = now; this.rand = rand;
@@ -234,7 +236,11 @@ export class Room {
         return this.broadcastState();
       }
       case 'clock': return this.onClock(c, m);
-      case 'scene': return this.requestScene(m.id, m.step, m.quant, m.trans, m.weighted === true);
+      case 'scene': {
+        const dropped = this.dropPendingAuto();
+        if (!this.requestScene(m.id, m.step, m.quant, m.trans, m.weighted === true) && dropped) this.broadcastState();
+        return;
+      }
       case 'vote':
         if (m.vote !== 1 && m.vote !== -1) return;
         this.vote(String(m.scene), m.vote, [], c, m.vote < 0 ? { quant: m.quant ?? 'bar', trans: m.trans } : undefined, m.evolve);
@@ -246,6 +252,7 @@ export class Room {
         const bars = (AUTO_BARS as readonly number[]).includes(m.bars) ? m.bars : 0;
         this.state.auto = bars ? { bars, trans: cleanTransReq(m.trans) ?? { type: 'core-blend', beats: 4 } } : null;
         this.autoFrom = this.tickNow();
+        this.dropPendingAuto();
         return this.broadcastState();
       }
       case 'view': {
@@ -405,31 +412,49 @@ export class Room {
   /**
    * Schedule a scene switch on the next beat/bar boundary at least INPUT_DELAY ticks ahead. While
    * a switch is pending or running, the new one queues for the first boundary after it ends; a
-   * pending cut is replaced instead (stepping before it lands, as before transitions).
+   * pending cut is replaced instead (stepping before it lands, as before transitions). An owner's pick
+   * first takes back an auto-rotation pick that hasn't started (dropPendingAuto).
    */
-  requestScene(id: string | undefined, step: number | undefined, quant: Quant, req?: { type?: unknown; beats?: unknown }, weighted = false): void {
+  requestScene(id: string | undefined, step: number | undefined, quant: Quant, req?: { type?: unknown; beats?: unknown }, weighted = false): boolean {
     const { presets, scene, grid } = this.state, t = this.tickNow();
     // each step counts from the most recently scheduled scene
     const i = presets.indexOf(scene.id);
     const next = id ?? (weighted ? pickWeighted(presets, this.state.scores, this.rand(), scene.id) : presets[(((i + ((step ?? 1) | 0)) % presets.length) + presets.length) % presets.length]);
-    if (next === undefined || !presets.includes(next)) return;
+    if (next === undefined || !presets.includes(next)) return false;
     // a paused track never reaches a later tick: cut on the frozen one
     if (this.state.mode === 'file' && this.state.paused !== null) {
       this.state.scene = { id: next, prev: sceneAt(scene, t), at: t, trans: CUT, earlier: [] };
-      return this.broadcastState();
+      this.broadcastState();
+      return true;
     }
     const strip = ({ id, prev, at, trans }: SceneStep): SceneStep => ({ id, prev, at, trans });
     const chain = [...scene.earlier, strip(scene)].filter((s) => s.at + s.trans.ticks > t);
     let prev = sceneAt(scene, t);
     const last = chain[chain.length - 1];
     if (last && last.at > t && last.trans.ticks === 0) { chain.pop(); prev = last.prev; }
-    if (chain.length >= MAX_QUEUE) return;
+    if (chain.length >= MAX_QUEUE) return false;
     const before = chain[chain.length - 1];
     if (before) prev = before.id;
     const earliest = Math.max(t + INPUT_DELAY, before ? before.at + before.trans.ticks : -Infinity);
     const trans = this.resolveTrans(req);
     this.state.scene = { id: next, prev, at: nextBoundary(earliest, grid, quant), trans, earlier: chain };
     this.broadcastState();
+    return true;
+  }
+
+  /**
+   * Take back the auto-rotation's pick while it hasn't started (at least INPUT_DELAY ahead, so no host
+   * has drawn it): an owner's pick replaces it instead of queueing behind its transition, and turning
+   * rotation off stays on the scene showing. The schedule goes back to what it was before the pick.
+   * No broadcast (the caller sends the new state).
+   */
+  private dropPendingAuto(): boolean {
+    const s = this.state.scene;
+    if (s !== this.autoSched || s.at < this.tickNow() + INPUT_DELAY) return false;
+    const before = s.earlier[s.earlier.length - 1];
+    this.state.scene = before ? { ...before, earlier: s.earlier.slice(0, -1) } : fixedScene(s.prev);
+    this.autoSched = null;
+    return true;
   }
 
   /**
@@ -449,8 +474,10 @@ export class Room {
     const s = score(tl), retired = s <= RETIRE_AT;
     this.broadcast({ t: 'vote', scene: sceneId, vote: v, score: s, retired, host: c ? (c.name ?? `host ${c.id}`) : null });
     const showing = sceneAt(this.state.scene, t) === sceneId || this.state.scene.id === sceneId;
-    if (v < 0 && showing && (skip || retired)) this.requestScene(undefined, undefined, skip?.quant ?? 'bar', skip?.trans, true);
-    else this.broadcastState();
+    if (v < 0 && showing && (skip || retired)) {
+      if (sceneAt(this.state.scene, t) === sceneId) this.dropPendingAuto(); // the skip replaces a pending auto pick too
+      if (!this.requestScene(undefined, undefined, skip?.quant ?? 'bar', skip?.trans, true)) this.broadcastState();
+    } else this.broadcastState();
     return { score: s, retired };
   }
 
@@ -507,7 +534,7 @@ export class Room {
     const from = Math.max(this.autoFrom, end), bar = s.grid.tpb * 4;
     if (t + bar < from + a.bars * bar) return;
     this.autoFrom = t;
-    this.requestScene(undefined, undefined, 'bar', a.trans, true);
+    if (this.requestScene(undefined, undefined, 'bar', a.trans, true)) this.autoSched = this.state.scene;
   }
 
   /** `{type, beats}` from a request -> a concrete effect, its length frozen to ticks, and a seed. */

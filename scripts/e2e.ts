@@ -41,11 +41,16 @@ try {
   const noTok = await browsers[0].newPage();
   check((await noTok.goto(`http://127.0.0.1:${port}/`))!.status() === 401, 'page without token is refused');
 
-  const a = await open('name=left', 0), b = await open('name=right&view=1', 1);
-  await noTok.close();
+  const t0 = performance.now();
+  const a = await open('name=left', 0);
   const picked = await a.$$eval('#trans, #auto', (es) => es.map((e) => (e as HTMLSelectElement).value).join(' '));
   check(picked === 'random 8', `defaults: random transitions, auto-rotation every 8 bars ("${picked}")`);
-  await a.select('#auto', '0'); // the checks below switch scenes themselves
+  // the checks below switch scenes themselves: rotation off before host B's load (its first pick comes ~7 bars in)
+  await a.select('#auto', '0');
+  const tLeft = performance.now();
+  const b = await open('name=right&view=1', 1);
+  await noTok.close();
+  console.log(`     hosts ready: left ${((tLeft - t0) / 1000).toFixed(1)} s, right ${((performance.now() - tLeft) / 1000).toFixed(1)} s`);
   let da = await dbg(a), db = await dbg(b);
   check(da.view === 0 && db.view === 1, `per-host default views (left ${da.view}, right ${db.view})`);
   let c = compare(da, db);
