@@ -1,0 +1,36 @@
+{
+  "format": 1, "id": "claude-media-anime", "name": "Media: Anime cel", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-28",
+  "tags": ["media", "anime", "cel", "toon"],
+  "doc": "Your picture (image, video or camera) as an anime TV frame: flat cel fills in a few tone bands with lavender shadows and a white shine, clean ink outlines, sakura falling across it. Every kick is an action cut (the camera snaps in toward a new point and the ink thickens), onsets deal focus lines and sparkle stars, the bass pushes the light across the bands, some bars open on an inked impact frame. The build tightens the bands and the cuts, the drop paints an anime sky over the bright top and lights a lens flare, the breakdown goes soft two-tone at dusk under a storm of petals. Nothing picked: it draws and cel-shades its own hillside with a sakura tree under a summer sky.",
+  "nodes": [
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#1a1440 #3d4fa8 #49b6e8 #ffd9a8 #ff8fb1 #fff6e0", "cycle": 0 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.12, "drift": 0.3, "contrast": 1.1, "saturation": 1.15 } },
+    { "id": "cel", "piece": "claude-cel-anime",
+      "params": { "bands": 3, "soft": 0.08, "pump": 0.7, "sat": 1.3, "grade": 0.2, "shadow": 0.6, "shine": 0.7, "ink": 1.6, "ink_sense": 0.55,
+        "punch": 0.16, "space": 0.9, "lines": 0.8, "sparkle": 0.7, "petals": 0.55, "drop": 0, "flare": 0.12, "impact": 0.3 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "cel.in" },
+    { "from": "pal.palette", "to": "cel.palette" }
+  ],
+  "out": "cel.out",
+  "post": { "bloom": 0.5, "threshold": 0.8 },
+  "sections": {
+    "on": "phrase", "transition": "agy-ink", "beats": 2,
+    "variants": [
+      { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
+        "params": {
+          "cel": { "drop": 1, "flare": 0.2, "lines": 1.1, "punch": 0.22, "sparkle": 1, "pump": 0.9, "impact": 0.45, "space": 0.9 },
+          "pal": { "colors": "#140a33 #2a3fb8 #1fb0ff #fff1a8 #ff6f91 #ffffff" } },
+        "post": { "bloom": 0.75, "threshold": 0.75 } },
+      { "id": "build", "when": { "section": "build" },
+        "params": { "cel": { "bands": 4, "soft": 0.04, "lines": 1, "punch": 0.2, "space": 0.5, "ink": 2, "sparkle": 0.9, "impact": 0.2 } } },
+      { "id": "breakdown", "when": { "section": "breakdown" },
+        "params": {
+          "cel": { "bands": 2, "soft": 0.18, "light": 1.15, "shadow": 0.85, "grade": 0.4, "petals": 1, "lines": 0.5, "punch": 0.1, "space": 2, "impact": 0, "flare": 0.3 },
+          "pal": { "colors": "#160c2e #4a2a6e #c25b8c #ff9e7a #ffd6a0", "cycle": 0 } },
+        "post": { "bloom": 0.6, "threshold": 0.7 } }
+    ]
+  }
+}
