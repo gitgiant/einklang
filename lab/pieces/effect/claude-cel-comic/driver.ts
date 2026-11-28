@@ -3,7 +3,7 @@
 // and the bursts are the last few hits found in the onset history. No state.
 import { definePiece, oklabToLinear, oklch, BAR_TICKS, TICKS_PER_BEAT, type Palette } from '../../../api/index.ts';
 
-const MAX_BURST = 4, CUTS = 7, PAL = 8, HEAD = 32;
+const MAX_BURST = 4, CUTS = 7, PAL = 8, HEAD = 36;
 const EVERY = [1, 2, 4];
 
 type Rand = (a: number, b?: number) => number;
@@ -122,7 +122,7 @@ export default definePiece({
         data.fill(0);
         data.set([
           w, h, time, aspect,
-          P.bands as number, (P.ink as number) * (1 + 0.6 * bass + 0.3 * hit) / s, (P.dots as number) * (1 + 0.35 * bass + 0.15 * beat) / s, P.shade as number,
+          P.bands as number, (P.ink as number) * (1 + 0.9 * bass + 0.4 * hit) / s, (P.dots as number) * (1 + 0.6 * bass + 0.2 * beat) / s, P.shade as number,
           P.sat as number, P.tint as number, P.benday as number, P.blacks as number,
           P.gutter as number, 0.0042 + (P.gutter as number) * 0.25, l % 65536, bursts.length,
           hit * (P.punch as number), bass, P.wobble as number, (into + fs) / every,
@@ -130,6 +130,7 @@ export default definePiece({
         ]);
         data.set([...hex(P.paper, [0.88, 0.8, 0.62]), 1], 24);
         data.set([...hex(P.inkc, [0.004, 0.003, 0.008]), 1], 28);
+        data[32] = P.impact as number;
         palColours(stops.slice(0, PAL)).forEach((c, i) => data.set(c, HEAD + i * 4));
         cuts.forEach((c, i) => data.set(c, HEAD + PAL * 4 + i * 4));
         bursts.forEach((b, i) => data.set(b, HEAD + PAL * 4 + CUTS * 4 + i * 8));

@@ -6,6 +6,7 @@ struct Cc {
   hit: f32, bass: f32, wobble: f32, page_t: f32,     // latest hit (x punch), bass 0..1, line wobble, 0..1 through the layout
   detail: f32, lines: f32, life: f32, pal_n: f32,
   paper: vec4f, ink_c: vec4f,
+  impact: f32, _a: f32, _b: f32, _c: f32,
   pal: array<vec4f, 8>,     // linear rgb, dark to light
   cut: array<vec4f, 7>,     // heap of cuts: axis (-1 none, 0 x, 1 y), pos, slant, _
   burst: array<vec4f, 8>,   // two per burst: (x, y uv, age s, size), (rot, spikes, seed, loud)
@@ -177,7 +178,7 @@ fn cc_bursts(uv: vec2f) -> vec4f {
     let r2 = f32((hs >> 10u) & 1023u) / 1023.0;
     let r3 = f32((hs >> 20u) & 1023u) / 1023.0;
     let close = mix(0.55 + 0.35 * r1, 1.0, sz.x * sz.y);
-    let k = close * (1.0 - 0.07 * U.page_t) * (1.0 - 0.1 * U.hit);
+    let k = close * (1.0 - 0.07 * U.page_t) * (1.0 - 0.16 * U.hit);
     let hw = 0.5 * sz * k;
     let aim = mix(ctr, vec2f(0.3 + 0.4 * r2, 0.3 + 0.4 * r3), 0.6);
     let sc = clamp(aim, hw, vec2f(1.0) - hw);
@@ -226,6 +227,27 @@ fn cc_bursts(uv: vec2f) -> vec4f {
     // solid blacks
     tone = mix(tone, U.ink_c.rgb, smoothstep(U.blacks + 0.03, U.blacks - 0.03, L));
     col = mix(tone, U.ink_c.rgb, inked);
+
+    // impact: the panel a fresh burst sits in drops its tones for sunburst rays behind the ink
+    var imp = 0.0;
+    var ic = vec2f(0.5);
+    for (var j = 0; j < 4; j++) {
+      if (f32(j) >= U.n_burst || U.impact <= 0.0) { break; }
+      let bj = U.burst[2 * j];
+      if (bj.z < U.life * 0.6 && bj.w > 0.0 && cc_panel(bj.xy).leaf == pg.leaf) {
+        let s = 0.75 + 0.25 * U.burst[2 * j + 1].w;
+        if (s > imp) { imp = s; ic = bj.xy; }
+      }
+    }
+    if (imp > 0.0) {
+      let d = (uv - ic) * vec2f(U.aspect, 1.0);
+      let a = atan2(d.y, d.x) / CC_TAU;
+      let ray = smoothstep(0.46, 0.54, fract(a * 16.0 + U.time * 0.2 + 0.08 * sin(length(d) * 9.0)));
+      var bg = mix(cc_pal(0.6) * 1.1, cc_pal(0.93) * 1.2, ray);
+      bg = mix(bg, U.ink_c.rgb, smoothstep(0.44, 0.36, L)); // the picture's darks as flat ink shapes
+      bg = mix(bg, U.ink_c.rgb, max(inked, hdot * 0.5 * (1.0 - ray)));
+      col = mix(col, bg, imp * U.impact);
+    }
 
     // speed lines from the freshest burst
     if (U.n_burst > 0.5 && U.lines > 0.0) {

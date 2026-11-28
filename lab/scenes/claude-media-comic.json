@@ -2,20 +2,20 @@
   "format": 1, "id": "claude-media-comic", "name": "Media: comic page", "version": 1,
   "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-28",
   "tags": ["media", "comic", "cel", "halftone", "print"],
-  "doc": "Your picture (image, video or camera) printed as a comic page: flat cel tones, bold ink lines, halftone dots in the shadows and Ben-Day dots in the light, on off-white paper. Every bar the page re-lays out into new slanted panels that slide open, each a closer or wider shot of the picture; every hit pops a spiky burst with speed lines and knocks the colour out of register, the bass swells the dots and the ink, the mids step the tones. A drop cuts the page into many small panels with bursts on every beat; a breakdown or intro holds one big splash panel in soft pastel dots. With nothing picked, the page inks a cluster of glowing blobs instead.",
+  "doc": "Your picture (image, video or camera) printed as a comic page: flat cel tones, bold ink lines, halftone dots in the shadows and Ben-Day dots in the light, on off-white paper. Every bar the page re-lays out into new slanted panels that slide open, each a closer or wider shot of the picture; every hit pops a spiky burst with speed lines, turns its panel into sunburst rays behind the ink and knocks the colour out of register, the bass swells the dots and the ink, the mids step the tones. A drop cuts the page into many small panels with bursts on every beat; a breakdown or intro holds one big splash panel in soft pastel dots. With nothing picked, the page inks a cluster of glowing blobs instead.",
   "nodes": [
     { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.8 } },
     { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 10, "window": 10, "gain": 1.9 } },
     { "id": "high", "piece": "core-follow", "params": { "lo": 10, "hi": 15, "window": 8, "gain": 2.2 } },
     { "id": "pal", "piece": "core-swatch", "params": { "colors": "#141024 #1f4aa8 #d7263d #f9c80e #fff3d6", "cycle": 0.06 } },
-    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.2, "pulse": 0.12, "drift": 0.4, "contrast": 1.2, "saturation": 1.2 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.35, "pulse": 0.2, "drift": 0.4, "contrast": 1.2, "saturation": 1.2 } },
     { "id": "blobs", "piece": "claude-metaballs", "params": { "count": 9, "size": 0.12, "react": 1.4, "speed": 0.8, "pulse": 0.8, "glow": 0.9, "edge": 0.1, "depth": 1.3 } },
     { "id": "comic", "piece": "claude-cel-comic",
-      "params": { "ink": 2.4, "detail": 0.2, "blacks": 0.17, "dots": 9, "shade": 0.55, "benday": 0.55, "sat": 1.4, "tint": 0.3, "panels": 3, "relayout": 0, "slant": 0.14, "slide": 0.6, "bursts": 1, "space": 1, "life": 0.7, "lines": 0.7, "punch": 0.6, "bass": 1, "wobble": 0.3 },
+      "params": { "ink": 2.4, "detail": 0.2, "blacks": 0.17, "dots": 9, "shade": 0.55, "benday": 0.55, "sat": 1.4, "tint": 0.3, "panels": 3, "relayout": 0, "slant": 0.14, "slide": 0.6, "bursts": 1, "space": 1, "life": 0.7, "lines": 0.7, "impact": 0.85, "punch": 0.7, "bass": 1, "wobble": 0.3 },
       "bind": {
-        "bands": { "from": "mid.out", "range": [3, 6] },
+        "bands": { "from": "mid.out", "range": [3, 7] },
         "tint": { "from": "high.out", "range": [0.2, 0.55] },
-        "shade": { "from": "bass.out", "range": [0.45, 0.7] }
+        "shade": { "from": "bass.out", "range": [0.35, 0.8] }
       } }
   ],
   "edges": [
@@ -30,10 +30,10 @@
     "on": "phrase", "transition": "claude-page-turn", "beats": 2,
     "variants": [
       { "id": "drop", "when": { "section": "drop" }, "transition": "core-flash", "beats": 1,
-        "params": { "comic": { "panels": 5, "slant": 0.22, "slide": 0.4, "space": 0.5, "bursts": 1.25, "life": 0.55, "punch": 0.9, "ink": 3, "dots": 8 },
+        "params": { "comic": { "panels": 5, "slant": 0.22, "slide": 0.4, "space": 0.5, "bursts": 1.25, "life": 0.55, "punch": 1, "impact": 1, "ink": 3, "dots": 8 },
                     "pal": { "colors": "#12061a #5b1a8c #ff2e4c #ffd23f #fff6e0" } } },
       { "id": "splash", "when": { "section": ["breakdown", "intro"] },
-        "params": { "comic": { "panels": 1, "relayout": 2, "slide": 1.5, "space": 2, "bursts": 0.85, "life": 1.1, "benday": 0.85, "dots": 12, "sat": 1.1, "lines": 0.4 },
+        "params": { "comic": { "panels": 0, "relayout": 2, "slide": 1.5, "space": 2, "impact": 0.7, "bursts": 0.85, "life": 1.1, "benday": 0.85, "dots": 12, "sat": 1.1, "lines": 0.4 },
                     "pal": { "colors": "#1b1b33 #3e7cb1 #f08a9b #ffd6a5 #fdfcdc" } } }
     ]
   }

@@ -1,6 +1,6 @@
 {
   "id": "claude-cel-comic", "kind": "effect", "name": "Cel comic page",
-  "doc": "The picture printed as a comic page: cel-shaded into flat tone bands (its own hues, pushed toward the palette by `tint`), bold black ink lines from its edges, solid blacks in the deepest shadows, halftone dots in the shadows and Ben-Day dots in the light tones, on off-white paper. On every bar (or 2, 4) the page re-lays out into new panels: seeded, slanted cuts that slide open with an overshoot, each panel its own shot of the picture, slowly pushing in. Every hit (an onset with none in the `space` beats before it) pops a spiky onomatopoeia burst (two stars and exclamation marks, no text) with speed lines, punches the panels in and knocks the colour plate out of register; the bass swells the dots and thickens the ink, and `bands` (bind it) breathes the tone steps. With nothing picked on this host and `subject` wired, it inks that generator instead of the media fallback.",
+  "doc": "The picture printed as a comic page: cel-shaded into flat tone bands (its own hues, pushed toward the palette by `tint`), bold black ink lines from its edges, solid blacks in the deepest shadows, halftone dots in the shadows and Ben-Day dots in the light tones, on off-white paper. On every bar (or 2, 4) the page re-lays out into new panels: seeded, slanted cuts that slide open with an overshoot, each panel its own shot of the picture, slowly pushing in. Every hit (an onset with none in the `space` beats before it) pops a spiky onomatopoeia burst (two stars and exclamation marks, no text) with speed lines, turns its panel into an impact panel (sunburst rays behind the picture's ink), punches the panels in and knocks the colour plate out of register; the bass swells the dots and thickens the ink, and `bands` (bind it) breathes the tone steps. With nothing picked on this host and `subject` wired, it inks that generator instead of the media fallback.",
   "ports": {
     "in": {
       "in": { "type": "tex", "doc": "the picture, e.g. core-media.out" },
@@ -27,6 +27,7 @@
     "bursts": { "type": "float", "default": 1, "min": 0, "max": 1.6, "doc": "size of the hit bursts (0 = none)" },
     "space": { "type": "float", "default": 1, "min": 0.25, "max": 4, "doc": "beats between counted hits (onsets closer than this are one hit)" },
     "life": { "type": "float", "default": 0.7, "min": 0.2, "max": 2, "doc": "seconds a burst stays" },
+    "impact": { "type": "float", "default": 0.85, "min": 0, "max": 1, "doc": "the panel a fresh burst sits in drops its tones for sunburst rays behind the picture's ink and darks" },
     "lines": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "speed lines from a fresh burst" },
     "punch": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "panels zoom in and the colour plate slips out of register on a hit" },
     "bass": { "type": "float", "default": 0.8, "min": 0, "max": 2, "doc": "the bass swells the dots and thickens the ink" },
