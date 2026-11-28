@@ -1,0 +1,88 @@
+{
+  "format": 1,
+  "id": "agy-media-billboard",
+  "name": "Media: Stadium LED",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-28",
+  "tags": ["media", "led", "billboard", "stadium", "retro", "glitch"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 9, "hi": 15, "window": 5, "gain": 1.85 } },
+    { "id": "env", "piece": "core-envelope", "params": { "source": 0, "attack": 0.005, "decay": 0.28, "sustain": 0, "curve": 2.2 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0a0e1a #00d9ff #ff2a6d #ffbe0b #f8fff4", "cycle": 0.2 } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.36, "pulse": 0.34, "drift": 0.42, "contrast": 1.2, "saturation": 1.25, "edge_width": 2.5 }
+    },
+    {
+      "id": "led",
+      "piece": "agy-led-billboard",
+      "params": { "rows": 84, "cabinets": 10, "frame": 0.075, "scan": 0.65, "dropout": 0.65, "edge_glow": 0.85, "glow": 1.2 },
+      "bind": {
+        "dropout": { "from": "env.out", "range": [0.24, 1.42] },
+        "scan": { "from": "hi.out", "range": [0.25, 1.35] },
+        "edge_glow": { "from": "bass.out", "range": [0.35, 1.75] }
+      }
+    },
+    {
+      "id": "fx",
+      "piece": "agy-glitch",
+      "params": { "amount": 0.14, "displace": 0.12, "smear": 0.16, "rgb": 0.22, "burst": 0.72, "blocks": 14 },
+      "bind": {
+        "amount": { "from": "env.out", "range": [0.05, 0.34] },
+        "rgb": { "from": "hi.out", "range": [0.1, 0.52] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "led.in" },
+    { "from": "media.luma", "to": "led.luma" },
+    { "from": "media.edges", "to": "led.edges" },
+    { "from": "pal.palette", "to": "led.palette" },
+    { "from": "led.out", "to": "fx.in" }
+  ],
+  "out": "fx.out",
+  "post": { "bloom": 0.48, "threshold": 0.72 },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-glitch",
+    "beats": 1,
+    "variants": [
+      {
+        "id": "drop",
+        "when": { "section": "drop" },
+        "transition": "core-glitch",
+        "beats": 1,
+        "params": {
+          "pal": { "colors": "#0e0414 #ff006e #ffbe0b #00f5d4 #ffffff", "cycle": 0.35 },
+          "led": { "rows": 72, "cabinets": 12, "frame": 0.035, "glow": 1.35 },
+          "fx": { "displace": 0.24, "smear": 0.24, "burst": 0.9, "blocks": 18 }
+        },
+        "bind": {
+          "led": { "dropout": { "from": "env.out", "range": [0.28, 1.48] } },
+          "fx": { "amount": { "from": "env.out", "range": [0.1, 0.44] } }
+        },
+        "post": { "bloom": 0.56, "threshold": 0.66 }
+      },
+      {
+        "id": "breakdown",
+        "when": { "section": "breakdown" },
+        "transition": "core-wipe",
+        "beats": 2,
+        "params": {
+          "pal": { "colors": "#050a18 #1e40af #38bdf8 #f59e0b #fef3c7", "cycle": 0.1 },
+          "led": { "rows": 96, "cabinets": 8, "frame": 0.13, "glow": 1.08 },
+          "fx": { "displace": 0.06, "smear": 0.08, "burst": 0.35 }
+        },
+        "bind": {
+          "led": { "dropout": { "from": "env.out", "range": [0.08, 0.72] } },
+          "fx": { "amount": { "from": "env.out", "range": [0.02, 0.16] } }
+        },
+        "post": { "bloom": 0.38, "threshold": 0.78 }
+      }
+    ]
+  }
+}

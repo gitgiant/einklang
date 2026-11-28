@@ -1,0 +1,68 @@
+{
+  "format": 1,
+  "id": "agy-media-handheld",
+  "name": "Media: 4-Bit Pocket Level",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-28",
+  "tags": ["media", "handheld", "gameboy", "pixel", "retro", "game", "dither"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.65 } },
+    { "id": "hi", "piece": "core-follow", "params": { "lo": 9, "hi": 15, "window": 5, "gain": 1.75 } },
+    { "id": "env", "piece": "core-envelope", "params": { "source": 0, "attack": 0.005, "decay": 0.28, "sustain": 0, "curve": 2.0 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0f380f #306230 #8bac0f #9bbc0f", "cycle": 0, "pads": false } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.3, "pulse": 0.34, "drift": 0.35, "contrast": 1.3, "saturation": 1.0, "edge_width": 2.5 }
+    },
+    {
+      "id": "game",
+      "piece": "agy-handheld-level",
+      "params": { "speed": 1.0, "bezel": 0.075, "grid": 0.55, "dither": 0.85, "jump": 0.9, "coins": 0.8, "contrast": 1.25 },
+      "bind": {
+        "jump": { "from": "env.out", "range": [0.45, 1.45] },
+        "coins": { "from": "hi.out", "range": [0.42, 1.4] },
+        "contrast": { "from": "bass.out", "range": [1.05, 1.7] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "game.in" },
+    { "from": "media.luma", "to": "game.luma" },
+    { "from": "media.edges", "to": "game.edges" },
+    { "from": "pal.palette", "to": "game.palette" }
+  ],
+  "out": "game.out",
+  "post": { "bloom": 0.22, "threshold": 0.85 },
+  "sections": {
+    "on": "phrase",
+    "transition": "core-pixelate",
+    "beats": 2,
+    "variants": [
+      {
+        "id": "drop",
+        "when": { "section": "drop" },
+        "transition": "core-pixelate",
+        "beats": 1,
+        "params": {
+          "pal": { "colors": "#1b0816 #7a1c3b #e86a33 #ffd670", "cycle": 0, "pads": false },
+          "game": { "speed": 1.6, "bezel": 0.055, "grid": 0.48 }
+        },
+        "post": { "bloom": 0.34, "threshold": 0.78 }
+      },
+      {
+        "id": "breakdown",
+        "when": { "section": "breakdown" },
+        "transition": "core-pixelate",
+        "beats": 1,
+        "params": {
+          "pal": { "colors": "#061a24 #165163 #48b2b0 #b8f7e4", "cycle": 0, "pads": false },
+          "game": { "speed": 0.65, "bezel": 0.095, "grid": 0.62 }
+        },
+        "post": { "bloom": 0.28, "threshold": 0.82 }
+      }
+    ]
+  }
+}

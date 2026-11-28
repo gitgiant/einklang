@@ -1,0 +1,30 @@
+{
+  "id": "agy-splitflap-board",
+  "kind": "effect",
+  "name": "Split-flap & flip-dot board",
+  "doc": "Transforms the input media into a kinetic architectural split-flap and magnetic flip-dot arrival board whose mechanical tiles cascade and flip into the picture in sync with the beat.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "luma": { "type": "mask", "doc": "media brightness mask (core-media.luma) driving dot size and pigment brightness" },
+      "edges": { "type": "field", "doc": "media edge gradient (core-media.edges) triggering crisp onset flap chatter" },
+      "palette": { "type": "palette", "optional": true, "doc": "station-board pigment palette for flip faces and transit accents" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "columns": { "type": "int", "default": 44, "min": 20, "max": 80, "doc": "number of mechanical flap columns across the board" },
+    "style": { "type": "enum", "default": 2, "options": ["split-flap", "flip-dot", "hybrid"], "doc": "Solari split-flap cards, circular magnetic flip-dots, or hybrid dot-matrix flaps" },
+    "wave_mode": { "type": "enum", "default": 0, "options": ["diagonal", "sweep", "radial", "waterfall"], "doc": "spatial cascade pattern of each beat flip wave" },
+    "flip": { "type": "float", "default": 0.85, "min": 0.0, "max": 1.5, "doc": "beat-synced mechanical flip cascade strength" },
+    "chatter": { "type": "float", "default": 0.6, "min": 0.0, "max": 1.5, "doc": "onset mechanical flutter along media edges and high bands" },
+    "color_mix": { "type": "float", "default": 0.62, "min": 0.0, "max": 1.0, "doc": "0 = pure station palette pigments, 1 = full source media colors" },
+    "glow": { "type": "float", "default": 1.15, "min": 0.5, "max": 2.0, "doc": "overhead architectural gallery lighting and dot illumination" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.45, "scales": "res" },
+  "tags": ["split-flap", "flip-dot", "dot-matrix", "kinetic", "retro", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" }
+}

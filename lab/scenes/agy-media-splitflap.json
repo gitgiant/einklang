@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "id": "agy-media-splitflap",
+  "name": "Media: Split-Flap Matrix",
+  "version": 1,
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" },
+  "status": "live",
+  "created": "2026-11-28",
+  "tags": ["media", "split-flap", "flip-dot", "dot-matrix", "retro", "kinetic"],
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 6, "gain": 1.6 } },
+    { "id": "mid", "piece": "core-follow", "params": { "lo": 4, "hi": 10, "window": 6, "gain": 1.75 } },
+    { "id": "env", "piece": "core-envelope", "params": { "source": 0, "attack": 0.006, "decay": 0.32, "sustain": 0, "curve": 2.0 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#100e0b #3b3022 #ff9f1c #ffd166 #fff8e8", "cycle": 0.15 } },
+    {
+      "id": "media",
+      "piece": "core-media",
+      "params": { "beat_zoom": 0.3, "pulse": 0.32, "drift": 0.45, "contrast": 1.25, "saturation": 1.18, "edge_width": 2.5 }
+    },
+    {
+      "id": "board",
+      "piece": "agy-splitflap-board",
+      "params": { "columns": 44, "style": 2, "wave_mode": 0, "flip": 0.85, "chatter": 0.6, "color_mix": 0.64, "glow": 1.15 },
+      "bind": {
+        "flip": { "from": "env.out", "range": [0.28, 1.42] },
+        "chatter": { "from": "mid.out", "range": [0.2, 1.32] },
+        "glow": { "from": "bass.out", "range": [0.92, 1.68] }
+      }
+    }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "board.in" },
+    { "from": "media.luma", "to": "board.luma" },
+    { "from": "media.edges", "to": "board.edges" },
+    { "from": "pal.palette", "to": "board.palette" }
+  ],
+  "out": "board.out",
+  "post": { "bloom": 0.34, "threshold": 0.78 },
+  "evolve": {
+    "every": 2,
+    "transition": "core-wipe",
+    "beats": 2,
+    "slots": [
+      {
+        "node": "board",
+        "pool": [
+          { "piece": "agy-splitflap-board", "params": { "columns": 52, "style": 1, "wave_mode": 2, "color_mix": 0.56 }, "ranges": { "columns": [44, 62] } },
+          { "piece": "agy-splitflap-board", "params": { "columns": 36, "style": 0, "wave_mode": 1, "color_mix": 0.72 }, "ranges": { "columns": [30, 44] } },
+          { "piece": "agy-splitflap-board", "params": { "columns": 56, "style": 2, "wave_mode": 3, "color_mix": 0.62 }, "ranges": { "columns": [48, 64] } }
+        ]
+      },
+      {
+        "node": "pal",
+        "pool": [
+          { "piece": "core-swatch", "params": { "colors": "#06131f #123b54 #00e5ff #9bf6ff #f5ffff", "cycle": 0.2 } },
+          { "piece": "core-swatch", "params": { "colors": "#120614 #4a154b #ff2a85 #ffbe0b #fff5e1", "cycle": 0.25 } },
+          { "piece": "core-swatch", "params": { "colors": "#041008 #104222 #22e578 #9effc4 #f2fff7", "cycle": 0.18 } }
+        ]
+      }
+    ]
+  }
+}

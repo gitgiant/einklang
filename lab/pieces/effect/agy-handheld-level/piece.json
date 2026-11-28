@@ -1,0 +1,30 @@
+{
+  "id": "agy-handheld-level",
+  "kind": "effect",
+  "name": "4-colour handheld game level",
+  "doc": "Turns the input media into a scrolling 4-colour dot-matrix handheld platformer level where picture luma and edges auto-tile into brick platforms, spinning beat coins, and an animated pixel runner that leaps on beats.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "luma": { "type": "mask", "doc": "media brightness mask (core-media.luma) rendered as the 4-shade dithered world and solid terrain" },
+      "edges": { "type": "field", "doc": "media edge gradient (core-media.edges) generating steppable ledges and floating collectible coins" },
+      "palette": { "type": "palette", "optional": true, "doc": "4-colour handheld LCD ramp (shade 0 darkest ink to shade 3 lightest backlight)" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "speed": { "type": "float", "default": 1.0, "min": 0.2, "max": 2.5, "doc": "horizontal level scroll speed synced to tempo" },
+    "bezel": { "type": "float", "default": 0.075, "min": 0.0, "max": 0.2, "doc": "handheld screen bezel border width" },
+    "grid": { "type": "float", "default": 0.55, "min": 0.0, "max": 1.0, "doc": "authentic dot-matrix LCD pixel gap and shadow strength" },
+    "dither": { "type": "float", "default": 0.85, "min": 0.0, "max": 1.0, "doc": "4x4 Bayer ordered dithering into the 4 handheld shades" },
+    "jump": { "type": "float", "default": 0.9, "min": 0.0, "max": 1.5, "doc": "runner beat-jump height and onset bounce" },
+    "coins": { "type": "float", "default": 0.8, "min": 0.0, "max": 1.5, "doc": "density of spinning collectible beat coins along media edges" },
+    "contrast": { "type": "float", "default": 1.25, "min": 0.6, "max": 2.2, "doc": "media-to-platform terrain contrast" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.5, "scales": "res" },
+  "tags": ["handheld", "gameboy", "pixel", "retro", "dither", "game", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" }
+}
