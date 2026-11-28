@@ -2,7 +2,7 @@
   "install": ["npm", "ci", "--no-audit", "--no-fund"],
   "test": ["sh", "-c", "npm run typecheck && npm run lab -- validate && node --experimental-strip-types --no-warnings --test --test-reporter=junit --test-reporter-destination={junit} 'test/*.test.ts'"],
   "junit": "{junit}",
-  "gpu": ["npm", "run", "lab", "--", "gate", "--junit", "{junit}"],
+  "gpu": ["node", ".hauptling-gate-metrics.mjs", "{junit}"],
   "gateGpu": true,
   "gpuMemMB": 2048
 }
