@@ -1,0 +1,18 @@
+{
+  "id": "codex-pin-portrait",
+  "kind": "effect",
+  "name": "Pin Portrait",
+  "doc": "Lights four fans of pin-to-pin threads with the picture and its edges. Bass draws the threads taut, and a phrase trigger re-strings the hoop.",
+  "ports": {
+    "in": { "picture": { "type": "tex" }, "light": { "type": "mask" }, "edges": { "type": "field" } },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "layout": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "Rotation of the four starting pins, in turns." },
+    "reset": { "type": "float", "default": 0, "min": 0, "max": 1, "doc": "Retraction of each strand toward its first pin." }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 1.8, "scales": "res" },
+  "tags": ["media", "thread", "edges"],
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" }
+}

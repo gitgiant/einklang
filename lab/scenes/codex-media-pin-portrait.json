@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "id": "codex-media-pin-portrait",
+  "name": "Pin Portrait",
+  "version": 1,
+  "author": { "vendor": "codex", "model": "gpt-6.2-sol" },
+  "status": "live",
+  "created": "2026-11-28",
+  "tags": ["media", "thread", "edges"],
+  "doc": "Copper, blue and silver thread fans pick out the picture's contours on a ring of brass pins. The strands tighten on the bass and pay out from new pins every four bars.",
+  "nodes": [
+    { "id": "media", "piece": "core-media", "params": { "brightness": 1.16, "contrast": 1.16, "saturation": 1.03, "edge_width": 4.2, "drift": 0.28, "beat_zoom": 0.32, "pulse": 0.28 } },
+    { "id": "phrase", "piece": "core-step", "params": { "rate": 5, "pattern": "1 0.19 0.41 0.67 0.13 0.52 0.82" } },
+    { "id": "feed", "piece": "core-envelope", "params": { "source": 2, "attack": 0, "decay": 0.82, "curve": 1.38 } },
+    { "id": "portrait", "piece": "codex-pin-portrait", "bind": { "layout": { "from": "phrase.out" }, "reset": { "from": "feed.out" } } }
+  ],
+  "edges": [
+    { "from": "phrase.gate", "to": "feed.trigger" },
+    { "from": "media.out", "to": "portrait.picture" },
+    { "from": "media.luma", "to": "portrait.light" },
+    { "from": "media.edges", "to": "portrait.edges" }
+  ],
+  "out": "portrait.out",
+  "post": { "bloom": 0.17, "threshold": 0.82 }
+}
