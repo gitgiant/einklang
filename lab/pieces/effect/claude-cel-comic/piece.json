@@ -1,0 +1,41 @@
+{
+  "id": "claude-cel-comic", "kind": "effect", "name": "Cel comic page",
+  "doc": "The picture printed as a comic page: cel-shaded into flat tone bands (its own hues, pushed toward the palette by `tint`), bold black ink lines from its edges, solid blacks in the deepest shadows, halftone dots in the shadows and Ben-Day dots in the light tones, on off-white paper. On every bar (or 2, 4) the page re-lays out into new panels: seeded, slanted cuts that slide open with an overshoot, each panel its own shot of the picture, slowly pushing in. Every hit (an onset with none in the `space` beats before it) pops a spiky onomatopoeia burst (two stars and exclamation marks, no text) with speed lines, punches the panels in and knocks the colour plate out of register; the bass swells the dots and thickens the ink, and `bands` (bind it) breathes the tone steps. With nothing picked on this host and `subject` wired, it inks that generator instead of the media fallback.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture, e.g. core-media.out" },
+      "subject": { "type": "tex", "optional": true, "doc": "drawn instead of `in` while nothing is picked on this host (a generator: a cel-shaded subject rather than the soft media fallback)" },
+      "palette": { "type": "palette", "optional": true, "doc": "dark to light: the tones `tint` pulls toward; the bursts take the light end" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "bands": { "type": "float", "default": 4, "min": 2, "max": 8, "doc": "cel tone steps (fractional values move the thresholds: bind it to make the tones breathe)" },
+    "ink": { "type": "float", "default": 2.2, "min": 0, "max": 6, "doc": "ink line width in 1080p pixels (0 = no lines)" },
+    "detail": { "type": "float", "default": 0.22, "min": 0.03, "max": 1, "doc": "edge strength that gets inked: lower = more lines" },
+    "blacks": { "type": "float", "default": 0.16, "min": 0, "max": 0.5, "doc": "lightness below which the shadows print solid black" },
+    "dots": { "type": "float", "default": 9, "min": 3, "max": 30, "doc": "halftone cell in 1080p pixels" },
+    "shade": { "type": "float", "default": 0.55, "min": 0, "max": 1, "doc": "how far up the tones the shadow dots reach" },
+    "benday": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "light tones printed as coloured Ben-Day dots on the paper" },
+    "sat": { "type": "float", "default": 1.35, "min": 0, "max": 2.5, "doc": "colour of the cel tones" },
+    "tint": { "type": "float", "default": 0.3, "min": 0, "max": 1, "doc": "pull the tones toward the palette (0 = the picture's own colours)" },
+    "panels": { "type": "int", "default": 3, "min": 0, "max": 6, "doc": "panel cuts per layout (0 = one splash panel); read at the layout's first tick" },
+    "relayout": { "type": "enum", "default": 0, "options": ["every bar", "every 2 bars", "every 4 bars"], "doc": "how often the page re-lays out" },
+    "slant": { "type": "float", "default": 0.12, "min": 0, "max": 0.35, "doc": "how slanted the panel cuts are" },
+    "gutter": { "type": "float", "default": 0.016, "min": 0.004, "max": 0.05, "doc": "paper between panels, share of the screen height" },
+    "slide": { "type": "float", "default": 0.6, "min": 0.1, "max": 2, "doc": "beats a new panel cut takes to slide open" },
+    "bursts": { "type": "float", "default": 1, "min": 0, "max": 1.6, "doc": "size of the hit bursts (0 = none)" },
+    "space": { "type": "float", "default": 1, "min": 0.25, "max": 4, "doc": "beats between counted hits (onsets closer than this are one hit)" },
+    "life": { "type": "float", "default": 0.7, "min": 0.2, "max": 2, "doc": "seconds a burst stays" },
+    "lines": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "speed lines from a fresh burst" },
+    "punch": { "type": "float", "default": 0.5, "min": 0, "max": 1, "doc": "panels zoom in and the colour plate slips out of register on a hit" },
+    "bass": { "type": "float", "default": 0.8, "min": 0, "max": 2, "doc": "the bass swells the dots and thickens the ink" },
+    "wobble": { "type": "float", "default": 0.3, "min": 0, "max": 1, "doc": "hand-drawn wobble of the ink lines" },
+    "paper": { "type": "color", "default": "#f2e8cf", "doc": "paper (gutters, highlights, between the Ben-Day dots)" },
+    "inkc": { "type": "color", "default": "#0e0b16", "doc": "ink (lines, blacks, borders)" }
+  },
+  "budget": { "ms": 0.9, "scales": "res" },
+  "tags": ["media", "comic", "cel", "toon", "halftone", "ink", "print"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-28", "by": "claude/claude-opus-5-5", "note": "first version" }]
+}
