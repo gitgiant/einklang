@@ -1,0 +1,28 @@
+{
+  "format": 1, "id": "claude-media-flip-wall", "name": "Media: flip-tile wall", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-28",
+  "tags": ["media", "tiles", "3d"],
+  "doc": "Your picture (image, video or camera) on a wall of tiles that turn over on the hits: each hit flips a scatter, a disc, a row, a column, a diagonal or a checker of tiles, rippling in, to show that part of the picture as a palette duotone, halftone dots, neon edges or a posterized mosaic; flipped again they turn back. Every fourth bar a sweep turns the whole wall, the next bar turns it back. On a drop the tiles get small and fast, in a breakdown big and slow.",
+  "nodes": [
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#0a0414 #241047 #00d9f5 #ff2a85 #fff275", "cycle": 0.12 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0.1, "pulse": 0.15, "drift": 0.35, "contrast": 1.1, "saturation": 1.2 } },
+    { "id": "wall", "piece": "claude-media-flips",
+      "params": { "tiles": 12, "gap": 0.06, "flip": 0.4, "space": 0.5, "density": 0.8, "wipe": 0, "faces": 0, "bass": 1.6, "wobble": 0.5, "depth": 4, "glow": 1.6 } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "wall.in" },
+    { "from": "pal.palette", "to": "wall.palette" }
+  ],
+  "out": "wall.out",
+  "post": { "bloom": 0.5, "threshold": 0.72 },
+  "sections": {
+    "on": "phrase", "transition": "random", "beats": 4,
+    "variants": [
+      { "id": "drop", "when": { "section": "drop" }, "transition": "core-pixelate", "beats": 2,
+        "params": { "wall": { "tiles": 20, "gap": 0.08, "flip": 0.28, "space": 0.25, "density": 0.8, "wipe": 1, "depth": 3 },
+                    "pal": { "colors": "#100802 #4a2304 #ff8c00 #ffd166 #fff7db" } } },
+      { "id": "breakdown", "when": { "section": ["breakdown", "intro"] },
+        "params": { "wall": { "tiles": 6, "gap": 0.05, "flip": 0.7, "space": 0.5, "density": 0.75, "faces": 1, "depth": 5 } } }
+    ]
+  }
+}

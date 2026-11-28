@@ -1,0 +1,28 @@
+{
+  "id": "claude-media-flips", "kind": "effect", "name": "Media flip-tile wall",
+  "doc": "The picture on a wall of square tiles that turn over in 3D: every hit (onsets, at most one per `space` beats, louder = more tiles) flips a group of tiles (a scatter, a disc, a row, a column, a diagonal or a checker, rippling in) to show their part of the picture in another treatment (palette duotone, halftone dots, neon edges or a posterized mosaic), and flipping a tile again turns it back; on a wipe bar a sweep turns the whole wall to one treatment, and the next bar's sweep brings the picture back. At rest the tiles rock in a wave on each beat and the bass pumps and tilts them; a flipping tile lifts toward you and catches a palette light.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "the picture, e.g. core-media.out" },
+      "palette": { "type": "palette", "optional": true, "doc": "the treatments, the light on flipping tiles, the wall behind" }
+    },
+    "out": { "out": { "type": "tex" } }
+  },
+  "params": {
+    "tiles": { "type": "int", "default": 12, "min": 3, "max": 40, "doc": "tiles across (rows follow the aspect)" },
+    "gap": { "type": "float", "default": 0.06, "min": 0, "max": 0.3, "doc": "space between tiles, share of a tile" },
+    "flip": { "type": "float", "default": 0.4, "min": 0.1, "max": 1.5, "doc": "seconds a tile takes to turn over" },
+    "space": { "type": "float", "default": 0.5, "min": 0.25, "max": 4, "doc": "beats between counted hits (onsets closer than this are one hit)" },
+    "density": { "type": "float", "default": 0.6, "min": 0, "max": 1, "doc": "how many tiles a hit turns" },
+    "wipe": { "type": "enum", "default": 0, "options": ["every 4th bar", "every 2nd bar", "off"], "doc": "bars on which a sweep turns the whole wall to one treatment (the next bar turns it back)" },
+    "faces": { "type": "enum", "default": 0, "options": ["all", "palette (duotone, dots)", "graphic (neon, mosaic)"], "doc": "which treatments the backs show" },
+    "bass": { "type": "float", "default": 0.6, "min": 0, "max": 2, "doc": "tiles pump with the bass" },
+    "depth": { "type": "float", "default": 4, "min": 1.5, "max": 12, "doc": "camera distance in tiles: lower = stronger perspective on a turning tile" },
+    "wobble": { "type": "float", "default": 0.4, "min": 0, "max": 1, "doc": "tiles at rest rock in a wave on every beat" },
+    "glow": { "type": "float", "default": 1, "min": 0, "max": 3, "doc": "palette light on a tile while it turns" }
+  },
+  "budget": { "ms": 0.5, "scales": "res" },
+  "tags": ["media", "tiles", "flip", "grid", "3d"],
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" },
+  "changelog": [{ "date": "2026-11-28", "by": "claude/claude-opus-5-5", "note": "first version" }]
+}

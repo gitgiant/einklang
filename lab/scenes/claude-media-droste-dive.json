@@ -1,0 +1,44 @@
+{
+  "format": 1, "id": "claude-media-droste-dive", "name": "Media: Droste dive", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-28",
+  "tags": ["media", "recursive", "zoom"],
+  "doc": "Your picture (image, video or camera) holding a framed copy of itself, holding another, forever: the view dives one frame deeper every bar, pushed forward on each beat, until the next picture is the screen. Deeper copies are graded into the palette; the bass winds the frames into a spiral, kicks punch in and light the frames. Every four bars the frame size, its place, the grade and the palette change.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 10, "gain": 1.6 } },
+    { "id": "kick", "piece": "core-envelope", "params": { "source": 0, "attack": 0.01, "decay": 0.3, "curve": 3 } },
+    { "id": "lfo", "piece": "core-lfo", "params": { "beats": 64, "shape": 1 } },
+    { "id": "pal", "piece": "core-harmony", "params": { "scheme": 3, "chroma": 0.17, "light": 0.7, "contrast": 0.55 },
+      "bind": { "hue": { "from": "lfo.out", "range": [0.0, 1.0] } } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.15, "drift": 0.25, "contrast": 1.15, "saturation": 1.2 } },
+    { "id": "dive", "piece": "claude-media-droste",
+      "params": { "ratio": 0.42, "cx": 0.62, "cy": 0.56, "lurch": 0.75, "bass": 0.2, "punch": 0.1, "mode": 0, "grade": 0.85, "frame": 1, "glow": 1.1, "shadow": 0.6 },
+      "bind": { "twist": { "from": "bass.out", "range": [0.02, 0.45] }, "kick": { "from": "kick.out" } } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "dive.in" },
+    { "from": "pal.palette", "to": "dive.palette" }
+  ],
+  "out": "dive.out",
+  "post": { "bloom": 0.45, "threshold": 0.75 },
+  "evolve": {
+    "every": 4, "transition": "random", "beats": 4,
+    "slots": [
+      { "node": "dive", "pool": [
+        { "piece": "claude-media-droste", "params": { "mode": 1, "grade": 0.9, "frame": 0.6, "lurch": 0.9 },
+          "ranges": { "ratio": [0.36, 0.5], "cx": [0.35, 0.65], "cy": [0.35, 0.65] },
+          "bind": { "twist": { "from": "bass.out", "range": [-0.5, -0.05] }, "kick": { "from": "kick.out" } } },
+        { "piece": "claude-media-droste", "params": { "mode": 2, "grade": 0.6, "frame": 1.6, "glow": 1.6, "shadow": 0.8, "lurch": 0.6 },
+          "ranges": { "ratio": [0.5, 0.62], "cx": [0.4, 0.75], "cy": [0.4, 0.7] },
+          "bind": { "twist": { "from": "bass.out", "range": [0.0, 0.2] }, "kick": { "from": "kick.out" } } },
+        { "piece": "claude-media-droste", "params": { "mode": 0, "grade": 1, "frame": 0.8, "lurch": 1 },
+          "ranges": { "ratio": [0.3, 0.4], "cx": [0.45, 0.55], "cy": [0.45, 0.55] },
+          "bind": { "twist": { "from": "bass.out", "range": [0.3, 0.9] }, "kick": { "from": "kick.out" } } }
+      ] },
+      { "node": "pal", "pool": [
+        { "piece": "core-swatch", "params": { "colors": "#0a0414 #241047 #00d9f5 #ff2a85 #fff275", "cycle": 0.2 } },
+        { "piece": "core-swatch", "params": { "colors": "#100802 #4a2304 #ff8c00 #ffd166 #fff7db", "cycle": 0.15 } },
+        { "piece": "core-swatch", "params": { "colors": "#020b05 #0a3b1e #00e676 #38ff9c #d8fff0", "cycle": 0.15 } }
+      ] }
+    ]
+  }
+}

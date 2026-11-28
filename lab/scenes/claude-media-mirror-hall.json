@@ -1,0 +1,32 @@
+{
+  "format": 1, "id": "claude-media-mirror-hall", "name": "Media: hall of mirrors", "version": 1,
+  "author": { "vendor": "claude", "model": "claude-opus-5-5" }, "status": "live", "created": "2026-11-28",
+  "tags": ["media", "mirror", "3d"],
+  "doc": "Your picture (image, video or camera) on a wall of mirror panes: on every beat a wave runs through them (from the left, from the right, petals opening from the centre, a nod from the top), each tilted pane reflecting another part of the picture; the bass swings them wider, kicks shove them toward you and twist them, the hi-hats light the bevels. On a drop the wall breaks into many small mirrored panes, a breakdown leaves a few big ones swaying.",
+  "nodes": [
+    { "id": "bass", "piece": "core-follow", "params": { "lo": 0, "hi": 2, "window": 8, "gain": 1.7 } },
+    { "id": "high", "piece": "core-follow", "params": { "lo": 9, "hi": 15, "window": 8, "gain": 2 } },
+    { "id": "kick", "piece": "core-envelope", "params": { "source": 0, "attack": 0.01, "decay": 0.35, "curve": 3 } },
+    { "id": "pal", "piece": "core-swatch", "params": { "colors": "#05060c #1b2440 #5a7bd8 #c9d7ff #ffe9c4", "cycle": 0.1 } },
+    { "id": "media", "piece": "core-media", "params": { "beat_zoom": 0, "pulse": 0.12, "drift": 0.35, "contrast": 1.1, "saturation": 1.15 } },
+    { "id": "hall", "piece": "claude-media-mirrors",
+      "params": { "panes": 7, "gap": 0.07, "alternate": 0.6, "bass": 0.5, "push": 0.8, "twist": 0.6, "drift": 0.45, "depth": 1.3, "tint": 0.15, "sheen": 1.1 },
+      "bind": { "swing": { "from": "bass.out", "range": [0.12, 0.6] }, "kick": { "from": "kick.out" }, "rim": { "from": "high.out", "range": [0.4, 1.6] } } }
+  ],
+  "edges": [
+    { "from": "media.out", "to": "hall.in" },
+    { "from": "pal.palette", "to": "hall.palette" }
+  ],
+  "out": "hall.out",
+  "post": { "bloom": 0.5, "threshold": 0.72 },
+  "sections": {
+    "on": "phrase", "transition": "random", "beats": 4,
+    "variants": [
+      { "id": "drop", "when": { "section": "drop" }, "transition": "claude-shatter", "beats": 2,
+        "params": { "hall": { "panes": 12, "gap": 0.05, "flip": true, "alternate": 1, "depth": 1.8, "tint": 0.3 },
+                    "pal": { "colors": "#08030c #3a0f4f #d6336c #ffb86b #fff4e0" } } },
+      { "id": "breakdown", "when": { "section": ["breakdown", "intro"] },
+        "params": { "hall": { "panes": 4, "gap": 0.1, "alternate": 0.3, "drift": 0.8, "depth": 1.0, "tint": 0.05 } } }
+    ]
+  }
+}
