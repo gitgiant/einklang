@@ -29,23 +29,23 @@
     {
       "id": "cel",
       "piece": "agy-cel-cyberpunk",
-      "params": { "bands": 4, "neon_mix": 0.62, "ink": 0.92, "ink_glow": 1.15, "rain": 0.72, "scanlines": 0.58, "glitch": 0.72, "glow": 1.22 },
+      "params": { "bands": 4, "neon_mix": 0.66, "ink": 0.95, "ink_glow": 1.1, "rain": 0.72, "scanlines": 0.58, "glitch": 0.68, "glow": 1.15 },
       "bind": {
-        "ink_glow": { "from": "bass.out", "range": [0.35, 2.35] },
-        "glow": { "from": "bass.out", "range": [0.78, 1.95] },
-        "glitch": { "from": "env.out", "range": [0.12, 1.42] },
-        "rain": { "from": "hi.out", "range": [0.35, 1.35] },
-        "scanlines": { "from": "mid.out", "range": [0.25, 1.15] }
+        "ink_glow": { "from": "bass.out", "range": [0.25, 2.05] },
+        "glow": { "from": "bass.out", "range": [0.75, 1.62] },
+        "glitch": { "from": "env.out", "range": [0.08, 1.25] },
+        "rain": { "from": "hi.out", "range": [0.32, 1.18] },
+        "scanlines": { "from": "mid.out", "range": [0.22, 0.98] }
       }
     },
     {
       "id": "fx",
       "piece": "agy-glitch",
-      "params": { "amount": 0.14, "displace": 0.18, "smear": 0.16, "rgb": 0.25, "burst": 0.82, "blocks": 18 },
+      "params": { "amount": 0.12, "displace": 0.14, "smear": 0.14, "rgb": 0.22, "burst": 0.78, "blocks": 18 },
       "bind": {
-        "amount": { "from": "env.out", "range": [0.02, 0.42] },
-        "displace": { "from": "env.out", "range": [0.04, 0.48] },
-        "rgb": { "from": "hi.out", "range": [0.08, 0.72] }
+        "amount": { "from": "env.out", "range": [0.02, 0.34] },
+        "displace": { "from": "env.out", "range": [0.04, 0.38] },
+        "rgb": { "from": "hi.out", "range": [0.06, 0.58] }
       }
     }
   ],
@@ -58,7 +58,7 @@
     { "from": "cel.out", "to": "fx.in" }
   ],
   "out": "fx.out",
-  "post": { "bloom": 0.54, "threshold": 0.68 },
+  "post": { "bloom": 0.46, "threshold": 0.74 },
   "sections": {
     "on": "phrase",
     "transition": "core-glitch",
@@ -77,14 +77,14 @@
         },
         "bind": {
           "cel": {
-            "ink_glow": { "from": "bass.out", "range": [0.55, 2.5] },
-            "glow": { "from": "bass.out", "range": [0.88, 2.2] }
+            "ink_glow": { "from": "bass.out", "range": [0.42, 2.25] },
+            "glow": { "from": "bass.out", "range": [0.82, 1.78] }
           },
           "fx": {
-            "amount": { "from": "env.out", "range": [0.08, 0.52] }
+            "amount": { "from": "env.out", "range": [0.06, 0.42] }
           }
         },
-        "post": { "bloom": 0.62, "threshold": 0.62 }
+        "post": { "bloom": 0.52, "threshold": 0.70 }
       },
       {
         "id": "breakdown",
