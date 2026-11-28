@@ -1,0 +1,30 @@
+{
+  "id": "agy-led-billboard",
+  "kind": "effect",
+  "name": "Stadium LED billboard",
+  "doc": "Displays the input media on a colossal modular stadium LED wall with discrete RGB diode subpixels, sweeping refresh scanlines, steel truss spill lighting, and failing/rebooting LED cabinet modules on onsets.",
+  "ports": {
+    "in": {
+      "in": { "type": "tex", "doc": "source media image or video" },
+      "luma": { "type": "mask", "doc": "media brightness mask (core-media.luma) for diode intensity and scan highlights" },
+      "edges": { "type": "field", "doc": "media edge gradient (core-media.edges) for electric neon contour highlights" },
+      "palette": { "type": "palette", "optional": true, "doc": "concert accent palette for edge highlights, scan shimmer, and rebooting panels" }
+    },
+    "out": {
+      "out": { "type": "tex" }
+    }
+  },
+  "params": {
+    "rows": { "type": "int", "default": 84, "min": 40, "max": 144, "doc": "vertical LED diode density across the billboard" },
+    "cabinets": { "type": "int", "default": 10, "min": 4, "max": 18, "doc": "horizontal modular LED cabinet count" },
+    "frame": { "type": "float", "default": 0.075, "min": 0.0, "max": 0.24, "doc": "stadium truss gantry border margin around the wall" },
+    "scan": { "type": "float", "default": 0.65, "min": 0.0, "max": 1.5, "doc": "sweeping refresh scan wave strength" },
+    "dropout": { "type": "float", "default": 0.65, "min": 0.0, "max": 1.5, "doc": "dropped, torn, and rebooting LED cabinet modules on onsets" },
+    "edge_glow": { "type": "float", "default": 0.85, "min": 0.0, "max": 2.0, "doc": "electric palette highlight along media edges on bass hits" },
+    "glow": { "type": "float", "default": 1.2, "min": 0.5, "max": 2.2, "doc": "overall LED diode luminance and lens bloom" }
+  },
+  "shader": "main.wgsl",
+  "budget": { "ms": 0.45, "scales": "res" },
+  "tags": ["led", "billboard", "stadium", "retro", "glitch", "media"],
+  "author": { "vendor": "agy", "model": "gemini-4-neon-high" }
+}
