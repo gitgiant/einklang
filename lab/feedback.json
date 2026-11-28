@@ -111,6 +111,23 @@
     "core-swatch"
    ]
   },
+  "agy-evolve-media-matrix": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: Matrix Remix",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-glitch",
+    "agy-media-rain",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
   "agy-evolve-media-mosh": {
    "up": 0,
    "down": 0,
@@ -147,6 +164,40 @@
     "core-swatch"
    ]
   },
+  "agy-evolve-media-slitcode": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: Slit-Scan Code",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-glitch",
+    "agy-slit-code",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-media-terminal": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: Phosphor Terminal",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-glitch",
+    "agy-media-terminal",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
   "agy-evolve-sim-automata": {
    "up": 0,
    "down": 0,
@@ -159,6 +210,40 @@
    "pieces": [
     "agy-bayer-dither",
     "agy-media-life",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "agy-evolve-sim-caustics": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: Caustic Tank",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-ripple-optics",
+    "core-follow",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "agy-evolve-sim-cymatics": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: Cymatic Sand",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-cymatic-sand",
+    "codex-neon-phosphor",
     "core-follow",
     "core-media",
     "core-swatch"
@@ -180,6 +265,24 @@
     "core-lfo",
     "core-media",
     "core-swatch"
+   ]
+  },
+  "agy-evolve-sim-prism": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: Prism Optics",
+   "vendor": "agy",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-ripple-optics",
+    "core-follow",
+    "core-lfo",
+    "core-media",
+    "core-swatch",
+    "core-trails"
    ]
   },
   "agy-evolve-sim-sandfall": {
@@ -674,6 +777,24 @@
     "core-swatch"
    ]
   },
+  "claude-evolve-media-cubefield": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: cube field",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-cubes",
+    "core-envelope",
+    "core-follow",
+    "core-harmony",
+    "core-lfo",
+    "core-media"
+   ]
+  },
   "claude-evolve-media-dissolve": {
    "up": 0,
    "down": 0,
@@ -708,6 +829,41 @@
     "core-harmony",
     "core-lfo",
     "core-media"
+   ]
+  },
+  "claude-evolve-media-pinscreen": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: pin-screen",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "agy-glitch",
+    "claude-media-pins",
+    "core-envelope",
+    "core-follow",
+    "core-media",
+    "core-swatch"
+   ]
+  },
+  "claude-evolve-media-ridgefield": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve media: ridge field",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-ridgelines",
+    "core-envelope",
+    "core-follow",
+    "core-media",
+    "core-swatch"
    ]
   },
   "claude-evolve-media-strata": {
@@ -761,6 +917,22 @@
     "core-trails"
    ]
   },
+  "claude-evolve-sim-hoarfrost": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: hoarfrost",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-frost",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
   "claude-evolve-sim-ink": {
    "up": 0,
    "down": 0,
@@ -789,6 +961,38 @@
    "status": "live",
    "pieces": [
     "claude-media-mould",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-sim-riverbed": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: riverbed",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-erode",
+    "core-media",
+    "core-swatch",
+    "core-trails"
+   ]
+  },
+  "claude-evolve-sim-wash": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Evolve sim: wet wash",
+   "vendor": "claude",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "claude-media-erode",
     "core-media",
     "core-swatch",
     "core-trails"
@@ -1304,6 +1508,48 @@
     "codex-grid-floor",
     "codex-neon-phosphor",
     "core-swatch"
+   ]
+  },
+  "codex-evolve-media-dream-capture": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Dream Capture",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-window-station",
+    "core-media"
+   ]
+  },
+  "codex-evolve-media-night-console": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Night Console",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-window-station",
+    "core-media"
+   ]
+  },
+  "codex-evolve-media-proof-drawer": {
+   "up": 0,
+   "down": 0,
+   "score": 0,
+   "tags": {},
+   "name": "Proof Drawer",
+   "vendor": "codex",
+   "live": 0,
+   "status": "live",
+   "pieces": [
+    "codex-window-station",
+    "core-media"
    ]
   },
   "codex-evolve-media-relief-atlas": {
@@ -2708,17 +2954,7 @@
   }
  },
  "transitionTags": {},
- "retired": [
-  "agy-finale",
-  "agy-forge",
-  "agy-harmony-wheel",
-  "agy-shatter",
-  "agy-spectrogram-wall",
-  "agy-storm",
-  "claude-handheld",
-  "claude-julia-dive",
-  "claude-knockdown"
- ],
+ "retired": [],
  "evolve": {
   "agy-evolve-glitch": {
    "slots": {},
@@ -2732,6 +2968,10 @@
    "slots": {},
    "states": {}
   },
+  "agy-evolve-media-matrix": {
+   "slots": {},
+   "states": {}
+  },
   "agy-evolve-media-mosh": {
    "slots": {},
    "states": {}
@@ -2740,11 +2980,31 @@
    "slots": {},
    "states": {}
   },
+  "agy-evolve-media-slitcode": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-media-terminal": {
+   "slots": {},
+   "states": {}
+  },
   "agy-evolve-sim-automata": {
    "slots": {},
    "states": {}
   },
+  "agy-evolve-sim-caustics": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-sim-cymatics": {
+   "slots": {},
+   "states": {}
+  },
   "agy-evolve-sim-ecosystem": {
+   "slots": {},
+   "states": {}
+  },
+  "agy-evolve-sim-prism": {
    "slots": {},
    "states": {}
   },
@@ -2847,11 +3107,23 @@
    "slots": {},
    "states": {}
   },
+  "claude-evolve-media-cubefield": {
+   "slots": {},
+   "states": {}
+  },
   "claude-evolve-media-dissolve": {
    "slots": {},
    "states": {}
   },
   "claude-evolve-media-layers": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-media-pinscreen": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-media-ridgefield": {
    "slots": {},
    "states": {}
   },
@@ -2867,11 +3139,23 @@
    "slots": {},
    "states": {}
   },
+  "claude-evolve-sim-hoarfrost": {
+   "slots": {},
+   "states": {}
+  },
   "claude-evolve-sim-ink": {
    "slots": {},
    "states": {}
   },
   "claude-evolve-sim-mould": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-sim-riverbed": {
+   "slots": {},
+   "states": {}
+  },
+  "claude-evolve-sim-wash": {
    "slots": {},
    "states": {}
   },
@@ -2940,6 +3224,18 @@
      }
     }
    }
+  },
+  "codex-evolve-media-dream-capture": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-media-night-console": {
+   "slots": {},
+   "states": {}
+  },
+  "codex-evolve-media-proof-drawer": {
+   "slots": {},
+   "states": {}
   },
   "codex-evolve-media-relief-atlas": {
    "slots": {},
