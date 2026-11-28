@@ -213,6 +213,40 @@ test('room: auto-rotation switches every N bars by weight, and stops when turned
   assert.equal(state().scene.at, at);
 });
 
+// host e2e: the hosts' startup outlasted the default rotation's first pick, so the owner's switch queued behind it
+test('room: turning auto-rotation off or picking a scene takes back an auto pick that has not started', () => {
+  for (const turnOff of [true, false]) {
+    const { room, send, state, clock } = setup({ rand: () => 0.3 });
+    const start = state().scene.id;
+    let ticks = 0;
+    while (state().scene.id === start && ticks++ < 10_000) { clock.ms += 250; room.tickAuto(); } // the default rotation picks
+    const auto = state().scene;
+    assert.notEqual(auto.id, start);
+    assert.ok(auto.at >= room.tickNow() + INPUT_DELAY && auto.trans.ticks > 0, 'pending, with a transition');
+    if (turnOff) {
+      send({ t: 'auto', bars: 0 });
+      assert.equal(sceneAt(state().scene, auto.at + auto.trans.ticks), start, 'auto off: the pending pick is gone');
+    }
+    const other = ['radial', 'tunnel', 'scope', 'flow'].find((id) => id !== start && id !== auto.id)!;
+    send({ t: 'scene', id: other, quant: 'bar', trans: { type: 'random', beats: 8 } });
+    const s = state().scene, bar = state().grid.tpb * 4;
+    assert.equal(s.prev, start);
+    assert.deepEqual(s.earlier, [], 'not queued behind the auto pick');
+    assert.ok(s.at - room.tickNow() <= bar + INPUT_DELAY, `lands at the next bar (${s.at - room.tickNow()} ticks)`);
+  }
+  // a pick queued behind an auto switch that is already running stays put when rotation turns off
+  const { room, send, state, clock } = setup({ rand: () => 0.3 });
+  const start = state().scene.id;
+  while (state().scene.id === start) { clock.ms += 250; room.tickAuto(); }
+  const auto = state().scene;
+  while (room.tickNow() < auto.at + 1) clock.ms += 250;
+  send({ t: 'scene', id: start, quant: 'bar' });
+  const queued = state().scene;
+  assert.equal(queued.earlier.length, 1);
+  send({ t: 'auto', bars: 0 });
+  assert.deepEqual(state().scene, queued);
+});
+
 test('room: transition votes are stored, scored and weight random, without skipping; stored ones load', () => {
   const { room, store, send, state, got } = setup({ rand: () => 0.5, votes: [T('core-melt', -1), T('core-melt', -1)] });
   assert.deepEqual(state().transScores, { 'core-melt': -2 });
