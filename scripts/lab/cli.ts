@@ -123,6 +123,7 @@ const save = (dir: string, r: RunResult, video: boolean) => {
 interface ItemResult { id: string; failures: string[]; notes: string[]; ms: number; dir: string }
 
 /** Render one scene/piece over fixtures with the checks; artifacts go to lab/out/<id>/. */
+const DBG: { name: string; classname: string; failure: string }[] = [];
 async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, opts: { video: boolean; budget: boolean; media?: RunOpts['media']; sections?: string }): Promise<ItemResult> {
   if (t.transition) return checkTransition(lab, t.id, fixtures, seconds, opts);
   const ticks = Math.round(seconds * 60), dir = join(OUT, t.id), perf = lab.cpu ? 30 : 120;
@@ -173,6 +174,9 @@ async function check(lab: Lab, t: Target, fixtures: string[], seconds: number, o
     const tech = await lab.run({ ...base, scene: t.scene, fixture: 'techno', fps: 0, sheet: 0 });
     const none = await lab.run({ ...base, scene: t.scene, fixture: 'techno', fps: 0, sheet: 0, media: 'none' });
     failures.unshift(`DEBUG ${t.id} ms ${ms.toFixed(2)} :: ${notes.join(' | ')}\n${art(tech.stats)}\n${none.ok ? art(none.stats) : 'none failed ' + none.error}`);
+    const big = (f: { thumb: number[]; section?: string; tick: number }) => { const rows = []; for (let y = 0; y < 18; y++) { let l = ''; for (let x = 0; x < 64; x++) l += ramp[Math.min(9, Math.floor((f.thumb[2 * y * 64 + x] + f.thumb[(2 * y + 1) * 64 + x]) / 2 / 256 * 10))]; rows.push('|' + l + '|'); } return rows.join('\n'); };
+    const at = (st: { thumb: number[]; section?: string; tick: number }[], n: number) => Array.from({ length: n }, (_, i) => st[Math.min(st.length - 1, Math.floor((i + 0.5) * st.length / n))]).filter(Boolean);
+    for (const [tag, st, n] of [['media', tech.stats, t.piece ? 3 : 6], ['none', none.stats, 3]] as const) for (const f of at(st, n)) DBG.push({ name: `zz ${t.id} ${tag} ${f.section ?? '-'} t${f.tick}`, classname: 'lab.debug', failure: `frame\n${big(f)}` });
   }
   return { id: t.id, failures, notes, ms, dir };
 }
@@ -465,7 +469,7 @@ async function main() {
     if (gate) {
       if (lab.cpu) say('note: no GPU here, so the ms/frame budget was not enforced');
       const pr = await profile(lab.cpu);
-      writeJunit([...results.map((r) => ({ name: r.id, classname: 'lab.gate', failure: r.failures.length ? r.failures.join('\n') : undefined, time: r.ms / 1000 })), ...pr]);
+      writeJunit([...results.map((r) => ({ name: r.id, classname: 'lab.gate', failure: r.failures.length ? r.failures.join('\n') : undefined, time: r.ms / 1000 })), ...pr, ...DBG]);
       const md = ['# Lab gate', '', `WebGPU: ${lab.adapter}, ${w}x${h}, fixtures ${fixtures.join(', ')}`, '',
         ...results.flatMap((r) => [`## ${r.failures.length ? '✗' : '✓'} ${r.id}`, '', ...r.notes.map((n) => `- ${n}`), ...r.failures.map((f) => `- **${f}**`), '']),
         ...(pr[0]?.out ? [pr[0].out] : [])].join('\n');
