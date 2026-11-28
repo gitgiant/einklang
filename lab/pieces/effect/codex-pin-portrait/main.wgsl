@@ -24,7 +24,7 @@ fn pin_fan(p: vec2f, start: f32, normal: vec2f, aa: f32, pull: f32, reset: f32) 
   // A taut thread straightens on bass. Its ends stay fixed on their pins.
   let sag = at * (1.0 - at) * 0.024 * (1.0 - pull);
   let distance = length(ray - chord * at - sideways * sag);
-  let thread = 1.0 - smoothstep(aa * 0.37, aa * (1.36 + 1.2 * pull), distance);
+  let thread = 1.0 - smoothstep(aa * 0.37, aa * (1.28 + 0.68 * pull), distance);
   let alignment = 1.0 - abs(dot(normal, direction));
   let feed = 1.0 - smoothstep(1.0 - reset * 0.96, 1.04 - reset * 0.95, at);
   return thread * feed * (0.34 + 0.66 * alignment * alignment);
@@ -39,7 +39,7 @@ fn shade(uv: vec2f) -> vec4f {
   // The oval stretches across the screen with breathing room around the pinheads.
   let p = (uv - 0.5) * vec2f(2.34, 2.32);
   let radius = length(p);
-  let aa = 2.1 / resolution().y;
+  let aa = clamp(1.8 / resolution().y, 0.0035, 0.006);
   let salt = pin_grain(uv);
   let pull = smoothstep(0.10, 0.72, bass());
   let air = smoothstep(0.12, 0.68, (band(7) + band(10) + band(13)) / 3.0);
@@ -71,8 +71,9 @@ fn shade(uv: vec2f) -> vec4f {
       + blue * vec3f(0.12, 0.43, 0.63)
       + silver * vec3f(0.41, 0.53, 0.54)
       + red * vec3f(0.46, 0.18, 0.15);
-    let line_strength = (0.15 + 0.36 * luma + 1.2 * detail) * (0.58 + 0.88 * pull + 0.46 * air);
-    let lit = ink * (0.45 + 0.7 * pull + 0.55 * air) + fiber * line_strength * (0.87 + 0.17 * salt);
+    let dye = 0.64 + 0.36 * sqrt(clamp(color, vec3f(0.0), vec3f(1.0)));
+    let line_strength = (0.10 + 0.33 * luma + 0.95 * detail) * (0.64 + 0.82 * pull + 0.30 * air);
+    let lit = ink * (0.45 + 0.7 * pull + 0.55 * air) + fiber * dye * line_strength * (0.87 + 0.17 * salt);
     let face = mix(paper, lit + paper * 0.6, 1.0 - smoothstep(0.994, 1.0, radius));
     let frame = mix(outside, face, 1.0 - smoothstep(0.996, 1.026, radius));
     result = (frame + vec3f(0.14, 0.069, 0.031) * hoop) * (1.0 - 0.65 * pin_shadow);

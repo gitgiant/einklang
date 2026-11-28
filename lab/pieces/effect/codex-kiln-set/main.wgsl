@@ -26,9 +26,9 @@ fn shade(uv: vec2f) -> vec4f {
   let lift = smoothstep(0.18, 0.74, strike + sweep * 0.28 + chip * 0.17)
     * (0.48 + 0.52 * light);
   let energy = smoothstep(0.11, 0.73, rms());
-  let set = clamp(lift + 0.60 * energy, 0.0, 1.0);
-  let half_size = 0.385 + 0.045 * chip + 0.064 * set;
-  let offset = vec2f(0.010, 0.047) * lift;
+  let raised = clamp(lift + 0.72 * energy, 0.0, 1.0);
+  let half_size = 0.365 + 0.037 * chip + 0.066 * raised;
+  let offset = vec2f(0.009, 0.023) * lift;
   let face_uv = local + offset;
   let corner = abs(face_uv) - vec2f(half_size - 0.092);
   let sd = length(max(corner, vec2f(0.0))) + min(max(corner.x, corner.y), 0.0) - 0.092;
@@ -43,9 +43,9 @@ fn shade(uv: vec2f) -> vec4f {
   let grout = stone * (0.80 + 0.24 * chips + 0.10 * salt);
   let shadow = smoothstep(0.13, 0.02, sd) * (0.20 + 0.38 * lift);
   let terracotta = vec3f(0.18, 0.064, 0.031);
-  let ceramic = mix(terracotta, dye * vec3f(1.21, 1.05, 0.88) + 0.025, 0.80 + 0.16 * set);
-  var tile = ceramic * (0.46 + 0.52 * inset + 0.11 * chips) * (0.57 + 1.12 * set);
-  tile += vec3f(0.31, 0.195, 0.111) * (1.0 - inset) * sun_side * (0.55 + 0.52 * set);
+  let ceramic = mix(terracotta, dye * vec3f(1.21, 1.05, 0.88) + 0.025, 0.80 + 0.16 * raised);
+  var tile = ceramic * (0.46 + 0.52 * inset + 0.11 * chips) * (0.40 + 1.48 * raised);
+  tile += vec3f(0.31, 0.195, 0.111) * (1.0 - inset) * sun_side * (0.55 + 0.52 * raised);
   tile += vec3f(0.23, 0.15, 0.09) * glaze * inset * (0.25 + 0.66 * lift);
   let picture = mix(grout * (1.0 - shadow), tile, coverage);
 
